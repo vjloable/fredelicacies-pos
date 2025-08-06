@@ -4,6 +4,9 @@ import { useState } from "react";
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
+import EditIcon from "./components/EditIcon";
+import MinusIcon from "./components/MinusIcon";
+import OrderCartIcon from "./components/OrderCartIcon";
 
 export default function Home() {
     const [selectedCategory, setSelectedCategory] = useState("All");
@@ -62,13 +65,13 @@ export default function Home() {
                                 key={index}
                                 onClick={() => setSelectedCategory(category)}
                                 className={`
-                    w-45 h-35 rounded-xl flex flex-col items-center justify-center
-                    ${selectedCategory === category
-                                        ? "bg-[var(--accent)] text-white border-1 border-[var(--accent)]"
-                                        : "bg-[var(--primary)] text-[var(--secondary)] border-1 border-gray-200"
-                                    }
-                    hover:shadow-lg hover:border-2 hover:scale-105 transition-all
-                  `}
+                                    w-40 h-25 rounded-xl flex flex-col items-center justify-center
+                                    ${selectedCategory === category
+                                                        ? "bg-[var(--accent)] text-white border-1 border-[var(--accent)]"
+                                                        : "bg-[var(--primary)] text-[var(--secondary)] border-1 border-gray-200"
+                                                    }
+                                    hover:shadow-lg hover:border-2 hover:scale-105 transition-all
+                                `}
                             >
                                 <div className="w-8 h-8 bg-current opacity-20 rounded-full mb-1"></div>
                                 <span className="text-xs text-center">{category}</span>
@@ -78,7 +81,7 @@ export default function Home() {
                     </div>
 
                     {/* Menu Header - Fixed */}
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3 mt-6">
                         <h2 className="text-[var(--secondary)] font-bold">Menu</h2>
                     </div>
                 </div>
@@ -86,10 +89,7 @@ export default function Home() {
                 {/* Menu Items - Scrollable */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6">
                     <div
-                        className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 py-2"
-                        style={{
-                            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                        }}
+                        className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 py-2"
                     >
                         {menuItems.map((item, index) => (
                             <div
@@ -126,31 +126,34 @@ export default function Home() {
                     <div className="w-full h-[90px] bg-[var(--primary)] border-l border-gray-200 shadow-lg">
                         {/* Order Header */}
                         <div className="flex items-center gap-3 p-3">
-                            <div className="bg-[var(--light-accent)] w-16 h-16 rounded-full"></div>
-                            <div className="flex flex-1 flex-col items-center justify-space-between">
-                                <span className="text-[var(--secondary)] font-medium text-[16px]">
+                            <div className="bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex">
+                                <OrderCartIcon/>
+                            </div>
+                            <div className="flex flex-1 flex-col items-center">
+                                <span className="text-[var(--secondary)] font-medium text-[16px] self-start">
                                     Order Title
                                 </span>
-                                <span className="text-[var(--secondary)] font-light text-[12px]">
+                                <span className="text-[var(--secondary)] font-light text-[12px] self-start">
                                     Order Number: #001
                                 </span>
                             </div>
-                            <div className="bg-[var(--light-accent)] w-16 h-16 rounded-full"></div>
+                            <div className="hidden bg-[var(--light-accent)] w-16 h-16 rounded-full"></div>
                         </div>
                     </div>
 
-                    <div className="h-16 p-3">
+                    <div className="h-16 p-3 border-b border-[var(--secondary)]/20">
                         <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3">
                             <DropdownField
                                 options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
-                                defaultValue="DINE-IN"
+                                defaultValue="TAKE OUT"
                                 dropdownPosition="bottom-right"
                                 dropdownOffset={{ top: 2, right: 0 }}
                                 onChange={(value) => console.log("Selected:", value)}
                             />
                         </div>
                     </div>
-                </div>{" "}
+                </div>
+                
                 {/* Cart Items - Scrollable middle section */}
                 <div className="flex-1 overflow-y-auto px-3">
                     <div className="space-y-0">
@@ -183,27 +186,16 @@ export default function Home() {
                                     <div className="flex flex-row justify-between items-end gap-3 w-full h-[35px]">
                                         {/* Edit Button */}
                                         <button className="flex flex-col justify-center items-center p-[6px] gap-5 w-[35px] h-[35px] bg-[#FFDEC9] rounded-[24px] hover:scale-110 transition-all">
-                                            <svg
-                                                width="16.45"
-                                                height="16.45"
-                                                viewBox="0 0 17 17"
-                                                fill="none"
-                                            >
-                                                <path
-                                                    d="M2 15L15 2M2 2L15 15"
-                                                    stroke="#4C2E24"
-                                                    strokeWidth="2"
-                                                />
-                                            </svg>
+                                            <EditIcon/>
                                         </button>
 
                                         {/* Quantity Controls */}
                                         <div className="flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[#FFDEC9] rounded-[24px]">
                                             <button
                                                 onClick={() => updateQuantity(item.id, -1)}
-                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 transition-all"
+                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
                                             >
-                                                <div className="w-[13.41px] h-0 border-[3px] border-[#4C2E24]"></div>
+                                                <MinusIcon/>
                                             </button>
 
                                             <span className="font-bold text-base leading-[21px] text-[#4C2E24] font-['Poppins']">
@@ -212,7 +204,7 @@ export default function Home() {
 
                                             <button
                                                 onClick={() => updateQuantity(item.id, 1)}
-                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 transition-all"
+                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
                                             >
                                                 <svg
                                                     width="13.41"

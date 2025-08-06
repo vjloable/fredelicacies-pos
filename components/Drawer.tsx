@@ -25,7 +25,7 @@ interface DrawerProps {
 }
 
 export default function Drawer({ isOpen: externalIsOpen, onToggle, children }: DrawerProps) {
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(true);
   
   // Use external state if provided, otherwise use internal state
   const isDrawerOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;

@@ -60,8 +60,8 @@ export default function SidebarNav({ isOpen, toggleDrawer }: SidebarNavProps) {
                                     href={item.href}
                                     className={`flex h-12 items-center gap-3 text-[var(--secondary)] font-bold ${
                                         isActive 
-                                            ? 'bg-gradient-to-r from-white to-[var(--light-accent)] border-r-6 border-[var(--accent)]'
-                                            : 'bg-[var(--primary)] hover:bg-[var(--light-accent)]/20'
+                                            ? 'bg-gradient-to-r from-white to-[var(--light-accent)] border-r-6 border-[var(--accent)] hover:bg-gradient-to-r hover:from-white hover:to-[white] hover:border-r-3 transition-all duration-100 '
+                                            : 'bg-[var(--primary)] hover:bg-[var(--light-accent)]/20 hover:border-r-6 border-[var(--accent)]'
                                     } transition-colors duration-200`}
                                 >
                                     <IconComponent className="w-12 h-12 mx-3 gap-3" />

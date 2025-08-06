@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import DrawerProvider from "@/components/DrawerProvider";
+import { DateTimeProvider } from "@/contexts/DateTimeContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,9 +25,11 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased`}
       >
-        <DrawerProvider>
-          {children}
-        </DrawerProvider>
+        <DateTimeProvider>
+          <DrawerProvider>
+            {children}
+          </DrawerProvider>
+        </DateTimeProvider>
       </body>
     </html>
   );
