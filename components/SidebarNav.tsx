@@ -6,12 +6,7 @@ import LogsIcon from "@/components/icons/LogsIcon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface SidebarNavProps {
-    isOpen: boolean;
-    toggleDrawer: () => void;
-}
-
-export default function SidebarNav({ isOpen, toggleDrawer }: SidebarNavProps) {
+export default function SidebarNav() {
     const pathname = usePathname();
     
     const navItems = [

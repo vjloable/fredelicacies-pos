@@ -1,5 +1,5 @@
 // components/icons/HorizontalLogo.tsx
-export default function HorizontalLogo({ className, ...props }: { className?: string; [key: string]: any }) {
+export default function HorizontalLogo({ className }: { className?: string; }) {
   return (
     <svg 
       className={className}
@@ -7,7 +7,6 @@ export default function HorizontalLogo({ className, ...props }: { className?: st
       height="48" 
       viewBox="0 0 206 48" 
       fill="none"
-      {...props}
       >
       <path d="M2.57971 38.0691C4.13112 41.7771 6.35657 45.1329 9.10288 47.9834C15.0032 47.5322 19.1582 46.5624 18.338 45.3584C16.5244 42.6963 9.53501 39.7238 2.57971 38.0691Z" fill="#4C2E24"/>
       <path d="M52.2435 27.2387C52.2435 17.0184 43.9583 8.73317 33.738 8.73317C23.5177 8.73317 15.2325 17.0184 15.2325 27.2387C15.2325 37.459 23.5177 45.7442 33.738 45.7442C43.9583 45.7442 52.2435 37.459 52.2435 27.2387Z" fill="#DA834D"/>

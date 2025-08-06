@@ -1,5 +1,5 @@
 // components/icons/HomeIcon.tsx
-export default function HomeIcon({ className, ...props }: { className?: string; [key: string]: any }) {
+export default function HomeIcon({ className }: { className?: string; }) {
   return (
     <svg 
       className={className}
@@ -7,7 +7,6 @@ export default function HomeIcon({ className, ...props }: { className?: string; 
       height="49"
       viewBox="0 0 49 48"
       fill="none"
-      {...props}
     >
       <path fillRule="evenodd" clipRule="evenodd" d="M33.8334 19.3288C32.1287 16.4041 28.9702 14.1266 24.098 14.1266C19.226 14.1268 16.0682 16.4042 14.3636 19.3288C12.8464 21.932 12.6759 25.6904 12.6625 26.8083L16.6625 26.8571C16.6833 25.1269 17.249 18.1269 24.098 18.1266C30.9474 18.1266 31.5137 25.1268 31.5345 26.8571L35.5345 26.8083C35.521 25.6904 35.3505 21.932 33.8334 19.3288Z" fill="#4C2E24"/>
       <path d="M31.06 33.8739C33.3418 33.8739 35.567 32.0567 35.5346 29.3632L31.5346 29.412C31.5376 29.6744 31.3224 29.8739 31.06 29.8739H17.1371C16.8747 29.8739 16.6596 29.6744 16.6625 29.412L12.6625 29.3632C12.6301 32.0567 14.8554 33.8739 17.1371 33.8739H31.06Z" fill="#4C2E24"/>

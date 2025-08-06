@@ -1,5 +1,4 @@
-// components/icons/HomeIcon.tsx
-export default function MinusIcon({ className, ...props }: { className?: string; [key: string]: any }) {
+export default function MinusIcon({ className }: { className?: string;}) {
   return (
     <svg 
       className={className}
@@ -7,7 +6,6 @@ export default function MinusIcon({ className, ...props }: { className?: string;
       height="3"
       viewBox="0 0 15 3"
       fill="none"
-      {...props}
     >
     <path d="M0.89502 1.50031L14.3021 1.50031" stroke="#4C2E24" strokeWidth="3"/>
     </svg>

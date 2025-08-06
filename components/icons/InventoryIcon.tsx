@@ -1,5 +1,5 @@
 // components/icons/InventoryIcon.tsx
-export default function InventoryIcon({ className, ...props }: { className?: string; [key: string]: any }) {
+export default function InventoryIcon({ className }: { className?: string; }) {
   return (
     <svg 
       className={className}
@@ -7,7 +7,6 @@ export default function InventoryIcon({ className, ...props }: { className?: str
       height="48" 
       viewBox="0 0 49 48" 
       fill="none"
-      {...props}
     >
     <path d="M30.56 22.8383L31.56 21.5716H16.6371L17.6371 22.8383H30.56Z" fill="#4C2E24"/>
     <path fillRule="evenodd" clipRule="evenodd" d="M17.6371 28.804C17.6371 29.3217 18.0305 29.7478 18.5346 29.7991L18.6371 29.804H29.56C30.1123 29.804 30.56 29.3563 30.56 28.804V22.8383L31.56 21.5716V19.1966C31.56 18.6443 31.1123 18.1966 30.56 18.1966H17.6371L17.5346 18.2015C17.0305 18.2528 16.6371 18.6789 16.6371 19.1966V21.5716L17.6371 22.8383V28.804ZM30.56 14.1966C33.3214 14.1966 35.56 16.4352 35.56 19.1966V21.8383C35.56 22.3906 35.1123 22.8383 34.56 22.8383V22.8383V28.804C34.56 31.5654 32.3214 33.804 29.56 33.804H18.6371C15.8757 33.804 13.6371 31.5654 13.6371 28.804V22.8383V22.8383C13.0849 22.8383 12.6371 22.3906 12.6371 21.8383V19.1966C12.6371 16.4352 14.8757 14.1966 17.6371 14.1966H30.56Z" fill="#4C2E24"/>

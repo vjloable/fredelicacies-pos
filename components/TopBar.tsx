@@ -35,20 +35,20 @@ export default function TopBar({ title }: TopBarProps) {
   return (
     <div className="flex-shrink-0 p-6 pb-0">
       <div className="flex items-center justify-between h-14 mb-3 w-full">
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto">
           <button
             onClick={toggleDrawer}
-            className="h-14 w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center shadow-md hover:scale-110 hover:shadow-lg transition-all cursor-pointer"
+            className="h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer flex-shrink-0"
           >
             <MenuBurger />
           </button>
-          <div className="flex-0 h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
+          <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
             <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
               <UserIcon />
             </span>
-            Worker
+            <span className="hidden sm:inline">Worker</span>
           </div>
-          <div className="h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
+          <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
             <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
               <CalendarIcon />
             </span>
@@ -57,7 +57,7 @@ export default function TopBar({ title }: TopBarProps) {
                 <LoadingSpinner size="sm" />
               ) : (
                 <>
-                  <span>{date}</span>
+                  <span className="text-sm sm:text-base">{date}</span>
                   {!isInternetTime && date && (
                     <span className="text-xs opacity-70">(Local)</span>
                   )}
@@ -65,8 +65,8 @@ export default function TopBar({ title }: TopBarProps) {
               )}
             </div>
           </div>
-          -
-          <div className="h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
+          <span className="hidden sm:inline">-</span>
+          <div className="flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
             <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
               <ClockIcon />
             </span>
@@ -75,7 +75,7 @@ export default function TopBar({ title }: TopBarProps) {
                 <LoadingSpinner size="sm" />
               ) : (
                 <>
-                  <span>{time}</span>
+                  <span className="text-sm sm:text-base">{time}</span>
                   {!isInternetTime && time && (
                     <span className="text-xs opacity-70">(Local)</span>
                   )}
@@ -85,7 +85,7 @@ export default function TopBar({ title }: TopBarProps) {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="ml-2 p-1 hover:bg-[var(--light-accent)] rounded-full transition-colors disabled:opacity-50"
+              className="ml-2 p-1 hover:bg-[var(--light-accent)] rounded-full transition-colors disabled:opacity-50 flex-shrink-0"
               title={`${isInternetTime ? 'Internet time' : 'Local time'} - Click to sync`}
             >
               <RefreshIcon 

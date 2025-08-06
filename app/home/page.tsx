@@ -54,36 +54,38 @@ export default function Home() {
                 {/* Header Section - Fixed */}
                 <TopBar title="Home" />
 
+                <h2 className="text-[var(--secondary)] text-[16px] font-bold mb-3 pl-6">
+                    Category
+                </h2>
+
                 {/* Content Section */}
-                <div className="flex-shrink-0 px-6 pb-0">
-                    <h2 className="text-[var(--secondary)] text-[16px] font-bold mb-3">
-                        Category
-                    </h2>
-                    <div className="flex gap-4 flex-wrap mb-3 w-full">
+                <div className="flex-shrink-0 pb-0">
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-3 w-full px-6 pt-1 pb-6">
                         {categories.map((category, index) => (
                             <div
                                 key={index}
                                 onClick={() => setSelectedCategory(category)}
                                 className={`
-                                    w-40 h-25 rounded-xl flex flex-col items-center justify-center
+                                    flex-shrink-0 w-40 h-25 rounded-xl flex flex-col items-center justify-center
                                     ${selectedCategory === category
                                                         ? "bg-[var(--accent)] text-white border-1 border-[var(--accent)]"
                                                         : "bg-[var(--primary)] text-[var(--secondary)] border-1 border-gray-200"
                                                     }
-                                    hover:shadow-lg hover:border-2 hover:scale-105 transition-all
-                                `}
-                            >
+                                    hover:shadow-lg hover:border-2 hover:scale-105 transition-all cursor-pointer
+                                    shadow-sm
+                                `}>
                                 <div className="w-8 h-8 bg-current opacity-20 rounded-full mb-1"></div>
                                 <span className="text-xs text-center">{category}</span>
                                 <span className="text-xs opacity-70">Items</span>
                             </div>
                         ))}
                     </div>
+                </div>
 
-                    {/* Menu Header - Fixed */}
-                    <div className="flex items-center justify-between mb-3 mt-6">
-                        <h2 className="text-[var(--secondary)] font-bold">Menu</h2>
-                    </div>
+
+                {/* Menu Header - Fixed */}
+                <div className="flex items-center justify-between mb-3 pl-6">
+                    <h2 className="text-[var(--secondary)] font-bold">Menu</h2>
                 </div>
 
                 {/* Menu Items - Scrollable */}
@@ -155,7 +157,7 @@ export default function Home() {
                 </div>
                 
                 {/* Cart Items - Scrollable middle section */}
-                <div className="flex-1 overflow-y-auto px-3">
+                <div className="flex-1 overflow-y-auto px-3 pb-6">
                     <div className="space-y-0">
                         {cart.map((item) => (
                             <div

@@ -1,5 +1,5 @@
 // components/icons/LogsIcon.tsx
-export default function LogsIcon({ className, ...props }: { className?: string; [key: string]: any }) {
+export default function LogsIcon({ className }: { className?: string; }) {
   return (
     <svg 
       className={className}
@@ -7,7 +7,6 @@ export default function LogsIcon({ className, ...props }: { className?: string; 
       height="48"
       viewBox="0 0 49 48"
       fill="none"
-      {...props}
     >
       <path d="M30.0742 13.1448V17.1448H18.123V13.1448H30.0742Z" fill="#4C2E24"/>
       <path d="M18.0204 30.8509C17.5163 30.7995 17.123 30.3734 17.123 29.8558V18.1448C17.123 17.6272 17.5163 17.2011 18.0204 17.1497L18.123 17.1448V13.1448C15.3616 13.1448 13.123 15.3834 13.123 18.1448V29.8558C13.123 32.6172 15.3616 34.8558 18.123 34.8558H30.0742C32.8354 34.8556 35.0742 32.6171 35.0742 29.8558V18.1448C35.0742 15.3835 32.8354 13.145 30.0742 13.1448V17.1448L30.1757 17.1497C30.6802 17.2008 31.0742 17.6269 31.0742 18.1448V21.5391V23.4317V29.8558L31.0683 29.9583C31.0205 30.4291 30.6465 30.8032 30.1757 30.8509H18.0204Z" fill="#4C2E24"/>

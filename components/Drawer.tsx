@@ -64,7 +64,7 @@ export default function Drawer({ isOpen: externalIsOpen, onToggle, children }: D
           ${isDrawerOpen ? 'w-[271px]' : 'w-0'} 
           transition-all duration-300 ease-in-out overflow-hidden
         `}>
-          <SidebarNav isOpen={isDrawerOpen} toggleDrawer={toggleDrawer} />
+          <SidebarNav/>
         </div>
 
         {/* Main Content - Adjusts based on sidebar width */}
