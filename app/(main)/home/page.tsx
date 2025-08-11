@@ -53,10 +53,12 @@ export default function Home() {
             <div className="flex flex-col flex-1 h-full overflow-hidden">
                 {/* Header Section - Fixed */}
                 <TopBar title="Home" />
-
-                <h2 className="text-[var(--secondary)] text-[16px] font-bold mb-3 pl-6">
-                    Category
-                </h2>
+                
+                <div className="flex-shrink-0 p-6 pb-0">
+                    <h2 className="text-[var(--secondary)] text-[16px] font-bold mb-3">
+                        Category
+                    </h2>
+                </div>
 
                 {/* Content Section */}
                 <div className="flex-shrink-0 pb-0">

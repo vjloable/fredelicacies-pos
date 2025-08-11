@@ -181,26 +181,37 @@ class TimeService {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+      timeZone: 'Asia/Manila', // Force Philippine timezone
     };
     
     const timeOptions: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
+      timeZone: 'Asia/Manila', // Force Philippine timezone
     };
 
     return {
-      date: date.toLocaleDateString('en-US', dateOptions),
-      time: date.toLocaleTimeString('en-US', timeOptions),
+      date: date.toLocaleDateString('en-PH', dateOptions), // Use Philippine locale
+      time: date.toLocaleTimeString('en-PH', timeOptions), // Use Philippine locale
     };
   }
 
   private async fetchInternetTime(): Promise<Date | null> {
     try {
+      // Philippine time APIs - prioritizing local and regional sources
       const apis = [
+        // Philippine timezone from WorldTimeAPI
+        'https://worldtimeapi.org/api/timezone/Asia/Manila',
+        // Philippine timezone alternative
+        'https://worldtimeapi.org/api/timezone/Asia/Manila',
+        // Asia timezone as fallback
+        'https://worldtimeapi.org/api/timezone/Asia/Singapore',
+        // Global fallback APIs
+        'https://timeapi.io/api/Time/current/zone?timeZone=Asia/Manila',
+        'http://worldclockapi.com/api/json/manila/now',
+        // Final fallback to UTC (will be converted to Philippine time)
         'https://worldtimeapi.org/api/timezone/Etc/UTC',
-        'https://api.ipgeolocation.io/timezone?apiKey=free',
-        'http://worldclockapi.com/api/json/utc/now',
       ];
 
       for (const api of apis) {
@@ -210,7 +221,7 @@ class TimeService {
             headers: {
               'Accept': 'application/json',
             },
-            signal: AbortSignal.timeout(3000)
+            signal: AbortSignal.timeout(5000) // Increased timeout for better reliability
           });
           
           if (!response.ok) continue;
@@ -218,18 +229,35 @@ class TimeService {
           const data = await response.json();
           
           let dateString: string;
+          let isUTC = false;
+          
+          // Handle different API response formats
           if (data.datetime) {
             dateString = data.datetime;
+            isUTC = api.includes('Etc/UTC');
           } else if (data.date_time) {
             dateString = data.date_time;
           } else if (data.currentDateTime) {
             dateString = data.currentDateTime;
+          } else if (data.dateTime) {
+            dateString = data.dateTime;
+          } else if (data.currentFileTime) {
+            // Handle worldclockapi format
+            const timestamp = parseInt(data.currentFileTime);
+            dateString = new Date(timestamp * 10000 - 621355968000000000).toISOString();
           } else {
             continue;
           }
           
-          const internetDate = new Date(dateString);
+          let internetDate = new Date(dateString);
+          
+          // If we got UTC time, convert to Philippine time (UTC+8)
+          if (isUTC && !isNaN(internetDate.getTime())) {
+            internetDate = new Date(internetDate.getTime() + (8 * 60 * 60 * 1000));
+          }
+          
           if (!isNaN(internetDate.getTime())) {
+            console.log(`Successfully fetched time from: ${api}`);
             return internetDate;
           }
         } catch (error) {
@@ -240,7 +268,7 @@ class TimeService {
       
       return null;
     } catch (error) {
-      console.warn('All internet time APIs failed:', error);
+      console.warn('All Philippine time APIs failed:', error);
       return null;
     }
   }

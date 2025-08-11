@@ -2,20 +2,30 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function RootPage() {
   const router = useRouter();
+  const { user, loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Redirect to home page by default
-    router.push('/home');
-  }, [router]);
+    if (!loading) {
+      if (isAuthenticated) {
+        // User is authenticated, redirect to home
+        router.push('/home');
+      } else {
+        // User is not authenticated, redirect to login
+        router.push('/login');
+      }
+    }
+  }, [loading, isAuthenticated, router]);
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center h-screen bg-[var(--background)]">
       <div className="text-center">
-        <div className="w-16 h-16 bg-[var(--accent)] rounded-full mx-auto mb-4 animate-pulse"></div>
-        <p className="text-[var(--secondary)]">Loading...</p>
+        <LoadingSpinner />
+        <p className="text-[var(--secondary)] mt-4">Loading...</p>
       </div>
     </div>
   );
