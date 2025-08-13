@@ -12,8 +12,8 @@ export default function RootPage() {
   useEffect(() => {
     if (!loading) {
       if (isAuthenticated) {
-        // User is authenticated, redirect to home
-        router.push('/home');
+        // User is authenticated, redirect to store
+        router.push('/store');
       } else {
         // User is not authenticated, redirect to login
         router.push('/login');

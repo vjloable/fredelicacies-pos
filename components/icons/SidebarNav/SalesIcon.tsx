@@ -1,5 +1,5 @@
-// components/icons/InventoryIcon.tsx
-export default function OrderHistoryIcon({ className }: { className?: string; }) {
+// components/icons/SalesIcon.tsx
+export default function SalesIcon({ className }: { className?: string; }) {
   return (
     <svg 
       className={className}

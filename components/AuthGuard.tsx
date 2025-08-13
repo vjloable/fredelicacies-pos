@@ -23,7 +23,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[var(--background)]">
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center justify-center">
           <LoadingSpinner />
           <p className="text-[var(--secondary)] mt-4">Checking authentication...</p>
         </div>

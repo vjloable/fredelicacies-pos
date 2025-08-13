@@ -2,14 +2,14 @@
 
 import TopBar from "@/components/TopBar";
 
-export default function OrderHistory() {
+export default function SettingsScreen() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 h-full overflow-hidden">
         
         {/* Header Section - Fixed */}
-        <TopBar title="Order History" />
+        <TopBar title="Settings" />
         
         {/* Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
@@ -20,8 +20,8 @@ export default function OrderHistory() {
                   <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-[var(--secondary)] mb-2">Order History Page</h2>
-              <p className="text-[var(--secondary)] opacity-70">This page is ready for order history features.</p>
+              <h2 className="text-xl font-semibold text-[var(--secondary)] mb-2">Settings Page</h2>
+              <p className="text-[var(--secondary)] opacity-70">This page is ready for settings features.</p>
             </div>
           </div>
         </div>

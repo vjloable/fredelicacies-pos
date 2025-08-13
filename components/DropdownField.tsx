@@ -75,7 +75,7 @@ export default function DropdownField({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="h-[42px] bg-[#F7F7F7] col-start-1 row-start-1 w-full appearance-none text-base text-[var(--secondary)] focus:outline-1 focus:-outline-offset-2 rounded-3xl focus:outline-[var(--accent)] sm:text-sm/6 text-right pr-14 px-4 cursor-pointer hover:bg-gray-100 transition-colors"
+          className="h-[42px] bg-[var(--light-accent)] col-start-1 row-start-1 w-full appearance-none text-[14px] text-[var(--accent)] font-bold focus:outline-1 focus:-outline-offset-2 rounded-3xl focus:outline-[var(--accent)] sm:text-sm/6 text-right pr-14 px-4 cursor-pointer hover:bg-[var(--accent)]/80 hover:text-white transition-colors"
         >
           {selectedValue}
         </button>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import HorizontalLogo from '@/components/icons/HorizontalLogo';
+import HorizontalLogo from '@/components/icons/SidebarNav/HorizontalLogo';
+import LogoIcon from '@/components/icons/LogoIcon';
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -29,7 +30,7 @@ export default function LoginPage() {
 
     try {
       await login(credentials.email, credentials.password);
-      router.push('/home');
+      router.push('/store');
     } catch (error: any) {
       console.error('Login error:', error);
       
@@ -76,19 +77,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--background)] to-[var(--light-accent)] flex items-center justify-center p-4">
+    <div 
+      className='min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'
+			style={{
+				backgroundImage: "url('/cover.png')",
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				backgroundRepeat: 'no-repeat'
+			}}
+    >
       <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-[var(--accent)] rounded-full mx-auto mb-4 flex items-center justify-center">
-            <HorizontalLogo />
-          </div>
-          <h1 className="text-2xl font-bold text-[var(--secondary)] mb-2">Fredelicacies POS</h1>
-          <p className="text-[var(--secondary)] opacity-70">Sign in to your account</p>
-        </div>
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
+
+          {/* Logo/Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+              <LogoIcon/>
+            </div>
+            <h1 className="text-2xl font-bold text-[var(--secondary)] mb-2">Fredelicacies PoS</h1>
+            <p className="text-[var(--secondary)] opacity-70">Sign in to your account</p>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
@@ -150,7 +160,7 @@ export default function LoginPage() {
                   Signing in...
                 </div>
               ) : (
-                'Sign In'
+                'SIGN IN'
               )}
             </button>
           </form>
