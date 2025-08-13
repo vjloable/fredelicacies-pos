@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function RootPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!loading) {

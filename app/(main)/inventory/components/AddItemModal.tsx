@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
 import { InventoryItem, createInventoryItem } from '@/services/inventoryService';
 import { Category } from '@/services/categoryService';
@@ -205,9 +206,11 @@ export default function AddItemModal({
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {newItem.imgUrl ? (
-                    <img
+                    <Image
                       src={newItem.imgUrl}
                       alt={newItem.name || 'New item'}
+                      width={48}
+                      height={48}
                       className="w-full h-full object-cover"
                     />
                   ) : (

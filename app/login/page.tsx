@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import HorizontalLogo from '@/components/icons/SidebarNav/HorizontalLogo';
 import LogoIcon from '@/components/icons/LogoIcon';
+import { FirebaseError } from '@firebase/util';
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -31,12 +31,12 @@ export default function LoginPage() {
     try {
       await login(credentials.email, credentials.password);
       router.push('/store');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
       
       // Handle specific Firebase auth errors
       let errorMessage = 'Login failed. Please try again.';
-      if (error.code) {
+      if (error instanceof FirebaseError && error.code) {
         switch (error.code) {
           case 'auth/user-not-found':
             errorMessage = 'No account found with this email address.';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 interface ImageUploadProps {
@@ -75,11 +76,13 @@ export default function ImageUpload({
         {currentImageUrl ? (
           // Image Preview
           <div className="relative group">
-            <div className="w-full h-[300px] bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
-              <img
+            <div className="w-full h-[300px] bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200 relative">
+              <Image
                 src={currentImageUrl}
                 alt="Product preview"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
             

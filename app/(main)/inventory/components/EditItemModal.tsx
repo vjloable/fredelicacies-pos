@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
 import { InventoryItem, updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
 import { Category, getCategoryName, getCategoryColor } from '@/services/categoryService';
@@ -147,9 +148,11 @@ export default function EditItemModal({
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
               {localEditingItem.imgUrl ? (
-                <img
+                <Image
                   src={localEditingItem.imgUrl}
                   alt={localEditingItem.name}
+                  width={48}
+                  height={48}
                   className="w-full h-full object-cover"
                 />
               ) : (

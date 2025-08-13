@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
@@ -73,7 +74,6 @@ export default function StoreScreen() {
 
     // Determine if we're showing search results
     const isSearching = searchQuery.trim() !== "";
-    const isFiltering = selectedCategory !== "All" || isSearching;
 
     // Helper function to highlight search terms
     const highlightSearchTerm = (text: string, searchTerm: string) => {
@@ -217,7 +217,7 @@ export default function StoreScreen() {
                         </h2>
                         {isSearching && (
                             <p className="text-xs text-[var(--secondary)] opacity-60">
-                                Searching for "{searchQuery}"
+                                Searching for `{searchQuery}`
                             </p>
                         )}
                     </div>
@@ -312,10 +312,12 @@ export default function StoreScreen() {
                                         {/* Item Image Placeholder */}
                                         <div className="w-full h-40 lg:h-35 xl:h-50 bg-gray-100 rounded-lg mb-3 relative overflow-hidden">
                                             {item.imgUrl ? (
-                                                <img 
+                                                <Image 
                                                     src={item.imgUrl} 
                                                     alt={item.name}
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
