@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
   webpack(config) {
     // Handle SVG imports as React components
     config.module.rules.push({
@@ -19,6 +29,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  
 };
 
 export default nextConfig;
