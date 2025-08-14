@@ -77,7 +77,7 @@ export default function TopBar({ title }: TopBarProps) {
           </div>
           <span className="hidden sm:inline">-</span>
           <div className="flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
-            <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
+            <span className="w-8 h-8 pl-[2px] bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
               <ClockIcon />
             </span>
             <div className="flex flex-row items-center gap-2">

@@ -206,8 +206,6 @@ class TimeService {
         // Philippine timezone alternative
         'https://worldtimeapi.org/api/timezone/Asia/Manila',
         // Asia timezone as fallback
-        'https://worldtimeapi.org/api/timezone/Asia/Singapore',
-        // Global fallback APIs
         'https://timeapi.io/api/Time/current/zone?timeZone=Asia/Manila',
         'http://worldclockapi.com/api/json/manila/now',
         // Final fallback to UTC (will be converted to Philippine time)

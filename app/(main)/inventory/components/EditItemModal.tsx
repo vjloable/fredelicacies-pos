@@ -164,8 +164,23 @@ export default function EditItemModal({
             <div className="flex-1">
               <div className="flex items-center gap-4 mb-1">
                 <h4 className="font-semibold text-[var(--secondary)]">{localEditingItem.name || 'Item Name'}</h4>
-                <div className="font-semibold text-[var(--accent)]">
-                  {localEditingItem.price.toFixed(2)} Php
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold text-[var(--accent)]">
+                    ₱{localEditingItem.price.toFixed(2)}
+                  </div>
+                  {localEditingItem.cost && localEditingItem.cost > 0 && (
+                    <>
+                      <span className="text-xs text-gray-400">|</span>
+                      <div className="text-sm text-gray-600">
+                        Cost: ₱{localEditingItem.cost.toFixed(2)}
+                      </div>
+                      {localEditingItem.price > 0 && (
+                        <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                          {(((localEditingItem.price - localEditingItem.cost) / localEditingItem.price) * 100).toFixed(1)}% margin
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -234,11 +249,11 @@ export default function EditItemModal({
             />
           </div>
 
-          {/* Price and Stock Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Price, Cost, and Stock Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                Price *
+                Selling Price *
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
@@ -247,6 +262,24 @@ export default function EditItemModal({
                   step="0.01"
                   value={localEditingItem.price}
                   onChange={(e) => setLocalEditingItem({...localEditingItem, price: parseFloat(e.target.value) || 0})}
+                  className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0.00"
+                  min="0"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                Cost Price
+                <span className="text-xs text-gray-500 ml-1">(optional)</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={localEditingItem.cost || ''}
+                  onChange={(e) => setLocalEditingItem({...localEditingItem, cost: e.target.value ? parseFloat(e.target.value) : undefined})}
                   className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="0.00"
                   min="0"

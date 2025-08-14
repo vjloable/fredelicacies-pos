@@ -3,7 +3,8 @@ import {
   query, 
   orderBy,
   onSnapshot,
-  Unsubscribe 
+  Unsubscribe,
+  Timestamp 
 } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { InventoryItem } from '../services/inventoryService';
@@ -47,15 +48,19 @@ class DataStore {
   private isCategoriesListenerActive = false;
 
   private constructor() {
-    // Initialize listeners immediately
-    this.initializeListeners();
+    // Only initialize listeners on client side
+    if (typeof window !== 'undefined') {
+      this.initializeListeners();
+    }
     
     // Keep listeners alive even when page becomes hidden
-    document.addEventListener('visibilitychange', () => {
-      // Don't stop listeners when page becomes hidden
-      // This keeps them alive for cost efficiency
-      console.log('Page visibility changed, keeping listeners alive');
-    });
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        // Don't stop listeners when page becomes hidden
+        // This keeps them alive for cost efficiency
+        console.log('Page visibility changed, keeping listeners alive');
+      });
+    }
   }
 
   public static getInstance(): DataStore {
@@ -66,6 +71,12 @@ class DataStore {
   }
 
   private initializeListeners() {
+    // Only initialize if we're on the client side and have a valid db connection
+    if (typeof window === 'undefined' || !db) {
+      console.warn('⚠️ Skipping listener initialization: not on client or no db connection');
+      return;
+    }
+    
     this.startInventoryListener();
     this.startCategoriesListener();
   }
@@ -76,30 +87,61 @@ class DataStore {
 
     console.log('🔥 Starting inventory listener (singleton)');
     
-    const q = query(collection(db, 'inventory'), orderBy('createdAt', 'desc'));
-    
-    this.inventoryUnsubscribe = onSnapshot(q, 
-      (querySnapshot) => {
-        const items: InventoryItem[] = [];
-        querySnapshot.forEach((doc) => {
-          items.push({
-            id: doc.id,
-            ...doc.data()
-          } as InventoryItem);
-        });
-        
-        this.inventoryItems = items;
-        this.eventEmitter.emit('inventoryChanged', items);
-        
-        console.log(`📦 Inventory updated: ${items.length} items`);
-      },
-      (error) => {
-        console.error('❌ Inventory listener error:', error);
-        this.eventEmitter.emit('inventoryError', error);
-      }
-    );
-    
-    this.isInventoryListenerActive = true;
+    try {
+      const q = query(collection(db, 'inventory'), orderBy('createdAt', 'desc'));
+      
+      this.inventoryUnsubscribe = onSnapshot(q, 
+        (querySnapshot) => {
+          console.log('📦 Inventory snapshot received, empty:', querySnapshot.empty, 'size:', querySnapshot.size);
+          
+          const items: InventoryItem[] = [];
+          
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              try {
+                const data = doc.data();
+                if (data) {
+                  // Create a proper copy to avoid read-only issues
+                  const item: InventoryItem = {
+                    id: doc.id,
+                    name: data.name || '',
+                    price: data.price || 0,
+                    cost: data.cost || 0,
+                    stock: data.stock || 0,
+                    categoryId: data.categoryId || '',
+                    description: data.description || '',
+                    imgUrl: data.imgUrl || null,
+                    createdAt: data.createdAt || Timestamp.now(),
+                    updatedAt: data.updatedAt || Timestamp.now()
+                  };
+                  items.push(item);
+                }
+              } catch (docError) {
+                console.error('❌ Error processing document:', doc.id, docError);
+              }
+            });
+          }
+          
+          this.inventoryItems = items;
+          this.eventEmitter.emit('inventoryChanged', items);
+          
+          console.log(`📦 Inventory updated: ${items.length} items`);
+        },
+        (error) => {
+          console.error('❌ Inventory listener error:', error);
+          // Still emit an empty array so UI can stop loading
+          this.inventoryItems = [];
+          this.eventEmitter.emit('inventoryChanged', []);
+          this.eventEmitter.emit('inventoryError', error);
+        }
+      );
+      
+      this.isInventoryListenerActive = true;
+    } catch (error) {
+      console.error('❌ Error setting up inventory listener:', error);
+      this.inventoryItems = [];
+      this.eventEmitter.emit('inventoryChanged', []);
+    }
   }
 
   private startCategoriesListener() {
@@ -107,38 +149,68 @@ class DataStore {
 
     console.log('🔥 Starting categories listener (singleton)');
     
-    const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
-    
-    this.categoriesUnsubscribe = onSnapshot(q,
-      (querySnapshot) => {
-        const categories: Category[] = [];
-        querySnapshot.forEach((doc) => {
-          categories.push({
-            id: doc.id,
-            ...doc.data()
-          } as Category);
-        });
-        
-        this.categories = categories;
-        this.eventEmitter.emit('categoriesChanged', categories);
-        
-        console.log(`🏷️ Categories updated: ${categories.length} categories`);
-      },
-      (error) => {
-        console.error('❌ Categories listener error:', error);
-        this.eventEmitter.emit('categoriesError', error);
-      }
-    );
-    
-    this.isCategoriesListenerActive = true;
+    try {
+      const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
+      
+      this.categoriesUnsubscribe = onSnapshot(q,
+        (querySnapshot) => {
+          console.log('🏷️ Categories snapshot received, empty:', querySnapshot.empty, 'size:', querySnapshot.size);
+          
+          const categories: Category[] = [];
+          
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              try {
+                const data = doc.data();
+                if (data) {
+                  // Create a proper copy to avoid read-only issues
+                  const category: Category = {
+                    id: doc.id,
+                    name: data.name || '',
+                    color: data.color || '#000000',
+                    createdAt: data.createdAt || Timestamp.now(),
+                    updatedAt: data.updatedAt || Timestamp.now()
+                  };
+                  categories.push(category);
+                }
+              } catch (docError) {
+                console.error('❌ Error processing category document:', doc.id, docError);
+              }
+            });
+          }
+          
+          this.categories = categories;
+          this.eventEmitter.emit('categoriesChanged', categories);
+          
+          console.log(`🏷️ Categories updated: ${categories.length} categories`);
+        },
+        (error) => {
+          console.error('❌ Categories listener error:', error);
+          this.categories = [];
+          this.eventEmitter.emit('categoriesChanged', []);
+          this.eventEmitter.emit('categoriesError', error);
+        }
+      );
+      
+      this.isCategoriesListenerActive = true;
+    } catch (error) {
+      console.error('❌ Error setting up categories listener:', error);
+      this.categories = [];
+      this.eventEmitter.emit('categoriesChanged', []);
+    }
   }
 
   // Public methods to subscribe to data changes
   public subscribeToInventory(callback: (items: InventoryItem[]) => void): () => void {
-    // Immediately call with current data if available
-    if (this.inventoryItems.length > 0) {
-      callback(this.inventoryItems);
+    console.log('🔗 New inventory subscription created');
+    
+    // Ensure listeners are started (client-side only)
+    if (typeof window !== 'undefined' && !this.isInventoryListenerActive) {
+      this.initializeListeners();
     }
+    
+    // Always call with current data (even if empty array)
+    callback(this.inventoryItems);
     
     // Subscribe to future changes
     this.eventEmitter.on('inventoryChanged', callback);
@@ -150,10 +222,15 @@ class DataStore {
   }
 
   public subscribeToCategories(callback: (categories: Category[]) => void): () => void {
-    // Immediately call with current data if available
-    if (this.categories.length > 0) {
-      callback(this.categories);
+    console.log('🔗 New categories subscription created');
+    
+    // Ensure listeners are started (client-side only)
+    if (typeof window !== 'undefined' && !this.isCategoriesListenerActive) {
+      this.initializeListeners();
     }
+    
+    // Always call with current data (even if empty array)
+    callback(this.categories);
     
     // Subscribe to future changes
     this.eventEmitter.on('categoriesChanged', callback);

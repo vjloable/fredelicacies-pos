@@ -12,7 +12,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <AuthGuard>
       <DrawerProvider>
         <div className="flex flex-col h-full overflow-hidden">
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto bg-gray-50">
             {children}
           </main>
         </div>

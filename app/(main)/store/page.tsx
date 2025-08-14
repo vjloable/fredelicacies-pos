@@ -9,36 +9,93 @@ import OrderCartIcon from "./icons/OrderCartIcon";
 import { InventoryItem } from "@/services/inventoryService";
 import { subscribeToInventoryItems } from "@/stores/dataStore";
 import SearchIcon from "./icons/SearchIcon";
+import { loadSettingsFromLocal } from "@/services/settingsService";
+import { createOrder } from "@/services/orderService";
+
+// Image component with proper error handling
+const SafeImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
+    const [hasError, setHasError] = useState(false);
+    
+    if (hasError || !src) {
+        return null;
+    }
+    
+    return (
+        <Image
+            src={src}
+            alt={alt}
+            fill
+            className={`object-cover ${className || ''}`}
+            sizes="102px"
+            unoptimized
+            onError={() => {
+                console.error('Image failed to load:', src);
+                setHasError(true);
+            }}
+        />
+    );
+};
 
 export default function StoreScreen() {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hideOutOfStock, setHideOutOfStock] = useState(false);
+    const [orderType, setOrderType] = useState<'DINE-IN' | 'TAKE OUT' | 'DELIVERY'>('TAKE OUT');
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [isClient, setIsClient] = useState(false);
     const [cart, setCart] = useState<Array<{
         id: string;
         name: string;
         price: number;
+        cost?: number;
         quantity: number;
         originalStock: number;
+        imgUrl?: string | null;
+        categoryId: number | string;
     }>>([]);
+
+    // Ensure we're on the client before running Firebase code
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // Set up real-time subscription to inventory items using singleton dataStore
     useEffect(() => {
+        if (!isClient) return;
+        
         setLoading(true);
+        console.log('🚀 Setting up inventory subscription...');
         
         const unsubscribe = subscribeToInventoryItems(
             (items) => {
+                console.log('📦 Inventory items received:', items.length, 'items');
                 setInventoryItems(items);
                 setLoading(false);
             }
         );
 
+        // Add a timeout fallback to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+            console.warn('⏰ Inventory subscription timeout - stopping loading');
+            setLoading(false);
+        }, 10000); // 10 second timeout
+
         return () => {
+            clearTimeout(timeoutId);
             if (unsubscribe) {
                 unsubscribe();
             }
         };
+    }, [isClient]);
+
+    // Load settings
+    useEffect(() => {
+        const settings = loadSettingsFromLocal();
+        setHideOutOfStock(settings.hideOutOfStock);
     }, []);
 
     // Helper function to get category name (you might want to fetch categories from Firebase too)
@@ -69,7 +126,10 @@ export default function StoreScreen() {
             item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             getCategoryName(item.categoryId).toLowerCase().includes(searchQuery.toLowerCase());
         
-        return matchesCategory && matchesSearch;
+        // Filter out out-of-stock items if hideOutOfStock is enabled
+        const hasStock = hideOutOfStock ? item.stock > 0 : true;
+        
+        return matchesCategory && matchesSearch && hasStock;
     });
 
     // Determine if we're showing search results
@@ -126,8 +186,11 @@ export default function StoreScreen() {
                 id: itemId,
                 name: item.name,
                 price: item.price,
+                cost: item.cost,
                 quantity: 1,
-                originalStock: item.stock
+                originalStock: item.stock,
+                imgUrl: item.imgUrl,
+                categoryId: item.categoryId
             }]);
         }
     };
@@ -136,7 +199,7 @@ export default function StoreScreen() {
         (sum, item) => sum + item.price * item.quantity,
         0
     );
-    const total = subtotal;
+    const total = subtotal - discountAmount;
 
     const updateQuantity = (id: string, delta: number) => {
         setCart(
@@ -165,17 +228,46 @@ export default function StoreScreen() {
     };
 
     // Function to handle placing order
-    const handlePlaceOrder = () => {
-        if (cart.length === 0) return;
+    const handlePlaceOrder = async () => {
+        if (cart.length === 0 || isPlacingOrder) return;
         
-        // Here you would typically send the order to your backend
-        console.log('Placing order:', cart);
-        
-        // For now, just clear the cart after placing order
-        clearCart();
-        
-        // You could show a success message here
-        alert('Order placed successfully!');
+        setIsPlacingOrder(true);
+        try {
+            // Create order data
+            const orderData = {
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    cost: item.cost,
+                    quantity: item.quantity,
+                    imgUrl: item.imgUrl,
+                    categoryId: item.categoryId,
+                    originalStock: item.originalStock
+                })),
+                subtotal,
+                discountAmount,
+                discountCode: discountCode.trim() || undefined,
+                total,
+                orderType
+            };
+            
+            const orderId = await createOrder(orderData);
+            
+            // Clear the cart after successful order
+            clearCart();
+            setDiscountCode('');
+            setDiscountAmount(0);
+            
+            // Show success message
+            alert(`Order #${orderId} placed successfully!`);
+            
+        } catch (error) {
+            console.error('Error placing order:', error);
+            alert('Failed to place order. Please try again.');
+        } finally {
+            setIsPlacingOrder(false);
+        }
     };
 
     return (
@@ -193,7 +285,7 @@ export default function StoreScreen() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search items, categories, or descriptions..."
-                            className={`w-full px-4 py-3 pr-12 shadow-sm bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${searchQuery ? 'animate-pulse transition-all' : ''}`}
+                            className={`w-full text-[12px] px-4 py-3 pr-12 shadow-sm bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${searchQuery ? 'animate-pulse transition-all' : ''}`}
                         />
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                             {searchQuery ? (
@@ -254,11 +346,41 @@ export default function StoreScreen() {
                 {/* Menu Items - Scrollable */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6">
                     {loading ? (
-                        <div className="flex items-center justify-center py-8">
+                        <div className="flex flex-col items-center justify-center py-8">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
                             <span className="ml-3 text-[var(--secondary)]">Loading menu...</span>
                         </div>
+                    ) : inventoryItems.length === 0 ? (
+                        // Empty Inventory Collection State
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-6">
+                                <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-semibold text-[var(--secondary)] mb-3">
+                                No Inventory Found
+                            </h3>
+                            <p className="text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed">
+                                The inventory collection is empty or doesn't exist yet. You need to add items to your inventory before they can appear in the store.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => window.location.href = '/inventory'}
+                                    className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium"
+                                >
+                                    Go to Inventory
+                                </button>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="px-6 py-3 bg-gray-100 text-[var(--secondary)] rounded-lg hover:bg-gray-200 transition-all font-medium"
+                                >
+                                    Refresh Page
+                                </button>
+                            </div>
+                        </div>
                     ) : filteredItems.length === 0 ? (
+                        // Filtered Results Empty State
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
                                 {isSearching ? (
@@ -278,7 +400,7 @@ export default function StoreScreen() {
                                 {isSearching 
                                     ? `No items match "${searchQuery}". Try searching with different keywords or check the spelling.`
                                     : selectedCategory === "All" 
-                                        ? "No items found in inventory. Add items from the inventory page to see them here."
+                                        ? "No items available with current filters."
                                         : `No items found in the "${selectedCategory}" category.`
                                 }
                             </p>
@@ -312,12 +434,10 @@ export default function StoreScreen() {
                                         {/* Item Image Placeholder */}
                                         <div className="w-full h-40 lg:h-35 xl:h-50 bg-gray-100 rounded-lg mb-3 relative overflow-hidden">
                                             {item.imgUrl ? (
-                                                <Image 
+                                                <SafeImage 
                                                     src={item.imgUrl} 
                                                     alt={item.name}
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                                                    className=""
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
@@ -435,7 +555,7 @@ export default function StoreScreen() {
                                 defaultValue="TAKE OUT"
                                 dropdownPosition="bottom-right"
                                 dropdownOffset={{ top: 2, right: 0 }}
-                                onChange={(value) => console.log("Selected:", value)}
+                                onChange={(value) => setOrderType(value as 'DINE-IN' | 'TAKE OUT' | 'DELIVERY')}
                             />
                         </div>
                     </div>
@@ -449,27 +569,39 @@ export default function StoreScreen() {
                             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                 <OrderCartIcon/>
                             </div>
-                            <h3 className="text-lg font-medium text-[var(--secondary)] mb-2">
+                            <h3 className="text-lg font-medium text-[var(--secondary)] mb-2 select-none">
                                 Order tab is empty
                             </h3>
-                            <p className="text-[var(--secondary)] opacity-70 text-center max-w-sm text-sm leading-relaxed">
+                            <p className="text-[var(--secondary)] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none">
                                 Add items from the menu to start building your order. Click on any menu item to add it to your cart.
                             </p>
                         </div>
                     ) : (
                         /* Cart Items */
                         <div className="space-y-0">
-                            {cart.map((item) => (
+                            {cart.map((item) => {
+                                // Debug logging
+                                console.log('Cart item:', item.name, 'imgUrl:', item.imgUrl);
+                                return (
                                 <div
                                     key={`cart-item-${item.id}`}
                                     className="flex flex-row items-center gap-3 w-full h-[124px] bg-white border-b border-dashed border-[#4C2E24]"
                                 >
                                     {/* Item Image Placeholder - 102x100px */}
-                                    <div className="flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md flex items-center justify-center">
-                                        {/* You can add item image here later */}
-                                        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                        </svg>
+                                    <div className="flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden">
+                                        {item.imgUrl ? (
+                                            <SafeImage 
+                                                src={item.imgUrl} 
+                                                alt={item.name}
+                                            />
+                                        ) : null}
+                                        {!item.imgUrl && (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Item Details - 278px width */}
@@ -540,37 +672,49 @@ export default function StoreScreen() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
                 {/* Order Summary */}
-                <div className="flex-shrink mb-2 border-t-2 rounded-[12px] border-[var(--accent)]">
+                <div className="flex-shrink mb-3 border-t-2 rounded-[12px] border-[var(--accent)]">
                     <div className="flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end">
                         <span>Subtotal</span>
                         <span>₱{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]">
-                        <span>Tax</span>
-                        <span>₱0.00</span>
-                    </div>
-                    <div className="flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]">
                         <span>Discount</span>
-                        <span>₱0.00</span>
+                        <span>-₱{discountAmount.toFixed(2)}</span>
                     </div>
 
                     <div className="gap-2 p-3">
                         <div className="flex flex-row border border-[var(--accent)] rounded-[6px] bg-[var(--light-accent)]/40">
                           <input 
                             type="text" 
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                             className="flex-grow py-2 px-4 text-[12px] border-none rounded-l-[6px] focus:outline-none" 
                             placeholder="Enter discount coupon code"
-                            style={{ textTransform: 'uppercase' }}
-                            onChange={(e) => {
-                              e.target.value = e.target.value.toUpperCase();
-                            }}
                           />
-                          <button className="flex-shrink py-2 px-4 bg-[var(--accent)] font-bold text-sm text-white rounded-e-[6px] hover:bg-[var(--accent)]/50 transition-all">
+                          <button 
+                            onClick={() => {
+                              // Simple discount logic - you can make this more sophisticated
+                              if (discountCode === 'SAVE10') {
+                                setDiscountAmount(subtotal * 0.1); // 10% discount
+                              } else if (discountCode === 'SAVE20') {
+                                setDiscountAmount(subtotal * 0.2); // 20% discount
+                              } else if (discountCode === 'FLAT50') {
+                                setDiscountAmount(50); // ₱50 flat discount
+                              } else {
+                                setDiscountAmount(0);
+                                if (discountCode) {
+                                  alert('Invalid discount code');
+                                }
+                              }
+                            }}
+                            className="flex-shrink py-2 px-4 bg-[var(--accent)] font-bold text-sm text-white rounded-e-[6px] hover:bg-[var(--accent)]/50 transition-all"
+                          >
                             APPLY
                           </button>
                         </div>
@@ -585,14 +729,14 @@ export default function StoreScreen() {
                         {/* Place Order Button */}
                         <button 
                             onClick={handlePlaceOrder}
-                            disabled={cart.length === 0}
+                            disabled={cart.length === 0 || isPlacingOrder}
                             className={`w-full py-4 font-semibold text-lg transition-all h-16 ${
-                                cart.length === 0 
+                                cart.length === 0 || isPlacingOrder
                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                                     : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02]'
                             }`}
                         >
-                            {cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
+                            {isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
                         </button>
                     </div>
                 </div>

@@ -16,6 +16,7 @@ export interface InventoryItem {
   id?: string;
   name: string;
   price: number;
+  cost?: number; // Optional cost field for cost tracking
   categoryId: string; // Changed from number to string
   stock: number;
   description: string;
