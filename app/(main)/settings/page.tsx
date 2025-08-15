@@ -7,7 +7,7 @@ import {
   AppSettings, 
   loadSettingsFromLocal, 
   saveSettingsToLocal, 
-  loadSettingsFromFirebase, 
+  loadSettings,
   syncSettingsToFirebase 
 } from '@/services/settingsService';
 
@@ -24,16 +24,16 @@ export default function SettingsScreen() {
 
   // Load settings on component mount
   useEffect(() => {
-    const loadSettings = async () => {
+    const loadSettingsData = async () => {
       try {
-        // Always try to load from Firebase first (global settings)
-        const firebaseSettings = await loadSettingsFromFirebase();
-        setSettings(firebaseSettings);
-        setSavedSettings(firebaseSettings);
-        console.log('✅ Global settings loaded successfully');
+        // Use cached settings (will auto-refresh if cache is older than 1 hour)
+        const cachedSettings = await loadSettings();
+        setSettings(cachedSettings);
+        setSavedSettings(cachedSettings);
+        console.log('✅ Settings loaded (cached or refreshed)');
       } catch (error) {
         // Fallback to localStorage
-        console.log('Error loading settings from Firebase:', error);
+        console.log('Error loading settings:', error);
         const localSettings = loadSettingsFromLocal();
         setSettings(localSettings);
         setSavedSettings(localSettings);
@@ -42,8 +42,8 @@ export default function SettingsScreen() {
       }
     };
 
-    loadSettings();
-  }, []); // Removed user dependency since we're using global settings
+    loadSettingsData();
+  }, []);
 
   const handleHideOutOfStockToggle = () => {
     setSettings(prev => ({ ...prev, hideOutOfStock: !prev.hideOutOfStock }));
@@ -75,6 +75,11 @@ export default function SettingsScreen() {
         saveSettingsToLocal(settings);
         setSavedSettings(settings);
       }
+      
+      // Force refresh settings from Firebase to ensure sync
+      const refreshedSettings = await loadSettings(true);
+      setSettings(refreshedSettings);
+      setSavedSettings(refreshedSettings);
       
       if (result.isNew) {
         setSyncStatus('created');

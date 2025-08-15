@@ -39,6 +39,58 @@ const SafeImage = ({ src, alt, className }: { src: string; alt: string; classNam
     );
 };
 
+// Toast notification component
+const SuccessToast = ({ 
+    show, 
+    onClose, 
+    orderId 
+}: { 
+    show: boolean; 
+    onClose: () => void; 
+    orderId: string; 
+}) => {
+    useEffect(() => {
+        if (show) {
+            const timer = setTimeout(() => {
+                onClose();
+            }, 3000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [show, onClose]);
+
+    if (!show) return null;
+
+    return (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300">
+            <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px]">
+                {/* Success Icon */}
+                <div className="flex-shrink-0">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                
+                {/* Message */}
+                <div className="flex-1">
+                    <div className="font-semibold">Order Placed Successfully!</div>
+                    <div className="text-sm opacity-90">Order ID: {orderId}</div>
+                </div>
+                
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="flex-shrink-0 text-white hover:text-gray-200 transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+};
+
 export default function StoreScreen() {
     const { user } = useAuth(); // Get current authenticated user
     const [selectedCategory, setSelectedCategory] = useState("All");
@@ -52,6 +104,8 @@ export default function StoreScreen() {
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [successOrderId, setSuccessOrderId] = useState<string>('');
     const [cart, setCart] = useState<Array<{
         id: string;
         name: string;
@@ -236,6 +290,12 @@ export default function StoreScreen() {
         setCart([]);
     };
 
+    // Function to handle closing the success toast
+    const handleCloseToast = () => {
+        setShowSuccessToast(false);
+        setSuccessOrderId('');
+    };
+
     // Function to handle placing order
     const handlePlaceOrder = () => {
         if (cart.length === 0 || !user) return;
@@ -270,6 +330,10 @@ export default function StoreScreen() {
             );
             
             console.log('Order created successfully:', orderId);
+            
+            // Show success toast
+            setSuccessOrderId(orderId);
+            setShowSuccessToast(true);
             
             // Clear the cart after successful order
             clearCart();
@@ -870,6 +934,13 @@ export default function StoreScreen() {
                     </div>
                 </div>
             )}
+
+            {/* Success Toast Notification */}
+            <SuccessToast 
+                show={showSuccessToast}
+                onClose={handleCloseToast}
+                orderId={successOrderId}
+            />
         </div>
     );
 }
