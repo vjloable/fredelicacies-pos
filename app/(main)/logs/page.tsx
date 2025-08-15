@@ -9,7 +9,7 @@ export default function LogsScreen() {
       <div className="flex flex-col flex-1 h-full overflow-hidden">
         
         {/* Header Section - Fixed */}
-        <TopBar title="System Logs" />
+        <TopBar title="Logs" />
         
         {/* Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">

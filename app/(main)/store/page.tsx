@@ -11,6 +11,9 @@ import { subscribeToInventoryItems } from "@/stores/dataStore";
 import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
+import { useAuth } from "@/contexts/AuthContext";
+import EmptyOrderIllustration from "./illustrations/EmptyOrder";
+import EmptyStoreIllustration from "./illustrations/EmptyStore";
 
 // Image component with proper error handling
 const SafeImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
@@ -37,6 +40,7 @@ const SafeImage = ({ src, alt, className }: { src: string; alt: string; classNam
 };
 
 export default function StoreScreen() {
+    const { user } = useAuth(); // Get current authenticated user
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -47,6 +51,7 @@ export default function StoreScreen() {
     const [discountAmount, setDiscountAmount] = useState(0);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [isClient, setIsClient] = useState(false);
+    const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
     const [cart, setCart] = useState<Array<{
         id: string;
         name: string;
@@ -144,7 +149,7 @@ export default function StoreScreen() {
         
         return parts.map((part, index) => 
             regex.test(part) ? (
-                <span key={index} className="bg-yellow-200 font-semibold">
+                <span key={index} className="bg-[var(--light-accent)] font-semibold">
                     {part}
                 </span>
             ) : part
@@ -172,6 +177,8 @@ export default function StoreScreen() {
         
         const itemId = item.id || '0';
         const existingItem = cart.find(cartItem => cartItem.id === itemId);
+
+        console.log(`Adding item ${item} to cart`);
         
         if (existingItem) {
             // Update quantity if item already in cart and stock allows
@@ -182,6 +189,7 @@ export default function StoreScreen() {
             ));
         } else {
             // Add new item to cart
+            console.log(`Adding item ${item} to cart`);
             setCart([...cart, {
                 id: itemId,
                 name: item.name,
@@ -202,6 +210,7 @@ export default function StoreScreen() {
     const total = subtotal - discountAmount;
 
     const updateQuantity = (id: string, delta: number) => {
+        console.log(`Updating quantity for item ${id} by ${delta}`);
         setCart(
             cart
                 .map((item) => {
@@ -228,39 +237,45 @@ export default function StoreScreen() {
     };
 
     // Function to handle placing order
-    const handlePlaceOrder = async () => {
-        if (cart.length === 0 || isPlacingOrder) return;
+    const handlePlaceOrder = () => {
+        if (cart.length === 0 || !user) return;
+        setShowOrderConfirmation(true);
+    };
+
+    // Function to confirm and actually place the order
+    const confirmPlaceOrder = async () => {
+        if (cart.length === 0 || isPlacingOrder || !user) return;
         
         setIsPlacingOrder(true);
         try {
-            // Create order data
-            const orderData = {
-                items: cart.map(item => ({
+            // Create order using the new service signature
+            const orderId = await createOrder(
+                cart.map(item => ({
                     id: item.id,
                     name: item.name,
                     price: item.price,
-                    cost: item.cost,
+                    cost: item.cost || 0,
                     quantity: item.quantity,
-                    imgUrl: item.imgUrl,
-                    categoryId: item.categoryId,
+                    imgUrl: item.imgUrl || '',
+                    categoryId: item.categoryId || '',
                     originalStock: item.originalStock
                 })),
-                subtotal,
-                discountAmount,
-                discountCode: discountCode.trim() || undefined,
                 total,
-                orderType
-            };
+                subtotal,
+                user.displayName || user.email || 'Unknown Worker',
+                user.uid,
+                orderType,
+                discountAmount,
+                discountCode
+            );
             
-            const orderId = await createOrder(orderData);
+            console.log('Order created successfully:', orderId);
             
             // Clear the cart after successful order
             clearCart();
             setDiscountCode('');
             setDiscountAmount(0);
-            
-            // Show success message
-            alert(`Order #${orderId} placed successfully!`);
+            setShowOrderConfirmation(false);
             
         } catch (error) {
             console.error('Error placing order:', error);
@@ -353,16 +368,14 @@ export default function StoreScreen() {
                     ) : inventoryItems.length === 0 ? (
                         // Empty Inventory Collection State
                         <div className="flex flex-col items-center justify-center py-12">
-                            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-6">
-                                <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
-                                </svg>
+                            <div className="w-[360px] mb-4 pr-10 mx-auto opacity-50 flex items-center justify-center">
+                                <EmptyStoreIllustration />
                             </div>
                             <h3 className="text-xl font-semibold text-[var(--secondary)] mb-3">
-                                No Inventory Found
+                                The Store Front is Empty
                             </h3>
                             <p className="text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed">
-                                The inventory collection is empty or doesn't exist yet. You need to add items to your inventory before they can appear in the store.
+                                The inventory is empty. You need to add items to your inventory before they can appear in the store.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <button
@@ -370,12 +383,6 @@ export default function StoreScreen() {
                                     className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium"
                                 >
                                     Go to Inventory
-                                </button>
-                                <button
-                                    onClick={() => window.location.reload()}
-                                    className="px-6 py-3 bg-gray-100 text-[var(--secondary)] rounded-lg hover:bg-gray-200 transition-all font-medium"
-                                >
-                                    Refresh Page
                                 </button>
                             </div>
                         </div>
@@ -421,12 +428,13 @@ export default function StoreScreen() {
                                 const cartItem = cart.find(cartItem => cartItem.id === item.id);
                                 const inCartQuantity = cartItem ? cartItem.quantity : 0;
                                 
+                                console.log(item.id, 'Available stock:', availableStock, 'In cart:', inCartQuantity, '1');
                                 return (
                                     <div
                                         key={item.id || index}
                                         onClick={() => !isOutOfStock && addToCart(item)}
                                         className={`
-                                            bg-[var(--primary)] rounded-lg p-4 h-65 lg:h-60 xl:h-75 cursor-pointer shadow-md
+                                            max-w-[515px] bg-[var(--primary)] rounded-lg p-4 h-65 lg:h-60 xl:h-75 cursor-pointer shadow-md
                                             hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
                                             ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'border-gray-200 hover:border-[var(--accent)]'}
                                         `}
@@ -532,7 +540,7 @@ export default function StoreScreen() {
                                     {cart.length === 0 ? 'New Order' : 'Current Order'}
                                 </span>
                                 <span className="text-[var(--secondary)] font-light text-[12px] self-start">
-                                    {cart.length === 0 ? 'No items added' : `${cart.length} item${cart.length !== 1 ? 's' : ''} • Order #001`}
+                                    {cart.length === 0 ? 'No items added' : `${cart.length} item${cart.length !== 1 ? 's' : ''}`}
                                 </span>
                             </div>
                             {cart.length > 0 && (
@@ -564,15 +572,14 @@ export default function StoreScreen() {
                 {/* Cart Items - Scrollable middle section */}
                 <div className="flex-1 overflow-y-auto px-3 pb-6">
                     {cart.length === 0 ? (
-                        /* Empty Cart State */
                         <div className="flex flex-col items-center justify-center h-full py-12">
-                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                <OrderCartIcon/>
+                            <div className="w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-50">
+                                <EmptyOrderIllustration />
                             </div>
                             <h3 className="text-lg font-medium text-[var(--secondary)] mb-2 select-none">
-                                Order tab is empty
+                                Order List is Empty
                             </h3>
-                            <p className="text-[var(--secondary)] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none">
+                            <p className="text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none">
                                 Add items from the menu to start building your order. Click on any menu item to add it to your cart.
                             </p>
                         </div>
@@ -729,18 +736,140 @@ export default function StoreScreen() {
                         {/* Place Order Button */}
                         <button 
                             onClick={handlePlaceOrder}
-                            disabled={cart.length === 0 || isPlacingOrder}
+                            disabled={cart.length === 0 || isPlacingOrder || !user}
                             className={`w-full py-4 font-semibold text-lg transition-all h-16 ${
-                                cart.length === 0 || isPlacingOrder
+                                cart.length === 0 || isPlacingOrder || !user
                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                                     : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02]'
                             }`}
                         >
-                            {isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
+                            {!user ? 'PLEASE LOGIN TO ORDER' : isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Order Confirmation Modal */}
+            {showOrderConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-semibold text-gray-900">
+                                    Confirm Order
+                                </h2>
+                                <button
+                                    onClick={() => setShowOrderConfirmation(false)}
+                                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Please review your order before confirming
+                            </p>
+                        </div>
+
+                        {/* Order Details */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {/* Order Type */}
+                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium text-gray-700">Order Type:</span>
+                                    <span className="text-sm font-semibold text-[var(--accent)]">{orderType}</span>
+                                </div>
+                            </div>
+
+                            {/* Items List */}
+                            <div className="mb-4">
+                                <h3 className="text-lg font-medium text-gray-900 mb-3">Items ({cart.length})</h3>
+                                <div className="space-y-3">
+                                    {cart.map((item) => (
+                                        <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                            {/* Item Image */}
+                                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative">
+                                                {item.imgUrl ? (
+                                                    <SafeImage
+                                                        src={item.imgUrl}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Item Details */}
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-medium text-gray-900 truncate">{item.name}</h4>
+                                                <p className="text-sm text-gray-600">₱{item.price.toFixed(2)} each</p>
+                                            </div>
+
+                                            {/* Quantity and Total */}
+                                            <div className="text-right">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    Qty: {item.quantity}
+                                                </div>
+                                                <div className="text-sm font-semibold text-[var(--accent)]">
+                                                    ₱{(item.price * item.quantity).toFixed(2)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Order Summary */}
+                            <div className="border-t border-gray-200 pt-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Subtotal:</span>
+                                        <span className="font-medium">₱{subtotal.toFixed(2)}</span>
+                                    </div>
+                                    {discountAmount > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Discount {discountCode && `(${discountCode})`}:</span>
+                                            <span className="font-medium text-green-600">-₱{discountAmount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
+                                        <span>Total:</span>
+                                        <span className="text-[var(--accent)]">₱{total.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-6 border-t border-gray-200 bg-gray-50">
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowOrderConfirmation(false)}
+                                    className="flex-1 px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmPlaceOrder}
+                                    disabled={isPlacingOrder}
+                                    className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                                        isPlacingOrder
+                                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                            : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg'
+                                    }`}
+                                >
+                                    {isPlacingOrder ? 'Processing...' : 'Confirm Order'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

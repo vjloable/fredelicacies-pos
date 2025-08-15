@@ -62,7 +62,7 @@ export const generateHourlyData = (orders: Order[]): HourlyOrderData[] => {
   
   // Process orders
   orders.forEach(order => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.createdAt.toDate());
     const hourKey = orderDate.getHours().toString().padStart(2, '0') + ':00';
     const hourData = hourlyMap.get(hourKey)!;
     
@@ -174,7 +174,7 @@ export const generateWeeklyStats = (orders: Order[], weekStart: Date): WeeklySal
     
     // Filter orders for this day
     const dayOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
+      const orderDate = new Date(order.createdAt.toDate());
       return orderDate.toISOString().split('T')[0] === dateString;
     });
     

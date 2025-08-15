@@ -9,6 +9,7 @@ import {
 import { db } from '../firebase-config';
 import { InventoryItem } from '../services/inventoryService';
 import { Category } from '../services/categoryService';
+import { Order } from '../services/orderService';
 
 // Event emitter for state changes
 class EventEmitter {
@@ -40,12 +41,15 @@ class DataStore {
   // Data state
   private inventoryItems: InventoryItem[] = [];
   private categories: Category[] = [];
+  private orders: Order[] = [];
   
   // Listener states
   private inventoryUnsubscribe: Unsubscribe | null = null;
   private categoriesUnsubscribe: Unsubscribe | null = null;
+  private ordersUnsubscribe: Unsubscribe | null = null;
   private isInventoryListenerActive = false;
   private isCategoriesListenerActive = false;
+  private isOrdersListenerActive = false;
 
   private constructor() {
     // Only initialize listeners on client side
@@ -58,7 +62,6 @@ class DataStore {
       document.addEventListener('visibilitychange', () => {
         // Don't stop listeners when page becomes hidden
         // This keeps them alive for cost efficiency
-        console.log('Page visibility changed, keeping listeners alive');
       });
     }
   }
@@ -73,26 +76,23 @@ class DataStore {
   private initializeListeners() {
     // Only initialize if we're on the client side and have a valid db connection
     if (typeof window === 'undefined' || !db) {
-      console.warn('⚠️ Skipping listener initialization: not on client or no db connection');
       return;
     }
     
     this.startInventoryListener();
     this.startCategoriesListener();
+    this.startOrdersListener();
   }
 
   // Inventory Management
   private startInventoryListener() {
     if (this.isInventoryListenerActive) return;
-
-    console.log('🔥 Starting inventory listener (singleton)');
     
     try {
       const q = query(collection(db, 'inventory'), orderBy('createdAt', 'desc'));
       
       this.inventoryUnsubscribe = onSnapshot(q, 
         (querySnapshot) => {
-          console.log('📦 Inventory snapshot received, empty:', querySnapshot.empty, 'size:', querySnapshot.size);
           
           const items: InventoryItem[] = [];
           
@@ -117,7 +117,7 @@ class DataStore {
                   items.push(item);
                 }
               } catch (docError) {
-                console.error('❌ Error processing document:', doc.id, docError);
+                console.error(doc.id, docError);
               }
             });
           }
@@ -125,10 +125,8 @@ class DataStore {
           this.inventoryItems = items;
           this.eventEmitter.emit('inventoryChanged', items);
           
-          console.log(`📦 Inventory updated: ${items.length} items`);
         },
         (error) => {
-          console.error('❌ Inventory listener error:', error);
           // Still emit an empty array so UI can stop loading
           this.inventoryItems = [];
           this.eventEmitter.emit('inventoryChanged', []);
@@ -138,7 +136,6 @@ class DataStore {
       
       this.isInventoryListenerActive = true;
     } catch (error) {
-      console.error('❌ Error setting up inventory listener:', error);
       this.inventoryItems = [];
       this.eventEmitter.emit('inventoryChanged', []);
     }
@@ -146,8 +143,6 @@ class DataStore {
 
   private startCategoriesListener() {
     if (this.isCategoriesListenerActive) return;
-
-    console.log('🔥 Starting categories listener (singleton)');
     
     try {
       const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
@@ -163,29 +158,22 @@ class DataStore {
               try {
                 const data = doc.data();
                 if (data) {
-                  // Create a proper copy to avoid read-only issues
                   const category: Category = {
                     id: doc.id,
                     name: data.name || '',
                     color: data.color || '#000000',
-                    createdAt: data.createdAt || Timestamp.now(),
-                    updatedAt: data.updatedAt || Timestamp.now()
+                    createdAt: data.createdAt || Timestamp.now()
                   };
                   categories.push(category);
                 }
               } catch (docError) {
-                console.error('❌ Error processing category document:', doc.id, docError);
               }
             });
           }
-          
           this.categories = categories;
           this.eventEmitter.emit('categoriesChanged', categories);
-          
-          console.log(`🏷️ Categories updated: ${categories.length} categories`);
         },
         (error) => {
-          console.error('❌ Categories listener error:', error);
           this.categories = [];
           this.eventEmitter.emit('categoriesChanged', []);
           this.eventEmitter.emit('categoriesError', error);
@@ -194,15 +182,73 @@ class DataStore {
       
       this.isCategoriesListenerActive = true;
     } catch (error) {
-      console.error('❌ Error setting up categories listener:', error);
       this.categories = [];
       this.eventEmitter.emit('categoriesChanged', []);
     }
   }
 
+  private startOrdersListener() {
+    if (this.isOrdersListenerActive) return;
+
+    try {
+      const q = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
+      
+      this.ordersUnsubscribe = onSnapshot(q,
+        (querySnapshot) => {
+          
+          const orders: Order[] = [];
+          
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              try {
+                const data = doc.data();
+                if (data) {
+                  // Create a proper copy to avoid read-only issues
+                  const order: Order = {
+                    id: doc.id,
+                    items: data.items || [],
+                    subtotal: data.subtotal || 0,
+                    discountAmount: data.discountAmount || 0,
+                    discountCode: data.discountCode || '',
+                    total: data.total || 0,
+                    totalProfit: data.totalProfit || 0,
+                    orderType: data.orderType || 'DINE-IN',
+                    timestamp: data.timestamp || Timestamp.now(),
+                    createdAt: data.createdAt || Timestamp.now(),
+                    itemCount: data.itemCount || 0,
+                    uniqueItemCount: data.uniqueItemCount || 0,
+                    workerName: data.workerName || '',
+                    workerUid: data.workerUid || ''
+                  };
+                  orders.push(order);
+                }
+              } catch (docError) {
+                console.error(doc.id, docError);
+              }
+            });
+          }
+          
+          this.orders = orders;
+          this.eventEmitter.emit('ordersChanged', orders);
+          
+          console.log(`📄 Orders updated: ${orders.length} orders`);
+        },
+        (error) => {
+          this.orders = [];
+          this.eventEmitter.emit('ordersChanged', []);
+          this.eventEmitter.emit('ordersError', error);
+        }
+      );
+      
+      this.isOrdersListenerActive = true;
+    } catch (error) {
+      this.orders = [];
+      this.eventEmitter.emit('ordersChanged', []);
+    }
+  }
+
   // Public methods to subscribe to data changes
   public subscribeToInventory(callback: (items: InventoryItem[]) => void): () => void {
-    console.log('🔗 New inventory subscription created');
     
     // Ensure listeners are started (client-side only)
     if (typeof window !== 'undefined' && !this.isInventoryListenerActive) {
@@ -241,6 +287,25 @@ class DataStore {
     };
   }
 
+  public subscribeToOrders(callback: (orders: Order[]) => void): () => void {
+    
+    // Ensure listeners are started (client-side only)
+    if (typeof window !== 'undefined' && !this.isOrdersListenerActive) {
+      this.initializeListeners();
+    }
+    
+    // Always call with current data (even if empty array)
+    callback(this.orders);
+    
+    // Subscribe to future changes
+    this.eventEmitter.on('ordersChanged', callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.eventEmitter.off('ordersChanged', callback);
+    };
+  }
+
   public subscribeToInventoryErrors(callback: (error: any) => void): () => void {
     this.eventEmitter.on('inventoryError', callback);
     return () => {
@@ -255,6 +320,13 @@ class DataStore {
     };
   }
 
+  public subscribeToOrdersErrors(callback: (error: any) => void): () => void {
+    this.eventEmitter.on('ordersError', callback);
+    return () => {
+      this.eventEmitter.off('ordersError', callback);
+    };
+  }
+
   // Get current data synchronously
   public getInventoryItems(): InventoryItem[] {
     return [...this.inventoryItems];
@@ -264,9 +336,12 @@ class DataStore {
     return [...this.categories];
   }
 
+  public getOrders(): Order[] {
+    return [...this.orders];
+  }
+
   // Cleanup method (optional - usually not needed due to singleton nature)
   public cleanup() {
-    console.log('🧹 Cleaning up DataStore listeners');
     
     if (this.inventoryUnsubscribe) {
       this.inventoryUnsubscribe();
@@ -279,11 +354,16 @@ class DataStore {
       this.categoriesUnsubscribe = null;
       this.isCategoriesListenerActive = false;
     }
+
+    if (this.ordersUnsubscribe) {
+      this.ordersUnsubscribe();
+      this.ordersUnsubscribe = null;
+      this.isOrdersListenerActive = false;
+    }
   }
 
   // Method to restart listeners if needed
   public restartListeners() {
-    console.log('🔄 Restarting DataStore listeners');
     this.cleanup();
     this.initializeListeners();
   }
@@ -293,8 +373,10 @@ class DataStore {
     return {
       inventory: this.isInventoryListenerActive,
       categories: this.isCategoriesListenerActive,
+      orders: this.isOrdersListenerActive,
       inventoryItemsCount: this.inventoryItems.length,
-      categoriesCount: this.categories.length
+      categoriesCount: this.categories.length,
+      ordersCount: this.orders.length
     };
   }
 }
@@ -311,12 +393,20 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
   return dataStore.subscribeToCategories(callback);
 };
 
+export const subscribeToOrders = (callback: (orders: Order[]) => void) => {
+  return dataStore.subscribeToOrders(callback);
+};
+
 export const getInventoryItems = () => {
   return dataStore.getInventoryItems();
 };
 
 export const getCategories = () => {
   return dataStore.getCategories();
+};
+
+export const getOrders = () => {
+  return dataStore.getOrders();
 };
 
 // Export for debugging

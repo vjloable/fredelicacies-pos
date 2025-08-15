@@ -2,8 +2,7 @@ import {
   collection, 
   addDoc, 
   getDocs, 
-  doc, 
-  updateDoc, 
+  doc,
   deleteDoc, 
   query, 
   orderBy,
@@ -13,11 +12,10 @@ import {
 import { db } from '../firebase-config';
 
 export interface Category {
-  id?: string;
+  id: string;
   name: string;
   color: string;
   createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 const COLLECTION_NAME = 'categories';
@@ -28,7 +26,6 @@ export const createCategory = async (categoryData: Omit<Category, 'id' | 'create
     const docData = {
       ...categoryData,
       createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
     };
     
     const docRef = await addDoc(collection(db, COLLECTION_NAME), docData);
@@ -76,22 +73,6 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
   }
 };
 
-// Update a category
-export const updateCategory = async (id: string, updates: Partial<Category>): Promise<void> => {
-  try {
-    const categoryRef = doc(db, COLLECTION_NAME, id);
-    const updateData = {
-      ...updates,
-      updatedAt: Timestamp.now()
-    };
-    
-    await updateDoc(categoryRef, updateData);
-  } catch (error) {
-    console.error('Error updating category:', error);
-    throw error;
-  }
-};
-
 // Delete a category
 export const deleteCategory = async (id: string): Promise<void> => {
   try {
@@ -104,18 +85,18 @@ export const deleteCategory = async (id: string): Promise<void> => {
 };
 
 // Helper function to get category by ID
-export const getCategoryById = (categories: Category[], categoryId: string): Category | undefined => {
-  return categories.find(cat => cat.id === categoryId);
+export const getCategoryById = (categories: Category[], categoryId: string): Category => {
+  return categories.find(cat => cat.id === categoryId) || { id: categoryId, name: "Unknown", color: "#000000" };
 };
 
 // Helper function to get category name by ID
 export const getCategoryName = (categories: Category[], categoryId: string): string => {
   const category = getCategoryById(categories, categoryId);
-  return category?.name || "Unknown";
+  return category?.name;
 };
 
 // Helper function to get category color by ID
 export const getCategoryColor = (categories: Category[], categoryId: string): string => {
   const category = getCategoryById(categories, categoryId);
-  return category?.color || "#6B7280";
+  return category?.color;
 };

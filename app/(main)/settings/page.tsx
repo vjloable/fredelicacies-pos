@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import TopBar from "@/components/TopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { 
@@ -13,7 +12,6 @@ import {
 } from '@/services/settingsService';
 
 export default function SettingsScreen() {
-  const { user } = useAuth();
   const [settings, setSettings] = useState<AppSettings>({ hideOutOfStock: false });
   const [savedSettings, setSavedSettings] = useState<AppSettings>({ hideOutOfStock: false });
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +33,7 @@ export default function SettingsScreen() {
         console.log('✅ Global settings loaded successfully');
       } catch (error) {
         // Fallback to localStorage
+        console.log('Error loading settings from Firebase:', error);
         const localSettings = loadSettingsFromLocal();
         setSettings(localSettings);
         setSavedSettings(localSettings);
@@ -92,6 +91,7 @@ export default function SettingsScreen() {
       }, 3000);
       
     } catch (error) {
+      console.log('Error syncing settings:', error);
       setSyncStatus('error');
       setSyncMessage('Failed to sync settings to cloud. Please try again.');
       

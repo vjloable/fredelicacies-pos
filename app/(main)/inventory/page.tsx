@@ -15,9 +15,11 @@ import {
 	subscribeToCategories,
 	getCategoryName,
 	getCategoryColor,
+	deleteCategory,
 } from "@/services/categoryService";
 import EditIcon from "../store/icons/EditIcon";
 import PlusIcon from "../store/icons/PlusIcon";
+import DeleteIcon from "../store/icons/DeleteIcon";
 
 interface Item extends InventoryItem {
 	id: string; // Make id required for local state
@@ -33,6 +35,8 @@ export default function InventoryScreen() {
 	const [showCategoryForm, setShowCategoryForm] = useState(false);
 	const [showItemForm, setShowItemForm] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 	const [editingItem, setEditingItem] = useState<Item | null>(null);
 	const [newItem, setNewItem] = useState({
 		name: "",
@@ -117,6 +121,36 @@ export default function InventoryScreen() {
 
 	const handleError = (errorMessage: string) => {
 		setError(errorMessage);
+	};
+
+	const handleDeleteCategory = (category: Category) => {
+		// Check if category has items
+		const categoryItems = items.filter(item => item.categoryId === category.id);
+		if (categoryItems.length > 0) {
+			setError(`Cannot delete category "${category.name}" because it has ${categoryItems.length} item(s). Please move or delete all items in this category first.`);
+			return;
+		}
+		
+		setCategoryToDelete(category);
+		setShowDeleteConfirm(true);
+	};
+
+	const confirmDeleteCategory = async () => {
+		if (!categoryToDelete?.id) return;
+		
+		try {
+			await deleteCategory(categoryToDelete.id);
+			setShowDeleteConfirm(false);
+			setCategoryToDelete(null);
+		} catch (error) {
+			console.error('Error deleting category:', error);
+			setError('Failed to delete category. Please try again.');
+		}
+	};
+
+	const cancelDeleteCategory = () => {
+		setShowDeleteConfirm(false);
+		setCategoryToDelete(null);
 	};
 
 	return (
@@ -204,7 +238,7 @@ export default function InventoryScreen() {
 								{categories.map((category) => (
 									<div
 										key={category.id}
-										className="inline-flex items-center gap-2 bg-[var(--primary)] px-3 py-2 rounded-lg border border-gray-200"
+										className="inline-flex items-center gap-2 bg-[var(--primary)] px-3 py-2 rounded-lg border border-gray-200 group hover:border-gray-300 transition-colors"
 									>
 										<div
 											className="w-3 h-3 rounded-full"
@@ -224,6 +258,13 @@ export default function InventoryScreen() {
 												).length
 											}
 										</span>
+										<button
+											onClick={() => handleDeleteCategory(category)}
+											className="ml-1 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+											title="Delete category"
+										>
+											<DeleteIcon className="w-3 h-3" />
+										</button>
 									</div>
 								))}
 							</div>
@@ -255,27 +296,48 @@ export default function InventoryScreen() {
 								{items.length === 0 ? (
 									/* Empty State */
 									<div className="text-center py-16 px-4">
-										<div className="w-24 h-24 bg-gray-100 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-											<svg
-												className="w-12 h-12 text-gray-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={1.5}
-													d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5.6L12 4l3 1.6M19 8.8L16 7.2M5 8.8L8 7.2"
-												/>
+										<div className="w-[360px] mb-4 mx-auto opacity-50 flex items-center justify-center">
+											<svg viewBox="0 0 225 121" fill="none">
+												<path d="M112.335 53.7994V56.0173L160.095 28.4429L156.254 28.4429L112.335 53.7994Z" fill="#DDDDDD"/>
+												<path d="M112.335 0.868469L64.5746 28.4429L68.4161 28.4429L112.335 3.08633V0.868469Z" fill="#DDDDDD"/>
+												<path d="M160.095 28.4429L112.335 0.868469V3.08633L156.254 28.4429L160.095 28.4429Z" fill="#DDDDDD"/>
+												<path d="M84.0902 64.3629L84.3069 64.2892L88.2603 62.0067L88.238 61.9681L84.3069 64.2378L84.0902 64.3629Z" fill="#CF6625"/>
+												<path fillRule="evenodd" clipRule="evenodd" d="M64.5746 81.5686V69.5129V28.4429L84.0902 39.7102V64.3629L84.3069 64.2892L88.2603 62.0067L92.3858 69.1524L92.6025 69.0787V44.6248L112.335 56.0173V109.143L64.5746 81.5686Z" fill="#C3C3C3"/>
+												<path d="M68.4161 28.4429L64.5746 28.4429L84.0902 39.7102V39.6134L86.5994 38.941L68.4161 28.4429Z" fill="#DDDDDD"/>
+												<path d="M92.6025 44.6248L112.335 56.0173V53.7994L101.894 47.7716L95.2263 43.9218L93.9144 44.2733L92.6025 44.6248Z" fill="#DDDDDD"/>
+												<path d="M95.2263 43.9218V43.6418L92.3858 44.4029L92.6025 44.6248L93.9144 44.2733L95.2263 43.9218Z" fill="#DB9D77"/>
+												<path d="M92.3858 44.4029L84.0902 39.6134V39.7102V64.3629L84.3069 64.2378L88.238 61.9681L88.2603 62.0067L92.3858 69.1524V44.4029Z" fill="#DA834D"/>
+												<path d="M84.0902 39.6134L92.3858 44.4029L95.2263 43.6418L86.9307 38.8523L86.5994 38.941L84.0902 39.6134Z" fill="#DE905F"/>
+												<path fillRule="evenodd" clipRule="evenodd" d="M92.6025 44.6248V69.0787L92.3858 69.1524V44.4029L92.6025 44.6248Z" fill="#D6783E"/>
+												<path fillRule="evenodd" clipRule="evenodd" d="M112.335 41.7437L115.857 39.7102L156.254 28.4429L112.335 3.08633V41.7437Z" fill="url(#paint0_linear_2233_2)"/>
+												<path d="M112.335 53.7994L156.254 28.4429L115.857 39.7102L112.335 41.7437V53.7994Z" fill="url(#paint1_linear_2233_2)"/>
+												<path fillRule="evenodd" clipRule="evenodd" d="M86.5994 38.941L68.4161 28.4429L112.335 3.08633V41.7437L101.894 47.7716L95.2263 43.9218V43.6418L86.9307 38.8523L86.5994 38.941Z" fill="url(#paint2_linear_2233_2)"/>
+												<path d="M101.894 47.7716L112.335 53.7994V41.7437L101.894 47.7716Z" fill="#737373"/>
+												<path fillRule="evenodd" clipRule="evenodd" d="M112.335 56.0173L160.095 28.4429V44.6018V81.5686L112.335 109.143V56.0173Z" fill="#EFEBEB"/>
+												<path d="M112.335 109.143L64.5746 81.5686L24.1778 92.8359L71.9381 120.41L112.335 109.143Z" fill="#434343" fillOpacity="0.05"/>
+												<path d="M24.1778 92.8359L64.5746 81.5686V69.5129L43.6934 81.5686L24.1778 92.8359Z" fill="#434343" fillOpacity="0.05"/>
+												<defs>
+												<linearGradient id="paint0_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
+												<stop stopColor="#B8B8B8"/>
+												<stop offset="1" stopColor="#292929"/>
+												</linearGradient>
+												<linearGradient id="paint1_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
+												<stop offset="0.221154" stopColor="#818181"/>
+												<stop offset="1" stopColor="#1B1B1B"/>
+												</linearGradient>
+												<linearGradient id="paint2_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
+												<stop stopColor="#E2E2E2"/>
+												<stop offset="0.451923" stopColor="#868686"/>
+												<stop offset="0.625" stopColor="#292929"/>
+												</linearGradient>
+												</defs>
 											</svg>
 										</div>
-										<h3 className="text-xl font-semibold text-[var(--secondary)] mb-3">
+										<h3 className="text-[18px] font-semibold text-[var(--secondary)] mb-3">
 											No Items in Inventory
 										</h3>
-										<p className="text-[var(--secondary)] opacity-70 mb-6 max-w-md mx-auto">
-											Your inventory is empty. Start by
-											adding your first item to begin
+										<p className="w-[300px] text-[12px] text-[var(--secondary)] opacity-70 mb-6 max-w-md mx-auto">
+											Start by adding your first item to begin
 											managing your products and stock
 											levels.
 										</p>
@@ -283,7 +345,7 @@ export default function InventoryScreen() {
 											onClick={() =>
 												setShowItemForm(true)
 											}
-											className="inline-flex items-center gap-2 bg-[var(--accent)] text-white px-6 py-3 rounded-xl hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
+											className="text-[14px] inline-flex items-center gap-2 bg-[var(--accent)] text-white px-6 py-3 rounded-[8px] hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
 										>
 											<svg
 												className="w-5 h-5"
@@ -302,11 +364,11 @@ export default function InventoryScreen() {
 										</button>
 
 										{/* Quick Setup Guide */}
-										<div className="mt-12 max-w-2xl mx-auto">
-											<div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-												<h4 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+										<div className="mt-[80px] max-w-2xl mx-auto">
+											<div className="bg-[var(--light-accent)]/20 border border-[var(--light-accent)] rounded-xl p-6">
+												<h4 className="text-lg font-semibold text-[var(--accent)] mb-4 flex items-center gap-2">
 													<svg
-														className="w-5 h-5 text-blue-600"
+														className="w-5 h-5 text-[var(--accent)]"
 														fill="none"
 														stroke="currentColor"
 														viewBox="0 0 24 24"
@@ -322,43 +384,43 @@ export default function InventoryScreen() {
 												</h4>
 												<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 													<div className="text-center">
-														<div className="w-10 h-10 bg-blue-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-blue-600 font-bold">
+														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--accent)] font-bold">
 																1
 															</span>
 														</div>
-														<h5 className="font-medium text-blue-900 mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
 															Create Categories
 														</h5>
-														<p className="text-sm text-blue-700 opacity-80">
+														<p className="text-[12px] text-[var(--accent)] opacity-80">
 															Organize your
 															products by type
 														</p>
 													</div>
 													<div className="text-center">
-														<div className="w-10 h-10 bg-blue-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-blue-600 font-bold">
+														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--accent)] font-bold">
 																2
 															</span>
 														</div>
-														<h5 className="font-medium text-blue-900 mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
 															Add Items
 														</h5>
-														<p className="text-sm text-blue-700 opacity-80">
+														<p className="text-[12px] text-[var(--accent)] opacity-80">
 															Set prices and stock
 															levels
 														</p>
 													</div>
 													<div className="text-center">
-														<div className="w-10 h-10 bg-blue-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-blue-600 font-bold">
+														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--accent)] font-bold">
 																3
 															</span>
 														</div>
-														<h5 className="font-medium text-blue-900 mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
 															Manage Stock
 														</h5>
-														<p className="text-sm text-blue-700 opacity-80">
+														<p className="text-[12px] text-[var(--accent)] opacity-80">
 															Track and update
 															inventory
 														</p>
@@ -537,6 +599,50 @@ export default function InventoryScreen() {
 					onClose={() => setShowCategoryForm(false)}
 					onError={handleError}
 				/>
+
+				{/* Delete Confirmation Modal */}
+				{showDeleteConfirm && categoryToDelete && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+						<div className="bg-white rounded-lg max-w-md w-full p-6">
+							<div className="flex items-center gap-3 mb-4">
+								<div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+									<DeleteIcon className="w-5 h-5" />
+								</div>
+								<div>
+									<h3 className="text-lg font-semibold text-gray-900">
+										Delete Category
+									</h3>
+									<p className="text-sm text-gray-500">
+										This action cannot be undone
+									</p>
+								</div>
+							</div>
+							
+							<p className="text-gray-700 mb-6">
+								Are you sure you want to delete the category{" "}
+								<span className="font-semibold text-gray-900">
+									categoryToDelete.name
+								</span>
+								? This action cannot be undone.
+							</p>
+							
+							<div className="flex gap-3 justify-end">
+								<button
+									onClick={cancelDeleteCategory}
+									className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={confirmDeleteCategory}
+									className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+								>
+									Delete Category
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 					</>
 				)}
 			</div>

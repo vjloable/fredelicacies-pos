@@ -143,9 +143,23 @@ export const isInventoryEmpty = async (): Promise<boolean> => {
 // Bulk operations
 export const bulkUpdateStock = async (updates: { id: string; stock: number }[]): Promise<void> => {
   try {
-    const updatePromises = updates.map(({ id, stock }) => 
-      updateInventoryItem(id, { stock })
-    );
+    // Get current items to calculate new stock values
+    const currentItems = await getInventoryItems();
+    const itemsMap = new Map(currentItems.map(item => [item.id, item]));
+    
+    const updatePromises = updates.map(({ id, stock }) => {
+      const currentItem = itemsMap.get(id);
+      if (!currentItem) {
+        console.warn(`Item with ID ${id} not found for stock update`);
+        return Promise.resolve();
+      }
+      
+      // Calculate new stock: current stock + stock change (stock is negative for sales)
+      const newStock = Math.max(0, currentItem.stock + stock);
+      console.log(`Updating stock for ${currentItem.name}: ${currentItem.stock} + (${stock}) = ${newStock}`);
+      
+      return updateInventoryItem(id, { stock: newStock });
+    });
     
     await Promise.all(updatePromises);
     console.log('Bulk stock update completed for', updates.length, 'items');

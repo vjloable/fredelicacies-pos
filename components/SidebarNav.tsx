@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import SettingsIcon from "./icons/SidebarNav/SettingsIcon";
+import LogoutIcon from "./icons/SidebarNav/LogoutIcon";
 
 export default function SidebarNav() {
     const { logout } = useAuth();
@@ -98,12 +99,13 @@ export default function SidebarNav() {
                 <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="h-[55px] m-2 items-center justify-center text-[14px] text-[var(--primary)] font-semibold bg-[var(--accent)] hover:bg-[var(--light-accent)]/80 rounded disabled:opacity-50 disabled:cursor-not-allowed flex gap-2 duration-500 transition-colors"
+                    className="h-[55px] m-2 items-center justify-center text-[14px] font-bold text-[var(--primary)] bg-[var(--accent)] hover:bg-[var(--light-accent)]/80 rounded disabled:opacity-50 disabled:cursor-not-allowed flex gap-2 duration-500 transition-colors"
                 >
+                    <LogoutIcon />
                     {isLoggingOut ? (
-                        'LOGGING OUT...'
+                        'Logging out...'
                     ) : (
-                        'LOGOUT'
+                        'Logout'
                     )}
                 </button>
             </div>

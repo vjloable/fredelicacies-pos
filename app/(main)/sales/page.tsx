@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -12,7 +12,8 @@ import {
 } from 'recharts';
 import TopBar from "@/components/TopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { getOrdersByDateRange, Order } from '@/services/orderService';
+import { subscribeToOrders } from '@/stores/dataStore';
+import { Order } from '@/services/orderService';
 import { formatCurrency } from '@/services/salesService';
 
 interface TimeSeriesData {
@@ -28,6 +29,7 @@ type ViewPeriod = 'day' | 'week' | 'month';
 export default function SalesScreen() {
   const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('day');
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPeriodStats, setCurrentPeriodStats] = useState({
     totalRevenue: 0,
@@ -35,6 +37,27 @@ export default function SalesScreen() {
     totalProfit: 0,
     profitMargin: 0,
   });
+
+  // Pagination state for orders table
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Subscribe to orders using singleton listener
+  useEffect(() => {
+    console.log('🔗 Setting up orders subscription for sales screen');
+    
+    const unsubscribe = subscribeToOrders((orders) => {
+      console.log('📄 Received orders update in sales screen:', orders.length);
+      setAllOrders(orders);
+      setLoading(false);
+    });
+
+    return () => {
+      console.log('🔌 Cleaning up orders subscription in sales screen');
+      unsubscribe();
+    };
+  }, []);
 
   // Get date ranges based on view period
   const getDateRange = (period: ViewPeriod) => {
@@ -67,9 +90,20 @@ export default function SalesScreen() {
     return { startDate, endDate };
   };
 
-  // Generate time series data based on period
-  const generateTimeSeriesData = (orders: Order[], period: ViewPeriod): TimeSeriesData[] => {
+  // Filter orders by date range
+  const getFilteredOrders = useCallback((period: ViewPeriod): Order[] => {
     const { startDate, endDate } = getDateRange(period);
+    
+    return allOrders.filter(order => {
+      if (!order.createdAt) return false;
+      const orderDate = order.createdAt.toDate();
+      return orderDate >= startDate && orderDate <= endDate;
+    });
+  }, [allOrders]);
+
+    // Generate time series data based on period
+  const generateTimeSeriesData = useCallback((orders: Order[], period: ViewPeriod): TimeSeriesData[] => {
+    const { startDate } = getDateRange(period);
     const data: TimeSeriesData[] = [];
 
     if (period === 'day') {
@@ -81,7 +115,8 @@ export default function SalesScreen() {
         hourEnd.setHours(hour, 59, 59, 999);
         
         const hourOrders = orders.filter(order => {
-          const orderDate = new Date(order.createdAt);
+          if (!order.createdAt) return false;
+          const orderDate = order.createdAt.toDate();
           return orderDate >= hourStart && orderDate <= hourEnd;
         });
 
@@ -109,7 +144,8 @@ export default function SalesScreen() {
         dayEnd.setHours(23, 59, 59, 999);
         
         const dayOrders = orders.filter(order => {
-          const orderDate = new Date(order.createdAt);
+          if (!order.createdAt) return false;
+          const orderDate = order.createdAt.toDate();
           return orderDate >= dayStart && orderDate <= dayEnd;
         });
 
@@ -129,42 +165,33 @@ export default function SalesScreen() {
     }
 
     return data;
-  };
+  }, []);
 
-  // Load data based on selected period
+  // Update chart data when viewPeriod or orders change
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const { startDate, endDate } = getDateRange(viewPeriod);
-        const orders = await getOrdersByDateRange(startDate, endDate);
-        
-        const seriesData = generateTimeSeriesData(orders, viewPeriod);
-        setTimeSeriesData(seriesData);
+    if (allOrders.length === 0) {
+      setTimeSeriesData([]);
+      setCurrentPeriodStats({ totalRevenue: 0, totalOrders: 0, totalProfit: 0, profitMargin: 0 });
+      return;
+    }
 
-        // Calculate current period totals
-        const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-        const totalOrders = orders.length;
-        const totalProfit = orders.reduce((sum, order) => sum + (order.totalProfit || 0), 0);
-        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const filteredOrders = getFilteredOrders(viewPeriod);
+    const seriesData = generateTimeSeriesData(filteredOrders, viewPeriod);
+    setTimeSeriesData(seriesData);
 
-        setCurrentPeriodStats({
-          totalRevenue,
-          totalOrders,
-          totalProfit,
-          profitMargin,
-        });
-      } catch (error) {
-        console.error('Error loading sales data:', error);
-        setTimeSeriesData([]);
-        setCurrentPeriodStats({ totalRevenue: 0, totalOrders: 0, totalProfit: 0, profitMargin: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Calculate current period totals
+    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = filteredOrders.length;
+    const totalProfit = filteredOrders.reduce((sum, order) => sum + (order.totalProfit || 0), 0);
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-    loadData();
-  }, [viewPeriod]);
+    setCurrentPeriodStats({
+      totalRevenue,
+      totalOrders,
+      totalProfit,
+      profitMargin,
+    });
+  }, [allOrders, viewPeriod, getFilteredOrders, generateTimeSeriesData]);
 
   // Custom tooltip formatter
   const formatTooltipValue = (value: number, name: string) => {
@@ -173,6 +200,24 @@ export default function SalesScreen() {
     }
     return [value, name === 'orders' ? 'Orders' : name];
   };
+
+  // Filter orders for table
+  const filteredOrdersForTable = allOrders.filter(order => {
+    if (!searchTerm) return true;
+    return (
+      (order.id && order.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.orderType && order.orderType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.items && order.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())))
+    );
+  });
+
+  // Calculate pagination
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrdersForTable.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(filteredOrdersForTable.length / ordersPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   if (loading) {
     return (
@@ -216,7 +261,7 @@ export default function SalesScreen() {
             
             <div className="text-right">
               <p className="text-xs text-gray-400">Live Data</p>
-              <p className="text-sm text-green-400">● Real-time</p>
+              <p className="text-sm text-green-400">● Real-time ({allOrders.length} orders)</p>
             </div>
           </div>
         </div>
@@ -390,6 +435,169 @@ export default function SalesScreen() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+
+            {/* Orders Table */}
+            <div className="bg-white rounded-xl shadow-lg">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[var(--accent)]">Recent Orders</h3>
+                    <p className="text-sm text-gray-400">All order history ({filteredOrdersForTable.length} total)</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search orders..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setCurrentPage(1); // Reset to first page when searching
+                        }}
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      />
+                      <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{order.id ? order.id.slice(-8) : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {order.createdAt ? order.createdAt.toDate().toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            (order.orderType || 'DINE-IN') === 'DINE-IN' ? 'bg-blue-100 text-blue-800' :
+                            (order.orderType || 'DINE-IN') === 'TAKE OUT' ? 'bg-green-100 text-green-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {order.orderType || 'DINE-IN'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          <div className="max-w-xs">
+                            <p className="truncate">
+                              {order.items && order.items.length > 0 ? (
+                                order.items.length > 2 
+                                  ? `${order.items.slice(0, 2).map(item => `${item.name || 'Unknown'} (${item.quantity || 0})`).join(', ')} +${order.items.length - 2} more`
+                                  : order.items.map(item => `${item.name || 'Unknown'} (${item.quantity || 0})`).join(', ')
+                              ) : 'No items'}
+                            </p>
+                            <p className="text-xs text-gray-400">{order.itemCount || 0} items total</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {formatCurrency(order.total || 0)}
+                          {order.discountAmount && order.discountAmount > 0 && (
+                            <div className="text-xs text-red-500">
+                              -{formatCurrency(order.discountAmount)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                          {formatCurrency(order.totalProfit || 0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {currentOrders.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm2 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500">
+                      {searchTerm ? 'No orders found matching your search' : 'No orders yet'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      Showing {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, filteredOrdersForTable.length)} of {filteredOrdersForTable.length} orders
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => paginate(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      
+                      {/* Page numbers */}
+                      {[...Array(totalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        const isCurrentPage = pageNumber === currentPage;
+                        const showPage = pageNumber === 1 || pageNumber === totalPages || 
+                                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
+                        
+                        if (!showPage) {
+                          if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                            return <span key={pageNumber} className="px-2 text-gray-400">...</span>;
+                          }
+                          return null;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => paginate(pageNumber)}
+                            className={`px-3 py-1 text-sm border rounded-md ${
+                              isCurrentPage
+                                ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                                : 'border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                      
+                      <button
+                        onClick={() => paginate(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
