@@ -432,7 +432,7 @@ export default function StoreScreen() {
                     ) : inventoryItems.length === 0 ? (
                         // Empty Inventory Collection State
                         <div className="flex flex-col items-center justify-center py-12">
-                            <div className="w-[360px] mb-4 pr-10 mx-auto opacity-50 flex items-center justify-center">
+                            <div className="w-[360px] mb-6 pr-[50px] mx-auto opacity-50 flex items-center justify-center">
                                 <EmptyStoreIllustration />
                             </div>
                             <h3 className="text-xl font-semibold text-[var(--secondary)] mb-3">
@@ -444,7 +444,7 @@ export default function StoreScreen() {
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={() => window.location.href = '/inventory'}
-                                    className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium"
+                                    className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium shadow-md"
                                 >
                                     Go to Inventory
                                 </button>
@@ -637,7 +637,7 @@ export default function StoreScreen() {
                 <div className="flex-1 overflow-y-auto px-3 pb-6">
                     {cart.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-12">
-                            <div className="w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-50">
+                            <div className="w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40">
                                 <EmptyOrderIllustration />
                             </div>
                             <h3 className="text-lg font-medium text-[var(--secondary)] mb-2 select-none">
@@ -688,18 +688,18 @@ export default function StoreScreen() {
                                             {/* Price and Subtotal Row */}
                                             <div className="flex flex-row items-center justify-between w-full h-[21px]">
                                                 <span className="space-x-2 flex items-center">
-                                                    <span className="font-normal text-sm leading-[21px] text-[#DA834D] font-['Poppins']">
+                                                    <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
                                                         ₱{item.price.toFixed(2)} each
                                                     </span>
-                                                    <span className="font-bold text-sm leading-[21px] text-[#DA834D] font-['Poppins'] bg-[#FFDEC9] px-2 py-1 rounded-full min-w-[24px] text-center">
+                                                    <span className="font-bold text-sm leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
                                                         ×{item.quantity}
                                                     </span>
                                                 </span>
                                                 <span className="space-x-2 flex items-center">
-                                                    <span className="font-normal text-sm leading-[21px] text-[#DA834D] font-['Poppins']">
+                                                    <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
                                                         =
                                                     </span>
-                                                    <span className="font-bold text-sm leading-[21px] text-[#DA834D] font-['Poppins']">
+                                                    <span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
                                                         ₱{(item.price * item.quantity).toFixed(2)}
                                                     </span>
                                                 </span>
@@ -710,7 +710,7 @@ export default function StoreScreen() {
                                         <div className="flex flex-row justify-end items-end gap-3 w-full h-[35px]">
 
                                             {/* Quantity Controls */}
-                                            <div className="flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[#FFDEC9] rounded-[24px]">
+                                            <div className="flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]">
                                                 <button
                                                     onClick={() => updateQuantity(item.id, -1)}
                                                     className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
@@ -718,7 +718,7 @@ export default function StoreScreen() {
                                                     <MinusIcon/>
                                                 </button>
 
-                                                <span className="font-bold text-base leading-[21px] text-[#4C2E24] font-['Poppins']">
+                                                <span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
                                                     {item.quantity}
                                                 </span>
 
@@ -734,7 +734,7 @@ export default function StoreScreen() {
                                                     >
                                                         <path
                                                             d="M7 1V13M1 7H13"
-                                                            stroke="#4C2E24"
+                                                            stroke="var(--secondary)"
                                                             strokeWidth="3"
                                                         />
                                                     </svg>
@@ -801,9 +801,9 @@ export default function StoreScreen() {
                         <button 
                             onClick={handlePlaceOrder}
                             disabled={cart.length === 0 || isPlacingOrder || !user}
-                            className={`w-full py-4 font-semibold text-lg transition-all h-16 ${
+                            className={`w-full py-4 font-black text-lg transition-all h-16 ${
                                 cart.length === 0 || isPlacingOrder || !user
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                    ? 'bg-gray-300 text-[var(--primary)] cursor-not-allowed' 
                                     : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02]'
                             }`}
                         >

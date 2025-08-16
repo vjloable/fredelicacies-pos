@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import LogoIcon from '@/components/icons/LogoIcon';
+import LogoVerticalIcon from '@/components/icons/LogoVerticalIcon';
 import { FirebaseError } from '@firebase/util';
 
 export default function LoginPage() {
@@ -89,87 +89,90 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-[12px] shadow-xl">
 
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-              <LogoIcon/>
-            </div>
-            <h1 className="text-2xl font-bold text-[var(--secondary)] mb-2">Fredelicacies PoS</h1>
-            <p className="text-[var(--secondary)] opacity-70">Sign in to your account</p>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={credentials.email}
-                onChange={handleInputChange('email')}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
-                placeholder="Enter your email"
-                disabled={isLoading}
-                autoComplete="email"
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={credentials.password}
-                onChange={handleInputChange('password')}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
-                placeholder="Enter your password"
-                disabled={isLoading}
-                autoComplete="current-password"
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-sm text-red-700">{error}</span>
-                </div>
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--accent)] py-6 shadow-md rounded-t-[12px]">
+              <div className='w-[165px] h-[100px]'>
+                <LogoVerticalIcon/>
               </div>
-            )}
+            </div>
+          </div>
+          <p className="text-center text-[16px] font-medium text-[var(--secondary)]">Sign in to your account</p>
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={credentials.email}
+                  onChange={handleInputChange('email')}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  placeholder="Enter your email"
+                  disabled={isLoading}
+                  autoComplete="email"
+                />
+              </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                isLoading
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95'
-              }`}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                  Signing in...
+              {/* Password Field */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={credentials.password}
+                  onChange={handleInputChange('password')}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm text-red-700">{error}</span>
+                  </div>
                 </div>
-              ) : (
-                'SIGN IN'
               )}
-            </button>
-          </form>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-[var(--secondary)] opacity-50">
-              Fredelicacies Point of Sale System v1.0
-            </p>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full py-3 rounded-[6px] font-semibold transition-all shadow-lg ${
+                  isLoading
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95'
+                }`}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  'SIGN IN'
+                )}
+              </button>
+            </form>
+
+            {/* Footer */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-[var(--secondary)] opacity-50">
+                FoodMood Point-of-Sales System v1.0
+              </p>
+            </div>
           </div>
         </div>
       </div>

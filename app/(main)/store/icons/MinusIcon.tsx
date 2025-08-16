@@ -7,7 +7,7 @@ export default function MinusIcon({ className }: { className?: string;}) {
       viewBox="0 0 15 3"
       fill="none"
     >
-    <path d="M0.89502 1.50031L14.3021 1.50031" stroke="#4C2E24" strokeWidth="3"/>
+    <path d="M0.89502 1.50031L14.3021 1.50031" stroke="var(--secondary)" strokeWidth="3"/>
     </svg>
   );
 }

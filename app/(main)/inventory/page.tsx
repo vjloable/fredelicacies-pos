@@ -20,6 +20,7 @@ import {
 import EditIcon from "../store/icons/EditIcon";
 import PlusIcon from "../store/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
+import EmptyInventory from "./illustrations/EmptyInventory";
 
 interface Item extends InventoryItem {
 	id: string; // Make id required for local state
@@ -297,41 +298,7 @@ export default function InventoryScreen() {
 									/* Empty State */
 									<div className="text-center py-16 px-4">
 										<div className="w-[360px] mb-4 mx-auto opacity-50 flex items-center justify-center">
-											<svg viewBox="0 0 225 121" fill="none">
-												<path d="M112.335 53.7994V56.0173L160.095 28.4429L156.254 28.4429L112.335 53.7994Z" fill="#DDDDDD"/>
-												<path d="M112.335 0.868469L64.5746 28.4429L68.4161 28.4429L112.335 3.08633V0.868469Z" fill="#DDDDDD"/>
-												<path d="M160.095 28.4429L112.335 0.868469V3.08633L156.254 28.4429L160.095 28.4429Z" fill="#DDDDDD"/>
-												<path d="M84.0902 64.3629L84.3069 64.2892L88.2603 62.0067L88.238 61.9681L84.3069 64.2378L84.0902 64.3629Z" fill="#CF6625"/>
-												<path fillRule="evenodd" clipRule="evenodd" d="M64.5746 81.5686V69.5129V28.4429L84.0902 39.7102V64.3629L84.3069 64.2892L88.2603 62.0067L92.3858 69.1524L92.6025 69.0787V44.6248L112.335 56.0173V109.143L64.5746 81.5686Z" fill="#C3C3C3"/>
-												<path d="M68.4161 28.4429L64.5746 28.4429L84.0902 39.7102V39.6134L86.5994 38.941L68.4161 28.4429Z" fill="#DDDDDD"/>
-												<path d="M92.6025 44.6248L112.335 56.0173V53.7994L101.894 47.7716L95.2263 43.9218L93.9144 44.2733L92.6025 44.6248Z" fill="#DDDDDD"/>
-												<path d="M95.2263 43.9218V43.6418L92.3858 44.4029L92.6025 44.6248L93.9144 44.2733L95.2263 43.9218Z" fill="#DB9D77"/>
-												<path d="M92.3858 44.4029L84.0902 39.6134V39.7102V64.3629L84.3069 64.2378L88.238 61.9681L88.2603 62.0067L92.3858 69.1524V44.4029Z" fill="#DA834D"/>
-												<path d="M84.0902 39.6134L92.3858 44.4029L95.2263 43.6418L86.9307 38.8523L86.5994 38.941L84.0902 39.6134Z" fill="#DE905F"/>
-												<path fillRule="evenodd" clipRule="evenodd" d="M92.6025 44.6248V69.0787L92.3858 69.1524V44.4029L92.6025 44.6248Z" fill="#D6783E"/>
-												<path fillRule="evenodd" clipRule="evenodd" d="M112.335 41.7437L115.857 39.7102L156.254 28.4429L112.335 3.08633V41.7437Z" fill="url(#paint0_linear_2233_2)"/>
-												<path d="M112.335 53.7994L156.254 28.4429L115.857 39.7102L112.335 41.7437V53.7994Z" fill="url(#paint1_linear_2233_2)"/>
-												<path fillRule="evenodd" clipRule="evenodd" d="M86.5994 38.941L68.4161 28.4429L112.335 3.08633V41.7437L101.894 47.7716L95.2263 43.9218V43.6418L86.9307 38.8523L86.5994 38.941Z" fill="url(#paint2_linear_2233_2)"/>
-												<path d="M101.894 47.7716L112.335 53.7994V41.7437L101.894 47.7716Z" fill="#737373"/>
-												<path fillRule="evenodd" clipRule="evenodd" d="M112.335 56.0173L160.095 28.4429V44.6018V81.5686L112.335 109.143V56.0173Z" fill="#EFEBEB"/>
-												<path d="M112.335 109.143L64.5746 81.5686L24.1778 92.8359L71.9381 120.41L112.335 109.143Z" fill="#434343" fillOpacity="0.05"/>
-												<path d="M24.1778 92.8359L64.5746 81.5686V69.5129L43.6934 81.5686L24.1778 92.8359Z" fill="#434343" fillOpacity="0.05"/>
-												<defs>
-												<linearGradient id="paint0_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
-												<stop stopColor="#B8B8B8"/>
-												<stop offset="1" stopColor="#292929"/>
-												</linearGradient>
-												<linearGradient id="paint1_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
-												<stop offset="0.221154" stopColor="#818181"/>
-												<stop offset="1" stopColor="#1B1B1B"/>
-												</linearGradient>
-												<linearGradient id="paint2_linear_2233_2" x1="112.335" y1="0.868469" x2="112.335" y2="120.41" gradientUnits="userSpaceOnUse">
-												<stop stopColor="#E2E2E2"/>
-												<stop offset="0.451923" stopColor="#868686"/>
-												<stop offset="0.625" stopColor="#292929"/>
-												</linearGradient>
-												</defs>
-											</svg>
+											<EmptyInventory />
 										</div>
 										<h3 className="text-[18px] font-semibold text-[var(--secondary)] mb-3">
 											No Items in Inventory
@@ -365,10 +332,10 @@ export default function InventoryScreen() {
 
 										{/* Quick Setup Guide */}
 										<div className="mt-[80px] max-w-2xl mx-auto">
-											<div className="bg-[var(--light-accent)]/20 border border-[var(--light-accent)] rounded-xl p-6">
-												<h4 className="text-lg font-semibold text-[var(--accent)] mb-4 flex items-center gap-2">
+											<div className="bg-[var(--secondary)]/5 border border-[var(--secondary)]/10 rounded-xl p-6">
+												<h4 className="text-lg font-semibold text-[var(--secondary)]/50 mb-4 flex items-center gap-2">
 													<svg
-														className="w-5 h-5 text-[var(--accent)]"
+														className="w-5 h-5 text-[var(--secondary)]/50"
 														fill="none"
 														stroke="currentColor"
 														viewBox="0 0 24 24"
@@ -384,43 +351,43 @@ export default function InventoryScreen() {
 												</h4>
 												<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 													<div className="text-center">
-														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-[var(--accent)] font-bold">
+														<div className="w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--secondary)] font-bold">
 																1
 															</span>
 														</div>
-														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--secondary)]/80 mb-1">
 															Create Categories
 														</h5>
-														<p className="text-[12px] text-[var(--accent)] opacity-80">
+														<p className="text-[12px] text-[var(--secondary)] opacity-80">
 															Organize your
 															products by type
 														</p>
 													</div>
 													<div className="text-center">
-														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-[var(--accent)] font-bold">
+														<div className="w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--secondary)] font-bold">
 																2
 															</span>
 														</div>
-														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--secondary)]/80 mb-1">
 															Add Items
 														</h5>
-														<p className="text-[12px] text-[var(--accent)] opacity-80">
+														<p className="text-[12px] text-[var(--secondary)]] opacity-80">
 															Set prices and stock
 															levels
 														</p>
 													</div>
 													<div className="text-center">
-														<div className="w-10 h-10 bg-[var(--light-accent)]/50 rounded-lg mx-auto mb-3 flex items-center justify-center">
-															<span className="text-[var(--accent)] font-bold">
+														<div className="w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center">
+															<span className="text-[var(--secondary)] font-bold">
 																3
 															</span>
 														</div>
-														<h5 className="text-[14px] font-medium text-[var(--accent)] mb-1">
+														<h5 className="text-[14px] font-medium text-[var(--secondary)]/80 mb-1">
 															Manage Stock
 														</h5>
-														<p className="text-[12px] text-[var(--accent)] opacity-80">
+														<p className="text-[12px] text-[var(--secondary)] opacity-80">
 															Track and update
 															inventory
 														</p>
