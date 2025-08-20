@@ -23,10 +23,8 @@ export default function RootPage() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-[var(--background)]">
-      <div className="text-center">
-        <LoadingSpinner />
-        <p className="text-[var(--secondary)] mt-4">Loading...</p>
-      </div>
+      <LoadingSpinner />
+      <p className="text-[var(--secondary)] mt-4">Loading...</p>
     </div>
   );
 }

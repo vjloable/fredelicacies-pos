@@ -81,10 +81,10 @@ export default function InventoryScreen() {
 		
 		setLoading(true);
 		setError(null);
-		console.log('🚀 Setting up inventory subscription in inventory page...');
+		console.log('Setting up inventory subscription in inventory page...');
 
 		const unsubscribe = subscribeToInventoryItems((firestoreItems) => {
-			console.log('📦 Inventory items received in inventory page:', firestoreItems.length, 'items');
+			console.log('Inventory items received in inventory page:', firestoreItems.length, 'items');
 			
 			// Convert Firestore items to local Item type
 			const localItems: Item[] = firestoreItems.map((item) => ({
@@ -223,11 +223,11 @@ export default function InventoryScreen() {
 									onClick={() =>
 										setShowCategoryForm(true)
 									}
-									className="bg-[var(--accent)] text-white text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
+									className="bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
 								>
 									<div className="flex flex-row items-center gap-2">
 										<div className="w-3 h-3">
-											<PlusIcon color="white"/>
+											<PlusIcon color="var(--secondary)"/>
 										</div>
 										Add Category
 									</div>
@@ -281,11 +281,11 @@ export default function InventoryScreen() {
 									onClick={() =>
 										setShowItemForm(true)
 									}
-									className="bg-[var(--accent)] text-white text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
+									className="bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 transition-all font-semibold hover:scale-105 active:scale-95"
 								>
 									<div className="flex flex-row items-center gap-2">
 										<div className="w-3 h-3">
-											<PlusIcon color="white"/>
+											<PlusIcon color="var(--secondary)"/>
 										</div>
 										Add Item
 									</div>
@@ -569,7 +569,7 @@ export default function InventoryScreen() {
 
 				{/* Delete Confirmation Modal */}
 				{showDeleteConfirm && categoryToDelete && (
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+					<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 						<div className="bg-white rounded-lg max-w-md w-full p-6">
 							<div className="flex items-center gap-3 mb-4">
 								<div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">

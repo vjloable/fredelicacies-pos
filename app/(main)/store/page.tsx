@@ -7,13 +7,15 @@ import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
 import OrderCartIcon from "./icons/OrderCartIcon";
 import { InventoryItem } from "@/services/inventoryService";
-import { subscribeToInventoryItems } from "@/stores/dataStore";
+import { subscribeToInventoryItems, subscribeToCategories } from "@/stores/dataStore";
 import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
 import { useAuth } from "@/contexts/AuthContext";
+import { Category } from "@/services/categoryService";
 import EmptyOrderIllustration from "./illustrations/EmptyOrder";
 import EmptyStoreIllustration from "./illustrations/EmptyStore";
+import LogoIcon from "./icons/LogoIcon";
 
 // Image component with proper error handling
 const SafeImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
@@ -94,8 +96,10 @@ const SuccessToast = ({
 export default function StoreScreen() {
     const { user } = useAuth(); // Get current authenticated user
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
     const [searchQuery, setSearchQuery] = useState("");
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [hideOutOfStock, setHideOutOfStock] = useState(false);
     const [orderType, setOrderType] = useState<'DINE-IN' | 'TAKE OUT' | 'DELIVERY'>('TAKE OUT');
@@ -151,44 +155,93 @@ export default function StoreScreen() {
         };
     }, [isClient]);
 
+    // Set up real-time subscription to categories using singleton dataStore
+    useEffect(() => {
+        if (!isClient) return;
+        
+        console.log('🏷️ Setting up categories subscription...');
+        
+        const unsubscribe = subscribeToCategories(
+            (categoriesData) => {
+                console.log('📋 Categories received:', categoriesData.length, 'categories');
+                setCategories(categoriesData);
+            }
+        );
+
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [isClient]);
+
     // Load settings
     useEffect(() => {
         const settings = loadSettingsFromLocal();
         setHideOutOfStock(settings.hideOutOfStock);
     }, []);
 
-    // Helper function to get category name (you might want to fetch categories from Firebase too)
+    // Helper function to get category name from real categories data
     const getCategoryName = (categoryId: number | string) => {
-        const categoryMap: { [key: number]: string } = {
-            1: "Beverages",
-            2: "Main Course",
-            3: "Desserts",
-            4: "Appetizers",
-            5: "Side Dishes"
-        };
-        const numericId = typeof categoryId === 'string' ? parseInt(categoryId) : categoryId;
-        return categoryMap[numericId] || "Unknown";
+        const category = categories.find(cat => cat.id === String(categoryId));
+        return category ? category.name : "Unknown";
     };
 
-    // Get unique categories from inventory items
-    const categories = [
-        "All",
-        ...Array.from(new Set(inventoryItems.map(item => getCategoryName(item.categoryId))))
-            .filter(name => name !== "Unknown")
+    const getCategoryColor = (categoryId: number | string) => {
+        const category = categories.find(cat => cat.id === String(categoryId));
+        return category ? category.color.trim() : "transparent";
+    };
+
+    // Get display categories including "All" button plus real categories
+    const displayCategories = [
+        { id: "all", name: "All", isSpecial: true },
+        ...categories.map(cat => ({ ...cat, isSpecial: false }))
     ];
 
-    // Filter items based on selected category and search query
+    // Function to handle category toggle
+    const toggleCategory = (categoryName: string) => {
+        if (categoryName === "All") {
+            setSelectedCategory("All");
+            setSelectedCategories([]);
+            // Clear search when clicking "All" for better UX
+            if (searchQuery) setSearchQuery("");
+        } else {
+            setSelectedCategory(""); // Clear "All" selection
+            setSelectedCategories(prev => {
+                if (prev.includes(categoryName)) {
+                    return prev.filter(cat => cat !== categoryName);
+                } else {
+                    return [...prev, categoryName];
+                }
+            });
+        }
+    };
+
+    // Check if a category is selected
+    const isCategorySelected = (categoryName: string) => {
+        if (categoryName === "All") {
+            return selectedCategory === "All" && selectedCategories.length === 0;
+        }
+        return selectedCategories.includes(categoryName);
+    };
+
+    // Filter items based on selected categories and search query
     const filteredItems = inventoryItems.filter(item => {
-        const matchesCategory = selectedCategory === "All" || getCategoryName(item.categoryId) === selectedCategory;
+        // First apply search filter
         const matchesSearch = searchQuery === "" || 
             item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             getCategoryName(item.categoryId).toLowerCase().includes(searchQuery.toLowerCase());
         
+        // Then apply category filter (only after search logic)
+        const matchesCategory = selectedCategories.length === 0 || 
+            selectedCategory === "All" || 
+            selectedCategories.includes(getCategoryName(item.categoryId));
+        
         // Filter out out-of-stock items if hideOutOfStock is enabled
         const hasStock = hideOutOfStock ? item.stock > 0 : true;
         
-        return matchesCategory && matchesSearch && hasStock;
+        return matchesSearch && matchesCategory && hasStock;
     });
 
     // Determine if we're showing search results
@@ -364,7 +417,7 @@ export default function StoreScreen() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search items, categories, or descriptions..."
-                            className={`w-full text-[12px] px-4 py-3 pr-12 shadow-sm bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${searchQuery ? 'animate-pulse transition-all' : ''}`}
+                            className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${searchQuery ? 'animate-pulse transition-all' : ''}`}
                         />
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                             {searchQuery ? (
@@ -395,38 +448,32 @@ export default function StoreScreen() {
                 </div>
 
                 {/* Category Selector - Fixed */}
-                <div className="px-6 py-2">
-                    <div className="flex gap-2 overflow-x-auto">
-                        {categories.map((category) => (
-                            <button
-                                key={category}
-                                onClick={() => {
-                                    setSelectedCategory(category);
-                                    // Clear search when switching categories for better UX
-                                    if (searchQuery) setSearchQuery("");
-                                }}
-                                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                                    selectedCategory === category
-                                        ? 'bg-[var(--accent)] text-white'
-                                        : 'bg-gray-100 text-[var(--secondary)] hover:bg-gray-200'
-                                }`}
-                            >
-                                {category}
-                                {category !== "All" && (
-                                    <span className="ml-2 text-xs opacity-70">
-                                        ({inventoryItems.filter(item => getCategoryName(item.categoryId) === category).length})
-                                    </span>
-                                )}
-                            </button>
-                        ))}
-                    </div>
+                <div className="px-6 py-2 flex gap-2 overflow-x-auto flex-wrap">
+                    {displayCategories.map((category) => (
+                        <button
+                            key={category.id}
+                            onClick={() => toggleCategory(category.name)}
+                            className={`px-4 py-2 rounded-lg shadow-md font-medium whitespace-nowrap transition-all ${
+                                isCategorySelected(category.name)
+                                    ? 'bg-[var(--accent)] text-[var(--secondary)]'
+                                    : 'bg-white text-[var(--secondary)] hover:bg-gray-200'
+                            }`}
+                        >
+                            {category.name}
+                            {!category.isSpecial && (
+                                <span className="ml-2 text-xs opacity-70">
+                                    ({inventoryItems.filter(item => getCategoryName(item.categoryId) === category.name).length})
+                                </span>
+                            )}
+                        </button>
+                    ))}
                 </div>
                 
                 {/* Menu Items - Scrollable */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+                        <div className="flex flex-col items-center justify-center py-8 gap-4">
+                            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-[var(--accent)]"></div>
                             <span className="ml-3 text-[var(--secondary)]">Loading menu...</span>
                         </div>
                     ) : inventoryItems.length === 0 ? (
@@ -485,7 +532,7 @@ export default function StoreScreen() {
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 py-2">
+                        <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4 justify-center gap-6">
                             {filteredItems.map((item, index) => {
                                 const availableStock = getAvailableStock(item.id || '0');
                                 const isOutOfStock = availableStock <= 0;
@@ -498,13 +545,13 @@ export default function StoreScreen() {
                                         key={item.id || index}
                                         onClick={() => !isOutOfStock && addToCart(item)}
                                         className={`
-                                            max-w-[515px] bg-[var(--primary)] rounded-lg p-4 h-65 lg:h-60 xl:h-75 cursor-pointer shadow-md
+                                            bg-[var(--primary)] rounded-lg p-4 h-85 lg:h-95 xl:h-75 cursor-pointer shadow-md
                                             hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
                                             ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'border-gray-200 hover:border-[var(--accent)]'}
                                         `}
                                     >
                                         {/* Item Image Placeholder */}
-                                        <div className="w-full h-40 lg:h-35 xl:h-50 bg-gray-100 rounded-lg mb-3 relative overflow-hidden">
+                                        <div className="w-full h-60 lg:h-70 xl:h-50 bg-[#F7F7F7] rounded-lg mb-3 relative overflow-hidden">
                                             {item.imgUrl ? (
                                                 <SafeImage 
                                                     src={item.imgUrl} 
@@ -513,9 +560,7 @@ export default function StoreScreen() {
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
-                                                    <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                                    </svg>
+                                                    <LogoIcon className="w-20 h-20" />
                                                 </div>
                                             )}
                                             
@@ -526,12 +571,12 @@ export default function StoreScreen() {
                                                 </div>
                                             )}
                                             {!isOutOfStock && availableStock <= 5 && (
-                                                <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded select-none">
+                                                <div className="absolute top-2 right-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded select-none">
                                                     Low Stock
                                                 </div>
                                             )}
                                             {inCartQuantity > 0 && (
-                                                <div className="absolute top-2 left-2 bg-[var(--accent)] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                <div className="absolute top-2 left-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded flex items-center gap-1">
                                                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                         <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                                     </svg>
@@ -542,40 +587,19 @@ export default function StoreScreen() {
                                         
                                         {/* Item Details */}
                                         <div className="flex items-center justify-between mb-1">
-                                            <h3 className="font-medium text-[var(--secondary)] truncate">
+                                            <h3 className="font-regular text-[var(--secondary)] truncate text-[14px]">
                                                 {isSearching ? highlightSearchTerm(item.name, searchQuery) : item.name}
                                             </h3>
 
-                                            <span className="font-semibold text-[var(--secondary)]">
+                                            <span className="font-regular text-[var(--secondary)] text-[14px]">
                                                 ₱{item.price.toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded">
+                                            <span className={`text-[10px] text-[var(--primary)] bg-red-500 border-[$] px-2 py-1 rounded`}>
                                                 {isSearching ? highlightSearchTerm(getCategoryName(item.categoryId), searchQuery) : getCategoryName(item.categoryId)}
                                             </span>
-
-                                            {/* Enhanced stock info */}
-                                            <div className="text-right">
-                                                {isOutOfStock ? (
-                                                    <div className="text-xs text-red-500 font-medium">
-                                                        All in cart
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-xs text-[var(--secondary)] opacity-70">
-                                                        <div className="font-medium">
-                                                            {availableStock} available
-                                                        </div>
-                                                        {inCartQuantity > 0 && (
-                                                            <div className="text-[var(--accent)] font-medium">
-                                                                {inCartQuantity} in cart
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
                                         </div>
-                                        
                                     </div>
                                 );
                             })}
@@ -585,10 +609,10 @@ export default function StoreScreen() {
             </div>
 
             {/* Right Side Panel - Order Summary */}
-            <div className="flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[416px] flex-shrink-0">
+            <div className="flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0">
                 {/* Header Section - Fixed at top (154px total) */}
                 <div className="flex-shrink-0">
-                    <div className="w-full h-[90px] bg-[var(--primary)] border-l border-gray-200 shadow-lg">
+                    <div className="w-full h-[90px] bg-[var(--primary)] border-b-2 border-[var(--accent)]">
                         {/* Order Header */}
                         <div className="flex items-center gap-3 p-3">
                             <div className="bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative">
@@ -620,7 +644,7 @@ export default function StoreScreen() {
                         </div>
                     </div>
 
-                    <div className="h-16 p-3 border-b border-[var(--secondary)]/20">
+                    <div className="h-16 p-3 border-b border-[var(--secondary)]/20 border-dashed">
                         <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3">
                             <DropdownField
                                 options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
@@ -668,9 +692,7 @@ export default function StoreScreen() {
                                         ) : null}
                                         {!item.imgUrl && (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                                </svg>
+                                                <LogoIcon className="w-10 h-10"/>
                                             </div>
                                         )}
                                     </div>
@@ -689,7 +711,7 @@ export default function StoreScreen() {
                                             <div className="flex flex-row items-center justify-between w-full h-[21px]">
                                                 <span className="space-x-2 flex items-center">
                                                     <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                        ₱{item.price.toFixed(2)} each
+                                                        ₱{item.price.toFixed(2)}
                                                     </span>
                                                     <span className="font-bold text-sm leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
                                                         ×{item.quantity}
@@ -784,7 +806,7 @@ export default function StoreScreen() {
                                 }
                               }
                             }}
-                            className="flex-shrink py-2 px-4 bg-[var(--accent)] font-bold text-sm text-white rounded-e-[6px] hover:bg-[var(--accent)]/50 transition-all"
+                            className="flex-shrink py-2 px-4 bg-[var(--accent)] font-bold text-sm text-[var(--secondary)] rounded-e-[6px] hover:bg-[var(--accent)]/50 transition-all"
                           >
                             APPLY
                           </button>
@@ -804,7 +826,7 @@ export default function StoreScreen() {
                             className={`w-full py-4 font-black text-lg transition-all h-16 ${
                                 cart.length === 0 || isPlacingOrder || !user
                                     ? 'bg-gray-300 text-[var(--primary)] cursor-not-allowed' 
-                                    : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02]'
+                                    : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02] cursor-pointer'
                             }`}
                         >
                             {!user ? 'PLEASE LOGIN TO ORDER' : isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}

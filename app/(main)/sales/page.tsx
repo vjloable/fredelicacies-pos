@@ -351,7 +351,7 @@ export default function SalesScreen() {
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
                     </svg>
                   </div>
