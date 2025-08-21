@@ -115,7 +115,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -206,7 +206,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
               ))}
             </select>
             <p className="text-sm text-gray-500 mt-1">
-              Leave as "All Items" to apply discount to entire order
+              Leave as {"All Items"} to apply discount to entire order
             </p>
           </div>
 

@@ -13,6 +13,7 @@ import EmptyDiscounts from './illustrations/EmptyDiscounts';
 import EditIcon from './icons/EditIcon';
 import DeleteIcon from './icons/DeleteIcon';
 import PlusIcon from './icons/PlusIcon';
+import { Timestamp } from 'firebase/firestore';
 
 export default function DiscountsScreen() {
   const { user, isAuthenticated } = useAuth();
@@ -91,11 +92,11 @@ export default function DiscountsScreen() {
     return category ? category.name : 'Unknown Category';
   };
 
-  const formatDate = (timestamp: any) => {
+  const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
     
     try {
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      const date = timestamp.toDate();
       return new Intl.DateTimeFormat('en-US', {
         year: 'numeric',
         month: 'short',

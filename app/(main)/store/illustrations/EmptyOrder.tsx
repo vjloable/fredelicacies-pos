@@ -1,6 +1,6 @@
 export default function EmptyOrderIllustration({ className }: { className?: string; }) {
   return (
-   <svg viewBox="0 0 114 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+   <svg viewBox="0 0 114 74" fill="none" className={className}>
     <path d="M0.0511475 43.9861V46.0791L15.9091 55.2347L16.3948 53.4221L0.0511475 43.9861Z" fill="#D0CFC1"/>
     <path d="M4.77389 43.9746V41.2594L0.0511475 43.9861L16.3948 53.4221L17.0302 51.0508L4.77389 43.9746Z" fill="#E1E0D8"/>
     <path d="M47.6255 73.5461V71.4532L44.4277 69.6069L20.9712 56.0643L20.4855 57.8769L47.6255 73.5461Z" fill="#D0CFC1"/>
