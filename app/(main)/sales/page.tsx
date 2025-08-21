@@ -238,7 +238,7 @@ export default function SalesScreen() {
         <TopBar title="Sales" />
         
         {/* Controls Section */}
-        <div className="px-6 py-4 bg-white">
+        <div className="px-6 py-4 bg-white shadow-lg z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-400">Time Period:</span>
@@ -270,179 +270,12 @@ export default function SalesScreen() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-6">
             
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">
-                      {viewPeriod === 'day' ? 'Today' : viewPeriod === 'week' ? '7 Days' : '30 Days'} Revenue
-                    </p>
-                    <p className="text-2xl font-bold text-[var(--accent)]">
-                      {formatCurrency(currentPeriodStats.totalRevenue)}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Profit: {formatCurrency(currentPeriodStats.totalProfit)} ({currentPeriodStats.profitMargin.toFixed(1)}%)
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Total Orders</p>
-                    <p className="text-2xl font-bold text-[var(--accent)]">{currentPeriodStats.totalOrders}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Avg: {formatCurrency(currentPeriodStats.totalOrders > 0 ? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders : 0)}
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Peak {viewPeriod === 'day' ? 'Hour' : 'Day'}</p>
-                    <p className="text-2xl font-bold text-[var(--accent)]">
-                      {timeSeriesData.length > 0 
-                        ? timeSeriesData.reduce((peak, current) => 
-                            current.orders > peak.orders ? current : peak, timeSeriesData[0]
-                          ).label
-                        : '--'
-                      }
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {timeSeriesData.length > 0 
-                    ? `${timeSeriesData.reduce((peak, current) => 
-                        current.orders > peak.orders ? current : peak, timeSeriesData[0]
-                      ).orders} orders`
-                    : '0 orders'
-                  }
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Growth</p>
-                    <p className="text-2xl font-bold text-[var(--accent)]">
-                      {timeSeriesData.length >= 2 
-                        ? `${((timeSeriesData[timeSeriesData.length - 1].revenue - timeSeriesData[timeSeriesData.length - 2].revenue) / Math.max(timeSeriesData[timeSeriesData.length - 2].revenue, 1) * 100).toFixed(1)}%`
-                        : '0%'
-                      }
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  vs previous {viewPeriod === 'day' ? 'hour' : 'day'}
-                </p>
-              </div>
-            </div>
-
-            {/* Main Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--accent)]">
-                    {viewPeriod === 'day' ? 'Today\'s Activity' : 
-                     viewPeriod === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
-                  </h3>
-                  <p className="text-sm text-gray-400">
-                    {viewPeriod === 'day' ? 'Hourly breakdown' : 'Daily performance trends'}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-[var(--secondary)] rounded-full"></div>
-                    <span className="text-xs text-gray-400">Orders</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-[var(--accent)] rounded-full"></div>
-                    <span className="text-xs text-gray-400">Revenue</span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-96">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={timeSeriesData}>
-                    <CartesianGrid strokeDasharray="1 1" stroke="#374151" opacity={0.3} />
-                    <XAxis 
-                      label={{ value: 'Time', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
-                      dataKey="label" 
-                      stroke="#9CA3AF"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
-                      label={{ value: 'Revenue', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
-                      stroke="#9CA3AF"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip 
-                      formatter={formatTooltipValue}
-                      contentStyle={{
-                        backgroundColor: '#FFFFFF',
-                        border: '1px solid var(--accent)/20',
-                        borderRadius: '8px',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
-                      }}
-                      labelStyle={{ color: 'bg-gray-50' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="orders" 
-                      stroke="var(--secondary)" 
-                      strokeWidth={3}
-                      name="orders"
-                      dot={{ fill: 'var(--secondary)', strokeWidth: 0, r: 4 }}
-                      activeDot={{ r: 6, fill: 'orange', strokeWidth: 0 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="var(--accent)" 
-                      strokeWidth={3}
-                      name="revenue"
-                      dot={{ fill: 'var(--accent)', strokeWidth: 0, r: 4 }}
-                      activeDot={{ r: 6, fill: 'orange', strokeWidth: 0 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
             {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-lg">
+            <div className="bg-white rounded-xl shadow-md">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-[var(--accent)]">Recent Orders</h3>
+                    <h3 className="text-lg font-semibold text-[var(--secondary)]">Recent Orders</h3>
                     <p className="text-sm text-gray-400">All order history ({filteredOrdersForTable.length} total)</p>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -465,14 +298,14 @@ export default function SalesScreen() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
                     </tr>
@@ -480,7 +313,7 @@ export default function SalesScreen() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {currentOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
                           #{order.id ? order.id.slice(-8) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -491,7 +324,25 @@ export default function SalesScreen() {
                             minute: '2-digit'
                           }) : 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-1 text-sm text-gray-500">
+                          <div className="max-w-xs">
+                            <p className="truncate">
+                                {order.items && order.items.length > 0 ? (
+                                  order.items.length > 2 
+                                    ? `${order.items.slice(0, 2).map(item => `${item.name || 'Unknown'} x${item.quantity || 0}`).join(', ')} +${order.items.length - 2} more`
+                                    : order.items.map(
+                                      item => { return `${item.name || 'Unknown'} (x${item.quantity || 0})` }
+                                    ).join(', ')
+                                ) : 'No items'}
+                              <span>
+
+                              </span>
+                              
+                            </p>
+                            <p className="text-xs text-gray-400">{order.itemCount || 0} items total</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-1 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             (order.orderType || 'DINE-IN') === 'DINE-IN' ? 'bg-blue-100 text-blue-800' :
                             (order.orderType || 'DINE-IN') === 'TAKE OUT' ? 'bg-green-100 text-green-800' :
@@ -500,27 +351,15 @@ export default function SalesScreen() {
                             {order.orderType || 'DINE-IN'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          <div className="max-w-xs">
-                            <p className="truncate">
-                              {order.items && order.items.length > 0 ? (
-                                order.items.length > 2 
-                                  ? `${order.items.slice(0, 2).map(item => `${item.name || 'Unknown'} (${item.quantity || 0})`).join(', ')} +${order.items.length - 2} more`
-                                  : order.items.map(item => `${item.name || 'Unknown'} (${item.quantity || 0})`).join(', ')
-                              ) : 'No items'}
-                            </p>
-                            <p className="text-xs text-gray-400">{order.itemCount || 0} items total</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
                           {formatCurrency(order.total || 0)}
-                          {order.discountAmount && order.discountAmount > 0 && (
+                          {order.discountAmount > 0 && (
                             <div className="text-xs text-red-500">
                               -{formatCurrency(order.discountAmount)}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-green-600 font-medium">
                           {formatCurrency(order.totalProfit || 0)}
                         </td>
                       </tr>
@@ -599,6 +438,176 @@ export default function SalesScreen() {
                 </div>
               )}
             </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      {viewPeriod === 'day' ? 'Today' : viewPeriod === 'week' ? '7 Days' : '30 Days'} Revenue
+                    </p>
+                    <p className="text-2xl font-bold text-[var(--secondary)]">
+                      {formatCurrency(currentPeriodStats.totalRevenue)}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Profit: {formatCurrency(currentPeriodStats.totalProfit)} ({currentPeriodStats.profitMargin.toFixed(1)}%)
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">Total Orders</p>
+                    <p className="text-2xl font-bold text-[var(--secondary)]">{currentPeriodStats.totalOrders}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Avg: {formatCurrency(currentPeriodStats.totalOrders > 0 ? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders : 0)}
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">Peak {viewPeriod === 'day' ? 'Hour' : 'Day'}</p>
+                    <p className="text-2xl font-bold text-[var(--secondary)]">
+                      {timeSeriesData.length > 0 
+                        ? timeSeriesData.reduce((peak, current) => 
+                            current.orders > peak.orders ? current : peak, timeSeriesData[0]
+                          ).label
+                        : '--'
+                      }
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {timeSeriesData.length > 0 
+                    ? `${timeSeriesData.reduce((peak, current) => 
+                        current.orders > peak.orders ? current : peak, timeSeriesData[0]
+                      ).orders} orders`
+                    : '0 orders'
+                  }
+                </p>
+              </div>
+
+              {/* <div className="bg-white p-6 rounded-xl shadow-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">Growth</p>
+                    <p className="text-2xl font-bold text-[var(--secondary)]">
+                      {timeSeriesData.length >= 2 
+                        ? `${((timeSeriesData[timeSeriesData.length - 1].revenue - timeSeriesData[timeSeriesData.length - 2].revenue) / Math.max(timeSeriesData[timeSeriesData.length - 2].revenue, 1) * 100).toFixed(1)}%`
+                        : '0%'
+                      }
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  vs previous {viewPeriod === 'day' ? 'hour' : 'day'}
+                </p>
+              </div> */}
+
+            </div>
+
+            {/* Main Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--secondary)]">
+                    {viewPeriod === 'day' ? 'Today\'s Activity' : 
+                     viewPeriod === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {viewPeriod === 'day' ? 'Hourly breakdown' : 'Daily performance trends'}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-[var(--secondary)] rounded-full"></div>
+                    <span className="text-xs text-gray-400">Orders</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-[var(--accent)] rounded-full"></div>
+                    <span className="text-xs text-gray-400">Revenue</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeSeriesData}>
+                    <CartesianGrid strokeDasharray="1 1" stroke="#374151" opacity={0.3} />
+                    <XAxis 
+                      label={{ value: 'Time', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
+                      dataKey="label" 
+                      stroke="#9CA3AF"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      label={{ value: 'Revenue', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                      stroke="#9CA3AF"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      formatter={formatTooltipValue}
+                      contentStyle={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid var(--accent)/20',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+                      }}
+                      labelStyle={{ color: 'bg-gray-50' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="orders" 
+                      stroke="var(--secondary)" 
+                      strokeWidth={3}
+                      name="orders"
+                      dot={{ fill: 'var(--secondary)', strokeWidth: 0, r: 4 }}
+                      activeDot={{ r: 6, fill: 'orange', strokeWidth: 0 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="var(--accent)" 
+                      strokeWidth={3}
+                      name="revenue"
+                      dot={{ fill: 'var(--accent)', strokeWidth: 0, r: 4 }}
+                      activeDot={{ r: 6, fill: 'orange', strokeWidth: 0 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className='h-[100px]'/>
           </div>
         </div>
       </div>

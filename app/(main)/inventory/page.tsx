@@ -401,11 +401,11 @@ export default function InventoryScreen() {
 									items.map((item) => (
 										<div
 											key={item.id}
-											className="bg-[var(--primary)] p-4 rounded-lg border border-gray-200"
+											className="bg-[var(--primary)] p-2 rounded-lg border border-gray-200"
 										>
 											<div className="flex items-center justify-between w-full">
-												<div className="flex items-center gap-4 flex-1 min-w-0">
-													<div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+												<div className="flex items-center gap-4 flex-1 min-w-0 flex-row">
+													<div className="w-[120px] h-[120px] md:w-[56px] md:h-[56px] bg-gray-100 rounded-[3px] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
 														{item.imgUrl ? (
 															<Image
 																src={item.imgUrl}
@@ -428,30 +428,45 @@ export default function InventoryScreen() {
 															</svg>
 														)}
 													</div>
-													<div className="flex flex-1 gap-4 h-12 flex-shrink">
-														<div className="flex flex-shrink flex-col items-center justify-between">
-															<h3 className="font-semibold text-[var(--secondary)] text-[18px] truncate text-left w-full">
-																{item.name}
+													<div className="flex flex-1 gap-4 h-[100px] md:h-12 flex-shrink truncate">
+														<div className="flex flex-grow md:flex-grow-0 flex-col items-start justify-center w-auto xl:w-[400px] line-clamp-2">
+															<h3 className="leading-tight font-semibold text-[var(--secondary)] text-[14px] text-wrap line-clamp-2 md:text-[18px] md:truncate text-left w-full">
+																{item.name} sdasdasdasdasdasda asdasdads
 															</h3>
-															<div className="flex items-center gap-2 w-full">
-																<div className="font-semibold text-[var(--accent)] text-[12px]">
-																	₱{item.price.toFixed(2)}
+															<div className="flex items-center w-full">
+																<div className="font-regular text-[var(--secondary)] w-[100px] text-[12px]">
+																	Price: ₱{item.price.toFixed(2)}
 																</div>
 																{item.cost && item.cost > 0 && (
-																	<>
-																		<span className="text-xs text-gray-400">|</span>
-																		<div className="text-xs text-gray-600">
+																	<div className="items-center justify-end gap-1 w-0 xl:w-[200px] hidden xl:flex">
+																		<div className="text-xs text-[var(--secondary)]">
 																			Cost: ₱{item.cost.toFixed(2)}
 																		</div>
-																		<div className="text-xs text-green-600 bg-green-50 px-1 py-0.5 rounded">
+																		<div className="text-[12px] text-green-600 bg-green-50 px-1 py-0.5 rounded">
 																			{(((item.price - item.cost) / item.price) * 100).toFixed(0)}%
 																		</div>
-																	</>
+																	</div>
 																)}
 															</div>
+															<div className="text-xs text-[var(--secondary)] flex md:hidden">
+																Stock: {item.stock}
+															</div>
+															{/* Small Screen Edit Button */}
+															<div className="flex md:hidden justify-center mt-2">
+																<button
+																	onClick={() =>
+																		openEditModal(
+																			item
+																		)
+																	}
+																	className="w-full px-2 py-1 text-[12px] font-bold bg-[var(--accent)] shadow-none hover:shadow-md hover:bg-[var(--accent)]/80 rounded-[4px] transition-all hover:scale-105 active:scale-95"
+																>
+																	EDIT
+																</button>
+															</div>
 														</div>
-														<div className="flex flex-1 flex-grow flex-row items-left">
-															<div className="border-s-1 border-[var(--secondary)]/50 pl-4 h-12 text-center text-sm text-[var(--secondary)] opacity-70 items-center flex flex-1">
+														<div className="flex-1 flex-grow flex-row items-left w-0 hidden xl:w-[300px] xl:flex">
+															<div className="border-s-1 border-[var(--secondary)]/50 pl-4 h-12 text-left text-sm text-[var(--secondary)] opacity-70 items-center flex flex-1 truncate">
 																{
 																	item.description ? (
 																		item.description
@@ -460,13 +475,13 @@ export default function InventoryScreen() {
 																	)
 																}
 															</div>
-															<div className="flex flex-col items-center justify-center">
+															<div className="flex-col items-center justify-center hidden xl:flex">
 																{/* Low Stock Warning */}
 																{item.stock <= 5 && (
-																	<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+																	<div className={`p-3 ${item.stock !== 0 ? "bg-yellow-50" : "bg-red-50"} border ${item.stock !== 0 ? "border-yellow-200" : "border-red-200"} rounded-lg`}>
 																		<div className="flex items-center gap-3">
 																			<svg
-																				className="w-5 h-5 text-yellow-600"
+																				className={`w-5 h-5 ${item.stock !== 0 ? "text-yellow-700" : "text-red-500"}`}
 																				fill="currentColor"
 																				viewBox="0 0 20 20"
 																			>
@@ -476,17 +491,15 @@ export default function InventoryScreen() {
 																					clipRule="evenodd"
 																				/>
 																			</svg>
-																			<span className="text-sm text-yellow-700 font-medium">
-																				Low stock warning!
-																				Only {item.stock}{" "}
-																				left.
+																			<span className={`text-[10px] ${item.stock !== 0 ? "text-yellow-700" : "text-red-700"} font-medium hidden w-0 2xl:inline 2xl:w-auto transition-all duration-400`}>
+																				{item.stock !== 0 ? `Only ${item.stock} stocks left.` : "No stocks left. "}
 																			</span>
 																		</div>
 																	</div>
 																)}
 															</div>
 														</div>
-														<div className="flex flex-col items-center justify-center">
+														<div className="flex-col items-center justify-center hidden xl:flex">
 															<div className="flex items-center gap-2 px-4">
 																<div
 																	className="w-3 h-3 rounded-full"
@@ -510,7 +523,7 @@ export default function InventoryScreen() {
 												</div>
 
 												{/* Stock Display and Controls */}
-												<div className="flex items-center gap-6 flex-shrink-0 ml-4">
+												<div className="items-center gap-6 flex-shrink-0 ml-4 hidden md:flex">
 													{/* Current Stock Display */}
 													<div className="text-center">
 														<div className="text-sm text-[var(--secondary)] opacity-70 mb-1">

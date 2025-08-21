@@ -10,6 +10,7 @@ import { db } from '../firebase-config';
 import { InventoryItem } from '../services/inventoryService';
 import { Category } from '../services/categoryService';
 import { Order } from '../services/orderService';
+import { Discount } from '../services/discountService';
 
 // Event emitter for state changes
 class EventEmitter {
@@ -42,14 +43,17 @@ class DataStore {
   private inventoryItems: InventoryItem[] = [];
   private categories: Category[] = [];
   private orders: Order[] = [];
+  private discounts: Discount[] = [];
   
   // Listener states
   private inventoryUnsubscribe: Unsubscribe | null = null;
   private categoriesUnsubscribe: Unsubscribe | null = null;
   private ordersUnsubscribe: Unsubscribe | null = null;
+  private discountsUnsubscribe: Unsubscribe | null = null;
   private isInventoryListenerActive = false;
   private isCategoriesListenerActive = false;
   private isOrdersListenerActive = false;
+  private isDiscountsListenerActive = false;
 
   private constructor() {
     // Only initialize listeners on client side
@@ -82,6 +86,7 @@ class DataStore {
     this.startInventoryListener();
     this.startCategoriesListener();
     this.startOrdersListener();
+    this.startDiscountsListener();
   }
 
   // Inventory Management
@@ -247,6 +252,59 @@ class DataStore {
     }
   }
 
+  private startDiscountsListener() {
+    if (this.isDiscountsListenerActive) return;
+
+    try {
+      const q = query(collection(db, 'discounts'), orderBy('created_at', 'desc'));
+      
+      this.discountsUnsubscribe = onSnapshot(q,
+        (querySnapshot) => {
+          console.log('🎯 Discounts snapshot received, empty:', querySnapshot.empty, 'size:', querySnapshot.size);
+          
+          const discounts: Discount[] = [];
+          
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              try {
+                const data = doc.data();
+                if (data) {
+                  const discount: Discount = {
+                    id: doc.id,
+                    discount_code: data.discount_code || doc.id,
+                    type: data.type || 'flat',
+                    value: data.value || 0,
+                    applies_to: data.applies_to || null,
+                    created_at: data.created_at || Timestamp.now(),
+                    modified_at: data.modified_at || Timestamp.now(),
+                    created_by: data.created_by || ''
+                  };
+                  discounts.push(discount);
+                }
+              } catch (docError) {
+                console.error(doc.id, docError);
+              }
+            });
+          }
+          
+          this.discounts = discounts;
+          this.eventEmitter.emit('discountsChanged', discounts);
+          console.log(`🎯 Discounts updated: ${discounts.length} discounts`);
+        },
+        (error) => {
+          this.discounts = [];
+          this.eventEmitter.emit('discountsChanged', []);
+          this.eventEmitter.emit('discountsError', error);
+        }
+      );
+      
+      this.isDiscountsListenerActive = true;
+    } catch (error) {
+      this.discounts = [];
+      this.eventEmitter.emit('discountsChanged', []);
+    }
+  }
+
   // Public methods to subscribe to data changes
   public subscribeToInventory(callback: (items: InventoryItem[]) => void): () => void {
     
@@ -306,6 +364,26 @@ class DataStore {
     };
   }
 
+  public subscribeToDiscounts(callback: (discounts: Discount[]) => void): () => void {
+    console.log('🔗 New discounts subscription created');
+    
+    // Ensure listeners are started (client-side only)
+    if (typeof window !== 'undefined' && !this.isDiscountsListenerActive) {
+      this.initializeListeners();
+    }
+    
+    // Always call with current data (even if empty array)
+    callback(this.discounts);
+    
+    // Subscribe to future changes
+    this.eventEmitter.on('discountsChanged', callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.eventEmitter.off('discountsChanged', callback);
+    };
+  }
+
   public subscribeToInventoryErrors(callback: (error: any) => void): () => void {
     this.eventEmitter.on('inventoryError', callback);
     return () => {
@@ -327,6 +405,13 @@ class DataStore {
     };
   }
 
+  public subscribeToDiscountsErrors(callback: (error: any) => void): () => void {
+    this.eventEmitter.on('discountsError', callback);
+    return () => {
+      this.eventEmitter.off('discountsError', callback);
+    };
+  }
+
   // Get current data synchronously
   public getInventoryItems(): InventoryItem[] {
     return [...this.inventoryItems];
@@ -338,6 +423,10 @@ class DataStore {
 
   public getOrders(): Order[] {
     return [...this.orders];
+  }
+
+  public getDiscounts(): Discount[] {
+    return [...this.discounts];
   }
 
   // Cleanup method (optional - usually not needed due to singleton nature)
@@ -360,6 +449,12 @@ class DataStore {
       this.ordersUnsubscribe = null;
       this.isOrdersListenerActive = false;
     }
+
+    if (this.discountsUnsubscribe) {
+      this.discountsUnsubscribe();
+      this.discountsUnsubscribe = null;
+      this.isDiscountsListenerActive = false;
+    }
   }
 
   // Method to restart listeners if needed
@@ -374,9 +469,11 @@ class DataStore {
       inventory: this.isInventoryListenerActive,
       categories: this.isCategoriesListenerActive,
       orders: this.isOrdersListenerActive,
+      discounts: this.isDiscountsListenerActive,
       inventoryItemsCount: this.inventoryItems.length,
       categoriesCount: this.categories.length,
-      ordersCount: this.orders.length
+      ordersCount: this.orders.length,
+      discountsCount: this.discounts.length
     };
   }
 }
@@ -397,6 +494,10 @@ export const subscribeToOrders = (callback: (orders: Order[]) => void) => {
   return dataStore.subscribeToOrders(callback);
 };
 
+export const subscribeToDiscounts = (callback: (discounts: Discount[]) => void) => {
+  return dataStore.subscribeToDiscounts(callback);
+};
+
 export const getInventoryItems = () => {
   return dataStore.getInventoryItems();
 };
@@ -407,6 +508,10 @@ export const getCategories = () => {
 
 export const getOrders = () => {
   return dataStore.getOrders();
+};
+
+export const getDiscounts = () => {
+  return dataStore.getDiscounts();
 };
 
 // Export for debugging

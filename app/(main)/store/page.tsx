@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
@@ -16,30 +15,8 @@ import { Category } from "@/services/categoryService";
 import EmptyOrderIllustration from "./illustrations/EmptyOrder";
 import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
+import SafeImage from "@/components/SafeImage";
 
-// Image component with proper error handling
-const SafeImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
-    const [hasError, setHasError] = useState(false);
-    
-    if (hasError || !src) {
-        return null;
-    }
-    
-    return (
-        <Image
-            src={src}
-            alt={alt}
-            fill
-            className={`object-cover ${className || ''}`}
-            sizes="102px"
-            unoptimized
-            onError={() => {
-                console.error('Image failed to load:', src);
-                setHasError(true);
-            }}
-        />
-    );
-};
 
 // Toast notification component
 const SuccessToast = ({ 
@@ -453,18 +430,20 @@ export default function StoreScreen() {
                         <button
                             key={category.id}
                             onClick={() => toggleCategory(category.name)}
-                            className={`px-4 py-2 rounded-lg shadow-md font-medium whitespace-nowrap transition-all ${
+                            className={`px-4 py-2 rounded-lg font-medium text-[12px] whitespace-nowrap transition-all ${
                                 isCategorySelected(category.name)
-                                    ? 'bg-[var(--accent)] text-[var(--secondary)]'
-                                    : 'bg-white text-[var(--secondary)] hover:bg-gray-200'
+                                    ? `${!category.isSpecial ? "bg-[var(--secondary)]/20" : "bg-[var(--accent)]"} text-[var(--secondary)] shadow-none`
+                                    : 'bg-white text-[var(--secondary)] hover:bg-gray-200 shadow-md'
                             }`}
                         >
-                            {category.name}
-                            {!category.isSpecial && (
-                                <span className="ml-2 text-xs opacity-70">
-                                    ({inventoryItems.filter(item => getCategoryName(item.categoryId) === category.name).length})
-                                </span>
-                            )}
+                            <div className={`${!category.isSpecial ? "pl-2" : ""}`} style={{ borderLeftWidth: `${!category.isSpecial ? "4px" : "0px"}`, borderColor: getCategoryColor(category.id) }}>
+                                {category.name}
+                                {!category.isSpecial && (
+                                    <span className="ml-2 text-xs opacity-70">
+                                        ({inventoryItems.filter(item => getCategoryName(item.categoryId) === category.name).length})
+                                    </span>
+                                )}
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -545,13 +524,13 @@ export default function StoreScreen() {
                                         key={item.id || index}
                                         onClick={() => !isOutOfStock && addToCart(item)}
                                         className={`
-                                            bg-[var(--primary)] rounded-lg p-4 h-85 lg:h-95 xl:h-75 cursor-pointer shadow-md
+                                            bg-[var(--primary)] rounded-lg p-4 h-85 md:h-95 lg:h-75 cursor-pointer shadow-md
                                             hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
                                             ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'border-gray-200 hover:border-[var(--accent)]'}
                                         `}
                                     >
                                         {/* Item Image Placeholder */}
-                                        <div className="w-full h-60 lg:h-70 xl:h-50 bg-[#F7F7F7] rounded-lg mb-3 relative overflow-hidden">
+                                        <div className="w-full h-60 md:h-70 lg:h-50 bg-[#F7F7F7] rounded-lg mb-3 relative overflow-hidden">
                                             {item.imgUrl ? (
                                                 <SafeImage 
                                                     src={item.imgUrl} 
@@ -587,7 +566,7 @@ export default function StoreScreen() {
                                         
                                         {/* Item Details */}
                                         <div className="flex items-center justify-between mb-1">
-                                            <h3 className="font-regular text-[var(--secondary)] truncate text-[14px]">
+                                            <h3 className="font-semibold text-[var(--secondary)] truncate text-[14px]">
                                                 {isSearching ? highlightSearchTerm(item.name, searchQuery) : item.name}
                                             </h3>
 
@@ -596,9 +575,10 @@ export default function StoreScreen() {
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className={`text-[10px] text-[var(--primary)] bg-red-500 border-[$] px-2 py-1 rounded`}>
+                                            <span className={`text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full`} style={{ backgroundColor: getCategoryColor(item.categoryId) }}>
                                                 {isSearching ? highlightSearchTerm(getCategoryName(item.categoryId), searchQuery) : getCategoryName(item.categoryId)}
                                             </span>
+                                            <span className="text-[14px] font-light">Stock: {availableStock}</span>
                                         </div>
                                     </div>
                                 );
@@ -612,7 +592,7 @@ export default function StoreScreen() {
             <div className="flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0">
                 {/* Header Section - Fixed at top (154px total) */}
                 <div className="flex-shrink-0">
-                    <div className="w-full h-[90px] bg-[var(--primary)] border-b-2 border-[var(--accent)]">
+                    <div className="w-full h-[90px] bg-[var(--primary)] border-b border-[var(--secondary)]/20 border-dashed">
                         {/* Order Header */}
                         <div className="flex items-center gap-3 p-3">
                             <div className="bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative">
@@ -644,7 +624,7 @@ export default function StoreScreen() {
                         </div>
                     </div>
 
-                    <div className="h-16 p-3 border-b border-[var(--secondary)]/20 border-dashed">
+                    <div className="h-16 p-3 border-b-2 border-[var(--accent)] ">
                         <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3">
                             <DropdownField
                                 options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
@@ -770,8 +750,9 @@ export default function StoreScreen() {
                         </div>
                     )}
                 </div>
+
                 {/* Order Summary */}
-                <div className="flex-shrink mb-3 border-t-2 rounded-[12px] border-[var(--accent)]">
+                <div className="flex-shrink mb-1 border-t-2 border-[var(--accent)]">
                     <div className="flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end">
                         <span>Subtotal</span>
                         <span>₱{subtotal.toFixed(2)}</span>
@@ -823,10 +804,10 @@ export default function StoreScreen() {
                         <button 
                             onClick={handlePlaceOrder}
                             disabled={cart.length === 0 || isPlacingOrder || !user}
-                            className={`w-full py-4 font-black text-lg transition-all h-16 ${
+                            className={`w-full py-4 font-bold text-[18px] transition-all ${
                                 cart.length === 0 || isPlacingOrder || !user
                                     ? 'bg-gray-300 text-[var(--primary)] cursor-not-allowed' 
-                                    : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg hover:scale-[1.02] cursor-pointer'
+                                    : 'bg-[var(--accent)] text-[var(--secondary)] hover:bg-[var(--accent)]/90 hover:shadow-lg cursor-pointer'
                             }`}
                         >
                             {!user ? 'PLEASE LOGIN TO ORDER' : isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
@@ -837,39 +818,38 @@ export default function StoreScreen() {
 
             {/* Order Confirmation Modal */}
             {showOrderConfirmation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
                         <div className="p-6 border-b border-gray-200">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-gray-900">
+                                <h2 className="text-xl font-semibold text-[var(--secondary)]">
                                     Confirm Order
                                 </h2>
                                 <button
                                     onClick={() => setShowOrderConfirmation(false)}
-                                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                                    className="text-gray-400 hover:text-[var(--secondary)] text-2xl"
                                 >
                                     ×
                                 </button>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-[var(--secondary)]/80 mt-1">
                                 Please review your order before confirming
                             </p>
                         </div>
 
                         {/* Order Details */}
                         <div className="flex-1 overflow-y-auto p-6">
+
                             {/* Order Type */}
-                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-gray-700">Order Type:</span>
-                                    <span className="text-sm font-semibold text-[var(--accent)]">{orderType}</span>
-                                </div>
+                            <div className="mb-4 flex justify-between text-[12px]">
+                                <span className="text-[var(--secondary)] font-medium">Order Type:</span>
+                                <span className="font-medium">{orderType}</span>
                             </div>
 
                             {/* Items List */}
                             <div className="mb-4">
-                                <h3 className="text-lg font-medium text-gray-900 mb-3">Items ({cart.length})</h3>
+                                <h3 className="text-[12px] font-medium text-[var(--secondary)] mb-3">Items ({cart.length})</h3>
                                 <div className="space-y-3">
                                     {cart.map((item) => (
                                         <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -892,16 +872,16 @@ export default function StoreScreen() {
 
                                             {/* Item Details */}
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-medium text-gray-900 truncate">{item.name}</h4>
-                                                <p className="text-sm text-gray-600">₱{item.price.toFixed(2)} each</p>
+                                                <h4 className="font-medium text-[var(--secondary)] truncate">{item.name}</h4>
+                                                <p className="text-sm text-[var(--secondary)]">₱{item.price.toFixed(2)}</p>
                                             </div>
 
                                             {/* Quantity and Total */}
                                             <div className="text-right">
-                                                <div className="text-sm font-medium text-gray-900">
+                                                <div className="text-sm font-medium text-[var(--secondary)]/50">
                                                     Qty: {item.quantity}
                                                 </div>
-                                                <div className="text-sm font-semibold text-[var(--accent)]">
+                                                <div className="text-sm font-regular text-[var(--secondary)]">
                                                     ₱{(item.price * item.quantity).toFixed(2)}
                                                 </div>
                                             </div>
@@ -914,18 +894,18 @@ export default function StoreScreen() {
                             <div className="border-t border-gray-200 pt-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Subtotal:</span>
+                                        <span className="text-[var(--secondary)]">Subtotal:</span>
                                         <span className="font-medium">₱{subtotal.toFixed(2)}</span>
                                     </div>
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Discount {discountCode && `(${discountCode})`}:</span>
+                                            <span className="text-[var(--secondary)]">Discount {discountCode && `(${discountCode})`}:</span>
                                             <span className="font-medium text-green-600">-₱{discountAmount.toFixed(2)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
                                         <span>Total:</span>
-                                        <span className="text-[var(--accent)]">₱{total.toFixed(2)}</span>
+                                        <span className="text-[var(--secondary)]">₱{total.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -936,20 +916,20 @@ export default function StoreScreen() {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setShowOrderConfirmation(false)}
-                                    className="flex-1 px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                                    className="flex-1 px-4 py-3 text-[var(--secondary)]/50 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-bold"
                                 >
-                                    Cancel
+                                    CANCEL
                                 </button>
                                 <button
                                     onClick={confirmPlaceOrder}
                                     disabled={isPlacingOrder}
-                                    className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                                    className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
                                         isPlacingOrder
                                             ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                            : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 hover:shadow-lg'
+                                            : 'bg-[var(--accent)] text-[var(--secondary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md'
                                     }`}
                                 >
-                                    {isPlacingOrder ? 'Processing...' : 'Confirm Order'}
+                                    {isPlacingOrder ? 'PROCESSING...' : 'CONFIRM ORDER'}
                                 </button>
                             </div>
                         </div>

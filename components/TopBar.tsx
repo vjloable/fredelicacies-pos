@@ -50,16 +50,16 @@ export default function TopBar({ title }: TopBarProps) {
           
           {/* User Info*/}
           <div className="relative group">
-            <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
-              <span className="my-6 w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
+            <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]">
+              <span className="my-6 w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]">
                 <UserIcon />
               </span>
               <span>{userDisplayName}</span>
             </div>
           </div>
 
-          <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
-            <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
+          <div className="flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]">
+            <span className="w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]">
               <CalendarIcon />
             </span>
             <div className="flex flex-col items-start">
@@ -67,7 +67,7 @@ export default function TopBar({ title }: TopBarProps) {
                 <LoadingSpinner size="sm" />
               ) : (
                 <>
-                  <span className="text-sm sm:text-base">{date}</span>
+                  <span>{date}</span>
                   {!isInternetTime && date && (
                     <span className="text-xs opacity-70">(Local)</span>
                   )}
@@ -76,7 +76,7 @@ export default function TopBar({ title }: TopBarProps) {
             </div>
           </div>
           <span className="hidden sm:inline">-</span>
-          <div className="flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] font-medium gap-3 items-center">
+          <div className="flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]">
             <span className="w-8 h-8 pl-[2px] bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm">
               <ClockIcon />
             </span>
@@ -89,7 +89,7 @@ export default function TopBar({ title }: TopBarProps) {
                     <span className="bg-red-500 size-2 border border-[var(--secondary)] rounded-full shadow-sm"></span>
                   ):
                     <span className="bg-green-500 size-2 border border-[var(--secondary)] rounded-full shadow-sm"></span>}
-                  <span className="text-sm sm:text-base animate-pulse ">{time}</span>
+                  <span className="animate-pulse ">{time}</span>
                 </>
               )}
             </div>
