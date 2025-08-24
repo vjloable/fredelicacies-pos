@@ -19,6 +19,7 @@ import {
 import EditIcon from "../store/icons/EditIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
+import { formatCurrency } from "@/lib/formatters";
 import EmptyInventory from "./illustrations/EmptyInventory";
 import InventoryIcon from "@/components/icons/SidebarNav/InventoryIcon";
 
@@ -421,12 +422,12 @@ export default function InventoryScreen() {
 															</h3>
 															<div className="flex items-center w-full">
 																<div className="font-regular text-[var(--secondary)] w-[100px] text-[12px]">
-																	Price: ₱{item.price.toFixed(2)}
+																	Price: {formatCurrency(item.price)}
 																</div>
 																{item.cost && item.cost > 0 && (
 																	<div className="items-center justify-start gap-1 w-0 md:w-[180px] hidden md:flex">
 																		<div className="text-xs text-[var(--secondary)]">
-																			Cost: ₱{item.cost.toFixed(2)}
+																			Cost: {formatCurrency(item.cost)}
 																		</div>
 																		<div className="text-[12px] text-green-600 bg-green-50 px-1 py-0.5 rounded">
 																			{(((item.price - item.cost) / item.price) * 100).toFixed(0)}%

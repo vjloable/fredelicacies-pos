@@ -226,10 +226,5 @@ export const getWeekStart = (date: Date = new Date()): Date => {
   return start;
 };
 
-export const formatCurrency = (amount: number): string => {
-  return `₱${amount.toFixed(2)}`;
-};
-
-export const formatPercentage = (value: number): string => {
-  return `${value.toFixed(1)}%`;
-};
+// Re-export currency formatting utilities
+export { formatCurrency, formatPercentage, formatNumber } from '../lib/formatters';

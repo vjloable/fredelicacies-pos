@@ -5,6 +5,7 @@ import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
 import { InventoryItem, createInventoryItem } from '@/services/inventoryService';
 import { Category } from '@/services/categoryService';
+import { formatCurrency } from '@/lib/formatters';
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -361,13 +362,13 @@ export default function AddItemModal({
                     </h4>
                     <div className="flex items-center gap-2">
                       <div className="font-semibold text-[var(--accent)]">
-                        ₱{(newItem.price || 0).toFixed(2)}
+                        {formatCurrency(newItem.price || 0)}
                       </div>
                       {newItem.cost && newItem.cost > 0 && (
                         <>
                           <span className="text-xs text-gray-400">|</span>
                           <div className="text-sm text-gray-600">
-                            Cost: ₱{newItem.cost.toFixed(2)}
+                            Cost: {formatCurrency(newItem.cost)}
                           </div>
                           {(newItem.price || 0) > 0 && (
                             <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">

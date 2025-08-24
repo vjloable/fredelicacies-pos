@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { subscribeToDiscounts, Discount, calculateDiscountAmount } from "@/services/discountService";
 import { Category } from "@/services/categoryService";
+import { formatCurrency } from "@/lib/formatters";
 
 interface DiscountDropdownProps {
   value: string;
@@ -210,7 +211,7 @@ export default function DiscountDropdown({
                       }
                       {previewAmount > 0 && canApply && (
                         <span className="text-[var(--success)] font-medium ml-2">
-                          (-₱{previewAmount.toFixed(2)})
+                          (-{formatCurrency(previewAmount)})
                         </span>
                       )}
                     </div>
@@ -224,7 +225,7 @@ export default function DiscountDropdown({
                     <div className="text-right">
                       <div className="text-xs text-gray-500">Savings</div>
                       <div className="font-semibold text-[var(--success)]">
-                        ₱{previewAmount.toFixed(2)}
+                        {formatCurrency(previewAmount)}
                       </div>
                     </div>
                   )}
@@ -257,7 +258,7 @@ export default function DiscountDropdown({
             </div>
             <div className="text-right">
               <div className="font-semibold text-[var(--secondary)]">
-                -₱{getDiscountPreview(appliedDiscount).toFixed(2)}
+                -{formatCurrency(getDiscountPreview(appliedDiscount))}
               </div>
             </div>
           </div>

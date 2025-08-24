@@ -21,6 +21,7 @@ import { Discount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
+import { formatCurrency } from "@/lib/formatters";
 
 
 // Toast notification component
@@ -592,7 +593,7 @@ export default function StoreScreen() {
                                             </h3>
 
                                             <span className="font-regular text-[var(--secondary)] text-[14px]">
-                                                ₱{item.price.toFixed(2)}
+                                                {formatCurrency(item.price)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
@@ -730,7 +731,7 @@ export default function StoreScreen() {
                                                         <div className="flex flex-row items-center justify-between w-full h-[21px]">
                                                             <span className="space-x-2 flex items-center">
                                                                 <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                                    ₱{item.price.toFixed(2)}
+                                                                    {formatCurrency(item.price)}
                                                                 </span>
                                                                 <span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
                                                                     ×{item.quantity}
@@ -741,7 +742,7 @@ export default function StoreScreen() {
                                                                     =
                                                                 </span>
                                                                 <span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                                    ₱{(item.price * item.quantity).toFixed(2)}
+                                                                    {formatCurrency(item.price * item.quantity)}
                                                                 </span>
                                                             </span>
                                                         </div>
@@ -800,11 +801,11 @@ export default function StoreScreen() {
                 <div className="flex-shrink mb-[40px] border-t-2 border-[var(--accent)]">
                     <div className="flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end">
                         <span>Subtotal</span>
-                        <span>₱{subtotal.toFixed(2)}</span>
+                        <span>{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]">
                         <span>Discount</span>
-                        <span>-₱{discountAmount.toFixed(2)}</span>
+                        <span>-{formatCurrency(discountAmount)}</span>
                     </div>
 
                     <div className="gap-2 p-3">
@@ -821,7 +822,7 @@ export default function StoreScreen() {
                     <div className="border-t-1 border-dashed border-[var(--accent)] h-[124px]">
                         <div className="flex justify-between font-semibold text-lg h-[62px] p-3 items-center">
                             <span>Total</span>
-                            <span>₱{total.toFixed(2)}</span>
+                            <span>{formatCurrency(total)}</span>
                         </div>
 
                         {/* Place Order Button */}
@@ -899,7 +900,7 @@ export default function StoreScreen() {
                                             {/* Item Details */}
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-medium text-[var(--secondary)] truncate">{item.name}</h4>
-                                                <p className="text-sm text-[var(--secondary)]">₱{item.price.toFixed(2)}</p>
+                                                <p className="text-sm text-[var(--secondary)]">{formatCurrency(item.price)}</p>
                                             </div>
 
                                             {/* Quantity and Total */}
@@ -908,7 +909,7 @@ export default function StoreScreen() {
                                                     Qty: {item.quantity}
                                                 </div>
                                                 <div className="text-sm font-regular text-[var(--secondary)]">
-                                                    ₱{(item.price * item.quantity).toFixed(2)}
+                                                    {formatCurrency(item.price * item.quantity)}
                                                 </div>
                                             </div>
                                         </div>
@@ -921,7 +922,7 @@ export default function StoreScreen() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-[var(--secondary)]">Subtotal:</span>
-                                        <span className="font-medium">₱{subtotal.toFixed(2)}</span>
+                                        <span className="font-medium">{formatCurrency(subtotal)}</span>
                                     </div>
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-sm">
@@ -937,12 +938,12 @@ export default function StoreScreen() {
                                                     </span>
                                                 )}:
                                             </span>
-                                            <span className="font-medium text-green-600">-₱{discountAmount.toFixed(2)}</span>
+                                            <span className="font-medium text-green-600">-{formatCurrency(discountAmount)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
                                         <span>Total:</span>
-                                        <span className="text-[var(--secondary)]">₱{total.toFixed(2)}</span>
+                                        <span className="text-[var(--secondary)]">{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                             </div>
