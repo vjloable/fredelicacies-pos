@@ -17,6 +17,7 @@ interface DropdownFieldProps {
   valueAlignment?: 'left' | 'center' | 'right';
   shadow?: boolean;
   fontSize?: string;
+  padding?: string;
 }
 
 export default function DropdownField({ 
@@ -30,6 +31,7 @@ export default function DropdownField({
   valueAlignment = 'right',
   shadow = true,
   fontSize = "14px",
+  padding = "12px"
 }: DropdownFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
@@ -90,11 +92,12 @@ export default function DropdownField({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`h-[${height}px] py-[12px] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
+          className={`py-[${padding}] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
             text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
             rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
             hover:bg-[var(--accent)] transition-colors 
             ${shadow ? 'shadow-md border-none' : 'shadow-none border-2 border-[var(--secondary)]/20'}`}
+          style={height ? { height: `${height}px` } : {}}
         >
           {selectedValue}
         </button>

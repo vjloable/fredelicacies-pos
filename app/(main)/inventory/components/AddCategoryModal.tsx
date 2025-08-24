@@ -15,7 +15,7 @@ export default function AddCategoryModal({
   onError
 }: AddCategoryModalProps) {
   const [loading, setLoading] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", color: "#3B82F6" });
+  const [newCategory, setNewCategory] = useState({ name: "", color: "#ff9f80" });
 
   if (!isOpen) return null;
 
@@ -27,7 +27,7 @@ export default function AddCategoryModal({
           name: newCategory.name,
           color: newCategory.color
         });
-        setNewCategory({ name: "", color: "#3B82F6" });
+        setNewCategory({ name: "", color: "#ff9f80" });
         onClose();
       } catch (error) {
         console.error('Error adding category:', error);
@@ -59,7 +59,7 @@ export default function AddCategoryModal({
           /* Loading Screen */
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-blue-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-dashed border-2 border-[--accent]"></div>
             </div>
             <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
               Adding Category...
@@ -72,8 +72,8 @@ export default function AddCategoryModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-[var(--accent)]/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
+                <svg className="w-8 h-8 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
@@ -89,14 +89,14 @@ export default function AddCategoryModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-              Category Name *
+              Category Name <span className="text-[var(--error)]">*</span>
             </label>
             <input
               type="text"
               value={newCategory.name}
               onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
               onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="Enter category name"
               autoFocus
             />
@@ -111,14 +111,14 @@ export default function AddCategoryModal({
                 type="color"
                 value={newCategory.color}
                 onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                className="w-16 h-12 border-2 p-1 border-gray-300 rounded-xl cursor-pointer "
+                className="w-16 h-12 border-2 p-1 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent cursor-pointer "
               />
               <div className="flex-1">
                 <input
                   type="text"
                   value={newCategory.color}
                   onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent font-mono text-sm"
                   placeholder="#3B82F6"
                 />
               </div>
@@ -154,10 +154,10 @@ export default function AddCategoryModal({
           <button
             onClick={addCategory}
             disabled={!newCategory.name.trim()}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 ${
+            className={`flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
               newCategory.name.trim()
-                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
+                : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 cursor-not-allowed'
             }`}
           >
             Add Category

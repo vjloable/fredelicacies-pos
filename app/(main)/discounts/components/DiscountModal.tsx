@@ -6,6 +6,7 @@ import { createDiscount, updateDiscount } from '@/services/discountService';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscribeToCategories } from '@/stores/dataStore';
 import { Category } from '@/services/categoryService';
+import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
 
 interface DiscountModalProps {
   isOpen: boolean;
@@ -125,11 +126,21 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
         <h2 className="text-xl font-semibold mb-4">
-          {discount ? 'Edit Discount' : 'Create New Discount'}
         </h2>
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-[var(--light-accent)] rounded-xl mx-auto mb-4 flex items-center justify-center">
+            <DiscountsIcon className='text-[var(--accent)]'/>
+          </div>
+          <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+            {discount ? 'Edit Discount' : 'Create New Discount'}
+          </h3>
+          <p className="text-[var(--secondary)] opacity-70">
+            {discount ? 'Edit the details of the discount' : 'Create a new discount code'}
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Discount Code */}

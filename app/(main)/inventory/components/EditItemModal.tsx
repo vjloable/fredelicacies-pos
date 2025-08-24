@@ -189,7 +189,6 @@ export default function EditItemModal({
             />
           </div>
 
-
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
@@ -273,8 +272,7 @@ export default function EditItemModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                Cost Price
-                <span className="text-xs text-[var(--secondary)]/50 ml-1">(Optional)</span>
+                Cost Price <span className="text-[var(--error)]">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--secondary)] font-thin">₱</span>
@@ -446,13 +444,13 @@ export default function EditItemModal({
         <div className="flex gap-4 mt-8 grid-cols-3">
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="flex-1 px-6 py-3 bg-[var(--error)]/20 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 px-6 py-3 bg-[var(--error)]/10 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
-            Delete
+            Remove
           </button>
           <button
             onClick={closeModal}
-            className="flex-1 px-6 py-3 border-2 border-[var(--accent)] bg-[var(--accent)]/10 hover:bg-[var(--accent)]/80 text-[var(--secondary)]/80 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             Cancel
           </button>
@@ -465,14 +463,14 @@ export default function EditItemModal({
               parseFloat(priceInput) <= 0 ||
               (costInput !== '' && (isNaN(parseFloat(costInput)) || parseFloat(costInput) < 0))
             }
-            className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 ${
+            className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
               localEditingItem.name.trim() && 
               priceInput !== '' && 
               !isNaN(parseFloat(priceInput)) && 
               parseFloat(priceInput) > 0 &&
               (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
-                ? 'bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-[var(--secondary)]/80 cursor-pointer'
-                : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 cursor-not-allowed'
+                ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
+                : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 cursor-not-allowed'
             }`}
           >
             Save
