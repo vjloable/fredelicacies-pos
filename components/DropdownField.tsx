@@ -12,14 +12,24 @@ interface DropdownFieldProps {
     right?: number;
   };
   dropdownPosition?: 'bottom' | 'top' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  roundness?: string;
+  height?: number;
+  valueAlignment?: 'left' | 'center' | 'right';
+  shadow?: boolean;
+  fontSize?: string;
 }
 
 export default function DropdownField({ 
-  options = ['DINE-IN', 'TAKE OUT'], 
-  defaultValue = 'DINE-IN',
+  options = [], 
+  defaultValue,
   onChange,
   dropdownOffset = { top: 1, left: 0 },
-  dropdownPosition = 'bottom-left'
+  dropdownPosition = 'bottom-left',
+  roundness = "none",
+  height = 42,
+  valueAlignment = 'right',
+  shadow = true,
+  fontSize = "14px",
 }: DropdownFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
@@ -38,6 +48,11 @@ export default function DropdownField({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Update selectedValue when defaultValue changes
+  useEffect(() => {
+    setSelectedValue(defaultValue);
+  }, [defaultValue]);
 
   const handleSelect = (value: string) => {
     setSelectedValue(value);
@@ -69,16 +84,17 @@ export default function DropdownField({
   };
 
   return (
-    <div className="h-[42px] w-full relative" ref={dropdownRef}>
-      <div className="grid shrink-0 grid-cols-1 focus-within:relative h-[42px] w-full">
+    <div className={`h-[${height}px] w-full relative`} ref={dropdownRef}>
+      <div className={`grid shrink-0 grid-cols-1 focus-within:relative h-[${height}px] w-full`}>
         {/* Custom Dropdown Trigger */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="h-[42px] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
-            text-[14px] text-[var(--secondary)] font-bold focus:outline-1 focus:-outline-offset-2 
-            rounded-3xl focus:outline-[var(--accent)] sm:text-sm/6 text-right pr-14 px-4 cursor-pointer 
-            hover:bg-[var(--accent)]/80 hover:text-white transition-colors shadow-md"
+          className={`h-[${height}px] py-[12px] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
+            text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
+            rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
+            hover:bg-[var(--accent)] transition-colors 
+            ${shadow ? 'shadow-md border-none' : 'shadow-none border-2 border-[var(--secondary)]/20'}`}
         >
           {selectedValue}
         </button>
@@ -106,7 +122,7 @@ export default function DropdownField({
                   key={index}
                   type="button"
                   onClick={() => handleSelect(option)}
-                  className={`w-full text-right px-4 py-2 text-sm hover:bg-[var(--accent)]/50 hover:text-[var(--primary)] transition-colors ${
+                  className={`w-full text-${valueAlignment} px-4 py-2 text-sm hover:bg-[var(--accent)]/50 hover:text-[var(--secondary)] transition-colors ${
                     selectedValue === option 
                       ? 'bg-[var(--accent)] text-[var(--primary)] font-medium' 
                       : 'text-[var(--secondary)]'

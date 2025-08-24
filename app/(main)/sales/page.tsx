@@ -15,6 +15,8 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { subscribeToOrders } from '@/stores/dataStore';
 import { Order } from '@/services/orderService';
 import { formatCurrency } from '@/services/salesService';
+import SearchIcon from '../store/icons/SearchIcon';
+import SalesIcon from '@/components/icons/SidebarNav/SalesIcon';
 
 interface TimeSeriesData {
   label: string;
@@ -235,64 +237,40 @@ export default function SalesScreen() {
   return (
     <div className="flex h-full overflow-hidden">
       <div className="flex flex-col flex-1 h-full overflow-hidden">
-        <TopBar title="Sales" />
-        
-        {/* Controls Section */}
-        <div className="px-6 py-4 bg-white shadow-lg z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-400">Time Period:</span>
-              <div className="flex bg-white rounded-lg p-1">
-                {(['day', 'week', 'month'] as ViewPeriod[]).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setViewPeriod(period)}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      viewPeriod === period
-                        ? 'bg-[var(--accent)] text-white'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                    }`}
-                  >
-                    {period === 'day' ? 'Today (24h)' : period === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="text-right">
-              <p className="text-xs text-gray-400">Live Data</p>
-              <p className="text-sm text-green-400">● Real-time ({allOrders.length} orders)</p>
-            </div>
-          </div>
-        </div>
+        <TopBar title="Sales" icon={<SalesIcon />} />
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto pt-4">
           <div className="space-y-6">
             
             {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-md">
+            <div className="bg-[var(--primary)] rounded-xl shadow-md mx-6">
               <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--secondary)]">Recent Orders</h3>
-                    <p className="text-sm text-gray-400">All order history ({filteredOrdersForTable.length} total)</p>
-                  </div>
-                  <div className="flex items-center space-x-4">
+                <div className="flex-1 flex-col items-center gap-4">
+                  <h3 className="text-lg font-semibold text-[var(--secondary)]">Recent Orders</h3>
+                  <div className="flex-1 items-center space-x-4 mt-4">
                     <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search orders..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          setCurrentPage(1); // Reset to first page when searching
-                        }}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
-                      />
-                      <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                      </svg>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => {
+                              setSearchTerm(e.target.value);
+                              setCurrentPage(1); // Reset to first page when searching
+                            }}
+                            placeholder="Search orders..."
+                            className={`w-full text-[12px] px-4 py-3 pr-12 border-2 border-[var(--secondary)]/20 bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${searchTerm ? 'animate-pulse transition-all' : ''}`}
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            {searchTerm ? (
+                                <div className="size-[30px] border-[var(--accent)] border-y-2 rounded-full flex items-center justify-center animate-spin">
+
+                                </div>
+                            ) : (
+                                <div className="size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center">
+                                    <SearchIcon className="mr-[2px] mb-[2px]"/>
+                                </div>
+                            )}
+                        </div>
                     </div>
                   </div>
                 </div>
@@ -302,21 +280,23 @@ export default function SalesScreen() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Order ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Date & Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Items</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider">Profit</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-[var(--primary)] divide-y divide-gray-200">
                     {currentOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{order.id ? order.id.slice(-8) : 'N/A'}
+                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium text-[var(--secondary)]">
+                          <div className='px-2 py-1 bg-[var(--secondary)]/10 max-w-[120px] text-center font-regular rounded-[12px]'>
+                            #{order.id ? order.id.slice(-8) : 'N/A'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary)]">
                           {order.createdAt ? order.createdAt.toDate().toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -324,32 +304,37 @@ export default function SalesScreen() {
                             minute: '2-digit'
                           }) : 'N/A'}
                         </td>
-                        <td className="px-6 py-1 text-sm text-gray-500">
+                        <td className="px-6 py-1 text-sm text-[var(--secondary)]">
                           <div className="max-w-xs">
-                            <p className="truncate">
+                            <div className="truncate flex-wrap">
                                 {order.items && order.items.length > 0 ? (
                                   order.items.length > 2 
                                     ? `${order.items.slice(0, 2).map(item => `${item.name || 'Unknown'} x${item.quantity || 0}`).join(', ')} +${order.items.length - 2} more`
                                     : order.items.map(
-                                      item => { return `${item.name || 'Unknown'} (x${item.quantity || 0})` }
-                                    ).join(', ')
-                                ) : 'No items'}
-                              <span>
+                                      item => { 
+                                        return <div className='flex-row items-center inline-flex text-[12px] mr-1 gap-1 border-1 border-[var(--secondary)]/20 p-1 px-2 rounded-full' key={item.id}>
+                                            {`${item.name || 'Unknown'}`} 
+                                            <div className='size-5 bg-[var(--secondary)]/20 rounded-full text-center text-[10px] p-1'>
+                                              {`${item.quantity || 0}`}
+                                            </div>
+                                          </div>
 
-                              </span>
+                                      })
+                                ) : 'No items'}
+
                               
-                            </p>
-                            <p className="text-xs text-gray-400">{order.itemCount || 0} items total</p>
+                            </div>
+                            <p className="text-xs text-[var(--secondary)]/50 mt-1">= {order.itemCount || 0} items total</p>
                           </div>
                         </td>
                         <td className="px-6 py-1 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          <div className={`p-2 text-xs text-center w-[100px] font-semibold rounded-full ${
                             (order.orderType || 'DINE-IN') === 'DINE-IN' ? 'bg-blue-100 text-blue-800' :
                             (order.orderType || 'DINE-IN') === 'TAKE OUT' ? 'bg-green-100 text-green-800' :
                             'bg-orange-100 text-orange-800'
                           }`}>
                             {order.orderType || 'DINE-IN'}
-                          </span>
+                          </div>
                         </td>
                         <td className="px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
                           {formatCurrency(order.total || 0)}
@@ -385,14 +370,14 @@ export default function SalesScreen() {
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-[var(--secondary)]/50">
                       Showing {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, filteredOrdersForTable.length)} of {filteredOrdersForTable.length} orders
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => paginate(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1 text-sm bg-[var(--secondary)]/5 border border-[var(--secondary)]/50 rounded-md hover:bg-[var(--secondary)]/10 disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
@@ -406,7 +391,7 @@ export default function SalesScreen() {
                         
                         if (!showPage) {
                           if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                            return <span key={pageNumber} className="px-2 text-gray-400">...</span>;
+                            return <span key={pageNumber} className="px-2 text-[var(--secondary)]/40">...</span>;
                           }
                           return null;
                         }
@@ -415,10 +400,10 @@ export default function SalesScreen() {
                           <button
                             key={pageNumber}
                             onClick={() => paginate(pageNumber)}
-                            className={`px-3 py-1 text-sm border rounded-md ${
+                            className={`px-3 py-1 text-sm border font-semibold rounded-md ${
                               isCurrentPage
-                                ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                                : 'border-gray-300 hover:bg-gray-50'
+                                ? 'bg-[var(--accent)] text-[var(--primary)] border-[var(--accent)]'
+                                : 'bg-[var(--secondary)]/5 border-[var(--secondary)]/50 text-[var(--secondary)]'
                             }`}
                           >
                             {pageNumber}
@@ -429,7 +414,7 @@ export default function SalesScreen() {
                       <button
                         onClick={() => paginate(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1 text-sm border bg-[var(--secondary)]/5 border-[var(--secondary)]/50 rounded-md hover:bg-[var(--secondary)]/10 disabled:opacity-30  disabled:cursor-not-allowed"
                       >
                         Next
                       </button>
@@ -439,9 +424,40 @@ export default function SalesScreen() {
               )}
             </div>
 
+            {/* Controls Section */}
+            <div className="px-12 py-4 bg-[var(--primary)] shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-[var(--secondary)]/50">Time Period:</span>
+                  <div className="flex bg-[var(--primary)] rounded-lg p-1 space-x-2">
+                    {(['day', 'week', 'month'] as ViewPeriod[]).map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => setViewPeriod(period)}
+                        className={`px-4 py-2 text-sm rounded-md transition-colors border-1 border-transparent ${
+                          viewPeriod === period
+                            ? 'bg-[var(--accent)] text-[var(--primary)] text-shadow-md font-bold'
+                            : 'font-medium hover:border-1 hover:border-[var(--accent)] text-[var(--secondary)]/50 hover:text-[var(--secondary)] hover:bg-text-[var(--secondary)]/80'
+                        }`}
+                      >
+                        {period === 'day' ? 'Last 24 Hours' : period === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">Live Data</p>
+                  <span className="flex items-center justify-end">
+                    <div className="bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin"/>
+                    <p className="ml-2 text-sm text-[var(--success)] drop-shadow-md">Real-time ({allOrders.length} orders)</p>
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-6 rounded-xl shadow-md">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mx-6">
+              <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400">
@@ -462,7 +478,7 @@ export default function SalesScreen() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-md">
+              <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400">Total Orders</p>
@@ -479,7 +495,7 @@ export default function SalesScreen() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-md">
+              <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400">Peak {viewPeriod === 'day' ? 'Hour' : 'Day'}</p>
@@ -508,7 +524,7 @@ export default function SalesScreen() {
                 </p>
               </div>
 
-              {/* <div className="bg-white p-6 rounded-xl shadow-md">
+              {/* <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400">Growth</p>
@@ -533,7 +549,7 @@ export default function SalesScreen() {
             </div>
 
             {/* Main Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-md">
+            <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md mx-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-semibold text-[var(--secondary)]">

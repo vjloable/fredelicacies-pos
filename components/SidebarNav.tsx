@@ -90,36 +90,39 @@ export default function SidebarNav() {
                             <li key={item.href}>
                                 <Link 
                                     href={item.href}
-                                    className={`flex h-10 items-center text-[14px] text-[var(--secondary)] font-regular  ${
+                                    className={`flex h-10 items-center text-[14px] font-semibold ${
                                         isActive 
-                                            ? 'bg-[#FDEA83] from-white to-[var(--light-accent)] hover:bg-[#FDEA83] transition-all duration-100 '
-                                            : 'bg-[var(--primary)] hover:bg-[var(--light-accent)]'
-                                    } transition-colors duration-400`}
+                                            ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'
+                                            : 'bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]'
+                                    }`}
                                 >
-                                    <div className="w-full flex items-center justify-center lg:justify-start transition-all duration-1000">
-                                        <IconComponent className="w-8 h-8 mx-3 gap-3" />
-                                        <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-400">{item.label}</span>
+                                    <div className="w-full flex items-center justify-center lg:justify-start">
+                                        <IconComponent className={`w-8 h-8 mx-3 gap-3 ${isActive ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
+                                        <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300">{item.label}</span>
                                     </div>
                                 </Link>
                             </li>
                         );
                     })}
+                        <li>
+                            <button
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                                className="flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400"
+                            >
+                                <div className="w-full flex items-center justify-center lg:justify-start transition-all duration-300">
+                                    <span className="size-8 mx-3">
+                                        <LogoutIcon className="gap-3 text-[var(--error)]" />
+                                    </span>
+                                    <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300 ">
+                                        {"Logout"}
+                                    </span>
+                                </div>
+                            </button>
+                        </li>
                     </ul>
                 </nav>
-                <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="h-[55px] m-2 items-center justify-center text-[14px] font-bold text-[var(--primary)] bg-[var(--accent)] hover:bg-[var(--light-accent)]/80 rounded disabled:opacity-50 disabled:cursor-not-allowed flex gap-0 lg:gap-2 duration-500 transition-colors"
-                >
-                    <LogoutIcon className="w-4 h-4 lg:w-6 lg:h-6" />
-                    <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-400">
-                        {isLoggingOut ? (
-                            'Logging out...'
-                        ) : (
-                            'Logout'
-                        )}
-                    </span>
-                </button>
+                
             </div>
         </div>
     )

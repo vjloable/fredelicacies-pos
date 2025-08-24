@@ -18,6 +18,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [valueInput, setValueInput] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -45,6 +46,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         value: discount.value,
         applies_to: discount.applies_to
       });
+      setValueInput(discount.value > 0 ? discount.value.toString() : '');
     } else {
       setFormData({
         discount_code: '',
@@ -52,6 +54,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         value: 0,
         applies_to: null
       });
+      setValueInput('');
     }
   }, [discount]);
 
@@ -172,14 +175,47 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={formData.value}
-                onChange={(e) => handleInputChange('value', parseFloat(e.target.value) || 0)}
+                type="text"
+                value={valueInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  
+                  // Only allow digits and one decimal point
+                  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                    setValueInput(value);
+                    
+                    // Update the actual value if it's a valid number
+                    if (value !== '' && !isNaN(parseFloat(value))) {
+                      const numValue = parseFloat(value);
+                      // For percentage, limit to 100
+                      if (formData.type === 'percentage' && numValue > 100) {
+                        setValueInput('100');
+                        setFormData(prev => ({ ...prev, value: 100 }));
+                      } else {
+                        setFormData(prev => ({ ...prev, value: numValue }));
+                      }
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent scientific notation
+                  if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onFocus={(e) => {
+                  e.target.select();
+                }}
+                onBlur={() => {
+                  // If empty or invalid, set to 0
+                  if (valueInput === '' || isNaN(parseFloat(valueInput))) {
+                    setFormData(prev => ({ ...prev, value: 0 }));
+                    setValueInput('');
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={formData.type === 'percentage' ? '10' : '100'}
-                min="0"
-                max={formData.type === 'percentage' ? '100' : undefined}
-                step={formData.type === 'percentage' ? '0.1' : '0.01'}
+                inputMode="decimal"
                 required
               />
               <span className="absolute right-3 top-2 text-gray-500">

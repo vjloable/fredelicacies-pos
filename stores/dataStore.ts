@@ -472,8 +472,7 @@ class DataStore {
       discounts: this.isDiscountsListenerActive,
       inventoryItemsCount: this.inventoryItems.length,
       categoriesCount: this.categories.length,
-      ordersCount: this.orders.length,
-      discountsCount: this.discounts.length
+      ordersCount: this.orders.length
     };
   }
 }

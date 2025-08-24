@@ -16,6 +16,11 @@ import EmptyOrderIllustration from "./illustrations/EmptyOrder";
 import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
+import DiscountDropdown from "@/app/(main)/store/components/DiscountDropdown";
+import { Discount } from "@/services/discountService";
+import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
+import { AnimatePresence, motion } from "motion/react";
+import PlusIcon from "@/components/icons/PlusIcon";
 
 
 // Toast notification component
@@ -82,6 +87,7 @@ export default function StoreScreen() {
     const [orderType, setOrderType] = useState<'DINE-IN' | 'TAKE OUT' | 'DELIVERY'>('TAKE OUT');
     const [discountCode, setDiscountCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
+    const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
@@ -108,11 +114,9 @@ export default function StoreScreen() {
         if (!isClient) return;
         
         setLoading(true);
-        console.log('🚀 Setting up inventory subscription...');
         
         const unsubscribe = subscribeToInventoryItems(
             (items) => {
-                console.log('📦 Inventory items received:', items.length, 'items');
                 setInventoryItems(items);
                 setLoading(false);
             }
@@ -120,7 +124,6 @@ export default function StoreScreen() {
 
         // Add a timeout fallback to prevent infinite loading
         const timeoutId = setTimeout(() => {
-            console.warn('⏰ Inventory subscription timeout - stopping loading');
             setLoading(false);
         }, 10000); // 10 second timeout
 
@@ -135,12 +138,9 @@ export default function StoreScreen() {
     // Set up real-time subscription to categories using singleton dataStore
     useEffect(() => {
         if (!isClient) return;
-        
-        console.log('🏷️ Setting up categories subscription...');
-        
+                
         const unsubscribe = subscribeToCategories(
             (categoriesData) => {
-                console.log('📋 Categories received:', categoriesData.length, 'categories');
                 setCategories(categoriesData);
             }
         );
@@ -293,6 +293,23 @@ export default function StoreScreen() {
     );
     const total = subtotal - discountAmount;
 
+    // Get unique category IDs from cart items
+    const getCartCategoryIds = (): string[] => {
+        const categoryIds = cart.map(item => String(item.categoryId));
+        return [...new Set(categoryIds)]; // Remove duplicates
+    };
+
+    // Handle discount application
+    const handleDiscountApplied = (discount: Discount | null, amount: number) => {
+        setAppliedDiscount(discount);
+        setDiscountAmount(amount);
+        if (discount) {
+            console.log('Discount applied:', discount.discount_code, 'Amount:', amount);
+        } else {
+            console.log('Discount cleared');
+        }
+    };
+
     const updateQuantity = (id: string, delta: number) => {
         console.log(`Updating quantity for item ${id} by ${delta}`);
         setCart(
@@ -318,6 +335,9 @@ export default function StoreScreen() {
     // Function to clear the cart
     const clearCart = () => {
         setCart([]);
+        setDiscountCode('');
+        setDiscountAmount(0);
+        setAppliedDiscount(null);
     };
 
     // Function to handle closing the success toast
@@ -356,7 +376,7 @@ export default function StoreScreen() {
                 user.uid,
                 orderType,
                 discountAmount,
-                discountCode
+                appliedDiscount?.discount_code || ''
             );
             
             console.log('Order created successfully:', orderId);
@@ -369,6 +389,7 @@ export default function StoreScreen() {
             clearCart();
             setDiscountCode('');
             setDiscountAmount(0);
+            setAppliedDiscount(null);
             setShowOrderConfirmation(false);
             
         } catch (error) {
@@ -384,7 +405,7 @@ export default function StoreScreen() {
             {/* Menu Area - This should expand to fill available space */}
             <div className="flex flex-col flex-1 h-full overflow-hidden">
                 {/* Header Section - Fixed */}
-                <TopBar title="Store" />
+                <TopBar title="Store" icon={<StoreIcon />} />
 
                 {/* Search Section - Fixed */}
                 <div className="px-6 py-4">
@@ -614,7 +635,7 @@ export default function StoreScreen() {
                             {cart.length > 0 && (
                                 <button 
                                     onClick={clearCart}
-                                    className="text-red-500 hover:text-red-700 text-xs font-medium hover:bg-red-50 px-2 py-1 rounded transition-all"
+                                    className="text-[var(--error)] border-1 border-[var(--error)] hover:text-white text-xs font-medium hover:bg-[var(--error)]/50 px-2 py-1 rounded transition-all"
                                     title="Clear all items"
                                 >
                                     Clear
@@ -624,21 +645,25 @@ export default function StoreScreen() {
                         </div>
                     </div>
 
-                    <div className="h-16 p-3 border-b-2 border-[var(--accent)] ">
-                        <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3">
+                    <div className="h-16 p-3 border-b-2 border-[var(--accent)]">
+                        <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3 pb-1">
                             <DropdownField
                                 options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
                                 defaultValue="TAKE OUT"
                                 dropdownPosition="bottom-right"
                                 dropdownOffset={{ top: 2, right: 0 }}
                                 onChange={(value) => setOrderType(value as 'DINE-IN' | 'TAKE OUT' | 'DELIVERY')}
+                                roundness={"[12px]"}
+                                height={20}
+                                valueAlignment={'left'}
+                                shadow={false}
                             />
                         </div>
                     </div>
                 </div>
                 
                 {/* Cart Items - Scrollable middle section */}
-                <div className="flex-1 overflow-y-auto px-3 pb-6">
+                <div className="flex-1 overflow-y-auto px-3 p-6">
                     {cart.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-12">
                             <div className="w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40">
@@ -654,105 +679,125 @@ export default function StoreScreen() {
                     ) : (
                         /* Cart Items */
                         <div className="space-y-0">
-                            {cart.map((item) => {
-                                // Debug logging
-                                console.log('Cart item:', item.name, 'imgUrl:', item.imgUrl);
-                                return (
-                                <div
-                                    key={`cart-item-${item.id}`}
-                                    className="flex flex-row items-center gap-3 w-full h-[124px] bg-white border-b border-dashed border-[#4C2E24]"
-                                >
-                                    {/* Item Image Placeholder - 102x100px */}
-                                    <div className="flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden">
-                                        {item.imgUrl ? (
-                                            <SafeImage 
-                                                src={item.imgUrl} 
-                                                alt={item.name}
-                                            />
-                                        ) : null}
-                                        {!item.imgUrl && (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <LogoIcon className="w-10 h-10"/>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Item Details - 278px width */}
-                                    <div className="flex flex-col items-start gap-3 w-[278px] h-[100px] flex-grow">
-                                        {/* Item Info Section */}
-                                        <div className="flex flex-col items-start gap-2 w-full h-[53px] flex-grow">
-                                            {/* Title and Quantity Row */}
-                                            <div className="flex flex-row items-center justify-between gap-2 w-full h-[21px]">
-                                                <span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
-                                                    {item.name}
-                                                </span>
-                                            </div>
-                                            {/* Price and Subtotal Row */}
-                                            <div className="flex flex-row items-center justify-between w-full h-[21px]">
-                                                <span className="space-x-2 flex items-center">
-                                                    <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                        ₱{item.price.toFixed(2)}
-                                                    </span>
-                                                    <span className="font-bold text-sm leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
-                                                        ×{item.quantity}
-                                                    </span>
-                                                </span>
-                                                <span className="space-x-2 flex items-center">
-                                                    <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                        =
-                                                    </span>
-                                                    <span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                        ₱{(item.price * item.quantity).toFixed(2)}
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Controls Section */}
-                                        <div className="flex flex-row justify-end items-end gap-3 w-full h-[35px]">
-
-                                            {/* Quantity Controls */}
-                                            <div className="flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]">
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, -1)}
-                                                    className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
-                                                >
-                                                    <MinusIcon/>
-                                                </button>
-
-                                                <span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
-                                                    {item.quantity}
-                                                </span>
-
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, 1)}
-                                                    className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
-                                                >
-                                                    <svg
-                                                        width="13.41"
-                                                        height="13.41"
-                                                        viewBox="0 0 14 14"
-                                                        fill="none"
-                                                    >
-                                                        <path
-                                                            d="M7 1V13M1 7H13"
-                                                            stroke="var(--secondary)"
-                                                            strokeWidth="3"
+                            <AnimatePresence mode="popLayout">
+                                {cart.map((item, index) => (
+                                    <motion.div 
+                                        key={item.id}
+                                        initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                                        exit={{ 
+                                            opacity: 0, 
+                                            x: -100, 
+                                            scale: 0.8, 
+                                            height: 0
+                                        }}
+                                        transition={{ 
+                                            duration: 0.3,
+                                            type: "spring",
+                                            stiffness: 300,
+                                            damping: 25,
+                                            delay: index * 0.05
+                                        }}
+                                        layout
+                                        layoutId={`cart-item-${item.id}`}
+                                        className="flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden"
+                                    >
+                                            <div className="flex flex-row items-center gap-3 w-full h-[100px]">
+                                                <div className="flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden">
+                                                    {item.imgUrl ? (
+                                                        <SafeImage 
+                                                            src={item.imgUrl} 
+                                                            alt={item.name}
                                                         />
-                                                    </svg>
-                                                </button>
+                                                    ) : null}
+                                                    {!item.imgUrl && (
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <LogoIcon className="w-10 h-10"/>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex flex-col items-start gap-3 w-[278px] h-[100px] flex-grow">
+                                                    {/* Item Info Section */}
+                                                    <div className="flex flex-col items-start gap-2 w-full h-[53px] flex-grow">
+                                                        {/* Title and Quantity Row */}
+                                                        <div className="flex flex-row items-center justify-between gap-2 w-full h-[21px]">
+                                                            <span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+                                                                {item.name}
+                                                            </span>
+                                                        </div>
+                                                        {/* Price and Subtotal Row */}
+                                                        <div className="flex flex-row items-center justify-between w-full h-[21px]">
+                                                            <span className="space-x-2 flex items-center">
+                                                                <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+                                                                    ₱{item.price.toFixed(2)}
+                                                                </span>
+                                                                <span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+                                                                    ×{item.quantity}
+                                                                </span>
+                                                            </span>
+                                                            <span className="space-x-2 flex items-center">
+                                                                <span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+                                                                    =
+                                                                </span>
+                                                                <span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+                                                                    ₱{(item.price * item.quantity).toFixed(2)}
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Controls Section */}
+                                                    <div className="flex flex-row justify-end items-end gap-3 w-full h-[35px]">
+
+                                                        {/* Quantity Controls */}
+                                                        <div className="flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]">
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, -1)}
+                                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
+                                                            >
+                                                                <MinusIcon/>
+                                                            </button>
+
+                                                            <span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+                                                                {item.quantity}
+                                                            </span>
+
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, 1)}
+                                                                className="flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all"
+                                                            >
+                                                                <PlusIcon />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                );
-                            })}
+                                            <AnimatePresence>
+                                                <motion.div 
+                                                    key={`divider-${index}`}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: index === cart.length - 1 ? 0 : 1 }}
+
+                                                    transition={{ 
+                                                        duration: 0.3,
+                                                        type: "spring",
+                                                        stiffness: 300,
+                                                        damping: 25,
+                                                        delay: index * 0.05
+                                                    }}
+                                                    className="flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full"
+                                                />
+                                            </AnimatePresence>
+                                        </motion.div>
+                                    ))}
+                            </AnimatePresence>
                         </div>
                     )}
                 </div>
 
                 {/* Order Summary */}
-                <div className="flex-shrink mb-1 border-t-2 border-[var(--accent)]">
+                <div className="flex-shrink mb-[40px] border-t-2 border-[var(--accent)]">
                     <div className="flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end">
                         <span>Subtotal</span>
                         <span>₱{subtotal.toFixed(2)}</span>
@@ -763,35 +808,14 @@ export default function StoreScreen() {
                     </div>
 
                     <div className="gap-2 p-3">
-                        <div className="flex flex-row border border-[var(--accent)] rounded-[6px] bg-[var(--light-accent)]/40">
-                          <input 
-                            type="text" 
+                        <DiscountDropdown
                             value={discountCode}
-                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                            className="flex-grow py-2 px-4 text-[12px] border-none rounded-l-[6px] focus:outline-none" 
-                            placeholder="Enter discount coupon code"
-                          />
-                          <button 
-                            onClick={() => {
-                              // Simple discount logic - you can make this more sophisticated
-                              if (discountCode === 'SAVE10') {
-                                setDiscountAmount(subtotal * 0.1); // 10% discount
-                              } else if (discountCode === 'SAVE20') {
-                                setDiscountAmount(subtotal * 0.2); // 20% discount
-                              } else if (discountCode === 'FLAT50') {
-                                setDiscountAmount(50); // ₱50 flat discount
-                              } else {
-                                setDiscountAmount(0);
-                                if (discountCode) {
-                                  alert('Invalid discount code');
-                                }
-                              }
-                            }}
-                            className="flex-shrink py-2 px-4 bg-[var(--accent)] font-bold text-sm text-[var(--secondary)] rounded-e-[6px] hover:bg-[var(--accent)]/50 transition-all"
-                          >
-                            APPLY
-                          </button>
-                        </div>
+                            onChange={setDiscountCode}
+                            onDiscountApplied={handleDiscountApplied}
+                            subtotal={subtotal}
+                            cartCategoryIds={getCartCategoryIds()}
+                            categories={categories}
+                        />
                     </div>
 
                     <div className="border-t-1 border-dashed border-[var(--accent)] h-[124px]">
@@ -804,13 +828,15 @@ export default function StoreScreen() {
                         <button 
                             onClick={handlePlaceOrder}
                             disabled={cart.length === 0 || isPlacingOrder || !user}
-                            className={`w-full py-4 font-bold text-[18px] transition-all ${
+                            className={`w-full py-4 font-black text-[18px] transition-all ${
                                 cart.length === 0 || isPlacingOrder || !user
                                     ? 'bg-gray-300 text-[var(--primary)] cursor-not-allowed' 
-                                    : 'bg-[var(--accent)] text-[var(--secondary)] hover:bg-[var(--accent)]/90 hover:shadow-lg cursor-pointer'
+                                    : 'bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg'
                             }`}
                         >
-                            {!user ? 'PLEASE LOGIN TO ORDER' : isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
+                            <span>
+                                {!user ? 'PLEASE LOGIN TO ORDER' : isPlacingOrder ? 'PLACING ORDER...' : cart.length === 0 ? 'ADD ITEMS TO ORDER' : 'PLACE ORDER'}
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -899,7 +925,18 @@ export default function StoreScreen() {
                                     </div>
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-[var(--secondary)]">Discount {discountCode && `(${discountCode})`}:</span>
+                                            <span className="text-[var(--secondary)]">
+                                                Discount 
+                                                {appliedDiscount && (
+                                                    <span className="font-medium ml-1">
+                                                        ({appliedDiscount.discount_code} - {
+                                                            appliedDiscount.type === 'percentage' 
+                                                                ? `${appliedDiscount.value}% off`
+                                                                : `₱${appliedDiscount.value} off`
+                                                        })
+                                                    </span>
+                                                )}:
+                                            </span>
                                             <span className="font-medium text-green-600">-₱{discountAmount.toFixed(2)}</span>
                                         </div>
                                     )}

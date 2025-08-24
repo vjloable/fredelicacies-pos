@@ -13,9 +13,10 @@ import { useState } from "react";
 
 interface TopBarProps {
   title?: string;
+  icon?: React.ReactNode;
 }
 
-export default function TopBar({ title }: TopBarProps) {
+export default function TopBar({ title, icon }: TopBarProps) {
   const { toggle: toggleDrawer } = useDrawer();
   const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
   const { user } = useAuth();
@@ -39,11 +40,11 @@ export default function TopBar({ title }: TopBarProps) {
 
   return (
     <div className="flex-shrink-0">
-      <div className="flex items-center justify-between h-14 mb-6 w-full mt-6">
+      <div className="flex items-center justify-between h-[90px] w-full">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto">
           <button
             onClick={toggleDrawer}
-            className="ml-6 my-6 h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer flex-shrink-0"
+            className="ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer flex-shrink-0"
           >
             <MenuBurger />
           </button>
@@ -86,9 +87,9 @@ export default function TopBar({ title }: TopBarProps) {
               ) : (
                 <>
                   {!isInternetTime && time ? (
-                    <span className="bg-red-500 size-2 border border-[var(--secondary)] rounded-full shadow-sm"></span>
+                    <span className="bg-[var(--error)]/20 size-3 border-2 border-[var(--error)] border-dashed rounded-full shadow-sm animate-spin"/>
                   ):
-                    <span className="bg-green-500 size-2 border border-[var(--secondary)] rounded-full shadow-sm"></span>}
+                    <span className="bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin"/>}
                   <span className="animate-pulse ">{time}</span>
                 </>
               )}
@@ -110,7 +111,8 @@ export default function TopBar({ title }: TopBarProps) {
 
       {/* Page Title */}
       {title && (
-        <div className="flex items-center justify-between ml-6 mb-2">
+        <div className="flex items-center justify-start ml-6 mt-[8px] py-[4px]">
+          {icon}
           <h1 className="text-[var(--secondary)] text-2xl font-bold">
             {title}
           </h1>

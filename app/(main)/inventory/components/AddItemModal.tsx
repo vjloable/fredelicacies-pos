@@ -22,13 +22,16 @@ export default function AddItemModal({
   const [loading, setLoading] = useState(false);
   const [newItem, setNewItem] = useState({ 
     name: "", 
-    price: '', 
-    cost: '', // Add optional cost field
+    price: 0, 
+    cost: undefined as number | undefined, // Add optional cost field
     categoryId: categories[0]?.id || '', 
-    stock: '', 
+    stock: 0, 
     description: "",
     imgUrl: ""
   });
+  const [priceInput, setPriceInput] = useState('');
+  const [costInput, setCostInput] = useState('');
+  const [stockInput, setStockInput] = useState('');
 
   // Update categoryId when categories change and current selection is invalid
   if (categories.length > 0 && !categories.find(cat => cat.id === newItem.categoryId)) {
@@ -40,14 +43,38 @@ export default function AddItemModal({
   const addItem = async () => {
     if (!newItem.name.trim()) return;
     
+    // Validate price
+    const finalPrice = priceInput === '' ? 0 : parseFloat(priceInput);
+    if (isNaN(finalPrice) || finalPrice <= 0) {
+      onError('Please enter a valid selling price');
+      return;
+    }
+    
+    // Validate cost (optional field)
+    let finalCost: number | undefined = undefined;
+    if (costInput !== '') {
+      finalCost = parseFloat(costInput);
+      if (isNaN(finalCost) || finalCost < 0) {
+        onError('Please enter a valid cost price');
+        return;
+      }
+    }
+    
+    // Validate stock
+    const finalStock = stockInput === '' ? 0 : parseInt(stockInput);
+    if (isNaN(finalStock) || finalStock < 0) {
+      onError('Please enter a valid stock amount');
+      return;
+    }
+    
     setLoading(true);
     try {
       const itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'> = {
         name: newItem.name,
-        price: parseFloat(newItem.price) || 0,
-        cost: newItem.cost ? parseFloat(newItem.cost) : undefined, // Add cost if provided
+        price: finalPrice,
+        cost: finalCost,
         categoryId: newItem.categoryId,
-        stock: parseInt(newItem.stock) || 0,
+        stock: finalStock,
         description: newItem.description,
         imgUrl: newItem.imgUrl || ''
       };
@@ -57,13 +84,16 @@ export default function AddItemModal({
       // Reset form
       setNewItem({ 
         name: "", 
-        price: '', 
-        cost: '', // Reset cost field
+        price: 0, 
+        cost: undefined, // Reset cost field
         categoryId: categories[0]?.id || '', 
-        stock: '', 
+        stock: 0, 
         description: "",
         imgUrl: ""
       });
+      setPriceInput('');
+      setCostInput('');
+      setStockInput('');
       onClose();
     } catch (error) {
       console.error('Error adding item:', error);
@@ -134,13 +164,40 @@ export default function AddItemModal({
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
                 <input
-                  type="number"
-                  step="0.01"
-                  value={newItem.price}
-                  onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                  type="text"
+                  value={priceInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    
+                    // Only allow digits and one decimal point
+                    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                      setPriceInput(value);
+                      
+                      // Update the actual price if it's a valid number
+                      if (value !== '' && !isNaN(parseFloat(value))) {
+                        setNewItem({...newItem, price: parseFloat(value)});
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent scientific notation
+                    if (['e', 'E', '+', '-'].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onFocus={(e) => {
+                    e.target.select();
+                  }}
+                  onBlur={() => {
+                    // If empty or invalid, set to 0
+                    if (priceInput === '' || isNaN(parseFloat(priceInput))) {
+                      setNewItem({...newItem, price: 0});
+                      setPriceInput('');
+                    }
+                  }}
                   className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="0.00"
-                  min="0"
+                  inputMode="decimal"
                 />
               </div>
             </div>
@@ -152,13 +209,40 @@ export default function AddItemModal({
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
                 <input
-                  type="number"
-                  step="0.01"
-                  value={newItem.cost}
-                  onChange={(e) => setNewItem({...newItem, cost: e.target.value})}
+                  type="text"
+                  value={costInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    
+                    // Only allow digits and one decimal point
+                    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                      setCostInput(value);
+                      
+                      // Update the actual cost if it's a valid number
+                      if (value !== '' && !isNaN(parseFloat(value))) {
+                        setNewItem({...newItem, cost: parseFloat(value)});
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent scientific notation
+                    if (['e', 'E', '+', '-'].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onFocus={(e) => {
+                    e.target.select();
+                  }}
+                  onBlur={() => {
+                    // If empty or invalid, set to undefined
+                    if (costInput === '' || isNaN(parseFloat(costInput))) {
+                      setNewItem({...newItem, cost: undefined});
+                      setCostInput('');
+                    }
+                  }}
                   className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="0.00"
-                  min="0"
+                  inputMode="decimal"
                 />
               </div>
             </div>
@@ -170,12 +254,39 @@ export default function AddItemModal({
                 Initial Stock *
               </label>
               <input
-                type="number"
-                value={newItem.stock}
-                onChange={(e) => setNewItem({...newItem, stock: e.target.value})}
+                type="text"
+                value={stockInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow whole numbers (no decimals for stock)
+                  if (value === '' || /^[0-9]*$/.test(value)) {
+                    setStockInput(value);
+                    
+                    // Update the actual stock if it's a valid number
+                    if (value !== '' && !isNaN(parseInt(value))) {
+                      setNewItem({...newItem, stock: parseInt(value)});
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent scientific notation and decimals
+                  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onFocus={(e) => {
+                  e.target.select();
+                }}
+                onBlur={() => {
+                  // If empty or invalid, set to 0
+                  if (stockInput === '' || isNaN(parseInt(stockInput))) {
+                    setNewItem({...newItem, stock: 0});
+                    setStockInput('');
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="0"
-                min="0"
+                inputMode="numeric"
               />
             </div>
           </div>
@@ -250,17 +361,17 @@ export default function AddItemModal({
                     </h4>
                     <div className="flex items-center gap-2">
                       <div className="font-semibold text-[var(--accent)]">
-                        ₱{parseFloat(newItem.price || '0').toFixed(2)}
+                        ₱{(newItem.price || 0).toFixed(2)}
                       </div>
-                      {newItem.cost && parseFloat(newItem.cost) > 0 && (
+                      {newItem.cost && newItem.cost > 0 && (
                         <>
                           <span className="text-xs text-gray-400">|</span>
                           <div className="text-sm text-gray-600">
-                            Cost: ₱{parseFloat(newItem.cost).toFixed(2)}
+                            Cost: ₱{newItem.cost.toFixed(2)}
                           </div>
-                          {parseFloat(newItem.price || '0') > 0 && (
+                          {(newItem.price || 0) > 0 && (
                             <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                              {(((parseFloat(newItem.price || '0') - parseFloat(newItem.cost)) / parseFloat(newItem.price || '0')) * 100).toFixed(1)}% margin
+                              {(((newItem.price - (newItem.cost || 0)) / newItem.price) * 100).toFixed(1)}% margin
                             </div>
                           )}
                         </>
@@ -285,7 +396,7 @@ export default function AddItemModal({
                 <div className="text-center">
                   <div className="text-sm text-[var(--secondary)] opacity-70">Initial Stock</div>
                   <div className="text-xl font-bold text-[var(--secondary)]">
-                    {parseInt(newItem.stock || '0')}
+                    {newItem.stock || 0}
                   </div>
                 </div>
               </div>
@@ -303,9 +414,19 @@ export default function AddItemModal({
           </button>
           <button
             onClick={addItem}
-            disabled={!newItem.name.trim() || !newItem.price || parseFloat(newItem.price) <= 0}
+            disabled={
+              !newItem.name.trim() || 
+              priceInput === '' || 
+              isNaN(parseFloat(priceInput)) || 
+              parseFloat(priceInput) <= 0 ||
+              (costInput !== '' && (isNaN(parseFloat(costInput)) || parseFloat(costInput) < 0))
+            }
             className={`flex-1 py-3 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 ${
-              newItem.name.trim() && newItem.price && parseFloat(newItem.price) > 0
+              newItem.name.trim() && 
+              priceInput !== '' && 
+              !isNaN(parseFloat(priceInput)) && 
+              parseFloat(priceInput) > 0 &&
+              (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                 ? 'bg-green-500 hover:bg-green-600 text-white'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}

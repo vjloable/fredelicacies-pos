@@ -1,5 +1,6 @@
 'use client';
 
+import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import TopBar from "@/components/TopBar";
 
 export default function LogsScreen() {
@@ -9,8 +10,8 @@ export default function LogsScreen() {
       <div className="flex flex-col flex-1 h-full overflow-hidden">
         
         {/* Header Section - Fixed */}
-        <TopBar title="Logs" />
-        
+        <TopBar title="Logs" icon={<LogsIcon />} />
+
         {/* Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="flex items-center justify-center h-full">
