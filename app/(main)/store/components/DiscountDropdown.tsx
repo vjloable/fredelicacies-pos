@@ -235,7 +235,7 @@ export default function DiscountDropdown({
           })}
           {filteredDiscounts.length === 0 && value && (
             <div className="p-3 text-center text-gray-500 text-sm">
-              No discount codes found matching "{value}"
+              No discount codes found matching &quot;{value}&quot;
             </div>
           )}
         </div>

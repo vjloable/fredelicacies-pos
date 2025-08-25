@@ -23,7 +23,7 @@ import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
 
 import { formatCurrency } from "@/lib/currency_formatter";
-import { formatReceiptWithLogo, ReceiptOrderData } from "@/lib/esc_formatter";
+import { formatReceiptWithLogo } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
 

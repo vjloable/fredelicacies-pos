@@ -107,7 +107,7 @@ export default function DiscountsScreen() {
         minute: '2-digit'
       }).format(date);
     } catch (error) {
-      return 'Invalid Date';
+      return `Invalid Date: ${error}`;
     }
   };
 

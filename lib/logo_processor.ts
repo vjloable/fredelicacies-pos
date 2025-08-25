@@ -103,7 +103,7 @@ export class LogoProcessor {
     this.ctx.drawImage(img, 0, 0, width, optimizedHeight);
     
     const imageData = this.ctx.getImageData(0, 0, width, optimizedHeight);
-    return this.convertToBitmapFast(imageData, threshold, lineSkip);
+    return this.convertToBitmapFast(imageData, threshold);
   }
 
   private loadImage(url: string): Promise<HTMLImageElement> {
@@ -183,7 +183,7 @@ export class LogoProcessor {
     ]);
   }
 
-  private convertToBitmapFast(imageData: ImageData, threshold: number, lineSkip: number): Uint8Array {
+  private convertToBitmapFast(imageData: ImageData, threshold: number): Uint8Array {
     const { width, height, data } = imageData;
     const bitmapWidth = Math.ceil(width / 8) * 8;
     const bitmapData: number[] = [];

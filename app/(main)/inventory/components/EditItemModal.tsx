@@ -23,7 +23,6 @@ export default function EditItemModal({
   isOpen,
   editingItem,
   categories,
-  items,
   onClose,
   onError
 }: EditItemModalProps) {

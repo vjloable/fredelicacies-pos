@@ -373,8 +373,8 @@ export default function SettingsScreen() {
                       <h4 className="font-medium text-[var(--secondary)] mb-2 text-sm">How to use:</h4>
                       <ul className="text-xs text-[var(--secondary)] opacity-70 space-y-1">
                         <li>• Put your thermal printer in pairing mode</li>
-                        <li>• Click "Connect Printer" and select your device</li>
-                        <li>• Use "Test Print" to verify the connection</li>
+                        <li>• Click {"Connect Printer"} and select your device</li>
+                        <li>• Use {"Test Print"} to verify the connection</li>
                         <li>• Once connected, receipts will auto-print on order confirmation</li>
                         <li>• Connection persists until manually disconnected</li>
                       </ul>
