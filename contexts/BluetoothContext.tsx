@@ -59,6 +59,7 @@ interface BluetoothContextType {
   connectToBluetoothPrinter: () => Promise<void>;
   disconnectPrinter: () => void;
   testPrint: () => Promise<void>;
+  printReceipt: (receiptData: Uint8Array) => Promise<boolean>;
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined);
@@ -309,6 +310,72 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }
     }
   };
 
+  const printReceipt = async (receiptData: Uint8Array): Promise<boolean> => {
+    if (!bluetoothDevice) {
+      console.error('No printer connected');
+      return false;
+    }
+
+    try {
+      console.log('Connecting to printer for receipt...');
+      const server = await bluetoothDevice.gatt!.connect();
+      
+      console.log('Getting services...');
+      const services = await server.getPrimaryServices();
+      
+      let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
+      
+      for (const service of services) {
+        try {
+          const characteristics = await service.getCharacteristics();
+          
+          const writableChar = characteristics.find(c => 
+            c.properties.write || c.properties.writeWithoutResponse
+          );
+          
+          if (writableChar) {
+            characteristic = writableChar;
+            console.log('Found writable characteristic for receipt:', writableChar.uuid);
+            break;
+          }
+        } catch (error) {
+          console.log(`Error getting characteristics for service ${service.uuid}:`, error);
+        }
+      }
+      
+      if (!characteristic) {
+        console.error('No writable characteristic found for receipt');
+        return false;
+      }
+      
+      console.log('Printing receipt...');
+      const chunkSize = 20;
+      for (let i = 0; i < receiptData.length; i += chunkSize) {
+        const chunk = receiptData.slice(i, i + chunkSize);
+        
+        try {
+          if (characteristic.properties.writeWithoutResponse) {
+            await characteristic.writeValueWithoutResponse(chunk);
+          } else {
+            await characteristic.writeValue(chunk);
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } catch (writeError: any) {
+          console.error('Write error during receipt print:', writeError);
+          return false;
+        }
+      }
+      
+      console.log('Receipt sent successfully!');
+      return true;
+      
+    } catch (error: any) {
+      console.error('Receipt print error:', error);
+      return false;
+    }
+  };
+
   // Auto-reconnect on context initialization
   useEffect(() => {
     tryAutoReconnect();
@@ -321,7 +388,8 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }
     isAutoReconnecting,
     connectToBluetoothPrinter,
     disconnectPrinter,
-    testPrint
+    testPrint,
+    printReceipt
   };
 
   return (

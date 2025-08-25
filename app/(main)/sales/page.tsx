@@ -306,10 +306,21 @@ export default function SalesScreen() {
                         </td>
                         <td className="px-6 py-1 text-sm text-[var(--secondary)]">
                           <div className="max-w-xs">
-                            <div className="truncate flex-wrap">
+                            <div className="truncate flex-wrap space-y-1">
                                 {order.items && order.items.length > 0 ? (
-                                  order.items.length > 2 
-                                    ? `${order.items.slice(0, 2).map(item => `${item.name || 'Unknown'} x${item.quantity || 0}`).join(', ')} +${order.items.length - 2} more`
+                                  order.items.length > 3 
+                                    // ? `${order.items.slice(0, 3).map(item => `${item.name || 'Unknown'} x${item.quantity || 0}`).join(', ')} `
+                                    ? <> {order.items.slice(0, 2).map(
+                                      item => { 
+                                        return <div className='flex-row items-center inline-flex text-[12px] mr-1 gap-1 border-1 border-[var(--secondary)]/20 p-1 px-2 rounded-full' key={item.id}>
+                                            {`${item.name || 'Unknown'}`} 
+                                            <div className='size-5 bg-[var(--secondary)]/20 rounded-full text-center text-[10px] p-1'>
+                                              {`${item.quantity || 0}`}
+                                            </div>
+                                          </div>
+                                      })}
+                                      <div className='flex items-center justify-center h-[25px] w-15 bg-[var(--accent)]/50 rounded-full text-center text-[10px] p-1'>{`+${order.items.length - 2} more`}</div>
+                                      </>
                                     : order.items.map(
                                       item => { 
                                         return <div className='flex-row items-center inline-flex text-[12px] mr-1 gap-1 border-1 border-[var(--secondary)]/20 p-1 px-2 rounded-full' key={item.id}>

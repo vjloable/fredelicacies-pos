@@ -292,7 +292,7 @@ export default function SettingsScreen() {
                   {/* Bluetooth Printer Section */}
                   <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
                     <h3 className="text-lg font-semibold text-[var(--secondary)] mb-4 flex items-center gap-2">
-                      🖨️ Bluetooth
+                      Bluetooth
                     </h3>
                     
                     <p className="text-sm text-[var(--secondary)] opacity-70 mb-4">
@@ -333,7 +333,7 @@ export default function SettingsScreen() {
                           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                             isConnecting || isAutoReconnecting
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg'
+                              : 'bg-[var(--accent)] hover:bg-[var(--secondary]/80 text-white hover:shadow-lg'
                           }`}
                         >
                           {isConnecting ? (
@@ -347,22 +347,22 @@ export default function SettingsScreen() {
                               Auto-reconnecting...
                             </div>
                           ) : (
-                            '🔗 Connect Printer'
+                            'Connect Printer'
                           )}
                         </button>
                       ) : (
                         <>
                           <button
                             onClick={testPrint}
-                            className="w-full py-2 px-4 rounded-lg font-medium bg-green-500 hover:bg-green-600 text-white hover:shadow-lg transition-all"
+                            className="w-full py-2 px-4 rounded-lg font-medium bg-[var(--success)] hover:bg-[var(--success)]/50 text-[var(--secondary)] hover:shadow-lg transition-all"
                           >
-                            🧾 Test Print
+                            Test Print
                           </button>
                           <button
                             onClick={disconnectPrinter}
-                            className="w-full py-2 px-4 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white hover:shadow-lg transition-all"
+                            className="w-full py-2 px-4 rounded-lg font-medium bg-[var(--error)] hover:bg-[var(--error)]/50 text-[var(--primary)] hover:shadow-lg transition-all"
                           >
-                            ❌ Disconnect
+                            Disconnect
                           </button>
                         </>
                       )}

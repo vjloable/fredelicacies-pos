@@ -21,7 +21,10 @@ import { Discount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
-import { formatCurrency } from "@/lib/formatters";
+
+import { formatCurrency } from "@/lib/currency_formatter";
+import { formatReceiptWithLogo, ReceiptOrderData } from "@/lib/esc_formatter";
+import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
 
 // Toast notification component
@@ -78,6 +81,7 @@ const SuccessToast = ({
 
 export default function StoreScreen() {
     const { user } = useAuth(); // Get current authenticated user
+    const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
     const [searchQuery, setSearchQuery] = useState("");
@@ -254,27 +258,22 @@ export default function StoreScreen() {
         return Math.max(0, originalStock - reservedQuantity);
     };
 
-    // Function to add item to cart
     const addToCart = (item: InventoryItem) => {
         const availableStock = getAvailableStock(item.id || '0');
         
-        if (availableStock <= 0) return; // Don't add if no available stock
+        if (availableStock <= 0) return;
         
         const itemId = item.id || '0';
         const existingItem = cart.find(cartItem => cartItem.id === itemId);
-
-        console.log(`Adding item ${item} to cart`);
         
         if (existingItem) {
-            // Update quantity if item already in cart and stock allows
             setCart(cart.map(cartItem => 
                 cartItem.id === itemId 
                     ? { ...cartItem, quantity: cartItem.quantity + 1 }
                     : cartItem
             ));
         } else {
-            // Add new item to cart
-            console.log(`Adding item ${item} to cart`);
+            
             setCart([...cart, {
                 id: itemId,
                 name: item.name,
@@ -356,7 +355,6 @@ export default function StoreScreen() {
     // Function to confirm and actually place the order
     const confirmPlaceOrder = async () => {
         if (cart.length === 0 || isPlacingOrder || !user) return;
-        
         setIsPlacingOrder(true);
         try {
             // Create order using the new service signature
@@ -379,20 +377,53 @@ export default function StoreScreen() {
                 discountAmount,
                 appliedDiscount?.discount_code || ''
             );
-            
-            console.log('Order created successfully:', orderId);
-            
+
+            // Prepare receipt data for printing
+            const receiptData = {
+                orderId,
+                date: new Date(),
+                items: cart.map(item => ({
+                    name: item.name,
+                    qty: item.quantity,
+                    price: item.price,
+                    total: item.price * item.quantity
+                })),
+                subtotal,
+                discount: discountAmount,
+                appliedDiscountCode: appliedDiscount?.discount_code || '',
+                total,
+                payment: total, // You may want to prompt for payment amount if needed
+                change: 0, // You may want to calculate change if payment > total
+                cashier: user.uid,
+                storeName: 'FOODMOOD POS',
+                
+            };
+
+            // Print receipt via Bluetooth printer using context
+            try {
+                const receiptBytes = await formatReceiptWithLogo(receiptData);
+                const printSuccess = await printReceipt(receiptBytes);
+                
+                if (printSuccess) {
+                    console.log('Receipt printed successfully with logo!');
+                } else {
+                    console.log('Receipt printing failed - check printer connection in Settings');
+                }
+            } catch (printErr) {
+                console.error('Failed to print receipt:', printErr);
+            }
+
             // Show success toast
             setSuccessOrderId(orderId);
             setShowSuccessToast(true);
-            
+
             // Clear the cart after successful order
             clearCart();
             setDiscountCode('');
             setDiscountAmount(0);
             setAppliedDiscount(null);
             setShowOrderConfirmation(false);
-            
+
         } catch (error) {
             console.error('Error placing order:', error);
             alert('Failed to place order. Please try again.');
@@ -540,7 +571,6 @@ export default function StoreScreen() {
                                 const cartItem = cart.find(cartItem => cartItem.id === item.id);
                                 const inCartQuantity = cartItem ? cartItem.quantity : 0;
                                 
-                                console.log(item.id, 'Available stock:', availableStock, 'In cart:', inCartQuantity, '1');
                                 return (
                                     <div
                                         key={item.id || index}
@@ -647,16 +677,17 @@ export default function StoreScreen() {
                     </div>
 
                     <div className="h-16 p-3 border-b-2 border-[var(--accent)]">
-                        <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3 pb-1">
+                        <div className="flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3">
                             <DropdownField
                                 options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
                                 defaultValue="TAKE OUT"
                                 dropdownPosition="bottom-right"
                                 dropdownOffset={{ top: 2, right: 0 }}
                                 onChange={(value) => setOrderType(value as 'DINE-IN' | 'TAKE OUT' | 'DELIVERY')}
-                                roundness={"[12px]"}
-                                height={20}
+                                roundness={"full"}
+                                height={42}
                                 valueAlignment={'left'}
+                                padding=""
                                 shadow={false}
                             />
                         </div>
@@ -954,20 +985,20 @@ export default function StoreScreen() {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setShowOrderConfirmation(false)}
-                                    className="flex-1 px-4 py-3 text-[var(--secondary)]/50 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-bold"
+                                    className="flex-1 px-4 py-3 text-sm text-[var(--secondary)]/80 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
                                 >
                                     CANCEL
                                 </button>
                                 <button
                                     onClick={confirmPlaceOrder}
                                     disabled={isPlacingOrder}
-                                    className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
+                                    className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
                                         isPlacingOrder
-                                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                            : 'bg-[var(--accent)] text-[var(--secondary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md'
+                                            ? 'bg-[var(--secondary)]/50 text-[var(--primary)] cursor-not-allowed'
+                                            : 'bg-[var(--accent)] text-shadow-md text-[var(--primary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md'
                                     }`}
                                 >
-                                    {isPlacingOrder ? 'PROCESSING...' : 'CONFIRM ORDER'}
+                                    {isPlacingOrder ? 'PROCESSING...' : 'CONFIRM'}
                                 </button>
                             </div>
                         </div>

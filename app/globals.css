@@ -7,8 +7,8 @@
   --accent: #FBD508;
   --light-accent: #FFF6C8;
   --foreground: #60604A;
-  --error: #FF5F37;
-  --success: #90EE15;
+  --error: #FF7373;
+  --success: #76CC62;
 }
 
 @theme inline {
@@ -28,8 +28,8 @@
     --accent: #FBD508;
     --light-accent: #FFF6C8;
     --foreground: #60604A;
-    --error: #FF5F37;
-    --success: #90EE15;
+    --error: #FF7373;
+    --success: #76CC62;
   }
 }
 

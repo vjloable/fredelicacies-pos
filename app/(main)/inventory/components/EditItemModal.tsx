@@ -135,8 +135,8 @@ export default function EditItemModal({
         {loading ? (
           /* Loading Screen */
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-blue-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="w-12 h-12 bg-transparent rounded-xl mx-auto mb-4 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-dashed border-[var(--accent)]"></div>
             </div>
             <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
               {showDeleteConfirm ? 'Removing Item...' : 'Updating Item...'}
@@ -482,8 +482,8 @@ export default function EditItemModal({
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
               <div className="text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-[var(--error)]/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[var(--error)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </div>
@@ -495,14 +495,14 @@ export default function EditItemModal({
                 </p>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 px-4 py-3 text-sm text-[var(--secondary)]/80 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
                   >
-                    Cancel
+                      CANCEL
                   </button>
                   <button
                     onClick={() => handleDeleteItem(localEditingItem.id)}
-                    className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-3 bg-[var(--error)] hover:bg-[var(--error)]/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
                   >
                     Remove
                   </button>

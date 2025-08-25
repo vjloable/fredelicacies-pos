@@ -14,7 +14,7 @@ import EditIcon from './icons/EditIcon';
 import DeleteIcon from './icons/DeleteIcon';
 import PlusIcon from '@/components/icons/PlusIcon';
 import { Timestamp } from 'firebase/firestore';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/currency_formatter';
 import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
 
 export default function DiscountsScreen() {

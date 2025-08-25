@@ -5,7 +5,7 @@ import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
 import { InventoryItem, createInventoryItem } from '@/services/inventoryService';
 import { Category } from '@/services/categoryService';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/currency_formatter';
 import PlusIcon from '@/components/icons/PlusIcon';
 import DropdownField from '@/components/DropdownField';
 
