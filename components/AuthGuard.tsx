@@ -1,41 +1,137 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AuthGuardProps {
-  children: React.ReactNode;
+	children: React.ReactNode;
+	requiredRole?: "manager" | "worker";
+	requiredBranch?: string;
+	adminOnly?: boolean;
 }
 
-export default function AuthGuard({ children }: AuthGuardProps) {
-  const { loading, isAuthenticated } = useAuth();
-  const router = useRouter();
+export default function AuthGuard({
+	children,
+	requiredRole,
+	requiredBranch,
+	adminOnly,
+}: AuthGuardProps) {
+	const {
+		loading,
+		isAuthenticated,
+		user,
+		isUserAdmin,
+		getUserRoleForBranch,
+		canAccessBranch,
+	} = useAuth();
+	const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [loading, isAuthenticated, router]);
+	useEffect(() => {
+		if (!loading && !isAuthenticated) {
+			router.push("/login");
+			return;
+		}
 
-  // Show loading spinner while checking authentication
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-[var(--background)]">
-        <div className="text-center flex flex-col items-center justify-center">
-          <LoadingSpinner />
-          <p className="text-[var(--secondary)] mt-4">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
+		if (!loading && isAuthenticated && user) {
+			// Check admin-only access
+			if (adminOnly && !isUserAdmin()) {
+				router.push("/");
+				return;
+			}
 
-  // If not authenticated, don't render children (redirect will happen)
-  if (!isAuthenticated) {
-    return null;
-  }
+			// Check branch access
+			if (requiredBranch && !canAccessBranch(requiredBranch)) {
+				router.push("/"); // Redirect if user can't access the branch
+				return;
+			}
 
-  // User is authenticated, render the protected content
-  return <>{children}</>;
+			// Check role requirements
+			if (requiredRole && requiredBranch) {
+				const userRole = getUserRoleForBranch(requiredBranch);
+				if (
+					!userRole ||
+					(requiredRole === "manager" && userRole !== "manager")
+				) {
+					router.push("/"); // Redirect if user doesn't have required role
+					return;
+				}
+			}
+		}
+	}, [
+		loading,
+		isAuthenticated,
+		user,
+		adminOnly,
+		requiredBranch,
+		requiredRole,
+		router,
+		isUserAdmin,
+		canAccessBranch,
+		getUserRoleForBranch,
+	]);
+	// Show loading spinner while checking authentication
+	if (loading) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='text-center flex flex-col items-center justify-center'>
+					<LoadingSpinner />
+					<p className='text-[var(--secondary)] mt-4'>
+						Checking authentication...
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// If not authenticated, don't render children (redirect will happen)
+	if (!isAuthenticated || !user) {
+		return null;
+	}
+
+	// Check admin-only access after authentication
+	if (adminOnly && !isUserAdmin()) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='text-center'>
+					<p className='text-[var(--secondary)]'>
+						Access denied. Admin privileges required.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Check branch access
+	if (requiredBranch && !canAccessBranch(requiredBranch)) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='text-center'>
+					<p className='text-[var(--secondary)]'>
+						Access denied. You don't have access to this branch.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Check role requirements
+	if (requiredRole && requiredBranch) {
+		const userRole = getUserRoleForBranch(requiredBranch);
+		if (!userRole || (requiredRole === "manager" && userRole !== "manager")) {
+			return (
+				<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+					<div className='text-center'>
+						<p className='text-[var(--secondary)]'>
+							Access denied. {requiredRole} role required for this branch.
+						</p>
+					</div>
+				</div>
+			);
+		}
+	}
+
+	// User is authenticated and authorized, render the protected content
+	return <>{children}</>;
 }

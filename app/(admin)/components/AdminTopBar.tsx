@@ -5,7 +5,7 @@ import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
 import RefreshIcon from "@/components/icons/RefreshIcon";
-import { useDrawer } from "@/components/Drawer";
+import { useAdminDrawer } from "@/components/AdminDrawerProvider";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -17,7 +17,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({ title, icon }: TopBarProps) {
-	const { toggle: toggleDrawer } = useDrawer();
+	const { toggle: toggleDrawer } = useAdminDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
 	const { user } = useAuth();
 	const [isRefreshing, setIsRefreshing] = useState(false);
