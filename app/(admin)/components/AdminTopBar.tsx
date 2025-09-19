@@ -5,7 +5,7 @@ import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
 import RefreshIcon from "@/components/icons/RefreshIcon";
-import { useAdminDrawer } from "@/components/AdminDrawerProvider";
+import { useAdminDrawer } from "./AdminDrawerProvider";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";

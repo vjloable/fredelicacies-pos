@@ -1,9 +1,8 @@
 "use client";
-
-import AdminDrawerProvider from "@/components/AdminDrawerProvider";
+import AdminDrawerProvider from "./components/AdminDrawerProvider";
 import AuthGuard from "@/components/AuthGuard";
 import { BluetoothProvider } from "@/contexts/BluetoothContext";
-import AdminSidebar from "@/components/AdminSidebar";
+import AdminSidebar from "./components/AdminSidebar";
 import Drawer from "@/components/Drawer";
 import { useAuth } from "@/contexts/AuthContext";
 
