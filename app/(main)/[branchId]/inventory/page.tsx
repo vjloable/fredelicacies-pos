@@ -16,8 +16,9 @@ import {
 	getCategoryColor,
 	deleteCategory,
 } from "@/services/categoryService";
+import { useBranch } from "@/contexts/BranchContext";
 import EditIcon from "../store/icons/EditIcon";
-import PlusIcon from "../../../components/icons/PlusIcon";
+import PlusIcon from "../../../../components/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import EmptyInventory from "./illustrations/EmptyInventory";
@@ -28,6 +29,7 @@ interface Item extends InventoryItem {
 }
 
 export default function InventoryScreen() {
+	const { currentBranch } = useBranch(); // Get current branch context
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [items, setItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -78,17 +80,17 @@ export default function InventoryScreen() {
 
 	// Set up real-time subscription to inventory items
 	useEffect(() => {
-		if (!isClient) return;
+		if (!isClient || !currentBranch) return;
 		
 		setLoading(true);
 		setError(null);
 		console.log('Setting up inventory subscription in inventory page...');
 
-		const unsubscribe = subscribeToInventoryItems((firestoreItems) => {
+		const unsubscribe = subscribeToInventoryItems(currentBranch.id, (firestoreItems: InventoryItem[]) => {
 			console.log('Inventory items received in inventory page:', firestoreItems.length, 'items');
 			
 			// Convert Firestore items to local Item type
-			const localItems: Item[] = firestoreItems.map((item) => ({
+			const localItems: Item[] = firestoreItems.map((item: InventoryItem) => ({
 				...item,
 				id: item.id!, // We know id exists from Firestore
 			}));
@@ -109,7 +111,7 @@ export default function InventoryScreen() {
 				unsubscribe();
 			}
 		};
-	}, [isClient]);
+	}, [isClient, currentBranch]);
 
 	const openEditModal = (item: Item) => {
 		setEditingItem({ ...item });

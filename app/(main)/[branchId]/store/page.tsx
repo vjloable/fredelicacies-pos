@@ -11,12 +11,13 @@ import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { Category } from "@/services/categoryService";
 import EmptyOrderIllustration from "./illustrations/EmptyOrder";
 import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
-import DiscountDropdown from "@/app/(main)/store/components/DiscountDropdown";
+import DiscountDropdown from "./components/DiscountDropdown";
 import { Discount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
@@ -81,6 +82,7 @@ const SuccessToast = ({
 
 export default function StoreScreen() {
     const { user } = useAuth(); // Get current authenticated user
+    const { currentBranch } = useBranch(); // Get current branch context
     const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
@@ -116,11 +118,12 @@ export default function StoreScreen() {
 
     // Set up real-time subscription to inventory items using singleton dataStore
     useEffect(() => {
-        if (!isClient) return;
+        if (!isClient || !currentBranch) return;
         
         setLoading(true);
         
         const unsubscribe = subscribeToInventoryItems(
+            currentBranch.id,
             (items) => {
                 setInventoryItems(items);
                 setLoading(false);
@@ -138,7 +141,7 @@ export default function StoreScreen() {
                 unsubscribe();
             }
         };
-    }, [isClient]);
+    }, [isClient, currentBranch]);
 
     // Set up real-time subscription to categories using singleton dataStore
     useEffect(() => {
@@ -354,7 +357,7 @@ export default function StoreScreen() {
 
     // Function to confirm and actually place the order
     const confirmPlaceOrder = async () => {
-        if (cart.length === 0 || isPlacingOrder || !user) return;
+        if (cart.length === 0 || isPlacingOrder || !user || !currentBranch) return;
         setIsPlacingOrder(true);
         try {
             // Create order using the new service signature
@@ -375,7 +378,8 @@ export default function StoreScreen() {
                 user.uid,
                 orderType,
                 discountAmount,
-                appliedDiscount?.discount_code || ''
+                appliedDiscount?.discount_code || '',
+                currentBranch.id // Add branchId parameter
             );
 
             // Prepare receipt data for printing

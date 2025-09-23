@@ -7,6 +7,7 @@ import { subscribeToDiscounts } from '@/stores/dataStore';
 import { subscribeToCategories } from '@/stores/dataStore';
 import { Category } from '@/services/categoryService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBranch } from '@/contexts/BranchContext';
 import DiscountModal from './components/DiscountModal';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 import EmptyDiscounts from './illustrations/EmptyDiscounts';
@@ -19,6 +20,7 @@ import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
 
 export default function DiscountsScreen() {
   const { user, isAuthenticated } = useAuth();
+  const { currentBranch, loading: isBranchLoading } = useBranch();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +42,14 @@ export default function DiscountsScreen() {
 
   // Subscribe to data changes
   useEffect(() => {
-    const unsubscribeDiscounts = subscribeToDiscounts((discounts) => {
+    if (!currentBranch?.id) return;
+
+    const unsubscribeDiscounts = subscribeToDiscounts(currentBranch.id, (discounts: Discount[]) => {
       setDiscounts(discounts);
       setLoading(false);
     });
 
-    const unsubscribeCategories = subscribeToCategories((categories) => {
+    const unsubscribeCategories = subscribeToCategories((categories: Category[]) => {
       setCategories(categories);
     });
 
@@ -53,7 +57,7 @@ export default function DiscountsScreen() {
       unsubscribeDiscounts();
       unsubscribeCategories();
     };
-  }, []);
+  }, [currentBranch?.id]);
 
   const handleCreateDiscount = () => {
     setEditingDiscount(null);

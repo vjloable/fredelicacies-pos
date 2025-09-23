@@ -15,6 +15,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { subscribeToOrders } from "@/stores/dataStore";
 import { Order } from "@/services/orderService";
 import { formatCurrency } from "@/services/salesService";
+import { useBranch } from "@/contexts/BranchContext";
 import SearchIcon from "../store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 
@@ -29,6 +30,7 @@ interface TimeSeriesData {
 type ViewPeriod = "day" | "week" | "month";
 
 export default function SalesScreen() {
+	const { currentBranch } = useBranch(); // Get current branch context
 	const [viewPeriod, setViewPeriod] = useState<ViewPeriod>("day");
 	const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
 	const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -47,9 +49,11 @@ export default function SalesScreen() {
 
 	// Subscribe to orders using singleton listener
 	useEffect(() => {
+		if (!currentBranch) return;
+
 		console.log("🔗 Setting up orders subscription for sales screen");
 
-		const unsubscribe = subscribeToOrders((orders) => {
+		const unsubscribe = subscribeToOrders(currentBranch.id, (orders: Order[]) => {
 			console.log("📄 Received orders update in sales screen:", orders.length);
 			setAllOrders(orders);
 			setLoading(false);
@@ -59,7 +63,7 @@ export default function SalesScreen() {
 			console.log("🔌 Cleaning up orders subscription in sales screen");
 			unsubscribe();
 		};
-	}, []);
+	}, [currentBranch]);
 
 	// Get date ranges based on view period
 	const getDateRange = (period: ViewPeriod) => {

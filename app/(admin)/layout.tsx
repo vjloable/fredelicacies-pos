@@ -2,6 +2,7 @@
 import AdminDrawerProvider from "./components/AdminDrawerProvider";
 import AuthGuard from "@/components/AuthGuard";
 import { BluetoothProvider } from "@/contexts/BluetoothContext";
+import { BranchProvider } from "@/contexts/BranchContext";
 import AdminSidebar from "./components/AdminSidebar";
 import Drawer from "@/components/Drawer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +16,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 		<AuthGuard adminOnly>
 			<AdminDrawerProvider>
 				<BluetoothProvider>
-					<LayoutChooser>{children}</LayoutChooser>
+					<BranchProvider>
+						<LayoutChooser>{children}</LayoutChooser>
+					</BranchProvider>
 				</BluetoothProvider>
 			</AdminDrawerProvider>
 		</AuthGuard>

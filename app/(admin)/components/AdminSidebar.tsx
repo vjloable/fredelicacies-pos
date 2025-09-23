@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
-import LogoIcon from "@/app/(main)/store/icons/LogoIcon";
+import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
 import { useAdminDrawer } from "./AdminDrawerProvider";
 
 export default function AdminSidebar() {

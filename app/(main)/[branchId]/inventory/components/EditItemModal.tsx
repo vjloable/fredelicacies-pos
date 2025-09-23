@@ -5,6 +5,7 @@ import ImageUpload from '@/components/ImageUpload';
 import { InventoryItem, updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
 import { Category } from '@/services/categoryService';
 import DropdownField from '@/components/DropdownField';
+import { useBranch } from '@/contexts/BranchContext';
 
 interface Item extends InventoryItem {
   id: string;
@@ -26,6 +27,7 @@ export default function EditItemModal({
   onClose,
   onError
 }: EditItemModalProps) {
+  const { currentBranch } = useBranch();
   const [loading, setLoading] = useState(false);
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -92,7 +94,7 @@ export default function EditItemModal({
         imgUrl: localEditingItem.imgUrl
       };
       
-      await updateInventoryItem(localEditingItem.id, updates);
+      await updateInventoryItem(currentBranch!.id, localEditingItem.id, updates);
       
       onClose();
     } catch (error) {
@@ -106,7 +108,7 @@ export default function EditItemModal({
   const handleDeleteItem = async (itemId: string) => {
     setLoading(true);
     try {
-      await deleteInventoryItem(itemId);
+      await deleteInventoryItem(currentBranch!.id, itemId);
       setShowDeleteConfirm(false); // Reset delete confirmation first
       onClose(); // Then close the modal
     } catch (error) {

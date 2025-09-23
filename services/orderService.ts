@@ -29,6 +29,7 @@ export interface Order {
   uniqueItemCount: number;
   workerName: string;
   workerUid: string;
+  branchId: string; // Add branchId to orders
 }
 
 export const createOrder = async (
@@ -39,7 +40,8 @@ export const createOrder = async (
   workerUid: string,
   orderType: 'DINE-IN' | 'TAKE OUT' | 'DELIVERY' = 'TAKE OUT',
   discountAmount: number = 0,
-  discountCode: string = ''
+  discountCode: string = '',
+  branchId: string // Add branchId parameter
 ): Promise<string> => {
   try {
     const now = new Date();
@@ -75,7 +77,8 @@ export const createOrder = async (
       workerUid,
       discountCode,
       itemCount: orderItems.reduce((sum, item) => sum + item.quantity, 0),
-      uniqueItemCount: orderItems.length
+      uniqueItemCount: orderItems.length,
+      branchId // Add branchId to the order
     };
 
     // Save order to Firestore
@@ -87,7 +90,7 @@ export const createOrder = async (
       stock: -item.quantity // Negative to reduce stock
     }));
     
-    await bulkUpdateStock(stockUpdates);
+    await bulkUpdateStock(branchId, stockUpdates);
 
     return orderRef.id;
   } catch (error) {

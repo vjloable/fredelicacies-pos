@@ -6,14 +6,17 @@ import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { useState } from "react";
 import SettingsIcon from "./icons/SidebarNav/SettingsIcon";
 import LogoutIcon from "./icons/SidebarNav/LogoutIcon";
-import LogoIcon from "@/app/(main)/store/icons/LogoIcon";
+import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
 import DiscountsIcon from "./icons/SidebarNav/DiscountsIcon";
+import BranchSelector from "./BranchSelector";
 
 export default function SidebarNav() {
     const { logout } = useAuth();
+    const { currentBranch } = useBranch();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
 
@@ -21,32 +24,32 @@ export default function SidebarNav() {
     
     const navItems = [
         {
-            href: "/store",
+            href: "store",
             label: "Store",
             icon: HomeIcon,
         },
         {
-            href: "/inventory", 
+            href: "inventory", 
             label: "Inventory",
             icon: InventoryIcon,
         },
         {
-            href: "/sales",
+            href: "sales",
             label: "Sales",
             icon: SalesIcon,
         },
         {
-            href: "/discounts",
+            href: "discounts",
             label: "Discounts",
             icon: DiscountsIcon,
         },
         {
-            href: "/logs",
-            label: "Logs",
+            href: "logs",
+            label: "Logs",  
             icon: LogsIcon,
         },
         {
-            href: "/settings",
+            href: "settings",
             label: "Settings",
             icon: SettingsIcon,
         },
@@ -67,6 +70,18 @@ export default function SidebarNav() {
         setIsLoggingOut(false);
     }
     };
+
+    // Helper function to get the current branch-aware URL
+    const getBranchAwareHref = (page: string) => {
+        if (!currentBranch) return `/${page}`;
+        return `/${currentBranch.id}/${page}`;
+    };
+
+    // Helper function to check if current route is active
+    const isRouteActive = (page: string) => {
+        if (!currentBranch) return false;
+        return pathname === `/${currentBranch.id}/${page}`;
+    };
     
     return (
         // Sidebar container
@@ -79,17 +94,27 @@ export default function SidebarNav() {
                     <LogoIcon className="visible w-auto lg:invisible lg:w-0 opacity-100 lg:opacity-0 transition-all" />
                 </div>
 
+                {/* Branch Selector - Only visible on large screens */}
+                <div className="hidden lg:block border-b border-gray-200 p-3">
+                    <BranchSelector 
+                        showLabel={false}
+                        redirectOnChange={true}
+                        className="w-full"
+                    />
+                </div>
+
                 {/* Navigation */}
                 <nav className="flex-1 py-[8px]">
                     <ul className="space-y-[8px]">
                     {navItems.map((item) => {
                         const IconComponent = item.icon;
-                        const isActive = pathname === item.href;
+                        const isActive = isRouteActive(item.href);
+                        const href = getBranchAwareHref(item.href);
                         
                         return (
                             <li key={item.href}>
                                 <Link 
-                                    href={item.href}
+                                    href={href}
                                     className={`flex h-10 items-center text-[14px] font-semibold ${
                                         isActive 
                                             ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'

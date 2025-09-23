@@ -13,7 +13,7 @@ export default function RootPage() {
 		if (!loading) {
 			if (isAuthenticated) {
 				// User is authenticated, redirect to store
-				router.push("/store");
+				router.push("1/store");
 			} else {
 				// User is not authenticated, redirect to login
 				router.push("/login");

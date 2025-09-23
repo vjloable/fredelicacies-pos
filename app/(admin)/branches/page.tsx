@@ -1,37 +1,13 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import AdminTopBar from "@/app/(admin)/components/AdminTopBar";
 import BranchCard from "./components/BranchCard";
+import BranchSelector from "@/components/BranchSelector";
+import { useAuth } from "@/contexts/AuthContext";
+import { branchService, Branch } from "@/services/branchService";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-
-const mockBranches = [
-	{
-		branchId: "b1",
-		name: "Downtown",
-		location: "123 Main St",
-		createdAt: new Date("2024-01-10T09:00:00"),
-		updatedAt: new Date("2025-09-01T12:00:00"),
-		isActive: true,
-		image: "/public/icons/home.svg",
-	},
-	{
-		branchId: "b2",
-		name: "Uptown",
-		location: "456 Elm Ave",
-		createdAt: new Date("2024-03-15T10:30:00"),
-		updatedAt: new Date("2025-08-20T15:45:00"),
-		isActive: false,
-		image: "/public/icons/inventory.svg",
-	},
-	{
-		branchId: "b3",
-		name: "Suburb",
-		location: "789 Oak Blvd",
-		createdAt: new Date("2024-06-01T14:00:00"),
-		updatedAt: new Date("2025-09-10T09:20:00"),
-		isActive: true,
-		image: "/public/icons/logs.svg",
-	},
-];
 
 function formatDate(date: Date) {
 	return (
@@ -42,19 +18,152 @@ function formatDate(date: Date) {
 }
 
 export default function BranchesPage() {
+	const { user, isUserAdmin } = useAuth();
+	const router = useRouter();
+	const [branches, setBranches] = useState<Branch[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+
+	// Redirect non-admin users
+	useEffect(() => {
+		if (user && !isUserAdmin()) {
+			// Redirect to user's first assigned branch
+			const assignedBranches = user.roleAssignments;
+			if (assignedBranches.length > 0) {
+				router.push(`/${assignedBranches[0].branchId}/store`);
+			} else {
+				router.push('/login');
+			}
+		}
+	}, [user, isUserAdmin, router]);
+
+	// Load branches data
+	useEffect(() => {
+		const loadBranches = async () => {
+			if (!user || !isUserAdmin()) return;
+
+			try {
+				setLoading(true);
+				setError(null);
+				const branchesData = await branchService.getAllBranches();
+				setBranches(branchesData);
+			} catch (err) {
+				console.error("Error loading branches:", err);
+				setError("Failed to load branches");
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadBranches();
+	}, [user, isUserAdmin]);
+
+	// Don't render for non-admin users (will redirect)
+	if (!user || !isUserAdmin()) {
+		return (
+			<div className="flex items-center justify-center h-full">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+				<span className="ml-3 text-[var(--secondary)]">Redirecting...</span>
+			</div>
+		);
+	}
+
+	const handleBranchClick = (branchId: string) => {
+		// Navigate to the branch's store page
+		router.push(`/${branchId}/store`);
+	};
+
 	return (
 		<div className='flex flex-col h-full'>
 			<AdminTopBar title='Branches' />
-			<div className='p-6'>
-				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-					{mockBranches.map((branch) => (
-						<BranchCard
-							key={branch.branchId}
-							branch={branch}
-							formatDate={formatDate}
-						/>
-					))}
+			
+			{/* Branch Selector for quick navigation */}
+			<div className="px-6 py-4 border-b border-gray-200">
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-lg font-semibold text-[var(--secondary)] mb-1">
+							Branch Management
+						</h2>
+						<p className="text-sm text-[var(--secondary)]/70">
+							Manage all branches and navigate to branch-specific views
+						</p>
+					</div>
+					<BranchSelector 
+						showLabel={true}
+						redirectOnChange={true}
+						className="ml-4"
+					/>
 				</div>
+			</div>
+
+			<div className='p-6'>
+				{loading && (
+					<div className="flex items-center justify-center py-8">
+						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+						<span className="ml-3 text-[var(--secondary)]">Loading branches...</span>
+					</div>
+				)}
+
+				{error && (
+					<div className="bg-[var(--error)]/10 border border-[var(--error)]/40 rounded-lg p-4 mb-4">
+						<div className="flex items-center gap-3">
+							<svg className="w-5 h-5 text-[var(--error)]" fill="currentColor" viewBox="0 0 20 20">
+								<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+							</svg>
+							<span className="text-[var(--error)] font-medium">{error}</span>
+						</div>
+					</div>
+				)}
+
+				{!loading && !error && branches.length === 0 && (
+					<div className="text-center py-12">
+						<div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+							</svg>
+						</div>
+						<h3 className="text-lg font-medium text-[var(--secondary)] mb-2">No Branches Found</h3>
+						<p className="text-[var(--secondary)]/70">No branches have been created yet.</p>
+					</div>
+				)}
+
+				{!loading && !error && branches.length > 0 && (
+					<>
+						<div className="mb-4 flex items-center justify-between">
+							<div>
+								<h3 className="text-lg font-semibold text-[var(--secondary)]">
+									All Branches ({branches.length})
+								</h3>
+								<p className="text-sm text-[var(--secondary)]/70">
+									Click on a branch to navigate to its management interface
+								</p>
+							</div>
+						</div>
+
+						<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+							{branches.map((branch) => (
+								<div 
+									key={branch.id}
+									onClick={() => handleBranchClick(branch.id)}
+									className="cursor-pointer hover:scale-105 transition-transform"
+								>
+									<BranchCard
+										branch={{
+											branchId: branch.id,
+											name: branch.name,
+											location: branch.location,
+											createdAt: branch.createdAt.toDate(),
+											updatedAt: branch.updatedAt.toDate(),
+											isActive: branch.isActive,
+											image: "/public/icons/home.svg", // Default image
+										}}
+										formatDate={formatDate}
+									/>
+								</div>
+							))}
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	);
