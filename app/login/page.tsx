@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
@@ -14,8 +14,15 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const router = useRouter();
-	const { login } = useAuth();
+	const { user, login } = useAuth();
+	const branchId = user?.roleAssignments[0]?.branchId || "";
 
+	useEffect( () => {
+		// If user is already logged in, redirect to the main page
+		if (user) {
+			router.push(`/${branchId}/store`);
+		}
+	}, [user, router, branchId])
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -30,7 +37,7 @@ export default function LoginPage() {
 
 		try {
 			await login(credentials.email, credentials.password);
-			router.push("/store");
+			router.push(`/${branchId}/store`);
 		} catch (error) {
 			console.error("Login error:", error);
 
