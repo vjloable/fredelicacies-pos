@@ -7,13 +7,13 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function RootPage() {
 	const router = useRouter();
-	const { loading, isAuthenticated } = useAuth();
-
+	const { user, loading, isAuthenticated } = useAuth();
+	const branchId = user?.roleAssignments[0]?.branchId || "";
 	useEffect(() => {
 		if (!loading) {
 			if (isAuthenticated) {
 				// User is authenticated, redirect to store
-				router.push("1/store");
+				router.push(`/${branchId}/store`);
 			} else {
 				// User is not authenticated, redirect to login
 				router.push("/login");
