@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import { FirebaseError } from "@firebase/util";
+import { b } from "motion/react-client";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -23,6 +24,7 @@ export default function LoginPage() {
 			router.push(`/${branchId}/store`);
 		}
 	}, [user, router, branchId])
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -37,7 +39,11 @@ export default function LoginPage() {
 
 		try {
 			await login(credentials.email, credentials.password);
-			router.push(`/${branchId}/store`);
+			if (branchId || branchId !== "") {
+				router.push(`/${branchId}/store`);
+			} else {
+				setError("No branch assigned to this user.");
+			}
 		} catch (error) {
 			console.error("Login error:", error);
 
