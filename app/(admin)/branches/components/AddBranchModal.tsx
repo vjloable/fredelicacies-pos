@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import PlusIcon from '@/components/icons/PlusIcon';
 import { branchService } from '@/services/branchService';
+import ImageUpload from '@/components/ImageUpload';
 
 interface AddBranchModalProps {
   isOpen: boolean;
@@ -20,7 +21,8 @@ export default function AddBranchModal({
   const [loading, setLoading] = useState(false);
   const [branchData, setBranchData] = useState({
     name: '',
-    location: ''
+    location: '',
+    imgUrl: ''
   });
 
   if (!isOpen) return null;
@@ -45,13 +47,15 @@ export default function AddBranchModal({
       await branchService.createBranch({
         name: branchData.name.trim(),
         location: branchData.location.trim(),
-        isActive: true
+        isActive: true,
+        imgUrl: branchData.imgUrl
       });
 
       // Reset form
       setBranchData({
         name: '',
-        location: ''
+        location: '',
+        imgUrl: ''
       });
       
       onSuccess();
@@ -73,11 +77,11 @@ export default function AddBranchModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={!loading ? onClose : undefined}
     >
       <div 
-        className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
@@ -109,7 +113,7 @@ export default function AddBranchModal({
             </div>
 
             {/* Add Branch Form */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                   Branch Name <span className="text-[var(--error)]">*</span>
@@ -118,7 +122,7 @@ export default function AddBranchModal({
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
@@ -132,14 +136,23 @@ export default function AddBranchModal({
                   type="text"
                   value={branchData.location}
                   onChange={(e) => handleInputChange('location', e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
+                
+                
               </div>
+              <div>
+                  <ImageUpload
+                    currentImageUrl={branchData.imgUrl}
+                    onImageUpload={(imageUrl) => setBranchData({...branchData, imgUrl: imageUrl})}
+                    onImageRemove={() => setBranchData({...branchData, imgUrl: ""})}
+                  />
+                </div>
 
               {/* Preview Section */}
-              {(branchData.name.trim() || branchData.location.trim()) && (
+              {/* {(branchData.name.trim() || branchData.location.trim()) && (
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="text-sm text-[var(--secondary)] opacity-70 mb-2">Preview:</div>
                   <div className="flex items-center gap-4">
@@ -163,21 +176,21 @@ export default function AddBranchModal({
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateBranch}
                 disabled={!branchData.name.trim() || !branchData.location.trim()}
-                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
                   branchData.name.trim() && branchData.location.trim()
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'

@@ -22,6 +22,7 @@ export interface InventoryItem {
   stock: number;
   description: string;
   imgUrl?: string;
+  branchId: string; // Branch ID field within the document
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -34,19 +35,17 @@ export interface Category {
 
 const COLLECTION_NAME = 'inventory';
 
-// Helper function to get branch-specific inventory collection path
-const getBranchInventoryCollection = (branchId: string) => `branches/${branchId}/inventory`;
-
 // Create a new inventory item
-export const createInventoryItem = async (branchId: string, item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createInventoryItem = async (branchId: string, item: Omit<InventoryItem, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
     const itemData = {
       ...item,
+      branchId,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
     
-    const docRef = await addDoc(collection(db, getBranchInventoryCollection(branchId)), itemData);
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), itemData);
     console.log('Inventory item created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
@@ -58,7 +57,11 @@ export const createInventoryItem = async (branchId: string, item: Omit<Inventory
 // Get all inventory items for a branch
 export const getInventoryItems = async (branchId: string): Promise<InventoryItem[]> => {
   try {
-    const q = query(collection(db, getBranchInventoryCollection(branchId)), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, COLLECTION_NAME), 
+      where('branchId', '==', branchId),
+      orderBy('createdAt', 'desc')
+    );
     const querySnapshot = await getDocs(q);
     
     const items: InventoryItem[] = [];
@@ -80,7 +83,11 @@ export const getInventoryItems = async (branchId: string): Promise<InventoryItem
 // Real-time listener for inventory items
 export const subscribeToInventoryItems = (branchId: string, callback: (items: InventoryItem[]) => void) => {
   try {
-    const q = query(collection(db, getBranchInventoryCollection(branchId)), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, COLLECTION_NAME), 
+      where('branchId', '==', branchId),
+      orderBy('createdAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items: InventoryItem[] = [];
@@ -107,9 +114,10 @@ export const subscribeToInventoryItems = (branchId: string, callback: (items: In
 // Update an inventory item
 export const updateInventoryItem = async (branchId: string, id: string, updates: Partial<Omit<InventoryItem, 'id' | 'createdAt'>>): Promise<void> => {
   try {
-    const itemRef = doc(db, getBranchInventoryCollection(branchId), id);
+    const itemRef = doc(db, COLLECTION_NAME, id);
     const updateData = {
       ...updates,
+      branchId, // Ensure branchId is maintained
       updatedAt: Timestamp.now()
     };
     
@@ -124,7 +132,7 @@ export const updateInventoryItem = async (branchId: string, id: string, updates:
 // Delete an inventory item
 export const deleteInventoryItem = async (branchId: string, id: string): Promise<void> => {
   try {
-    const itemRef = doc(db, getBranchInventoryCollection(branchId), id);
+    const itemRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(itemRef);
     console.log('Inventory item deleted:', id);
   } catch (error) {
@@ -218,51 +226,6 @@ export const getLowStockItems = async (branchId: string, threshold: number = 5):
   }
 };
 
-export const getInventoryByBranch = async (branchId: string): Promise<InventoryItem[]> => {
-  try {
-    const q = query(collection(db, COLLECTION_NAME), where('branchId', '==', branchId), orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as InventoryItem[];
-  } catch (error) {
-    console.error('Error fetching inventory by branch:', error);
-    throw error;
-  }
-};
-
-export const addItemToBranch = async (branchId: string, item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>)  => {
-  try {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      ...item,
-      branchId,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    return docRef.id;
-  } catch (error) {
-    console.error('Error adding item to branch:', error);
-    throw error;
-  }
-};
-
-export const updateItemInBranch = async (branchId: string, itemId: string, updates: Partial<Omit<InventoryItem, 'id' | 'createdAt'>>) => {
-  try {
-    const itemRef = doc(db, COLLECTION_NAME, itemId);
-    const itemData = {
-      ...updates,
-      branchId,
-      updatedAt: Timestamp.now(),
-    };
-
-    await updateDoc(itemRef, itemData);
-    console.log('Inventory item updated in branch:', itemId);
-    return itemId;
-
-  }
-  catch (error) {
-    console.error("Error updating item in branch:", error);
-    throw error;
-  }
-};
+// Note: getInventoryByBranch is now handled by getInventoryItems
+// Note: addItemToBranch is now handled by createInventoryItem  
+// Note: updateItemInBranch is now handled by updateInventoryItem

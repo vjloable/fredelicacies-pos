@@ -290,7 +290,7 @@ export default function BranchesPage() {
                     createdAt: branch.createdAt.toDate(),
                     updatedAt: branch.updatedAt.toDate(),
                     isActive: branch.isActive,
-                    image: "/public/icons/home.svg", // Default image
+                    imgUrl: branch.imgUrl, // Default image
                   }}
                   formatDate={formatDate}
                   onClick={handleBranchClick}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { branchService, Branch } from '@/services/branchService';
+import ImageUpload from '@/components/ImageUpload';
 
 interface EditBranchModalProps {
   isOpen: boolean;
@@ -22,7 +23,8 @@ export default function EditBranchModal({
   const [branchData, setBranchData] = useState({
     name: '',
     location: '',
-    isActive: true
+    isActive: true,
+    imgUrl: ''
   });
 
   // Update form data when branch prop changes
@@ -31,7 +33,8 @@ export default function EditBranchModal({
       setBranchData({
         name: branch.name,
         location: branch.location,
-        isActive: branch.isActive
+        isActive: branch.isActive,
+        imgUrl: branch.imgUrl || ''
       });
     }
   }, [branch]);
@@ -58,7 +61,8 @@ export default function EditBranchModal({
       await branchService.updateBranch(branch.id, {
         name: branchData.name.trim(),
         location: branchData.location.trim(),
-        isActive: branchData.isActive
+        isActive: branchData.isActive,
+        imgUrl: branchData.imgUrl || ''
       });
 
       onSuccess();
@@ -82,15 +86,16 @@ export default function EditBranchModal({
     branchData.name !== branch.name ||
     branchData.location !== branch.location ||
     branchData.isActive !== branch.isActive
+    || branchData.imgUrl !== (branch.imgUrl || '')
   );
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={!loading ? onClose : undefined}
     >
       <div 
-        className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
@@ -124,7 +129,7 @@ export default function EditBranchModal({
             </div>
 
             {/* Edit Branch Form */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                   Branch Name <span className="text-[var(--error)]">*</span>
@@ -133,7 +138,7 @@ export default function EditBranchModal({
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
@@ -147,7 +152,7 @@ export default function EditBranchModal({
                   type="text"
                   value={branchData.location}
                   onChange={(e) => handleInputChange('location', e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
@@ -184,6 +189,13 @@ export default function EditBranchModal({
                   }
                 </p>
               </div>
+              <div>
+                  <ImageUpload
+                    currentImageUrl={branchData.imgUrl}
+                    onImageUpload={(imageUrl) => setBranchData({...branchData, imgUrl: imageUrl})}
+                    onImageRemove={() => setBranchData({...branchData, imgUrl: ""})}
+                  />
+                </div>
 
               {/* Changes indicator */}
               {hasChanges && (
@@ -198,7 +210,7 @@ export default function EditBranchModal({
               )}
 
               {/* Preview Section */}
-              <div className="bg-gray-50 rounded-xl p-4">
+              {/* <div className="bg-gray-50 rounded-xl p-4">
                 <div className="text-sm text-[var(--secondary)] opacity-70 mb-2">Preview:</div>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center flex-shrink-0">
@@ -224,21 +236,21 @@ export default function EditBranchModal({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateBranch}
                 disabled={!branchData.name.trim() || !branchData.location.trim() || !hasChanges}
-                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
                   branchData.name.trim() && branchData.location.trim() && hasChanges
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'

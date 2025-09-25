@@ -20,6 +20,7 @@ export interface Branch {
 	name: string;
 	location: string;
 	isActive: boolean;
+	imgUrl: string;
 	createdAt: Timestamp;
 	updatedAt: Timestamp;
 }
@@ -28,12 +29,14 @@ export interface CreateBranchData {
 	name: string;
 	location: string;
 	isActive?: boolean;
+	imgUrl?: string;
 }
 
 export interface UpdateBranchData {
 	name?: string;
 	location?: string;
 	isActive?: boolean;
+	imgUrl?: string;
 }
 
 export const branchService = {
@@ -120,6 +123,7 @@ export const branchService = {
 				name: branchData.name,
 				location: branchData.location,
 				isActive: branchData.isActive ?? true,
+				imgUrl: branchData.imgUrl || '',
 				createdAt: Timestamp.now(),
 				updatedAt: Timestamp.now(),
 			});

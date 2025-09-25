@@ -79,7 +79,8 @@ export default function AddItemModal({
         categoryId: newItem.categoryId,
         stock: finalStock,
         description: newItem.description,
-        imgUrl: newItem.imgUrl || ''
+        imgUrl: newItem.imgUrl || '',
+        branchId: currentBranch!.id
       };
       
       await createInventoryItem(currentBranch!.id, itemData);

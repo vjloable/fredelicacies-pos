@@ -60,11 +60,11 @@ export default function DeleteConfirmationModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={handleClose}
     >
       <div 
-        className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
@@ -124,13 +124,13 @@ export default function DeleteConfirmationModal({
             </div>
 
             {/* Delete Options */}
-            <div className="space-y-4 mb-6">
-              <div className="text-sm font-medium text-[var(--secondary)] mb-3">
+            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+              <div className="text-sm font-medium text-[var(--secondary)] mb-2 sm:mb-3">
                 Choose deletion type:
               </div>
               
               {/* Soft Delete Option */}
-              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
                   name="deleteOption"
@@ -140,17 +140,17 @@ export default function DeleteConfirmationModal({
                   className="mt-1"
                 />
                 <div className="flex-1">
-                  <div className="font-medium text-[var(--secondary)] mb-1">
+                  <div className="font-medium text-[var(--secondary)] mb-1 text-sm sm:text-base">
                     Deactivate (Recommended)
                   </div>
-                  <div className="text-sm text-[var(--secondary)] opacity-70">
+                  <div className="text-xs sm:text-sm text-[var(--secondary)] opacity-70">
                     Hide branch from users but preserve all data. Can be reactivated later.
                   </div>
                 </div>
               </label>
 
               {/* Hard Delete Option */}
-              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
                   name="deleteOption"
@@ -160,10 +160,10 @@ export default function DeleteConfirmationModal({
                   className="mt-1"
                 />
                 <div className="flex-1">
-                  <div className="font-medium text-red-600 mb-1">
+                  <div className="font-medium text-red-600 mb-1 text-sm sm:text-base">
                     Permanent Delete
                   </div>
-                  <div className="text-sm text-red-600">
+                  <div className="text-xs sm:text-sm text-red-600">
                     Completely remove branch and all associated data. This cannot be undone.
                   </div>
                 </div>
@@ -206,17 +206,17 @@ export default function DeleteConfirmationModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={handleClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={!isConfirmationValid}
-                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
                   isConfirmationValid
                     ? `${deleteOption === 'soft' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'} text-white hover:scale-105 cursor-pointer`
                     : 'bg-gray-200 text-gray-400 hover:scale-100 active:scale-100 cursor-not-allowed'
