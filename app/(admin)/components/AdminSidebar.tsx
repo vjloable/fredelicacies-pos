@@ -1,21 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
 import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
+import LogoutIcon from "@/components/icons/SidebarNav/LogoutIcon";
 import { useAdminDrawer } from "./AdminDrawerProvider";
+import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 export default function AdminSidebar() {
 	const pathname = usePathname();
+	const { logout } = useAuth();
+	const router = useRouter();
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const isBranches =
 		pathname === "/branches" || pathname.startsWith("/branches");
 	const { isOpen } = useAdminDrawer();
 
 	const asideWidthClass = isOpen ? "max-w-[80px] lg:max-w-[260px]" : "max-w-0";
-	const labelClass = isOpen
-		? "max-w-[160px] opacity-100 pr-2 transition-all duration-300 ease-in-out"
-		: "max-w-0 opacity-0 pr-0 overflow-hidden transition-all duration-300 ease-in-out";
+	
+	const handleLogout = async () => {
+		if (isLoggingOut) return;
+		
+		setIsLoggingOut(true);
+		try {
+			await logout();
+			router.push('/login');
+		} catch (error) {
+			console.error('Logout error:', error);
+		} finally {
+			setIsLoggingOut(false);
+		}
+	};
 
 	return (
 		<aside
@@ -37,41 +55,39 @@ export default function AdminSidebar() {
 					/>
 				</div>
 
-				<nav className='flex-1 py-4'>
-					<ul className='space-y-2 px-2'>
+				{/* Navigation */}
+				<nav className="flex-1 py-[8px]">
+					<ul className="space-y-[8px]">
 						<li>
-							<Link
-								href='/branches'
-								className={`flex h-12 items-center rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 ${
-									isBranches
-										? "bg-[var(--accent)] text-[var(--primary)]"
-										: "bg-[var(--primary)] text-[var(--secondary)] hover:bg-[var(--accent)]/50"
-								}`}>
-								<span className='w-full flex items-center gap-3 justify-center lg:justify-start'>
-									<svg
-										className={`w-6 h-6 ${
-											isBranches
-												? "text-[var(--primary)]"
-												: "text-[var(--secondary)]"
-										}`}
-										viewBox='0 0 24 24'
-										fill='none'
-										xmlns='http://www.w3.org/2000/svg'>
-										<path
-											d='M3 13h8V3H3v10zM3 21h8v-6H3v6zM13 21h8V11h-8v10zM13 3v6h8V3h-8z'
-											stroke='currentColor'
-											strokeWidth='1.2'
-											strokeLinecap='round'
-											strokeLinejoin='round'
-										/>
-									</svg>
-
-									<span
-										className={`${labelClass} overflow-hidden whitespace-nowrap`}>
-										Branches
-									</span>
-								</span>
+							<Link 
+								href="/branches"
+								className={`flex h-10 items-center text-[14px] font-semibold ${
+									isBranches 
+										? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'
+										: 'bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]'
+								}`}
+							>
+								<div className="w-full flex items-center justify-center lg:justify-start">
+									<BranchesIcon className={`w-8 h-8 mx-3 gap-3 ${isBranches ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
+									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Branches</span>
+								</div>
 							</Link>
+						</li>
+						<li>
+							<button
+								onClick={handleLogout}
+								disabled={isLoggingOut}
+								className="flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400"
+							>
+								<div className="w-full flex items-center justify-center lg:justify-start transition-all duration-300">
+									<span className="size-8 mx-3">
+										<LogoutIcon className="gap-3 text-[var(--error)]" />
+									</span>
+									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>
+										Logout
+									</span>
+								</div>
+							</button>
 						</li>
 					</ul>
 				</nav>

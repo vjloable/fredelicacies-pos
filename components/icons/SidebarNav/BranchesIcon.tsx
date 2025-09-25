@@ -1,0 +1,14 @@
+// components/icons/SidebarNav/BranchesIcon.tsx
+export default function BranchesIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      width="49" 
+      height="48" 
+      viewBox="0 0 49 48" 
+      fill="currentColor" 
+      className={className}
+    >
+      <path d="M12 8C10.3431 8 9 9.34315 9 11V17C9 18.6569 10.3431 20 12 20H18C19.6569 20 21 18.6569 21 17V11C21 9.34315 19.6569 8 18 8H12ZM31 8C29.3431 8 28 9.34315 28 11V17C28 18.6569 29.3431 20 31 20H37C38.6569 20 40 18.6569 40 17V11C40 9.34315 38.6569 8 37 8H31ZM12 28C10.3431 28 9 29.3431 9 32V38C9 39.6569 10.3431 41 12 41H18C19.6569 41 21 39.6569 21 38V32C21 29.3431 19.6569 28 18 28H12ZM24.5 22V26H26.5V22H24.5ZM24.5 14C24.5 13.1716 23.8284 12.5 23 12.5C22.1716 12.5 21.5 13.1716 21.5 14C21.5 14.8284 22.1716 15.5 23 15.5C23.8284 15.5 24.5 14.8284 24.5 14Z" fill="currentColor"/>
+    </svg>
+  );
+}

@@ -139,12 +139,6 @@ export default function BranchSelector({
           </>
         )}
       </div>
-      
-      {isUserAdmin() && (
-        <span className="text-xs bg-[var(--accent)]/20 text-[var(--accent)] px-2 py-1 rounded font-medium">
-          Admin
-        </span>
-      )}
     </div>
   );
 }

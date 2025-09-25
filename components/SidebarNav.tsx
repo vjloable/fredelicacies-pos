@@ -12,10 +12,11 @@ import SettingsIcon from "./icons/SidebarNav/SettingsIcon";
 import LogoutIcon from "./icons/SidebarNav/LogoutIcon";
 import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
 import DiscountsIcon from "./icons/SidebarNav/DiscountsIcon";
+import BranchesIcon from "./icons/SidebarNav/BranchesIcon";
 import BranchSelector from "./BranchSelector";
 
 export default function SidebarNav() {
-    const { logout } = useAuth();
+    const { logout, isUserAdmin } = useAuth();
     const { currentBranch } = useBranch();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
@@ -54,6 +55,15 @@ export default function SidebarNav() {
             icon: SettingsIcon,
         },
     ];
+
+    // Admin-only navigation items
+    const adminNavItems = [
+        {
+            href: "/branches",
+            label: "Branches",
+            icon: BranchesIcon,
+        },
+    ];
     
 
     
@@ -81,6 +91,11 @@ export default function SidebarNav() {
     const isRouteActive = (page: string) => {
         if (!currentBranch) return false;
         return pathname === `/${currentBranch.id}/${page}`;
+    };
+
+    // Helper function to check if admin route is active
+    const isAdminRouteActive = (page: string) => {
+        return pathname === page;
     };
     
     return (
@@ -115,6 +130,30 @@ export default function SidebarNav() {
                             <li key={item.href}>
                                 <Link 
                                     href={href}
+                                    className={`flex h-10 items-center text-[14px] font-semibold ${
+                                        isActive 
+                                            ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'
+                                            : 'bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]'
+                                    }`}
+                                >
+                                    <div className="w-full flex items-center justify-center lg:justify-start">
+                                        <IconComponent className={`w-8 h-8 mx-3 gap-3 ${isActive ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
+                                        <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300">{item.label}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                        );
+                    })}
+                    
+                    {/* Admin-only navigation items */}
+                    {isUserAdmin() && adminNavItems.map((item) => {
+                        const IconComponent = item.icon;
+                        const isActive = isAdminRouteActive(item.href);
+                        
+                        return (
+                            <li key={item.href}>
+                                <Link 
+                                    href={item.href}
                                     className={`flex h-10 items-center text-[14px] font-semibold ${
                                         isActive 
                                             ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'

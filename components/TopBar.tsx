@@ -19,7 +19,7 @@ interface TopBarProps {
 export default function TopBar({ title, icon }: TopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
-	const { user } = useAuth();
+	const { user, isUserAdmin } = useAuth();
 	const [isRefreshing, setIsRefreshing] = useState(false);
 
 	const handleRefresh = async () => {
@@ -57,6 +57,18 @@ export default function TopBar({ title, icon }: TopBarProps) {
 							<span>{userDisplayName}</span>
 						</div>
 					</div>
+
+					{/* Admin Badge */}
+					{isUserAdmin() && (
+						<div className='flex-shrink-0'>
+							<div className="h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-[12px] lg:text-[14px] ">
+								<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-xs font-bold'>
+									A
+								</span>
+								<span className="text-[var(--secondary)] font-medium">Admin</span>
+							</div>
+						</div>
+					)}
 
 					<div className='flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
 						<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]'>

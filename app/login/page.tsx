@@ -15,15 +15,22 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const router = useRouter();
-	const { user, login } = useAuth();
+	const { user, login, isUserAdmin } = useAuth();
 	const branchId = user?.roleAssignments[0]?.branchId || "";
 
 	useEffect( () => {
-		// If user is already logged in, redirect to the main page
+		// If user is already logged in, redirect based on their role
 		if (user) {
-			router.push(`/${branchId}/store`);
+			
+			if (isUserAdmin()) {
+				setIsLoading(false);
+				router.push('/branches');
+			} else {
+				setIsLoading(false);
+				router.push(`/${branchId}/store`);
+			}
 		}
-	}, [user, router, branchId])
+	}, [user, router, branchId, isUserAdmin])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -39,11 +46,8 @@ export default function LoginPage() {
 
 		try {
 			await login(credentials.email, credentials.password);
-			if (branchId || branchId !== "") {
-				router.push(`/${branchId}/store`);
-			} else {
-				setError("No branch assigned to this user.");
-			}
+			// After successful login, redirect based on user role
+			// Note: The user state will be updated, and the useEffect will handle the redirect
 		} catch (error) {
 			console.error("Login error:", error);
 
@@ -75,8 +79,6 @@ export default function LoginPage() {
 			}
 
 			setError(errorMessage);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 

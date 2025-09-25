@@ -94,6 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		setLoading(true);
 		try {
 			await signInWithEmailAndPassword(auth, email, password);
+			
 		} catch (error) {
 			setLoading(false);
 			throw error;
