@@ -13,6 +13,7 @@ import { branchService, Branch } from "@/services/branchService";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import PlusIcon from "@/components/icons/PlusIcon";
+import { subscribeToBranches } from '@/stores/dataStore';
 
 function formatDate(date: Date) {
   return (
@@ -48,6 +49,7 @@ export default function BranchesPage() {
     }
   }, [user, isUserAdmin, router]);
 
+  
   // Load branches data
   useEffect(() => {
     const loadBranches = async () => {
@@ -68,6 +70,14 @@ export default function BranchesPage() {
 
     loadBranches();
   }, [user, isUserAdmin]);
+
+  useEffect(() => {
+  const unsubscribe = subscribeToBranches((branches) => {
+    setBranches(branches);
+  });
+
+  return unsubscribe; // Cleanup on unmount
+}, []);
 
   // Don't render for non-admin users (will redirect)
   if (!user || !isUserAdmin()) {

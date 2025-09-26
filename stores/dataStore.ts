@@ -12,6 +12,7 @@ import { InventoryItem } from '../services/inventoryService';
 import { Category } from '../services/categoryService';
 import { Order } from '../services/orderService';
 import { Discount } from '../services/discountService';
+import { Branch } from '../services/branchService';
 
 // Event emitter for state changes
 class EventEmitter {
@@ -45,17 +46,20 @@ class DataStore {
   private categories: Category[] = []; // Categories are global
   private orders: { [branchId: string]: Order[] } = {};
   private discounts: { [branchId: string]: Discount[] } = {};
+  private branches: Branch[] = []; // Branches are global (admin only)
   
   // Listener states - now tracked by branch
   private inventoryUnsubscribes: { [branchId: string]: Unsubscribe } = {};
   private categoriesUnsubscribe: Unsubscribe | null = null;
   private ordersUnsubscribes: { [branchId: string]: Unsubscribe } = {};
   private discountsUnsubscribes: { [branchId: string]: Unsubscribe } = {};
+  private branchesUnsubscribe: Unsubscribe | null = null;
   
   private activeInventoryListeners: Set<string> = new Set();
   private isCategoriesListenerActive = false;
   private activeOrdersListeners: Set<string> = new Set();
   private activeDiscountsListeners: Set<string> = new Set();
+  private isBranchesListenerActive = false;
 
   private constructor() {
     // Only initialize global listeners on client side
@@ -110,6 +114,7 @@ class DataStore {
                     categoryId: data.categoryId || '',
                     description: data.description || '',
                     imgUrl: data.imgUrl || null,
+                    branchId: data.branchId || '',
                     createdAt: data.createdAt || Timestamp.now(),
                     updatedAt: data.updatedAt || Timestamp.now()
                   };
@@ -190,6 +195,61 @@ class DataStore {
       console.error('Error starting categories listener:', error);
       this.categories = [];
       this.eventEmitter.emit('categoriesChanged', []);
+    }
+  }
+
+  // Branches (Global - Admin only)
+  private startBranchesListener() {
+    if (this.isBranchesListenerActive) return;
+    
+    try {
+      const q = query(collection(db, 'branches'), orderBy('name', 'asc'));
+      
+      this.branchesUnsubscribe = onSnapshot(q,
+        (querySnapshot) => {
+          console.log('🏢 Branches snapshot received, empty:', querySnapshot.empty, 'size:', querySnapshot.size);
+          
+          const branches: Branch[] = [];
+          
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              try {
+                const data = doc.data();
+                if (data) {
+                  const branch: Branch = {
+                    id: doc.id,
+                    name: data.name || '',
+                    location: data.location || '',
+                    isActive: data.isActive ?? true,
+                    imgUrl: data.imgUrl || '',
+                    createdAt: data.createdAt || Timestamp.now(),
+                    updatedAt: data.updatedAt || Timestamp.now()
+                  };
+                  branches.push(branch);
+                }
+              } catch (docError) {
+                console.error(`Error processing branch doc ${doc.id}:`, docError);
+              }
+            });
+          }
+          
+          this.branches = branches;
+          this.eventEmitter.emit('branchesChanged', branches);
+          console.log(`🏢 Branches updated: ${branches.length} branches`);
+        },
+        (error) => {
+          console.error('Error in branches listener:', error);
+          this.branches = [];
+          this.eventEmitter.emit('branchesChanged', []);
+          this.eventEmitter.emit('branchesError', error);
+        }
+      );
+      
+      this.isBranchesListenerActive = true;
+    } catch (error) {
+      console.error('Error starting branches listener:', error);
+      this.branches = [];
+      this.eventEmitter.emit('branchesChanged', []);
     }
   }
 
@@ -365,6 +425,26 @@ class DataStore {
     };
   }
 
+  public subscribeToBranches(callback: (branches: Branch[]) => void): () => void {
+    console.log('🔗 New branches subscription created');
+    
+    // Ensure listeners are started (client-side only)
+    if (typeof window !== 'undefined' && !this.isBranchesListenerActive) {
+      this.startBranchesListener();
+    }
+    
+    // Always call with current data (even if empty array)
+    callback(this.branches);
+    
+    // Subscribe to future changes
+    this.eventEmitter.on('branchesChanged', callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.eventEmitter.off('branchesChanged', callback);
+    };
+  }
+
   public subscribeToOrders(branchId: string, callback: (orders: Order[]) => void): () => void {
     if (!branchId) {
       console.warn('No branchId provided for orders subscription');
@@ -432,6 +512,13 @@ class DataStore {
     };
   }
 
+  public subscribeToBranchesErrors(callback: (error: any) => void): () => void {
+    this.eventEmitter.on('branchesError', callback);
+    return () => {
+      this.eventEmitter.off('branchesError', callback);
+    };
+  }
+
   public subscribeToOrdersErrors(branchId: string, callback: (error: any) => void): () => void {
     this.eventEmitter.on(`ordersError:${branchId}`, callback);
     return () => {
@@ -453,6 +540,10 @@ class DataStore {
 
   public getCategories(): Category[] {
     return [...this.categories];
+  }
+
+  public getBranches(): Branch[] {
+    return [...this.branches];
   }
 
   public getOrders(branchId: string): Order[] {
@@ -506,6 +597,12 @@ class DataStore {
       this.categoriesUnsubscribe = null;
       this.isCategoriesListenerActive = false;
     }
+
+    if (this.branchesUnsubscribe) {
+      this.branchesUnsubscribe();
+      this.branchesUnsubscribe = null;
+      this.isBranchesListenerActive = false;
+    }
   }
 
   // Get listener status
@@ -513,9 +610,11 @@ class DataStore {
     return {
       activeInventoryBranches: Array.from(this.activeInventoryListeners),
       categories: this.isCategoriesListenerActive,
+      branches: this.isBranchesListenerActive,
       activeOrdersBranches: Array.from(this.activeOrdersListeners),
       activeDiscountsBranches: Array.from(this.activeDiscountsListeners),
       categoriesCount: this.categories.length,
+      branchesCount: this.branches.length,
       branchDataCounts: Object.keys(this.inventoryItems).reduce((acc, branchId) => {
         acc[branchId] = {
           inventory: this.inventoryItems[branchId]?.length || 0,
@@ -540,6 +639,10 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
   return dataStore.subscribeToCategories(callback);
 };
 
+export const subscribeToBranches = (callback: (branches: Branch[]) => void) => {
+  return dataStore.subscribeToBranches(callback);
+};
+
 export const subscribeToOrders = (branchId: string, callback: (orders: Order[]) => void) => {
   return dataStore.subscribeToOrders(branchId, callback);
 };
@@ -554,6 +657,10 @@ export const getInventoryItems = (branchId: string) => {
 
 export const getCategories = () => {
   return dataStore.getCategories();
+};
+
+export const getBranches = () => {
+  return dataStore.getBranches();
 };
 
 export const getOrders = (branchId: string) => {
