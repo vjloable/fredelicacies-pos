@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranch } from '@/contexts/BranchContext';
 import { useRouter } from 'next/navigation';
+import DropdownField from './DropdownField';
 
 interface BranchSelectorProps {
   className?: string;
@@ -28,7 +29,7 @@ export default function BranchSelector({
         {showLabel && (
           <span className="text-sm text-[var(--secondary)]/70">Branch:</span>
         )}
-        <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+        <div className="animate-pulse bg-gray-200 h-[42px] w-full rounded"></div>
       </div>
     );
   }
@@ -83,62 +84,18 @@ export default function BranchSelector({
       {showLabel && (
         <span className="text-sm text-[var(--secondary)]/70">Branch:</span>
       )}
-      
-      <div className="relative">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="bg-[var(--primary)] border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 hover:border-[var(--accent)] transition-colors min-w-[150px] justify-between"
-        >
-          <span className="text-sm font-medium text-[var(--secondary)] truncate">
-            {currentBranch?.name || 'Select Branch'}
-          </span>
-          <svg 
-            className={`w-4 h-4 text-[var(--secondary)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
 
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 z-10" 
-              onClick={() => setIsOpen(false)}
-            />
-            
-            {/* Dropdown */}
-            <div className="absolute top-full left-0 mt-1 w-full bg-[var(--primary)] border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-              {availableBranches.map((branch) => (
-                <button
-                  key={branch.id}
-                  onClick={() => handleBranchChange(branch.id)}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-[var(--accent)]/10 transition-colors ${
-                    currentBranch?.id === branch.id 
-                      ? 'bg-[var(--accent)]/20 text-[var(--secondary)] font-medium' 
-                      : 'text-[var(--secondary)]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{branch.name}</div>
-                      <div className="text-xs text-[var(--secondary)]/70">{branch.location}</div>
-                    </div>
-                    {!branch.isActive && (
-                      <span className="text-xs bg-[var(--error)]/20 text-[var(--error)] px-2 py-1 rounded">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      <DropdownField
+        options={availableBranches.map(branch => branch.name) }
+        defaultValue={currentBranch?.name || 'Select Branch'}
+        onChange={(selectedName) => {
+          const selectedBranch = availableBranches.find(branch => branch.name === selectedName);
+          if (selectedBranch) {
+            handleBranchChange(selectedBranch.id);
+          }
+        }}
+      />
+      
     </div>
   );
 }

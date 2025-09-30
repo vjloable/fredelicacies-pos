@@ -26,7 +26,6 @@ export default function SettingsScreen() {
     bluetoothDevice,
     bluetoothStatus,
     isConnecting,
-    isAutoReconnecting,
     connectToBluetoothPrinter,
     disconnectPrinter,
     testPrint
@@ -310,16 +309,13 @@ export default function SettingsScreen() {
                     <div className="mb-4">
                       <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                         bluetoothDevice ? 'bg-green-100 text-green-800' : 
-                        isAutoReconnecting ? 'bg-yellow-100 text-yellow-800' : 
                         'bg-gray-100 text-gray-600'
                       }`}>
                         <div className={`w-2 h-2 rounded-full mr-2 ${
                           bluetoothDevice ? 'bg-green-400' : 
-                          isAutoReconnecting ? 'bg-yellow-400 animate-pulse' : 
                           'bg-gray-400'
                         }`}></div>
                         {bluetoothDevice ? `Connected: ${bluetoothDevice.name || 'Unknown'}` : 
-                         isAutoReconnecting ? 'Reconnecting...' :
                          'Not Connected'}
                       </div>
                     </div>
@@ -329,9 +325,9 @@ export default function SettingsScreen() {
                       {!bluetoothDevice ? (
                         <button
                           onClick={connectToBluetoothPrinter}
-                          disabled={isConnecting || isAutoReconnecting}
+                          disabled={isConnecting}
                           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                            isConnecting || isAutoReconnecting
+                            isConnecting
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                               : 'bg-[var(--accent)] hover:bg-[var(--secondary]/80 text-white hover:shadow-lg'
                           }`}
@@ -340,11 +336,6 @@ export default function SettingsScreen() {
                             <div className="flex items-center justify-center">
                               <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                               Connecting...
-                            </div>
-                          ) : isAutoReconnecting ? (
-                            <div className="flex items-center justify-center">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent mr-2"></div>
-                              Auto-reconnecting...
                             </div>
                           ) : (
                             'Connect Printer'

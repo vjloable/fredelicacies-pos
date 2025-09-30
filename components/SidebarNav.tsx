@@ -114,7 +114,7 @@ export default function SidebarNav() {
                     <BranchSelector 
                         showLabel={false}
                         redirectOnChange={true}
-                        className="w-full"
+                        className="w-full flex flex-row flex-1"
                     />
                 </div>
 
@@ -172,11 +172,11 @@ export default function SidebarNav() {
                             <button
                                 onClick={handleLogout}
                                 disabled={isLoggingOut}
-                                className="flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400"
+                                className="group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400"
                             >
                                 <div className="w-full flex items-center justify-center lg:justify-start transition-all duration-300">
                                     <span className="size-8 mx-3">
-                                        <LogoutIcon className="gap-3 text-[var(--error)]" />
+                                        <LogoutIcon className="gap-3 text-[var(--error)] group-hover:text-[var(--primary)]" />
                                     </span>
                                     <span className="invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300 ">
                                         {"Logout"}

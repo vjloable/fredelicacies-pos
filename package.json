@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "autoprefixer": "^10.4.21",
     "firebase": "^12.1.0",
     "motion": "^12.23.12",
     "next": "15.4.4",

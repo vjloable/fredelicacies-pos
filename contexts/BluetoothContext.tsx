@@ -55,7 +55,6 @@ interface BluetoothContextType {
   bluetoothDevice: BluetoothDevice | null;
   bluetoothStatus: string;
   isConnecting: boolean;
-  isAutoReconnecting: boolean;
   connectToBluetoothPrinter: () => Promise<void>;
   disconnectPrinter: () => void;
   testPrint: () => Promise<void>;
@@ -80,20 +79,12 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice | null>(null);
   const [bluetoothStatus, setBluetoothStatus] = useState<string>('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isAutoReconnecting, setIsAutoReconnecting] = useState(false);
 
   const setupBluetoothDevice = async (device: BluetoothDevice) => {
     console.log('Setting up device:', {
       id: device.id,
       name: device.name,
       gatt: !!device.gatt
-    });
-
-    // Set up disconnect event listener for auto-reconnection
-    device.addEventListener('gattserverdisconnected', () => {
-      console.log('Device disconnected, attempting to reconnect...');
-      setBluetoothStatus('Connection lost, attempting to reconnect...');
-      attemptReconnect(device);
     });
 
     setBluetoothDevice(device);
@@ -105,40 +96,6 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }
     }));
 
     setBluetoothStatus(`Connected to: ${device.name || 'Unknown Printer'} - Ready for printing`);
-  };
-
-  const attemptReconnect = async (device: BluetoothDevice) => {
-    if (isAutoReconnecting) return;
-    
-    setIsAutoReconnecting(true);
-    let attempts = 0;
-    const maxAttempts = 5;
-    const retryDelay = 2000;
-
-    const reconnectLoop = async () => {
-      attempts++;
-      try {
-        setBluetoothStatus(`Reconnecting attempt ${attempts}/${maxAttempts}...`);
-        
-        if (device.gatt) {
-          await device.gatt.connect();
-          setBluetoothStatus(`Reconnected to: ${device.name || 'Unknown Printer'} - Ready for printing`);
-          setIsAutoReconnecting(false);
-          return;
-        }
-      } catch (error) {
-        console.log(`Reconnection attempt ${attempts} failed:`, error);
-        
-        if (attempts < maxAttempts) {
-          setTimeout(reconnectLoop, retryDelay);
-        } else {
-          setBluetoothStatus(`Failed to reconnect after ${maxAttempts} attempts. Please reconnect manually.`);
-          setIsAutoReconnecting(false);
-        }
-      }
-    };
-
-    reconnectLoop();
   };
 
   const tryAutoReconnect = async () => {
@@ -385,7 +342,6 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }
     bluetoothDevice,
     bluetoothStatus,
     isConnecting,
-    isAutoReconnecting,
     connectToBluetoothPrinter,
     disconnectPrinter,
     testPrint,

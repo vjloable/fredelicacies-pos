@@ -77,11 +77,11 @@ export default function AdminSidebar() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className="flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400"
+								className="group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer"
 							>
 								<div className="w-full flex items-center justify-center lg:justify-start transition-all duration-300">
 									<span className="size-8 mx-3">
-										<LogoutIcon className="gap-3 text-[var(--error)]" />
+										<LogoutIcon className="gap-3 text-[var(--error)] group-hover:text-[var(--primary)] transition-colors duration-300" />
 									</span>
 									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>
 										Logout
