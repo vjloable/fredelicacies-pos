@@ -18,19 +18,18 @@ export default function LoginPage() {
 	const { user, login, isUserAdmin } = useAuth();
 	const branchId = user?.roleAssignments[0]?.branchId || "";
 
-	useEffect( () => {
+	useEffect(() => {
 		// If user is already logged in, redirect based on their role
 		if (user) {
-			
 			if (isUserAdmin()) {
 				setIsLoading(false);
-				router.push('/branches');
+				router.push("/branches");
 			} else {
 				setIsLoading(false);
 				router.push(`/${branchId}/store`);
 			}
 		}
-	}, [user, router, branchId, isUserAdmin])
+	}, [user, router, branchId, isUserAdmin]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -79,6 +78,8 @@ export default function LoginPage() {
 			}
 
 			setError(errorMessage);
+		} finally {
+			setIsLoading(false);
 		}
 	};
 

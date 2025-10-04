@@ -7,6 +7,7 @@ import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
 import LogoutIcon from "@/components/icons/SidebarNav/LogoutIcon";
 import { useAdminDrawer } from "./AdminDrawerProvider";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
+import UserIcon from "@/components/icons/UserIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
@@ -17,19 +18,20 @@ export default function AdminSidebar() {
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const isBranches =
 		pathname === "/branches" || pathname.startsWith("/branches");
+	const isWorkers = pathname === "/workers" || pathname.startsWith("/workers");
 	const { isOpen } = useAdminDrawer();
 
 	const asideWidthClass = isOpen ? "max-w-[80px] lg:max-w-[260px]" : "max-w-0";
-	
+
 	const handleLogout = async () => {
 		if (isLoggingOut) return;
-		
+
 		setIsLoggingOut(true);
 		try {
 			await logout();
-			router.push('/login');
+			router.push("/login");
 		} catch (error) {
-			console.error('Logout error:', error);
+			console.error("Logout error:", error);
 		} finally {
 			setIsLoggingOut(false);
 		}
@@ -56,20 +58,59 @@ export default function AdminSidebar() {
 				</div>
 
 				{/* Navigation */}
-				<nav className="flex-1 py-[8px]">
-					<ul className="space-y-[8px]">
+				<nav className='flex-1 py-[8px]'>
+					<ul className='space-y-[8px]'>
 						<li>
-							<Link 
-								href="/branches"
+							<Link
+								href='/branches'
 								className={`flex h-10 items-center text-[14px] font-semibold ${
-									isBranches 
-										? 'bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg'
-										: 'bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]'
-								}`}
-							>
-								<div className="w-full flex items-center justify-center lg:justify-start">
-									<BranchesIcon className={`w-8 h-8 mx-3 gap-3 ${isBranches ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
-									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Branches</span>
+									isBranches
+										? "bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg"
+										: "bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]"
+								}`}>
+								<div className='w-full flex items-center justify-center lg:justify-start'>
+									<BranchesIcon
+										className={`w-8 h-8 mx-3 gap-3 ${
+											isBranches
+												? "text-[var(--primary)] drop-shadow-lg"
+												: "text-[var(--secondary)]"
+										} transition-all duration-300`}
+									/>
+									<span
+										className={`${
+											isOpen
+												? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100"
+												: "invisible w-0 opacity-0"
+										} transition-all duration-300`}>
+										Branches
+									</span>
+								</div>
+							</Link>
+						</li>
+						<li>
+							<Link
+								href='/workers'
+								className={`flex h-10 items-center text-[14px] font-semibold ${
+									isWorkers
+										? "bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg"
+										: "bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]"
+								}`}>
+								<div className='w-full flex items-center justify-center lg:justify-start'>
+									<UserIcon
+										className={`w-8 h-8 mx-3 gap-3 ${
+											isWorkers
+												? "text-[var(--primary)] drop-shadow-lg"
+												: "text-[var(--secondary)]"
+										} transition-all duration-300`}
+									/>
+									<span
+										className={`${
+											isOpen
+												? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100"
+												: "invisible w-0 opacity-0"
+										} transition-all duration-300`}>
+										Workers
+									</span>
 								</div>
 							</Link>
 						</li>
@@ -77,13 +118,17 @@ export default function AdminSidebar() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className="group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer"
-							>
-								<div className="w-full flex items-center justify-center lg:justify-start transition-all duration-300">
-									<span className="size-8 mx-3">
-										<LogoutIcon className="gap-3 text-[var(--error)] group-hover:text-[var(--primary)] transition-colors duration-300" />
+								className='group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer'>
+								<div className='w-full flex items-center justify-center lg:justify-start transition-all duration-300'>
+									<span className='size-8 mx-3'>
+										<LogoutIcon className='gap-3 text-[var(--error)] group-hover:text-[var(--primary)] transition-colors duration-300' />
 									</span>
-									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>
+									<span
+										className={`${
+											isOpen
+												? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100"
+												: "invisible w-0 opacity-0"
+										} transition-all duration-300`}>
 										Logout
 									</span>
 								</div>

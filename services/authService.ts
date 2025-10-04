@@ -12,8 +12,17 @@ import {
 	getDoc,
 	updateDoc,
 	setDoc,
+	writeBatch,
 } from "firebase/firestore";
-import { db } from "@/firebase-config";
+import { auth, db } from "@/firebase-config";
+import {
+	createUserWithEmailAndPassword,
+	updateProfile,
+	sendPasswordResetEmail,
+	deleteUser,
+	User as FirebaseUser,
+	UserCredential,
+} from "firebase/auth";
 
 interface UserData {
 	name: string;
@@ -24,7 +33,55 @@ interface UserData {
 	updatedAt?: Timestamp;
 }
 
+interface CreateUserRequest {
+	name: string;
+	email: string;
+	password: string;
+	isAdmin?: boolean;
+	roleAssignments?: RoleAssignment[];
+}
+
+interface CreateUserResult {
+	userId: string;
+	success: boolean;
+	error?: string;
+}
+
+interface UserImportData {
+	name: string;
+	email: string;
+	password: string;
+	isAdmin?: boolean;
+	roleAssignments?: RoleAssignment[];
+}
+
+interface ImportResult {
+	successCount: number;
+	errorCount: number;
+	errors: Array<{
+		email: string;
+		error: string;
+	}>;
+}
+
 export const authService = {
+	createUserAccount: async (createUserData: {
+		name: string;
+		email: string;
+		password: string;
+	}) => {
+		try {
+			const userCredential = await createUserWithEmailAndPassword(
+				auth,
+				createUserData.email,
+				createUserData.password
+			);
+			return userCredential.user;
+		} catch (error) {
+			console.error("Error creating user account:", error);
+			throw Error("Error creating user account:" + error);
+		}
+	},
 	// User data management
 	getUserData: async (userId: string): Promise<UserData | null> => {
 		try {
@@ -78,13 +135,44 @@ export const authService = {
 				throw new Error("User not found");
 			}
 
-			// Remove existing assignment for this branch if any
-			const filteredAssignments = userData.roleAssignments.filter(
-				(assignment) => assignment.branchId !== branchId
+			// Get current user for assignedBy
+			const currentUser = auth.currentUser;
+			if (!currentUser) {
+				throw new Error("No authenticated user found");
+			}
+
+			// Check if there's an existing assignment for this branch
+			const existingAssignment = userData.roleAssignments.find(
+				(assignment) => assignment.branchId === branchId
 			);
 
-			// Add new assignment
-			const newAssignments = [...filteredAssignments, { branchId, role }];
+			let newAssignments;
+
+			if (existingAssignment) {
+				// Update existing assignment
+				newAssignments = userData.roleAssignments.map((assignment) => {
+					if (assignment.branchId === branchId) {
+						return {
+							...assignment,
+							role,
+							isActive: true,
+							assignedBy: currentUser.uid, // Update who made the change
+						};
+					}
+					return assignment;
+				});
+			} else {
+				// Create new assignment with proper metadata
+				const newAssignment = {
+					branchId,
+					role,
+					assignedAt: Timestamp.now(),
+					assignedBy: currentUser.uid,
+					isActive: true,
+				};
+
+				newAssignments = [...userData.roleAssignments, newAssignment];
+			}
 
 			await authService.updateUserRoles(userId, newAssignments);
 		} catch (error) {
@@ -103,12 +191,18 @@ export const authService = {
 				throw new Error("User not found");
 			}
 
-			// Remove assignment for this branch
-			const filteredAssignments = userData.roleAssignments.filter(
-				(assignment) => assignment.branchId !== branchId
-			);
+			// Deactivate assignment for this branch instead of removing (preserves history)
+			const updatedAssignments = userData.roleAssignments.map((assignment) => {
+				if (assignment.branchId === branchId) {
+					return {
+						...assignment,
+						isActive: false,
+					};
+				}
+				return assignment;
+			});
 
-			await authService.updateUserRoles(userId, filteredAssignments);
+			await authService.updateUserRoles(userId, updatedAssignments);
 		} catch (error) {
 			console.error("Error removing user from branch:", error);
 			throw error;
@@ -166,5 +260,201 @@ export const authService = {
 			console.error("Error creating user profile:", error);
 			throw error;
 		}
+	},
+
+	// Firebase Auth Profile Management
+	updateUserProfile: async (
+		userId: string,
+		updates: { displayName?: string; photoURL?: string }
+	): Promise<void> => {
+		try {
+			// Note: This would typically require Firebase Admin SDK for server-side operations
+			// For client-side, you can only update the current user's profile
+			console.warn(
+				"updateUserProfile requires Firebase Admin SDK for full functionality"
+			);
+
+			// Update Firestore user document
+			const userDocRef = doc(db, "users", userId);
+			const firestoreUpdates: any = {};
+
+			if (updates.displayName) {
+				firestoreUpdates.name = updates.displayName;
+			}
+			if (updates.photoURL) {
+				firestoreUpdates.profilePicture = updates.photoURL;
+			}
+
+			firestoreUpdates.updatedAt = Timestamp.now();
+
+			await updateDoc(userDocRef, firestoreUpdates);
+		} catch (error) {
+			console.error("Error updating user profile:", error);
+			throw error;
+		}
+	},
+
+	deleteUserAccount: async (userId: string): Promise<void> => {
+		try {
+			// Note: This requires Firebase Admin SDK for complete functionality
+			// For now, we'll just disable the user in Firestore
+			console.warn("Full user deletion requires Firebase Admin SDK");
+
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				isActive: false,
+				updatedAt: Timestamp.now(),
+			});
+
+			// In a real implementation, you'd also need to:
+			// 1. Delete the Firebase Auth user (requires Admin SDK)
+			// 2. Clean up related data (work sessions, etc.)
+		} catch (error) {
+			console.error("Error deleting user account:", error);
+			throw error;
+		}
+	},
+
+	resetUserPassword: async (email: string): Promise<void> => {
+		try {
+			await sendPasswordResetEmail(auth, email);
+		} catch (error) {
+			console.error("Error sending password reset email:", error);
+			throw error;
+		}
+	},
+
+	// Admin Operations (require Firebase Admin SDK)
+	setCustomClaims: async (
+		userId: string,
+		claims: Record<string, any>
+	): Promise<void> => {
+		try {
+			// This requires Firebase Admin SDK
+			console.warn("setCustomClaims requires Firebase Admin SDK");
+
+			// For now, store claims in Firestore
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				customClaims: claims,
+				updatedAt: Timestamp.now(),
+			});
+		} catch (error) {
+			console.error("Error setting custom claims:", error);
+			throw error;
+		}
+	},
+
+	revokeRefreshTokens: async (userId: string): Promise<void> => {
+		try {
+			// This requires Firebase Admin SDK
+			console.warn("revokeRefreshTokens requires Firebase Admin SDK");
+
+			// Mark in Firestore that tokens should be revoked
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				tokensRevokedAt: Timestamp.now(),
+				updatedAt: Timestamp.now(),
+			});
+		} catch (error) {
+			console.error("Error revoking refresh tokens:", error);
+			throw error;
+		}
+	},
+
+	disableUser: async (userId: string): Promise<void> => {
+		try {
+			// This requires Firebase Admin SDK for full functionality
+			console.warn(
+				"disableUser requires Firebase Admin SDK for complete functionality"
+			);
+
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				isActive: false,
+				disabledAt: Timestamp.now(),
+				updatedAt: Timestamp.now(),
+			});
+		} catch (error) {
+			console.error("Error disabling user:", error);
+			throw error;
+		}
+	},
+
+	enableUser: async (userId: string): Promise<void> => {
+		try {
+			// This requires Firebase Admin SDK for full functionality
+			console.warn(
+				"enableUser requires Firebase Admin SDK for complete functionality"
+			);
+
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				isActive: true,
+				disabledAt: null,
+				updatedAt: Timestamp.now(),
+			});
+		} catch (error) {
+			console.error("Error enabling user:", error);
+			throw error;
+		}
+	},
+
+	// Bulk Operations
+	createMultipleUsers: async (
+		users: CreateUserRequest[]
+	): Promise<CreateUserResult[]> => {
+		const results: CreateUserResult[] = [];
+
+		for (const userData of users) {
+			try {
+				const userCredential = await createUserWithEmailAndPassword(
+					auth,
+					userData.email,
+					userData.password
+				);
+
+				// Create user profile in Firestore
+				await authService.createUserProfile(userCredential.user.uid, {
+					name: userData.name,
+					email: userData.email,
+					isAdmin: userData.isAdmin || false,
+					roleAssignments: userData.roleAssignments || [],
+				});
+
+				results.push({
+					userId: userCredential.user.uid,
+					success: true,
+				});
+			} catch (error) {
+				console.error(`Error creating user ${userData.email}:`, error);
+				results.push({
+					userId: "",
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
+
+		return results;
+	},
+
+	importUsers: async (userData: UserImportData[]): Promise<ImportResult> => {
+		const results = await authService.createMultipleUsers(userData);
+
+		const successCount = results.filter((r) => r.success).length;
+		const errorCount = results.filter((r) => !r.success).length;
+		const errors = results
+			.filter((r) => !r.success)
+			.map((r, index) => ({
+				email: userData[index]?.email || "unknown",
+				error: r.error || "Unknown error",
+			}));
+
+		return {
+			successCount,
+			errorCount,
+			errors,
+		};
 	},
 };
