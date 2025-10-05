@@ -374,7 +374,8 @@ export default function WorkersPage() {
 								}`}>
 								Workers
 							</button>
-							<button
+							{/* For now disable analytics and schedule*/}
+							{/* <button
 								onClick={() => setViewMode("analytics")}
 								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 									viewMode === "analytics"
@@ -391,7 +392,7 @@ export default function WorkersPage() {
 										: "text-gray-600 hover:text-gray-900"
 								}`}>
 								Schedule
-							</button>
+							</button> */}
 						</div>
 
 						{/* Add Worker Button - only show in workers view */}
