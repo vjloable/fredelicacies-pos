@@ -28,8 +28,6 @@ import {
 import { db } from "@/firebase-config";
 import { deleteUser } from "firebase/auth";
 import firebase from "firebase/compat/app";
-import { app } from "firebase-admin";
-import { adminAuth } from "@/lib/firebase-admin";
 
 // Worker interface matching the User structure with additional fields
 export interface Worker {
@@ -98,34 +96,17 @@ export const workerService: WorkerService = {
 		try {
 			console.log("🔄 Creating worker:", userData.email);
 
-			// Step 1: Check if email is already in use
-			let user;
-			try {
-				const existingUser = await adminAuth.getUserByEmail(userData.email);
-				console.log(
-					"✅ Email already exists, using existing user:",
-					existingUser.uid
-				);
-				user = {
-					uid: existingUser.uid,
-					email: existingUser.email!,
-				};
-			} catch (error: any) {
-				if (error.code === "auth/user-not-found") {
-					console.log("👤 Email not in use, creating new Firebase Auth user");
-					// Step 2: Create new Firebase Auth user if email not in use
-					user = await authService.createUserWithoutLogin({
-						name: userData.name,
-						email: userData.email,
-						password: userData.password,
-					});
-				} else {
-					throw error; // Re-throw other errors
-				}
-			}
+			// Call API route to create worker (handles Firebase Admin SDK operations)
+			const response = await fetch("/api/admin/workers", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ userData }),
+			});
 
-			// Step 3: Create complete user profile in Firestore
-			await authService.createUserProfile(user.uid, {
+			const result = await response.json();
+			await authService.createUserProfile(result.userId, {
 				name: userData.name,
 				email: userData.email,
 				isAdmin: userData.isAdmin || false,
@@ -133,9 +114,12 @@ export const workerService: WorkerService = {
 				phoneNumber: userData.phoneNumber,
 				employeeId: userData.employeeId,
 			});
+			if (!response.ok) {
+				throw new Error(result.error || "Failed to create worker");
+			}
 
-			console.log("✅ Worker created successfully:", user.uid);
-			return user.uid;
+			console.log("✅ Worker created successfully:", result.userId);
+			return result.userId;
 		} catch (error) {
 			console.error("❌ Error creating worker:", error);
 			throw error;
