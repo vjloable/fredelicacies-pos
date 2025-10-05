@@ -83,23 +83,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				try {
 					let userData = await authService.getUserData(firebaseUser.uid);
 
-					// If no user data exists, create a basic user profile
+					// If no user data exists, it means the user was deleted from Firestore
+					// but the Firebase Auth session is still active. Force logout.
 					if (!userData) {
 						console.log(
-							"No user data found, creating basic profile for:",
-							firebaseUser.email
+							"User data not found for authenticated user. This usually means the user was deleted. Forcing logout."
 						);
-						await authService.createUserProfile(firebaseUser.uid, {
-							name:
-								firebaseUser.displayName ||
-								firebaseUser.email?.split("@")[0] ||
-								"User",
-							email: firebaseUser.email || "",
-							isAdmin: false,
-							roleAssignments: [],
-						});
-						// Fetch the newly created user data
-						userData = await authService.getUserData(firebaseUser.uid);
+						await signOut(auth);
+						setUser(null);
+						setLoading(false);
+						return;
 					}
 
 					if (userData) {

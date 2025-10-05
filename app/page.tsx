@@ -7,19 +7,32 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function RootPage() {
 	const router = useRouter();
-	const { user, loading, isAuthenticated } = useAuth();
-	const branchId = user?.roleAssignments[0]?.branchId || "";
+	const { user, loading, isAuthenticated, isUserAdmin } = useAuth();
+
 	useEffect(() => {
 		if (!loading) {
-			if (isAuthenticated) {
-				// User is authenticated, redirect to store
-				router.push(`/${branchId}/store`);
+			if (isAuthenticated && user) {
+				// Check if user is admin
+				if (isUserAdmin()) {
+					router.push("/branches");
+					return;
+				}
+
+				// Check if user has branch assignments
+				const branchId = user?.roleAssignments?.[0]?.branchId;
+				if (branchId) {
+					router.push(`/${branchId}/store`);
+				} else {
+					// User has no branch assignments - redirect to login
+					console.log("User has no branch assignments. Redirecting to login.");
+					router.push("/login");
+				}
 			} else {
 				// User is not authenticated, redirect to login
 				router.push("/login");
 			}
 		}
-	}, [loading, isAuthenticated, router]);
+	}, [loading, isAuthenticated, user, isUserAdmin, router]);
 
 	return (
 		<div className='flex flex-col items-center justify-center h-screen bg-[var(--background)]'>

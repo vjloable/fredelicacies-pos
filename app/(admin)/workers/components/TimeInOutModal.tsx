@@ -66,13 +66,21 @@ export default function TimeInOutModal({
 
 		try {
 			if (action === "time_in") {
-				await workerService.timeInWorker(worker.id, selectedBranchId, notes);
+				await workSessionService.timeInWorker(
+					worker.id,
+					selectedBranchId,
+					notes
+				);
 			} else {
 				const activeSession = await workSessionService.getActiveWorkSession(
 					worker.id
 				);
 				if (activeSession) {
-					await workerService.timeOutWorker(worker.id, activeSession.id, notes);
+					await workSessionService.timeOutWorker(
+						worker.id,
+						activeSession.id,
+						notes
+					);
 				} else {
 					throw new Error("No active session found");
 				}

@@ -41,6 +41,18 @@ export interface WorkSessionService {
 		dateRange?: DateRange
 	) => Promise<WorkSession[]>;
 
+	// Time In/Out Operations
+	timeInWorker: (
+		userId: string,
+		branchId: string,
+		notes?: string
+	) => Promise<string>; // Returns sessionId
+	timeOutWorker: (
+		userId: string,
+		sessionId: string,
+		notes?: string
+	) => Promise<void>;
+
 	// Utility methods
 	getActiveWorkSession: (
 		userId: string
@@ -368,5 +380,81 @@ export const workSessionService: WorkSessionService = {
 		};
 
 		return await workSessionService.listWorkSessions(userId, dateRange);
+	},
+
+	// Time In/Out Operations
+	timeInWorker: async (
+		userId: string,
+		branchId: string,
+		notes?: string
+	): Promise<string> => {
+		try {
+			// Create new work session
+			const sessionData: WorkSession = {
+				userId,
+				branchId,
+				timeInAt: Timestamp.now(),
+				clockedInBy: userId, // In a real scenario, this would be the manager's ID
+				notes: notes || "",
+				sessionType: "scheduled",
+			};
+
+			const sessionId = await workSessionService.createWorkSession(sessionData);
+
+			// Update user's current status in users collection
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				currentStatus: "clocked_in",
+				currentBranchId: branchId,
+				lastTimeIn: Timestamp.now(),
+				updatedAt: Timestamp.now(),
+			});
+
+			return sessionId;
+		} catch (error) {
+			console.error("Error timing in worker:", error);
+			throw error;
+		}
+	},
+
+	timeOutWorker: async (
+		userId: string,
+		sessionId: string,
+		notes?: string
+	): Promise<void> => {
+		try {
+			const timeOutAt = Timestamp.now();
+
+			// Get the existing session to calculate duration
+			const session = await workSessionService.getWorkSession(sessionId);
+			if (!session) {
+				throw new Error("Work session not found");
+			}
+
+			const duration = workSessionService.calculateSessionDuration(
+				session.timeInAt,
+				timeOutAt
+			);
+
+			// Update work session with time out data
+			await workSessionService.updateWorkSession(sessionId, {
+				timeOutAt,
+				clockedOutBy: userId, // In a real scenario, this would be the manager's ID
+				duration,
+				notes: notes || session.notes || "",
+			});
+
+			// Update user's current status in users collection
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				currentStatus: "clocked_out",
+				currentBranchId: null,
+				lastTimeOut: timeOutAt,
+				updatedAt: Timestamp.now(),
+			});
+		} catch (error) {
+			console.error("Error timing out worker:", error);
+			throw error;
+		}
 	},
 };

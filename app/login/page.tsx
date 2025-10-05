@@ -16,7 +16,6 @@ export default function LoginPage() {
 	const [error, setError] = useState("");
 	const router = useRouter();
 	const { user, login, isUserAdmin } = useAuth();
-	const branchId = user?.roleAssignments[0]?.branchId || "";
 
 	useEffect(() => {
 		// If user is already logged in, redirect based on their role
@@ -25,11 +24,15 @@ export default function LoginPage() {
 				setIsLoading(false);
 				router.push("/branches");
 			} else {
-				setIsLoading(false);
-				router.push(`/${branchId}/store`);
+				// Check if user has valid branch assignments
+				const branchId = user?.roleAssignments?.[0]?.branchId;
+				if (branchId) {
+					setIsLoading(false);
+					router.push(`/${branchId}/store`);
+				}
 			}
 		}
-	}, [user, router, branchId, isUserAdmin]);
+	}, [user, router, isUserAdmin]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();

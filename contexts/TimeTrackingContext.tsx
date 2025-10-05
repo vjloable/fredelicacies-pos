@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+	createContext,
+	useContext,
+	useState,
+	useEffect,
+	useCallback,
+} from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { workSessionService } from "@/services/workSessionService";
@@ -27,14 +33,22 @@ interface TimeTrackingActions {
 	clearError: () => void;
 }
 
-interface TimeTrackingContextType extends TimeTrackingState, TimeTrackingActions {}
+interface TimeTrackingContextType
+	extends TimeTrackingState,
+		TimeTrackingActions {}
 
-const TimeTrackingContext = createContext<TimeTrackingContextType | undefined>(undefined);
+const TimeTrackingContext = createContext<TimeTrackingContextType | undefined>(
+	undefined
+);
 
-export function useTimeTracking(options: TimeTrackingOptions = {}): TimeTrackingContextType {
+export function useTimeTracking(
+	options: TimeTrackingOptions = {}
+): TimeTrackingContextType {
 	const context = useContext(TimeTrackingContext);
 	if (context === undefined) {
-		throw new Error("useTimeTracking must be used within a TimeTrackingProvider");
+		throw new Error(
+			"useTimeTracking must be used within a TimeTrackingProvider"
+		);
 	}
 	return context;
 }
@@ -44,7 +58,10 @@ interface TimeTrackingProviderProps {
 	options?: TimeTrackingOptions;
 }
 
-export function TimeTrackingProvider({ children, options = {} }: TimeTrackingProviderProps) {
+export function TimeTrackingProvider({
+	children,
+	options = {},
+}: TimeTrackingProviderProps) {
 	const { user } = useAuth();
 	const { autoRefresh = false, refreshInterval = 30000 } = options;
 
@@ -196,7 +213,7 @@ export function TimeTrackingProvider({ children, options = {} }: TimeTrackingPro
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await workerService.timeInWorker(
+				await workSessionService.timeInWorker(
 					user.uid,
 					branchId,
 					notes || `Clock-in via POS at ${new Date().toLocaleString()}`
@@ -227,7 +244,7 @@ export function TimeTrackingProvider({ children, options = {} }: TimeTrackingPro
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await workerService.timeOutWorker(
+				await workSessionService.timeOutWorker(
 					user.uid,
 					state.currentSession.id || user.uid,
 					notes || `Clock-out via POS at ${new Date().toLocaleString()}`

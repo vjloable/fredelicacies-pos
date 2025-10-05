@@ -7,6 +7,7 @@ import {
 	WorkerStats,
 } from "@/types/WorkerTypes";
 import { authService } from "./authService";
+import { workSessionService } from "./workSessionService";
 import {
 	collection,
 	doc,
@@ -26,6 +27,9 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase-config";
 import { deleteUser } from "firebase/auth";
+import firebase from "firebase/compat/app";
+import { app } from "firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 
 // Worker interface matching the User structure with additional fields
 export interface Worker {
@@ -68,6 +72,7 @@ export interface WorkerService {
 
 	// Branch-specific operations
 	getWorkersByBranch: (branchId: string) => Promise<Worker[]>;
+	getClockedInWorkers: (branchId: string) => Promise<Worker[]>;
 	assignWorkerToBranch: (
 		userId: string,
 		branchId: string,
@@ -84,81 +89,55 @@ export interface WorkerService {
 	promoteToAdmin: (userId: string) => Promise<void>;
 	demoteFromAdmin: (userId: string) => Promise<void>;
 
-	// Time In/Time Out Management
-	timeInWorker: (
-		userId: string,
-		branchId: string,
-		notes?: string
-	) => Promise<string>; // Returns sessionId
-	timeOutWorker: (
-		userId: string,
-		sessionId: string,
-		notes?: string
-	) => Promise<void>;
-	getClockedInWorkers: (branchId: string) => Promise<Worker[]>;
-	getWorkSession: (sessionId: string) => Promise<WorkSession | null>;
-
-	// Reporting & Analytics
-	getWorkerWorkHistory: (
-		userId: string,
-		dateRange?: DateRange
-	) => Promise<WorkSession[]>;
-	getBranchWorkSessions: (
-		branchId: string,
-		dateRange?: DateRange
-	) => Promise<WorkSession[]>;
+	// Worker Statistics (work session data will come from workSessionService)
 	getWorkerStats: (userId: string) => Promise<WorkerStats>;
 }
 
 export const workerService: WorkerService = {
 	createWorker: async (userData: CreateWorkerRequest): Promise<string> => {
 		try {
-			// Create Firebase Auth account
-			const user = await authService.createUserAccount({
-				name: userData.name,
-				email: userData.email,
-				password: userData.password,
-			});
+			console.log("🔄 Creating worker:", userData.email);
 
-			if (user) {
-				// Create user profile in Firestore with worker details
-				await authService.createUserProfile(user.uid, {
-					name: userData.name,
-					email: userData.email,
-					isAdmin: userData.isAdmin || false,
-					roleAssignments: userData.branchAssignments,
-				});
-
-				// Update with additional worker fields
-				const userDocRef = doc(db, "users", user.uid);
-				await updateDoc(userDocRef, {
-					name: userData.name,
-					email: userData.email,
-					phoneNumber: userData.phoneNumber,
-					employeeId: userData.employeeId,
-					isAdmin: userData.isAdmin || false,
-					roleAssignments: userData.branchAssignments.map((assignment) => ({
-						...assignment,
-						assignedAt: Timestamp.now(),
-						assignedBy: user.uid, // In real scenario, this would be the current user's ID
-						isActive: true,
-					})),
-					// Admins don't have currentStatus - only regular workers do
-					...(userData.isAdmin ? {} : { currentStatus: "clocked_out" }),
-					isActive: true,
-					createdAt: Timestamp.now(),
-					updatedAt: Timestamp.now(),
-					createdBy: user.uid, // In real scenario, this would be the current user's ID
-					passwordResetRequired: false,
-					twoFactorEnabled: false,
-				});
-
-				return user.uid;
+			// Step 1: Check if email is already in use
+			let user;
+			try {
+				const existingUser = await adminAuth.getUserByEmail(userData.email);
+				console.log(
+					"✅ Email already exists, using existing user:",
+					existingUser.uid
+				);
+				user = {
+					uid: existingUser.uid,
+					email: existingUser.email!,
+				};
+			} catch (error: any) {
+				if (error.code === "auth/user-not-found") {
+					console.log("👤 Email not in use, creating new Firebase Auth user");
+					// Step 2: Create new Firebase Auth user if email not in use
+					user = await authService.createUserWithoutLogin({
+						name: userData.name,
+						email: userData.email,
+						password: userData.password,
+					});
+				} else {
+					throw error; // Re-throw other errors
+				}
 			}
 
-			throw new Error("Failed to create Firebase Auth user");
+			// Step 3: Create complete user profile in Firestore
+			await authService.createUserProfile(user.uid, {
+				name: userData.name,
+				email: userData.email,
+				isAdmin: userData.isAdmin || false,
+				roleAssignments: userData.branchAssignments || [],
+				phoneNumber: userData.phoneNumber,
+				employeeId: userData.employeeId,
+			});
+
+			console.log("✅ Worker created successfully:", user.uid);
+			return user.uid;
 		} catch (error) {
-			console.error("Error creating worker:", error);
+			console.error("❌ Error creating worker:", error);
 			throw error;
 		}
 	},
@@ -285,14 +264,8 @@ export const workerService: WorkerService = {
 			let q = query(usersRef, orderBy("name"));
 
 			// Apply filters
-			if (filters?.branchId) {
-				q = query(
-					q,
-					where("roleAssignments", "array-contains", {
-						branchId: filters.branchId,
-					})
-				);
-			}
+			// Note: Branch filtering is done locally since roleAssignments have complex objects
+			// that can't be matched exactly with array-contains
 
 			if (filters?.status) {
 				// Only filter by status for non-admin users (admins don't have currentStatus)
@@ -301,13 +274,12 @@ export const workerService: WorkerService = {
 					where("isAdmin", "==", false),
 					where("currentStatus", "==", filters.status)
 				);
-			}
-
-			// Apply pagination
+			} // Apply pagination
 			if (filters?.limit) {
 				q = query(q, limit(filters.limit));
 			}
 
+			console.log("🔍 Executing Firestore query...");
 			const querySnapshot = await getDocs(q);
 			const workers: Worker[] = [];
 
@@ -325,12 +297,23 @@ export const workerService: WorkerService = {
 					if (!matchesSearch) return;
 				}
 
+				// Apply branch filter locally
+				if (filters?.branchId) {
+					const hasBranchAccess = data.roleAssignments?.some(
+						(assignment: any) =>
+							assignment.branchId === filters.branchId &&
+							assignment.isActive === true
+					);
+					if (!hasBranchAccess) return;
+				}
+
 				// Apply role filter locally
 				if (filters?.role) {
 					if (filters.role === "admin" && !data.isAdmin) return;
 					if (filters.role !== "admin") {
 						const hasRole = data.roleAssignments?.some(
-							(assignment: any) => assignment.role === filters.role
+							(assignment: any) =>
+								assignment.role === filters.role && assignment.isActive === true
 						);
 						if (!hasRole) return;
 					}
@@ -375,6 +358,18 @@ export const workerService: WorkerService = {
 			return await workerService.listWorkers({ branchId });
 		} catch (error) {
 			console.error("Error getting workers by branch:", error);
+			throw error;
+		}
+	},
+
+	getClockedInWorkers: async (branchId: string): Promise<Worker[]> => {
+		try {
+			return await workerService.listWorkers({
+				branchId,
+				status: "clocked_in",
+			});
+		} catch (error) {
+			console.error("Error getting clocked in workers:", error);
 			throw error;
 		}
 	},
@@ -455,218 +450,10 @@ export const workerService: WorkerService = {
 		}
 	},
 
-	timeInWorker: async (
-		userId: string,
-		branchId: string,
-		notes?: string
-	): Promise<string> => {
-		try {
-			// Create new work session
-			const workSessionsRef = collection(db, "workSessions");
-			const sessionData = {
-				userId,
-				branchId,
-				timeInAt: Timestamp.now(),
-				clockedInBy: userId, // In a real scenario, this would be the manager's ID
-				notes: notes || "",
-				timeOutAt: null,
-				sessionType: "scheduled" as const,
-			};
-
-			const sessionDoc = await addDoc(workSessionsRef, sessionData);
-
-			// Update user's current status
-			const userDocRef = doc(db, "users", userId);
-			await updateDoc(userDocRef, {
-				currentStatus: "clocked_in",
-				currentBranchId: branchId,
-				lastTimeIn: Timestamp.now(),
-				updatedAt: Timestamp.now(),
-			});
-
-			return sessionDoc.id;
-		} catch (error) {
-			console.error("Error timing in worker:", error);
-			throw error;
-		}
-	},
-
-	timeOutWorker: async (
-		userId: string,
-		sessionId: string,
-		notes?: string
-	): Promise<void> => {
-		try {
-			const timeOutAt = Timestamp.now();
-
-			// Update work session
-			const sessionDocRef = doc(db, "workSessions", sessionId);
-			const sessionSnap = await getDoc(sessionDocRef);
-
-			if (!sessionSnap.exists()) {
-				throw new Error("Work session not found");
-			}
-
-			const sessionData = sessionSnap.data();
-			const timeInAt = sessionData.timeInAt;
-			const duration = Math.floor((timeOutAt.seconds - timeInAt.seconds) / 60); // Duration in minutes
-
-			await updateDoc(sessionDocRef, {
-				timeOutAt,
-				clockedOutBy: userId, // In a real scenario, this would be the manager's ID
-				duration,
-				notes: notes || sessionData.notes || "",
-			});
-
-			// Update user's current status
-			const userDocRef = doc(db, "users", userId);
-			await updateDoc(userDocRef, {
-				currentStatus: "clocked_out",
-				currentBranchId: null,
-				lastTimeOut: timeOutAt,
-				updatedAt: Timestamp.now(),
-			});
-		} catch (error) {
-			console.error("Error timing out worker:", error);
-			throw error;
-		}
-	},
-
-	getClockedInWorkers: async (branchId: string): Promise<Worker[]> => {
-		try {
-			return await workerService.listWorkers({
-				branchId,
-				status: "clocked_in",
-			});
-		} catch (error) {
-			console.error("Error getting clocked in workers:", error);
-			throw error;
-		}
-	},
-
-	getWorkSession: async (sessionId: string): Promise<WorkSession | null> => {
-		try {
-			const sessionDocRef = doc(db, "workSessions", sessionId);
-			const sessionSnap = await getDoc(sessionDocRef);
-
-			if (!sessionSnap.exists()) {
-				return null;
-			}
-
-			const data = sessionSnap.data();
-			return {
-				userId: data.userId,
-				branchId: data.branchId,
-				timeInAt: data.timeInAt,
-				timeOutAt: data.timeOutAt,
-				clockedInBy: data.clockedInBy,
-				clockedOutBy: data.clockedOutBy,
-				duration: data.duration,
-				notes: data.notes,
-				sessionType: data.sessionType,
-			} as WorkSession;
-		} catch (error) {
-			console.error("Error getting work session:", error);
-			throw error;
-		}
-	},
-
-	getWorkerWorkHistory: async (
-		userId: string,
-		dateRange?: DateRange
-	): Promise<WorkSession[]> => {
-		try {
-			const workSessionsRef = collection(db, "workSessions");
-			let q = query(
-				workSessionsRef,
-				where("userId", "==", userId),
-				orderBy("timeInAt", "desc")
-			);
-
-			// Apply date range filter if provided
-			if (dateRange) {
-				q = query(
-					q,
-					where("timeInAt", ">=", dateRange.startDate),
-					where("timeInAt", "<=", dateRange.endDate)
-				);
-			}
-
-			const querySnapshot = await getDocs(q);
-			const sessions: WorkSession[] = [];
-
-			querySnapshot.forEach((doc) => {
-				const data = doc.data();
-				sessions.push({
-					userId: data.userId,
-					branchId: data.branchId,
-					timeInAt: data.timeInAt,
-					timeOutAt: data.timeOutAt,
-					clockedInBy: data.clockedInBy,
-					clockedOutBy: data.clockedOutBy,
-					duration: data.duration,
-					notes: data.notes,
-					sessionType: data.sessionType,
-				});
-			});
-
-			return sessions;
-		} catch (error) {
-			console.error("Error getting worker work history:", error);
-			throw error;
-		}
-	},
-
-	getBranchWorkSessions: async (
-		branchId: string,
-		dateRange?: DateRange
-	): Promise<WorkSession[]> => {
-		try {
-			const workSessionsRef = collection(db, "workSessions");
-			let q = query(
-				workSessionsRef,
-				where("branchId", "==", branchId),
-				orderBy("timeInAt", "desc")
-			);
-
-			// Apply date range filter if provided
-			if (dateRange) {
-				q = query(
-					q,
-					where("timeInAt", ">=", dateRange.startDate),
-					where("timeInAt", "<=", dateRange.endDate)
-				);
-			}
-
-			const querySnapshot = await getDocs(q);
-			const sessions: WorkSession[] = [];
-
-			querySnapshot.forEach((doc) => {
-				const data = doc.data();
-				sessions.push({
-					userId: data.userId,
-					branchId: data.branchId,
-					timeInAt: data.timeInAt,
-					timeOutAt: data.timeOutAt,
-					clockedInBy: data.clockedInBy,
-					clockedOutBy: data.clockedOutBy,
-					duration: data.duration,
-					notes: data.notes,
-					sessionType: data.sessionType,
-				});
-			});
-
-			return sessions;
-		} catch (error) {
-			console.error("Error getting branch work sessions:", error);
-			throw error;
-		}
-	},
-
 	getWorkerStats: async (userId: string): Promise<WorkerStats> => {
 		try {
-			// Get all work sessions for this worker
-			const allSessions = await workerService.getWorkerWorkHistory(userId);
+			// Get all work sessions for this worker using workSessionService
+			const allSessions = await workSessionService.listWorkSessions(userId);
 
 			// Calculate date ranges
 			const now = new Date();
@@ -698,7 +485,7 @@ export const workerService: WorkerService = {
 			let lastSession: WorkerStats["lastSession"] | undefined;
 
 			// Process each session
-			allSessions.forEach((session) => {
+			allSessions.forEach((session: WorkSession) => {
 				const sessionDate = session.timeInAt.toDate();
 				const duration = session.duration || 0;
 				const hours = duration / 60;

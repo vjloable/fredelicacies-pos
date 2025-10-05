@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase-config";
 import { WorkerFilters as WorkerFiltersType } from "@/types/WorkerTypes";
 import AdminTopBar from "@/app/(admin)/components/AdminTopBar";
 import WorkersTable from "./components/WorkersTable";
@@ -24,6 +26,18 @@ export default function WorkersPage() {
 	const [branches, setBranches] = useState<Branch[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	// Real-time subscription management
+	const workerSubscriptions = useRef<Map<string, () => void>>(new Map());
+
+	// Debug worker state changes
+	useEffect(() => {
+		console.log(
+			"🔍 Workers state updated:",
+			workers.length,
+			workers.map((w) => w.name)
+		);
+	}, [workers]);
 
 	// Modal states
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -57,6 +71,117 @@ export default function WorkersPage() {
 		}
 	}, [user, hasWorkerManagementAccess]);
 
+	// Setup single collection subscription for all workers
+	const setupWorkerSubscriptions = useCallback(() => {
+		// Clean up existing subscriptions first
+		workerSubscriptions.current.forEach((unsubscribe) => unsubscribe());
+		workerSubscriptions.current.clear();
+
+		console.log("🔗 Setting up single real-time subscription for all workers");
+
+		try {
+			// Create query for users collection
+			const usersRef = collection(db, "users");
+			const q = query(usersRef, orderBy("name", "asc"));
+
+			// Set up real-time listener
+			const unsubscribe = onSnapshot(
+				q,
+				(querySnapshot) => {
+					console.log(
+						`📤 Real-time update: ${querySnapshot.size} workers received from Firestore`
+					);
+
+					const updatedWorkers: Worker[] = [];
+
+					querySnapshot.forEach((doc) => {
+						const data = doc.data();
+
+						// Convert Firestore data to Worker format (same as workerService.listWorkers)
+						const worker: Worker = {
+							id: doc.id,
+							name: data.name || "",
+							email: data.email || "",
+							phoneNumber: data.phoneNumber,
+							employeeId: data.employeeId,
+							roleAssignments: data.roleAssignments || [],
+							isAdmin: data.isAdmin || false,
+							adminAssignedBy: data.adminAssignedBy,
+							adminAssignedAt: data.adminAssignedAt?.toDate(),
+							currentStatus: data.isAdmin
+								? undefined
+								: data.currentStatus || "clocked_out",
+							currentBranchId: data.currentBranchId,
+							lastTimeIn: data.lastTimeIn?.toDate(),
+							lastTimeOut: data.lastTimeOut?.toDate(),
+							profilePicture: data.profilePicture,
+							createdAt: data.createdAt?.toDate() || new Date(),
+							updatedAt: data.updatedAt?.toDate() || new Date(),
+							createdBy: data.createdBy || "",
+							isActive: data.isActive !== false,
+							lastLoginAt: data.lastLoginAt?.toDate(),
+							passwordResetRequired: data.passwordResetRequired || false,
+							twoFactorEnabled: data.twoFactorEnabled || false,
+						};
+
+						// Apply current filters locally (same logic as workerService)
+						if (filters?.searchQuery) {
+							const searchTerm = filters.searchQuery.toLowerCase();
+							const matchesSearch =
+								data.name?.toLowerCase().includes(searchTerm) ||
+								data.email?.toLowerCase().includes(searchTerm) ||
+								data.employeeId?.toLowerCase().includes(searchTerm);
+							if (!matchesSearch) return;
+						}
+
+						if (filters?.branchId) {
+							const hasBranchAccess = data.roleAssignments?.some(
+								(assignment: any) =>
+									assignment.branchId === filters.branchId &&
+									assignment.isActive === true
+							);
+							if (!hasBranchAccess) return;
+						}
+
+						if (filters?.role) {
+							if (filters.role === "admin" && !data.isAdmin) return;
+							if (filters.role !== "admin") {
+								const hasRole = data.roleAssignments?.some(
+									(assignment: any) =>
+										assignment.role === filters.role &&
+										assignment.isActive === true
+								);
+								if (!hasRole) return;
+							}
+						}
+
+						if (filters?.status && !data.isAdmin) {
+							if (data.currentStatus !== filters.status) return;
+						}
+
+						updatedWorkers.push(worker);
+					});
+
+					console.log(
+						`✅ Processed ${updatedWorkers.length} workers after filtering`
+					);
+					setWorkers(updatedWorkers);
+				},
+				(error) => {
+					console.error("❌ Error in workers collection listener:", error);
+				}
+			);
+
+			// Store the unsubscribe function
+			workerSubscriptions.current.set("all-workers", unsubscribe);
+			console.log(
+				"✅ Successfully set up real-time subscription for all workers"
+			);
+		} catch (error) {
+			console.error("❌ Error setting up workers collection listener:", error);
+		}
+	}, [filters]);
+
 	// Load data
 	useEffect(() => {
 		if (user && hasWorkerManagementAccess()) {
@@ -64,6 +189,14 @@ export default function WorkersPage() {
 			loadBranches();
 		}
 	}, [user, hasWorkerManagementAccess, filters]);
+
+	// Cleanup subscriptions on unmount
+	useEffect(() => {
+		return () => {
+			workerSubscriptions.current.forEach((unsubscribe) => unsubscribe());
+			workerSubscriptions.current.clear();
+		};
+	}, []);
 
 	const loadWorkers = async () => {
 		try {
@@ -82,6 +215,12 @@ export default function WorkersPage() {
 			const workersData = await workerService.listWorkers(workerFilters);
 			setWorkers(workersData);
 			setError(null);
+			console.log(
+				`📋 Initial load: ${workersData.length} workers loaded from workerService`
+			);
+
+			// Set up real-time subscriptions
+			setupWorkerSubscriptions();
 		} catch (err) {
 			console.error("Error loading workers:", err);
 			setError("Failed to load workers");
@@ -244,7 +383,7 @@ export default function WorkersPage() {
 								}`}>
 								Analytics
 							</button>
-							{/* <button
+							<button
 								onClick={() => setViewMode("schedule")}
 								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 									viewMode === "schedule"
@@ -252,7 +391,7 @@ export default function WorkersPage() {
 										: "text-gray-600 hover:text-gray-900"
 								}`}>
 								Schedule
-							</button> */}
+							</button>
 						</div>
 
 						{/* Add Worker Button - only show in workers view */}

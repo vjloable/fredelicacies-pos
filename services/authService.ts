@@ -23,6 +23,8 @@ import {
 	User as FirebaseUser,
 	UserCredential,
 } from "firebase/auth";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { Timestamp as AdminTimestamp } from "firebase-admin/firestore";
 
 interface UserData {
 	name: string;
@@ -76,6 +78,9 @@ export const authService = {
 				createUserData.email,
 				createUserData.password
 			);
+			await updateProfile(userCredential.user, {
+				displayName: createUserData.name,
+			});
 			return userCredential.user;
 		} catch (error) {
 			console.error("Error creating user account:", error);
@@ -104,6 +109,45 @@ export const authService = {
 		} catch (error) {
 			console.error("Error fetching user data:", error);
 			return null;
+		}
+	},
+	createUserWithoutLogin: async (userData: {
+		name: string;
+		email: string;
+		password: string;
+	}): Promise<{ uid: string; email: string }> => {
+		try {
+			console.log("🔄 Creating Firebase Auth user only:", userData.email);
+
+			// Create user with Firebase Admin Auth (doesn't affect current session)
+			const userRecord = await adminAuth.createUser({
+				email: userData.email,
+				password: userData.password,
+				displayName: userData.name,
+				emailVerified: false,
+			});
+
+			console.log("✅ Firebase Auth user created:", userRecord.uid);
+
+			return {
+				uid: userRecord.uid,
+				email: userRecord.email!,
+			};
+		} catch (error: any) {
+			console.error("❌ Error creating Firebase Auth user:", error);
+
+			// Handle specific Firebase errors
+			if (error.code === "auth/email-already-exists") {
+				throw new Error("Email already exists");
+			}
+			if (error.code === "auth/weak-password") {
+				throw new Error("Password is too weak (minimum 6 characters)");
+			}
+			if (error.code === "auth/invalid-email") {
+				throw new Error("Invalid email address");
+			}
+
+			throw error;
 		}
 	},
 
@@ -244,18 +288,54 @@ export const authService = {
 			email: string;
 			isAdmin?: boolean;
 			roleAssignments?: RoleAssignment[];
+			phoneNumber?: string;
+			employeeId?: string;
 		}
 	): Promise<void> => {
 		try {
+			// Get current authenticated user for tracking who created this user
+			const currentUser = auth.currentUser;
+			if (!currentUser) {
+				throw new Error("Not authenticated - cannot create user profile");
+			}
+
+			console.log("🔄 Creating complete user profile in Firestore:", userId);
+
 			const userDocRef = doc(db, "users", userId);
-			await setDoc(userDocRef, {
+
+			// Process role assignments with proper metadata
+			const processedRoleAssignments =
+				userData.roleAssignments?.map((assignment) => ({
+					...assignment,
+					assignedAt: Timestamp.now(),
+					assignedBy: currentUser.uid,
+					isActive: true,
+				})) || [];
+
+			// Create complete user document
+			const userDoc: any = {
 				name: userData.name,
 				email: userData.email,
+				phoneNumber: userData.phoneNumber || "",
+				employeeId: userData.employeeId || "",
 				isAdmin: userData.isAdmin || false,
-				roleAssignments: userData.roleAssignments || [],
+				roleAssignments: processedRoleAssignments,
+				isActive: true,
 				createdAt: Timestamp.now(),
+				createdBy: currentUser.uid,
 				updatedAt: Timestamp.now(),
-			});
+				passwordResetRequired: false,
+				twoFactorEnabled: false,
+			};
+
+			// Only add currentStatus for non-admin users (avoid undefined)
+			if (!userData.isAdmin) {
+				userDoc.currentStatus = "clocked_out";
+			}
+
+			await setDoc(userDocRef, userDoc);
+
+			console.log("✅ Complete user profile created in Firestore");
 		} catch (error) {
 			console.error("Error creating user profile:", error);
 			throw error;

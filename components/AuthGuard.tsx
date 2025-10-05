@@ -37,13 +37,13 @@ export default function AuthGuard({
 		if (!loading && isAuthenticated && user) {
 			// Check admin-only access
 			if (adminOnly && !isUserAdmin()) {
-				router.push("/");
+				router.push("/login");
 				return;
 			}
 
 			// Check branch access
 			if (requiredBranch && !canAccessBranch(requiredBranch)) {
-				router.push("/"); // Redirect if user can't access the branch
+				router.push("/login"); // Redirect if user can't access the branch
 				return;
 			}
 
@@ -54,7 +54,7 @@ export default function AuthGuard({
 					!userRole ||
 					(requiredRole === "manager" && userRole !== "manager")
 				) {
-					router.push("/"); // Redirect if user doesn't have required role
+					router.push("/login"); // Redirect if user doesn't have required role
 					return;
 				}
 			}
