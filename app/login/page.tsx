@@ -23,7 +23,7 @@ export default function LoginPage() {
 			if (isUserAdmin()) {
 				// Admin redirects to branch management
 				setIsLoading(false);
-				router.push("/branches");
+				router.push("/admin/branches");
 			} else {
 				// Check if user has valid branch assignments
 				const branchId = user?.roleAssignments?.[0]?.branchId;

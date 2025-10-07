@@ -88,13 +88,13 @@ export default function SidebarNav() {
 	// Admin Section - Available to admins only
 	const adminNavItems: NavItem[] = [
 		{
-			href: "/branches",
+			href: "/admin/branches",
 			label: "Branch Management",
 			icon: BranchesIcon,
 			adminOnly: true,
 		},
 		{
-			href: "/workers",
+			href: "/admin/workers",
 			label: "Worker Management",
 			icon: StoreIcon, // You may want to create a specific worker management icon
 			adminOnly: true,

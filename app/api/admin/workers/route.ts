@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
 import { authService } from "@/services/authService";
+import { workerService } from "@/services/workerService";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -54,6 +55,49 @@ export async function POST(request: NextRequest) {
 		}
 		return NextResponse.json(
 			{ error: error.message || "Failed to create worker" },
+			{ status: 500 }
+		);
+	}
+}
+
+export async function DELETE(request: NextRequest) {
+	try {
+		const { userId } = await request.json();
+		if (!userId) {
+			return NextResponse.json(
+				{ error: "User ID is required" },
+				{ status: 400 }
+			);
+		}
+
+		// Check if user exists in Firebase Auth
+		const existingUser = await adminAuth.getUser(userId);
+		if (!existingUser) {
+			return NextResponse.json({ error: "User not found" }, { status: 404 });
+		}
+
+		// Delete user from Firebase Auth
+		await adminAuth.deleteUser(userId);
+
+		// Delete user data from Firestore (cleanup worker data)
+		try {
+			await workerService.deleteWorkerData(userId);
+		} catch (firestoreError: any) {
+			console.warn(
+				"Failed to delete worker data from Firestore:",
+				firestoreError
+			);
+			// Continue - auth user is already deleted
+		}
+
+		return NextResponse.json({
+			success: true,
+			message: "Worker deleted successfully",
+		});
+	} catch (error: any) {
+		console.error("Error deleting worker:", error);
+		return NextResponse.json(
+			{ error: error.message || "Failed to delete worker" },
 			{ status: 500 }
 		);
 	}

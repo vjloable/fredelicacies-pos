@@ -66,6 +66,7 @@ export interface WorkerService {
 	getWorker: (userId: string) => Promise<Worker | null>;
 	updateWorker: (userId: string, updates: Partial<Worker>) => Promise<void>;
 	deleteWorker: (userId: string) => Promise<void>;
+	deleteWorkerData: (userId: string) => Promise<void>; // Internal method for Firestore cleanup
 	listWorkers: (filters?: WorkerFilters) => Promise<Worker[]>;
 
 	// Branch-specific operations
@@ -210,6 +211,29 @@ export const workerService: WorkerService = {
 
 	deleteWorker: async (userId: string): Promise<void> => {
 		try {
+			// Call API route first to handle complete deletion (Auth + Firestore)
+			const response = await fetch("/api/admin/workers", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ userId }),
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || "Failed to delete worker");
+			}
+
+			console.log("✅ Worker deleted successfully:", userId);
+		} catch (error) {
+			console.error("Error deleting worker:", error);
+			throw error;
+		}
+	},
+
+	// Internal method for Firestore cleanup only (called by API route)
+	deleteWorkerData: async (userId: string): Promise<void> => {
+		try {
 			const batch = writeBatch(db);
 
 			// Delete user document from Firestore
@@ -230,14 +254,9 @@ export const workerService: WorkerService = {
 
 			// Commit the batch
 			await batch.commit();
-
-			// Note: Firebase Auth user deletion would typically be handled separately
-			// by an admin SDK in a Cloud Function for security reasons
-			console.log(
-				`Worker ${userId} deleted from Firestore. Firebase Auth deletion should be handled by admin.`
-			);
+			console.log("🗑️ Worker data deleted from Firestore:", userId);
 		} catch (error) {
-			console.error("Error deleting worker:", error);
+			console.error("Error deleting worker data from Firestore:", error);
 			throw error;
 		}
 	},

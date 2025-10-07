@@ -7,7 +7,6 @@ import { branchService, Branch } from "@/services/branchService";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase-config";
 import { WorkerFilters as WorkerFiltersType } from "@/types/WorkerTypes";
-import AdminTopBar from "@/app/(admin)/components/AdminTopBar";
 import WorkersTable from "./components/WorkersTable";
 import WorkerFiltersComponent from "./components/WorkerFilters";
 import CreateWorkerModal from "./components/CreateWorkerModal";
@@ -19,6 +18,7 @@ import WorkerDetailModal from "@/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import AdvancedReporting from "./components/AdvancedReporting";
 import WorkScheduleManagement from "./components/WorkScheduleManagement";
+import TopBar from "@/components/TopBar";
 
 export default function WorkersPage() {
 	const { user, hasWorkerManagementAccess, getAccessibleBranches } = useAuth();
@@ -348,7 +348,7 @@ export default function WorkersPage() {
 
 	return (
 		<div className='flex flex-col h-full'>
-			<AdminTopBar />
+			<TopBar />
 
 			{/* Header */}
 			<div className='px-6 py-4 border-b border-gray-200'>

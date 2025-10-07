@@ -20,7 +20,7 @@ export default function NotFound() {
 						Go to Store
 					</Link>
 					<Link
-						href='/branches'
+						href='/admin/branches'
 						className='bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors'>
 						All Branches
 					</Link>

@@ -14,7 +14,7 @@ export default function RootPage() {
 			if (isAuthenticated && user) {
 				// Check if user is admin
 				if (isUserAdmin()) {
-					router.push("/branches");
+					router.push("/admin/branches");
 					return;
 				}
 
