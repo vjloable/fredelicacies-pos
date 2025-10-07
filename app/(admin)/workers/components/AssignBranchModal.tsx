@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { workerService, Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
+import DropdownField from "@/components/DropdownField";
 
 interface AssignBranchModalProps {
 	isOpen: boolean;
@@ -24,13 +25,11 @@ export default function AssignBranchModal({
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const [branchAssignments, setBranchAssignments] = useState<
-		Array<{
-			branchId: string;
-			role: "manager" | "worker";
-			isNew?: boolean;
-		}>
-	>([]);
+	// Single branch assignment state
+	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
+		"worker"
+	);
 
 	// Get available branches based on user permissions
 	const availableBranches = isAdmin
@@ -40,48 +39,27 @@ export default function AssignBranchModal({
 	// Initialize assignments when worker changes
 	useEffect(() => {
 		if (worker && isOpen) {
-			setBranchAssignments(
-				worker.roleAssignments
-					.filter((assignment) => assignment.isActive)
-					.map((assignment) => ({
-						branchId: assignment.branchId,
-						role: assignment.role,
-					}))
+			const activeAssignments = worker.roleAssignments.filter(
+				(assignment) => assignment.isActive
 			);
+
+			if (activeAssignments.length > 0) {
+				setSelectedBranchId(activeAssignments[0].branchId);
+				setSelectedRole(activeAssignments[0].role);
+			} else {
+				setSelectedBranchId("");
+				setSelectedRole("worker");
+			}
 			setError(null);
 		}
 	}, [worker, isOpen]);
 
-	const handleAssignmentChange = (
-		branchId: string,
-		role: "manager" | "worker",
-		checked: boolean
-	) => {
-		setBranchAssignments((prev) => {
-			if (checked) {
-				// Add new assignment
-				return [
-					...prev.filter((a) => a.branchId !== branchId),
-					{ branchId, role, isNew: true },
-				];
-			} else {
-				// Remove assignment
-				return prev.filter((a) => a.branchId !== branchId);
-			}
-		});
+	const handleBranchChange = (branchId: string) => {
+		setSelectedBranchId(branchId);
 	};
 
-	const handleRoleChange = (
-		branchId: string,
-		newRole: "manager" | "worker"
-	) => {
-		setBranchAssignments((prev) =>
-			prev.map((assignment) =>
-				assignment.branchId === branchId
-					? { ...assignment, role: newRole }
-					: assignment
-			)
-		);
+	const handleRoleChange = (role: "manager" | "worker") => {
+		setSelectedRole(role);
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -89,8 +67,8 @@ export default function AssignBranchModal({
 
 		if (!worker) return;
 
-		if (branchAssignments.length === 0 && !worker.isAdmin) {
-			setError("Worker must be assigned to at least one branch or be an admin");
+		if (!selectedBranchId && !worker.isAdmin) {
+			setError("Worker must be assigned to a branch or be an admin");
 			return;
 		}
 
@@ -102,40 +80,21 @@ export default function AssignBranchModal({
 				(a) => a.isActive !== false
 			);
 
-			// Remove assignments that are no longer selected
+			// Remove all old assignments first
 			for (const currentAssignment of currentAssignments) {
-				const stillAssigned = branchAssignments.some(
-					(a) => a.branchId === currentAssignment.branchId
+				await workerService.removeWorkerFromBranch(
+					worker.id,
+					currentAssignment.branchId
 				);
-				if (!stillAssigned) {
-					await workerService.removeWorkerFromBranch(
-						worker.id,
-						currentAssignment.branchId
-					);
-				}
 			}
 
-			// Add new assignments or update roles
-			for (const newAssignment of branchAssignments) {
-				const currentAssignment = currentAssignments.find(
-					(a) => a.branchId === newAssignment.branchId
+			// Add the new single assignment if selected
+			if (selectedBranchId) {
+				await workerService.assignWorkerToBranch(
+					worker.id,
+					selectedBranchId,
+					selectedRole
 				);
-
-				if (!currentAssignment) {
-					// New assignment
-					await workerService.assignWorkerToBranch(
-						worker.id,
-						newAssignment.branchId,
-						newAssignment.role
-					);
-				} else if (currentAssignment.role !== newAssignment.role) {
-					// Role change
-					await workerService.updateWorkerRole(
-						worker.id,
-						newAssignment.branchId,
-						newAssignment.role
-					);
-				}
 			}
 
 			onSuccess();
@@ -265,102 +224,98 @@ export default function AssignBranchModal({
 							</div>
 						)}
 
-						{/* Branch Assignments */}
+						{/* Branch Assignment */}
 						<form onSubmit={handleSubmit} className='space-y-6'>
-							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-4'>
-									Branch Assignments
-									{!worker.isAdmin && (
-										<span className='text-red-500 ml-1'>*</span>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div>
+									<label className='block text-sm font-medium text-gray-700 mb-2'>
+										Assign to Branch
+										{!worker.isAdmin && (
+											<span className='text-red-500 ml-1'>*</span>
+										)}
+									</label>
+									{availableBranches.length === 0 ? (
+										<div className='text-center py-4 text-gray-500 border border-gray-200 rounded-lg'>
+											No branches available
+										</div>
+									) : (
+										<DropdownField
+											options={[
+												"Select a branch",
+												...availableBranches.map((branch) => branch.name),
+											]}
+											defaultValue={
+												selectedBranchId
+													? availableBranches.find(
+															(b) => b.id === selectedBranchId
+													  )?.name
+													: "Select a branch"
+											}
+											onChange={(value) => {
+												if (value === "Select a branch") {
+													handleBranchChange("");
+												} else {
+													const branch = availableBranches.find(
+														(b) => b.name === value
+													);
+													if (branch) {
+														handleBranchChange(branch.id);
+													}
+												}
+											}}
+											roundness='lg'
+											height={42}
+											valueAlignment='left'
+											shadow={false}
+											fontSize='14px'
+											padding='12px'
+											maxVisibleOptions={5}
+										/>
 									)}
-								</label>
-
-								{availableBranches.length === 0 ? (
-									<div className='text-center py-8 text-gray-500'>
-										No branches available for assignment
-									</div>
-								) : (
-									<div className='space-y-3 max-h-80 overflow-y-auto'>
-										{availableBranches.map((branch) => {
-											const assignment = branchAssignments.find(
-												(a) => a.branchId === branch.id
-											);
-											const isAssigned = !!assignment;
-											const role = assignment?.role || "worker";
-
-											return (
-												<div
-													key={branch.id}
-													className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
-														isAssigned
-															? "border-[var(--accent)] bg-[var(--accent)]/5"
-															: "border-gray-200 hover:border-gray-300"
-													}`}>
-													<div className='flex items-center'>
-														<input
-															type='checkbox'
-															checked={isAssigned}
-															onChange={(e) =>
-																handleAssignmentChange(
-																	branch.id,
-																	role,
-																	e.target.checked
-																)
-															}
-															className='h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-gray-300 rounded'
-														/>
-														<div className='ml-4'>
-															<div className='font-medium text-gray-900'>
-																{branch.name}
-															</div>
-															<div className='text-sm text-gray-500'>
-																{branch.location}
-															</div>
-														</div>
-													</div>
-
-													{isAssigned && (
-														<div className='flex items-center space-x-2'>
-															<select
-																value={role}
-																onChange={(e) =>
-																	handleRoleChange(
-																		branch.id,
-																		e.target.value as "manager" | "worker"
-																	)
-																}
-																className='px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
-																<option value='worker'>Worker</option>
-																<option value='manager'>Manager</option>
-															</select>
-														</div>
-													)}
-												</div>
-											);
-										})}
-									</div>
-								)}
+								</div>
+								<div>
+									<label className='block text-sm font-medium text-gray-700 mb-2'>
+										Role
+										{!worker.isAdmin && (
+											<span className='text-red-500 ml-1'>*</span>
+										)}
+									</label>
+									<DropdownField
+										options={["Worker", "Manager"]}
+										defaultValue={
+											selectedRole === "worker" ? "Worker" : "Manager"
+										}
+										onChange={(value) =>
+											handleRoleChange(
+												value.toLowerCase() as "manager" | "worker"
+											)
+										}
+										roundness='lg'
+										height={42}
+										valueAlignment='left'
+										shadow={false}
+										fontSize='14px'
+										padding='12px'
+									/>
+								</div>
 							</div>
 
 							{/* Summary */}
-							{branchAssignments.length > 0 && (
+							{selectedBranchId && (
 								<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
 									<h4 className='text-sm font-medium text-blue-800 mb-2'>
 										Assignment Summary:
 									</h4>
-									<ul className='text-sm text-blue-700 space-y-1'>
-										{branchAssignments.map((assignment) => {
-											const branch = branches.find(
-												(b) => b.id === assignment.branchId
-											);
-											return (
-												<li key={assignment.branchId}>
-													<span className='font-medium'>{branch?.name}</span> -{" "}
-													{assignment.role}
-												</li>
-											);
-										})}
-									</ul>
+									<div className='text-sm text-blue-700'>
+										<span className='font-medium'>
+											{
+												availableBranches.find((b) => b.id === selectedBranchId)
+													?.name
+											}
+										</span>
+										{" - "}
+										<span className='capitalize'>{selectedRole}</span>
+									</div>
 								</div>
 							)}
 

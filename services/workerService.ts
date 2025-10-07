@@ -291,6 +291,11 @@ export const workerService: WorkerService = {
 					if (!hasBranchAccess) return;
 				}
 
+				// Apply excludeAdmins filter locally (for managers who shouldn't see admins)
+				if (filters?.excludeAdmins && data.isAdmin) {
+					return;
+				}
+
 				// Apply role filter locally
 				if (filters?.role) {
 					if (filters.role === "admin" && !data.isAdmin) return;

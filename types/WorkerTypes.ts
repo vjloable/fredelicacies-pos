@@ -22,6 +22,7 @@ export interface WorkerFilters {
 	searchQuery?: string;
 	page?: number;
 	limit?: number;
+	excludeAdmins?: boolean; // For managers who shouldn't see admins
 }
 
 export interface WorkSession {

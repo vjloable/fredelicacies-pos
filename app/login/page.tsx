@@ -21,14 +21,27 @@ export default function LoginPage() {
 		// If user is already logged in, redirect based on their role
 		if (user) {
 			if (isUserAdmin()) {
+				// Admin redirects to branch management
 				setIsLoading(false);
 				router.push("/branches");
 			} else {
 				// Check if user has valid branch assignments
 				const branchId = user?.roleAssignments?.[0]?.branchId;
 				if (branchId) {
+					// Check if user is a manager for any branch
+					const isManager = user.roleAssignments.some(
+						(assignment) =>
+							assignment.role === "manager" && assignment.isActive !== false
+					);
+
+					if (isManager) {
+						// Manager redirects to management (worker view for their branch)
+						router.push(`/${branchId}/management`);
+					} else {
+						// Worker redirects to store
+						router.push(`/${branchId}/store`);
+					}
 					setIsLoading(false);
-					router.push(`/${branchId}/store`);
 				}
 			}
 		}

@@ -11,6 +11,8 @@ interface WorkerFiltersProps {
 	userAccessibleBranches: string[];
 	isAdmin: boolean;
 	onFiltersChange: (filters: WorkerFiltersType) => void;
+	hideBranchFilter?: boolean; // Hide branch filter for managers
+	hideAdminRole?: boolean; // Hide admin role option for managers
 }
 
 export default function WorkerFilters({
@@ -19,6 +21,8 @@ export default function WorkerFilters({
 	userAccessibleBranches,
 	isAdmin,
 	onFiltersChange,
+	hideBranchFilter = false,
+	hideAdminRole = false,
 }: WorkerFiltersProps) {
 	const [localFilters, setLocalFilters] = useState<WorkerFiltersType>(filters);
 
@@ -34,8 +38,18 @@ export default function WorkerFilters({
 	};
 
 	const clearFilters = () => {
-		setLocalFilters({});
-		onFiltersChange({});
+		const clearedFilters: WorkerFiltersType = {};
+
+		// Preserve branchId and excludeAdmins if they were set initially
+		if (filters.branchId) {
+			clearedFilters.branchId = filters.branchId;
+		}
+		if (filters.excludeAdmins) {
+			clearedFilters.excludeAdmins = filters.excludeAdmins;
+		}
+
+		setLocalFilters(clearedFilters);
+		onFiltersChange(clearedFilters);
 	};
 
 	const hasActiveFilters = Object.keys(localFilters).some(
@@ -74,7 +88,7 @@ export default function WorkerFilters({
 			</div>
 
 			{/* Branch Filter */}
-			{availableBranches.length > 0 && (
+			{!hideBranchFilter && availableBranches.length > 0 && (
 				<div className='min-w-48'>
 					<select
 						value={localFilters.branchId || ""}
@@ -104,7 +118,7 @@ export default function WorkerFilters({
 					}
 					className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
 					<option value=''>All Roles</option>
-					<option value='admin'>Admin</option>
+					{!hideAdminRole && <option value='admin'>Admin</option>}
 					<option value='manager'>Manager</option>
 					<option value='worker'>Worker</option>
 				</select>

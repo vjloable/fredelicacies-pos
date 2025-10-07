@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Branch } from "@/services/branchService";
 import { workerService } from "@/services/workerService";
 import { CreateWorkerRequest } from "@/types/WorkerTypes";
+import DropdownField from "@/components/DropdownField";
 
 interface CreateWorkerModalProps {
 	isOpen: boolean;
@@ -33,6 +34,12 @@ export default function CreateWorkerModal({
 		isAdmin: false,
 	});
 
+	// Single branch assignment state
+	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
+		"worker"
+	);
+
 	// Get available branches based on user permissions
 	const availableBranches = isAdmin
 		? branches
@@ -50,19 +57,22 @@ export default function CreateWorkerModal({
 		}));
 	};
 
-	const handleBranchAssignmentChange = (
-		branchId: string,
-		role: "manager" | "worker",
-		checked: boolean
-	) => {
+	const handleBranchChange = (branchId: string) => {
+		setSelectedBranchId(branchId);
 		setFormData((prev) => ({
 			...prev,
-			branchAssignments: checked
-				? [...prev.branchAssignments, { branchId, role }]
-				: prev.branchAssignments.filter(
-						(assignment) => assignment.branchId !== branchId
-				  ),
+			branchAssignments: branchId ? [{ branchId, role: selectedRole }] : [],
 		}));
+	};
+
+	const handleRoleChange = (role: "manager" | "worker") => {
+		setSelectedRole(role);
+		if (selectedBranchId) {
+			setFormData((prev) => ({
+				...prev,
+				branchAssignments: [{ branchId: selectedBranchId, role }],
+			}));
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -77,10 +87,8 @@ export default function CreateWorkerModal({
 			return;
 		}
 
-		if (formData.branchAssignments.length === 0 && !formData.isAdmin) {
-			setError(
-				"Please assign the worker to at least one branch or make them an admin"
-			);
+		if (!selectedBranchId && !formData.isAdmin) {
+			setError("Please select a branch assignment or make them an admin");
 			return;
 		}
 
@@ -109,6 +117,8 @@ export default function CreateWorkerModal({
 			branchAssignments: [],
 			isAdmin: false,
 		});
+		setSelectedBranchId("");
+		setSelectedRole("worker");
 		setError(null);
 	};
 
@@ -280,74 +290,67 @@ export default function CreateWorkerModal({
 								</div>
 							)}
 
-							{/* Branch Assignments */}
+							{/* Branch Assignment */}
 							{!formData.isAdmin && (
-								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-3'>
-										Branch Assignments *
-									</label>
-									<div className='space-y-3 max-h-60 overflow-y-auto'>
-										{availableBranches.map((branch) => {
-											const assignment = formData.branchAssignments.find(
-												(a) => a.branchId === branch.id
-											);
-											const isAssigned = !!assignment;
-											const role = assignment?.role || "worker";
-
-											return (
-												<div
-													key={branch.id}
-													className='flex items-center justify-between p-3 border border-gray-200 rounded-lg'>
-													<div className='flex items-center'>
-														<input
-															type='checkbox'
-															checked={isAssigned}
-															onChange={(e) =>
-																handleBranchAssignmentChange(
-																	branch.id,
-																	role,
-																	e.target.checked
-																)
-															}
-															className='h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-gray-300 rounded'
-														/>
-														<div className='ml-3'>
-															<div className='font-medium text-gray-900'>
-																{branch.name}
-															</div>
-															<div className='text-sm text-gray-500'>
-																{branch.location}
-															</div>
-														</div>
-													</div>
-													{isAssigned && (
-														<select
-															value={role}
-															onChange={(e) => {
-																const newAssignments =
-																	formData.branchAssignments.map((a) =>
-																		a.branchId === branch.id
-																			? {
-																					...a,
-																					role: e.target.value as
-																						| "manager"
-																						| "worker",
-																			  }
-																			: a
-																	);
-																setFormData((prev) => ({
-																	...prev,
-																	branchAssignments: newAssignments,
-																}));
-															}}
-															className='ml-4 px-2 py-1 border border-gray-300 rounded text-sm'>
-															<option value='worker'>Worker</option>
-															<option value='manager'>Manager</option>
-														</select>
-													)}
-												</div>
-											);
-										})}
+								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+									<div>
+										<label className='block text-sm font-medium text-gray-700 mb-2'>
+											Assign to Branch *
+										</label>
+										<DropdownField
+											options={[
+												"Select a branch",
+												...availableBranches.map((branch) => branch.name),
+											]}
+											defaultValue={
+												selectedBranchId
+													? availableBranches.find(
+															(b) => b.id === selectedBranchId
+													  )?.name
+													: "Select a branch"
+											}
+											onChange={(value) => {
+												if (value === "Select a branch") {
+													handleBranchChange("");
+												} else {
+													const branch = availableBranches.find(
+														(b) => b.name === value
+													);
+													if (branch) {
+														handleBranchChange(branch.id);
+													}
+												}
+											}}
+											roundness='lg'
+											height={42}
+											valueAlignment='left'
+											shadow={false}
+											fontSize='14px'
+											padding='12px'
+											maxVisibleOptions={3}
+										/>
+									</div>
+									<div>
+										<label className='block text-sm font-medium text-gray-700 mb-2'>
+											Role *
+										</label>
+										<DropdownField
+											options={["Worker", "Manager"]}
+											defaultValue={
+												selectedRole === "worker" ? "Worker" : "Manager"
+											}
+											onChange={(value) =>
+												handleRoleChange(
+													value.toLowerCase() as "manager" | "worker"
+												)
+											}
+											roundness='lg'
+											height={42}
+											valueAlignment='left'
+											shadow={false}
+											fontSize='14px'
+											padding='12px'
+										/>
 									</div>
 								</div>
 							)}
