@@ -21,7 +21,12 @@ import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
 
 export default function WorkersPage() {
-	const { user, hasWorkerManagementAccess, getAccessibleBranches } = useAuth();
+	const {
+		user,
+		hasWorkerManagementAccess,
+		getAccessibleBranches,
+		loading: authLoading,
+	} = useAuth();
 	const [workers, setWorkers] = useState<Worker[]>([]);
 	const [branches, setBranches] = useState<Branch[]>([]);
 	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
@@ -64,13 +69,13 @@ export default function WorkersPage() {
 		direction: "asc" | "desc";
 	}>({ column: "name", direction: "asc" });
 
-	// Check access
+	// Check access only after auth loading is complete
 	useEffect(() => {
-		if (user && !hasWorkerManagementAccess()) {
+		if (!authLoading && user && !hasWorkerManagementAccess()) {
 			setError("You don't have permission to access worker management.");
 			setLoading(false);
 		}
-	}, [user, hasWorkerManagementAccess]);
+	}, [user, hasWorkerManagementAccess, authLoading]);
 
 	// Setup single collection subscription for all workers
 	const setupWorkerSubscriptions = useCallback(() => {
@@ -185,13 +190,13 @@ export default function WorkersPage() {
 		}
 	}, [filters, selectedBranchId]);
 
-	// Load data
+	// Load data only after auth loading is complete
 	useEffect(() => {
-		if (user && hasWorkerManagementAccess()) {
+		if (!authLoading && user && hasWorkerManagementAccess()) {
 			loadWorkers();
 			loadBranches();
 		}
-	}, [user, hasWorkerManagementAccess, filters, selectedBranchId]);
+	}, [user, hasWorkerManagementAccess, filters, selectedBranchId, authLoading]);
 
 	// Cleanup subscriptions on unmount
 	useEffect(() => {
@@ -332,6 +337,19 @@ export default function WorkersPage() {
 		});
 	}, [workers, sortConfig]);
 
+	// Show loading state while auth is loading
+	if (authLoading) {
+		return (
+			<div className='flex items-center justify-center h-full'>
+				<div className='text-center'>
+					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
+					<p className='text-gray-500'>Loading...</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Show access denied only after auth loading is complete
 	if (!user || !hasWorkerManagementAccess()) {
 		return (
 			<div className='flex items-center justify-center h-full'>

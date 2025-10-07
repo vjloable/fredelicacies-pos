@@ -27,7 +27,12 @@ import TopBar from "@/components/TopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 
 export default function ManagementPage() {
-	const { user, getUserRoleForBranch, canAccessBranch } = useAuth();
+	const {
+		user,
+		getUserRoleForBranch,
+		canAccessBranch,
+		loading: authLoading,
+	} = useAuth();
 	const { branchId } = useParams();
 	const [workers, setWorkers] = useState<Worker[]>([]);
 	const [branches, setBranches] = useState<Branch[]>([]);
@@ -62,9 +67,9 @@ export default function ManagementPage() {
 		direction: "asc" as "asc" | "desc",
 	});
 
-	// Access control check
+	// Access control check - wait for auth loading to complete
 	useEffect(() => {
-		if (user && branchId) {
+		if (!authLoading && user && branchId) {
 			const userRole = getUserRoleForBranch(branchId as string);
 			const hasAccess = canAccessBranch(branchId as string);
 
@@ -84,7 +89,7 @@ export default function ManagementPage() {
 			// If user has proper access, clear any existing errors
 			setError(null);
 		}
-	}, [user, branchId, getUserRoleForBranch, canAccessBranch]);
+	}, [user, branchId, getUserRoleForBranch, canAccessBranch, authLoading]);
 
 	// Real-time workers collection setup
 	const setupWorkerSubscriptions = useCallback(() => {
@@ -365,6 +370,19 @@ export default function ManagementPage() {
 		});
 	}, [workers, sortConfig, filters]);
 
+	// Show loading state while auth is loading
+	if (authLoading) {
+		return (
+			<div className='flex items-center justify-center h-full'>
+				<div className='text-center'>
+					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
+					<p className='text-gray-500'>Loading...</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Show access denied only after auth loading is complete
 	if (!user) {
 		return (
 			<div className='flex items-center justify-center h-full'>
