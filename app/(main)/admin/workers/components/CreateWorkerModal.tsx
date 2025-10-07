@@ -164,9 +164,9 @@ export default function CreateWorkerModal({
 			await workerService.createWorker(formData);
 			onSuccess();
 			resetForm();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error creating worker:", err);
-			setError(err.message || "Failed to create worker");
+			setError(err instanceof Error ? err.message : "Failed to create worker");
 		} finally {
 			setLoading(false);
 		}

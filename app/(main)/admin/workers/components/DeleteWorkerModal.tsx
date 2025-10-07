@@ -33,9 +33,9 @@ export default function DeleteWorkerModal({
 			await workerService.deleteWorker(worker.id);
 			onSuccess();
 			handleClose();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error deleting worker:", err);
-			setError(err.message || "Failed to delete worker");
+			setError(err instanceof Error ? err.message : "Failed to delete worker");
 		} finally {
 			setLoading(false);
 		}
@@ -104,7 +104,7 @@ export default function DeleteWorkerModal({
 								{worker.profilePicture ? (
 									<img
 										src={worker.profilePicture}
-										alt=''
+										alt={`${worker.name} profile`}
 										className='w-12 h-12 rounded-full mr-4'
 									/>
 								) : (

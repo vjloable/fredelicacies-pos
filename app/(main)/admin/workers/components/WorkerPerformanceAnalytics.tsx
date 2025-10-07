@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService } from "@/services/workSessionService";
+import { workSessionService, WorkSession } from "@/services/workSessionService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
+import { Timestamp } from "firebase/firestore";
 
 interface WorkerPerformanceProps {
 	worker: Worker;
@@ -59,8 +60,8 @@ export default function WorkerPerformanceAnalytics({
 					worker.id,
 					dateRange
 						? {
-								startDate: dateRange.startDate as any,
-								endDate: dateRange.endDate as any,
+								startDate: Timestamp.fromDate(dateRange.startDate),
+								endDate: Timestamp.fromDate(dateRange.endDate),
 						  }
 						: undefined
 				)) || [];
@@ -68,25 +69,25 @@ export default function WorkerPerformanceAnalytics({
 			// Calculate performance metrics
 			const calculatedMetrics = calculatePerformanceMetrics(sessions);
 			setMetrics(calculatedMetrics);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error loading performance metrics:", err);
-			setError(err.message || "Failed to load performance data");
+			setError(err instanceof Error ? err.message : "Failed to load performance data");
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const calculatePerformanceMetrics = (sessions: any[]): PerformanceMetrics => {
+	const calculatePerformanceMetrics = (sessions: WorkSession[]): PerformanceMetrics => {
 		// Basic calculations
 		const totalHours = sessions.reduce((sum, session) => {
 			if (session.duration) {
 				return sum + session.duration / 60; // Convert minutes to hours
 			}
 			if (session.timeInAt && session.timeOutAt) {
-				const startTime = session.timeInAt.toDate
+				const startTime = session.timeInAt instanceof Timestamp
 					? session.timeInAt.toDate()
 					: session.timeInAt;
-				const endTime = session.timeOutAt.toDate
+				const endTime = session.timeOutAt instanceof Timestamp
 					? session.timeOutAt.toDate()
 					: session.timeOutAt;
 				return (
@@ -125,14 +126,12 @@ export default function WorkerPerformanceAnalytics({
 		};
 	};
 
-	const calculatePunctualityScore = (sessions: any[]): number => {
+	const calculatePunctualityScore = (sessions: WorkSession[]): number => {
 		// Simplified punctuality: assume on-time if clocked in within 15 minutes of hour
-		const onTimeThreshold = 15 * 60 * 1000; // 15 minutes in milliseconds
-
 		const punctualSessions = sessions.filter((session) => {
 			if (!session.timeInAt) return false;
 
-			const startTime = session.timeInAt.toDate
+			const startTime = session.timeInAt instanceof Timestamp
 				? session.timeInAt.toDate()
 				: session.timeInAt;
 			const minutes = startTime.getMinutes();
@@ -174,7 +173,7 @@ export default function WorkerPerformanceAnalytics({
 		return "stable";
 	};
 
-	const calculateBranchPerformance = (sessions: any[]) => {
+	const calculateBranchPerformance = (sessions: WorkSession[]) => {
 		const branchMap = new Map();
 
 		sessions.forEach((session) => {
@@ -206,11 +205,11 @@ export default function WorkerPerformanceAnalytics({
 		return Array.from(branchMap.values());
 	};
 
-	const calculateWeeklyBreakdown = (sessions: any[]) => {
+	const calculateWeeklyBreakdown = (sessions: WorkSession[]) => {
 		const weekMap = new Map();
 
 		sessions.forEach((session) => {
-			const sessionDate = session.timeInAt.toDate
+			const sessionDate = session.timeInAt instanceof Timestamp
 				? session.timeInAt.toDate()
 				: session.timeInAt;
 			const weekStart = getWeekStart(sessionDate);
@@ -237,7 +236,7 @@ export default function WorkerPerformanceAnalytics({
 		);
 	};
 
-	const calculateDailyPattern = (sessions: any[]) => {
+	const calculateDailyPattern = (sessions: WorkSession[]) => {
 		const dayMap = new Map();
 		const dayNames = [
 			"Sunday",
@@ -258,7 +257,7 @@ export default function WorkerPerformanceAnalytics({
 		});
 
 		sessions.forEach((session) => {
-			const sessionDate = session.timeInAt.toDate
+			const sessionDate = session.timeInAt instanceof Timestamp
 				? session.timeInAt.toDate()
 				: session.timeInAt;
 			const dayName = dayNames[sessionDate.getDay()];

@@ -12,7 +12,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
-import QuickTimeWidget from "./QuickTimeWidget";
+
 
 interface TopBarProps {
 	title?: string;

@@ -17,7 +17,7 @@ export default function BranchSelector({
 	showLabel = true,
 	redirectOnChange = false,
 }: BranchSelectorProps) {
-	const { user, isUserAdmin } = useAuth();
+	const { user } = useAuth();
 	const { currentBranch, availableBranches, loading, setCurrentBranchId } =
 		useBranch();
 	const router = useRouter();

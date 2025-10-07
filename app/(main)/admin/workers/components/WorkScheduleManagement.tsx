@@ -297,9 +297,14 @@ export default function WorkScheduleManagement({
 				) : (
 					<div className='divide-y divide-gray-200'>
 						{scheduleTargets.map((target, index) => {
-							const [compliance, setCompliance] = useState<any>(null);
+							// TODO: Extract to separate component to fix React hooks rule
+							const [compliance, setCompliance] = useState<{
+								compliance: number;
+								actualHours: number;
+								targetHours: number;
+								sessionsCount: number;
+							} | null>(null);
 
-							// Calculate compliance when component mounts
 							React.useEffect(() => {
 								calculateScheduleCompliance(target).then(setCompliance);
 							}, [target]);

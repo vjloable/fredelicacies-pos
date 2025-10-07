@@ -109,7 +109,7 @@ export default function AuthGuard({
 			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
 				<div className='text-center'>
 					<p className='text-[var(--secondary)]'>
-						Access denied. You don't have access to this branch.
+						Access denied. You don&apos;t have access to this branch.
 					</p>
 				</div>
 			</div>

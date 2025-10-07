@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Worker } from "@/services/workerService";
 import { workSessionService, WorkSession } from "@/services/workSessionService";
-import { Timestamp } from "firebase/firestore";
+
 import LoadingSpinner from "./LoadingSpinner";
 
 interface WorkSessionWithMetadata extends WorkSession {

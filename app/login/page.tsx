@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import { FirebaseError } from "@firebase/util";
-import { b } from "motion/react-client";
+
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({

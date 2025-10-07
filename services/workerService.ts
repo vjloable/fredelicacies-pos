@@ -3,7 +3,6 @@ import {
 	WorkerFilters,
 	UserRole,
 	WorkSession,
-	DateRange,
 	WorkerStats,
 } from "@/types/WorkerTypes";
 import { authService } from "./authService";
@@ -14,20 +13,14 @@ import {
 	getDoc,
 	getDocs,
 	updateDoc,
-	deleteDoc,
 	query,
 	where,
 	orderBy,
 	limit,
-	startAfter,
-	addDoc,
-	setDoc,
 	Timestamp,
 	writeBatch,
 } from "firebase/firestore";
 import { db } from "@/firebase-config";
-import { deleteUser } from "firebase/auth";
-import firebase from "firebase/compat/app";
 
 // Worker interface matching the User structure with additional fields
 export interface Worker {
@@ -478,13 +471,13 @@ export const workerService: WorkerService = {
 			const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
 			let totalHoursWorked = 0;
-			let totalSessions = allSessions.length;
+			const totalSessions = allSessions.length;
 			let weekHours = 0;
 			let monthHours = 0;
 			let weekSessions = 0;
 			let monthSessions = 0;
-			let weekDays = new Set<string>();
-			let monthDays = new Set<string>();
+			const weekDays = new Set<string>();
+			const monthDays = new Set<string>();
 
 			const branchStatsMap = new Map<
 				string,

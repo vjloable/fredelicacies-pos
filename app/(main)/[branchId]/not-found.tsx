@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 
 export default function NotFound() {
 	return (
@@ -11,7 +10,7 @@ export default function NotFound() {
 					Page Not Found
 				</h2>
 				<p className='text-gray-500 mb-6'>
-					The page you're looking for doesn't exist in this branch.
+					The page you&apos;re looking for doesn&apos;t exist in this branch.
 				</p>
 				<div className='space-x-4'>
 					<Link

@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { branchService, Branch } from "@/services/branchService";
+
 import TopBar from "@/components/TopBar";
 import SettingsIcon from "@/components/icons/SidebarNav/SettingsIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
-import { formatCurrency } from "@/lib/currency_formatter";
 
 // Helper function to format Firestore timestamps or dates
 const formatDate = (date: any) => {
@@ -22,7 +22,6 @@ export default function WorkerSettingsPage() {
 	const { user } = useAuth();
 	const timeTracking = useTimeTracking({ autoRefresh: true });
 	const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
-	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
 		if (timeTracking.worker) {

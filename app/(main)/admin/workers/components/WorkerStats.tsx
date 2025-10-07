@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { WorkerStats } from "@/types/WorkerTypes";
-import { workSessionService } from "@/services/workSessionService";
+import { workSessionService, WorkSession } from "@/services/workSessionService";
 import { Worker } from "@/services/workerService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
+import { Timestamp } from "firebase/firestore";
 
 interface WorkerStatsProps {
 	worker: Worker;
@@ -47,9 +48,9 @@ export default function WorkerStatsComponent({
 			// Calculate stats from sessions
 			const calculatedStats = calculateWorkerStats(worker.id, filteredSessions);
 			setStats(calculatedStats);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error loading worker stats:", err);
-			setError(err.message || "Failed to load worker statistics");
+			setError(err instanceof Error ? err.message : "Failed to load worker statistics");
 		} finally {
 			setLoading(false);
 		}
@@ -57,7 +58,7 @@ export default function WorkerStatsComponent({
 
 	const calculateWorkerStats = (
 		userId: string,
-		sessions: any[]
+		sessions: WorkSession[]
 	): WorkerStats => {
 		// Initialize stats
 		const stats: WorkerStats = {

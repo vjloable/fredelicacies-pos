@@ -30,7 +30,7 @@ import { formatCurrency } from "@/lib/currency_formatter";
 import { formatReceiptWithLogo } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
-import QuickTimeWidget from "@/components/QuickTimeWidget";
+
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 
 // Toast notification component

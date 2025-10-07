@@ -21,7 +21,7 @@ import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
 export default function DiscountsScreen() {
 	const { user, isAuthenticated } = useAuth();
-	const { currentBranch, loading: isBranchLoading } = useBranch();
+	const { currentBranch } = useBranch();
 	const [discounts, setDiscounts] = useState<Discount[]>([]);
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [loading, setLoading] = useState(true);

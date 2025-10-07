@@ -189,9 +189,9 @@ export default function EditWorkerModal({
 			}
 
 			onSuccess();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error updating worker:", err);
-			setError(err.message || "Failed to update worker");
+			setError(err instanceof Error ? err.message : "Failed to update worker");
 		} finally {
 			setLoading(false);
 		}

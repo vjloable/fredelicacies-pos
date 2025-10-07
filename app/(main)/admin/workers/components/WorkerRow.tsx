@@ -153,7 +153,7 @@ export default function WorkerRow({
 					{worker.profilePicture ? (
 						<img
 							src={worker.profilePicture}
-							alt=''
+							alt={`${worker.name} profile`}
 							className='w-10 h-10 rounded-full mr-4'
 						/>
 					) : (

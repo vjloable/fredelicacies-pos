@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useState } from "react";
 import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
-import BranchSelector from "./BranchSelector";
+
 
 // Import icons for new sections (create if they don't exist)
 interface NavItem {
@@ -25,7 +25,7 @@ interface NavItem {
 }
 
 export default function SidebarNav() {
-	const { logout, isUserAdmin, user, getUserRoleForBranch } = useAuth();
+	const { logout, isUserAdmin, getUserRoleForBranch } = useAuth();
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const router = useRouter();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
-import { authService } from "@/services/authService";
+
 import { workerService } from "@/services/workerService";
 
 export async function POST(request: NextRequest) {

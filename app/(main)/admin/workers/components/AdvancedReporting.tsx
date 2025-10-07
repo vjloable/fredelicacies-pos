@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService } from "@/services/workSessionService";
+import { workSessionService, WorkSession } from "@/services/workSessionService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
 import { Timestamp } from "firebase/firestore";
@@ -64,12 +64,6 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 	const [error, setError] = useState<string | null>(null);
 	const { allBranches } = useAccessibleBranches();
 
-	useEffect(() => {
-		if (filters.reportType === "summary") {
-			generateSummaryReport();
-		}
-	}, [filters]);
-
 	const generateSummaryReport = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -117,17 +111,23 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			// Calculate summary metrics
 			const metrics = calculateSummaryMetrics(filteredWorkers, allSessions);
 			setSummaryMetrics(metrics);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error generating summary report:", err);
-			setError(err.message || "Failed to generate report");
+			setError(err instanceof Error ? err.message : "Failed to generate report");
 		} finally {
 			setLoading(false);
 		}
 	}, [filters, workers, allBranches]);
 
-	const calculateSummaryMetrics = (
+	useEffect(() => {
+		if (filters.reportType === "summary") {
+			generateSummaryReport();
+		}
+	}, [filters, generateSummaryReport]);
+
+	const calculateSummaryMetrics = useCallback((
 		workers: Worker[],
-		sessions: any[]
+		sessions: (WorkSession & { workerId: string; workerName: string })[]
 	): SummaryMetrics => {
 		const totalWorkers = workers.length;
 
@@ -137,10 +137,10 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 				return sum + session.duration / 60; // Convert minutes to hours
 			}
 			if (session.timeInAt && session.timeOutAt) {
-				const startTime = session.timeInAt.toDate
+				const startTime = session.timeInAt instanceof Timestamp 
 					? session.timeInAt.toDate()
 					: session.timeInAt;
-				const endTime = session.timeOutAt.toDate
+				const endTime = session.timeOutAt instanceof Timestamp
 					? session.timeOutAt.toDate()
 					: session.timeOutAt;
 				return (
@@ -176,9 +176,9 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			topPerformers,
 			timeDistribution,
 		};
-	};
+	}, [allBranches]);
 
-	const calculateBranchCoverage = (sessions: any[]) => {
+	const calculateBranchCoverage = (sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
 		const branchMap = new Map();
 
 		sessions.forEach((session) => {
@@ -213,7 +213,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		}));
 	};
 
-	const calculateTopPerformers = (workers: Worker[], sessions: any[]) => {
+	const calculateTopPerformers = (workers: Worker[], sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
 		const workerMap = new Map();
 
 		// Initialize worker data
@@ -239,7 +239,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 				// Simple punctuality check (on-time if clocked in within 15 minutes of hour)
 				if (session.timeInAt) {
-					const startTime = session.timeInAt.toDate
+					const startTime = session.timeInAt instanceof Timestamp
 						? session.timeInAt.toDate()
 						: session.timeInAt;
 					const minutes = startTime.getMinutes();
@@ -263,7 +263,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			.slice(0, 5);
 	};
 
-	const calculateTimeDistribution = (sessions: any[]) => {
+	const calculateTimeDistribution = (sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
 		const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
 			hour,
 			clockInsCount: 0,
@@ -272,14 +272,14 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 		sessions.forEach((session) => {
 			if (session.timeInAt) {
-				const startTime = session.timeInAt.toDate
+				const startTime = session.timeInAt instanceof Timestamp
 					? session.timeInAt.toDate()
 					: session.timeInAt;
 				hourlyData[startTime.getHours()].clockInsCount++;
 			}
 
 			if (session.timeOutAt) {
-				const endTime = session.timeOutAt.toDate
+				const endTime = session.timeOutAt instanceof Timestamp
 					? session.timeOutAt.toDate()
 					: session.timeOutAt;
 				hourlyData[endTime.getHours()].clockOutsCount++;
@@ -328,14 +328,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		}));
 	};
 
-	const handleWorkerFilterChange = (workerId: string) => {
-		setFilters((prev) => ({
-			...prev,
-			workerIds: prev.workerIds.includes(workerId)
-				? prev.workerIds.filter((id) => id !== workerId)
-				: [...prev.workerIds, workerId],
-		}));
-	};
+
 
 	const exportReport = () => {
 		if (!summaryMetrics) return;
@@ -426,7 +419,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 							onChange={(e) =>
 								setFilters((prev) => ({
 									...prev,
-									reportType: e.target.value as any,
+									reportType: e.target.value as ReportFilters["reportType"],
 								}))
 							}
 							className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'>

@@ -72,18 +72,7 @@ export default function POSTimeTracking({
 		}
 	};
 
-	const formatDuration = (startTime: Date): string => {
-		const now = new Date();
-		const diffMs = now.getTime() - startTime.getTime();
-		const diffMins = Math.floor(diffMs / (1000 * 60));
-		const hours = Math.floor(diffMins / 60);
-		const minutes = diffMins % 60;
 
-		if (hours > 0) {
-			return `${hours}h ${minutes}m`;
-		}
-		return `${minutes}m`;
-	};
 
 	// Don't show for users without time tracking access
 	// (admins without manager role assignments are exempt)
@@ -118,7 +107,7 @@ export default function POSTimeTracking({
 						/>
 					</svg>
 					<p className='text-yellow-800 text-sm'>
-						You don't have access to clock in/out at this branch location.
+						You don&apos;t have access to clock in/out at this branch location.
 					</p>
 				</div>
 			</div>

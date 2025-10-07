@@ -99,9 +99,9 @@ export default function AssignBranchModal({
 
 			onSuccess();
 			handleClose();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error updating branch assignments:", err);
-			setError(err.message || "Failed to update branch assignments");
+			setError(err instanceof Error ? err.message : "Failed to update branch assignments");
 		} finally {
 			setLoading(false);
 		}
@@ -222,7 +222,7 @@ export default function AssignBranchModal({
 								{worker.profilePicture ? (
 									<img
 										src={worker.profilePicture}
-										alt=''
+										alt={`${worker.name} profile`}
 										className='w-12 h-12 rounded-full mr-4'
 									/>
 								) : (

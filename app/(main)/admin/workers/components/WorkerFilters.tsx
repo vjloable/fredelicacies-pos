@@ -31,7 +31,7 @@ export default function WorkerFilters({
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
-	const handleFilterChange = (key: keyof WorkerFiltersType, value: any) => {
+	const handleFilterChange = (key: keyof WorkerFiltersType, value: WorkerFiltersType[keyof WorkerFiltersType]) => {
 		const newFilters = { ...localFilters, [key]: value };
 		setLocalFilters(newFilters);
 		onFiltersChange(newFilters);
@@ -129,7 +129,7 @@ export default function WorkerFilters({
 				<select
 					value={localFilters.status || ""}
 					onChange={(e) =>
-						handleFilterChange("status", (e.target.value as any) || undefined)
+						handleFilterChange("status", e.target.value || undefined)
 					}
 					className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
 					<option value=''>All Status</option>

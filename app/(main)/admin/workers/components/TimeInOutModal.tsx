@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { workerService, Worker } from "@/services/workerService";
+import { Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import { workSessionService } from "@/services/workSessionService";
 
@@ -88,13 +88,13 @@ export default function TimeInOutModal({
 
 			onSuccess();
 			handleClose();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(
 				`Error ${action === "time_in" ? "timing in" : "timing out"} worker:`,
 				err
 			);
 			setError(
-				err.message ||
+				err instanceof Error ? err.message :
 					`Failed to ${action === "time_in" ? "time in" : "time out"} worker`
 			);
 		} finally {
@@ -202,7 +202,7 @@ export default function TimeInOutModal({
 								{worker.profilePicture ? (
 									<img
 										src={worker.profilePicture}
-										alt=''
+										alt={`${worker.name} profile`}
 										className='w-10 h-10 rounded-full mr-3'
 									/>
 								) : (

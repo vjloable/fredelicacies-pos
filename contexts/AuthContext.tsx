@@ -21,7 +21,7 @@ export interface User extends FirebaseUser {
 export interface RoleAssignment {
 	branchId: string;
 	role: "manager" | "worker";
-	assignedAt?: any; // Firestore Timestamp
+	assignedAt?: Date | { toDate: () => Date }; // Firestore Timestamp or Date
 	assignedBy?: string;
 	isActive?: boolean;
 }
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 			if (firebaseUser) {
 				try {
-					let userData = await authService.getUserData(firebaseUser.uid);
+					const userData = await authService.getUserData(firebaseUser.uid);
 
 					// If no user data exists, it means the user was deleted from Firestore
 					// but the Firebase Auth session is still active. Force logout.

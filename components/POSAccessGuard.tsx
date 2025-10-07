@@ -90,7 +90,8 @@ export default function POSAccessGuard({
 				{/* Additional Info */}
 				<div className='text-center'>
 					<p className='text-xs text-gray-500'>
-						Contact your manager if you're having trouble accessing the system
+						Contact your manager if you&apos;re having trouble accessing the
+						system
 					</p>
 				</div>
 			</div>

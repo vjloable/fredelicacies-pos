@@ -1,30 +1,11 @@
 import { RoleAssignment } from "@/contexts/AuthContext";
-import {
-	collection,
-	addDoc,
-	getDocs,
-	doc,
-	deleteDoc,
-	query,
-	orderBy,
-	onSnapshot,
-	Timestamp,
-	getDoc,
-	updateDoc,
-	setDoc,
-	writeBatch,
-} from "firebase/firestore";
+import { doc, Timestamp, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase-config";
 import {
 	createUserWithEmailAndPassword,
 	updateProfile,
 	sendPasswordResetEmail,
-	deleteUser,
-	User as FirebaseUser,
-	UserCredential,
 } from "firebase/auth";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
-import { Timestamp as AdminTimestamp } from "firebase-admin/firestore";
 
 interface UserData {
 	name: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { RoleAssignment, useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
@@ -58,9 +58,7 @@ export default function WorkersPage() {
 	>("time_in");
 
 	// View mode
-	const [viewMode, setViewMode] = useState<
-		"workers" | "analytics" | "schedule"
-	>("workers");
+	const [viewMode] = useState<"workers" | "analytics" | "schedule">("workers");
 
 	// Filters
 	const [filters, setFilters] = useState<WorkerFiltersType>({});
@@ -144,7 +142,7 @@ export default function WorkersPage() {
 						const currentBranchFilter = selectedBranchId || filters?.branchId;
 						if (currentBranchFilter) {
 							const hasBranchAccess = data.roleAssignments?.some(
-								(assignment: any) =>
+								(assignment: RoleAssignment) =>
 									assignment.branchId === currentBranchFilter &&
 									assignment.isActive === true
 							);
@@ -155,7 +153,7 @@ export default function WorkersPage() {
 							if (filters.role === "admin" && !data.isAdmin) return;
 							if (filters.role !== "admin") {
 								const hasRole = data.roleAssignments?.some(
-									(assignment: any) =>
+									(assignment: RoleAssignment) =>
 										assignment.role === filters.role &&
 										assignment.isActive === true
 								);
@@ -211,7 +209,7 @@ export default function WorkersPage() {
 			setLoading(true);
 
 			// Apply branch filtering based on selected branch for admins
-			let workerFilters = { ...filters };
+			const workerFilters = { ...filters };
 			if (user?.isAdmin) {
 				// For admins, use the selected branch filter
 				if (selectedBranchId) {
@@ -359,7 +357,7 @@ export default function WorkersPage() {
 						Access Denied
 					</h2>
 					<p className='text-gray-500'>
-						You don't have permission to access worker management.
+						You don&apos;t have permission to access worker management.
 					</p>
 				</div>
 			</div>

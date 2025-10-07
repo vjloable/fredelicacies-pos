@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
-import { workSessionService } from "@/services/workSessionService";
+
 import { branchService, Branch } from "@/services/branchService";
 import TopBar from "@/components/TopBar";
 import ClockIcon from "@/components/icons/ClockIcon";
