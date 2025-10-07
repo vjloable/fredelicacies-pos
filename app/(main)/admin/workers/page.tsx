@@ -24,6 +24,7 @@ export default function WorkersPage() {
 	const { user, hasWorkerManagementAccess, getAccessibleBranches } = useAuth();
 	const [workers, setWorkers] = useState<Worker[]>([]);
 	const [branches, setBranches] = useState<Branch[]>([]);
+	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -134,10 +135,12 @@ export default function WorkersPage() {
 							if (!matchesSearch) return;
 						}
 
-						if (filters?.branchId) {
+						// Apply selectedBranchId filter for admins
+						const currentBranchFilter = selectedBranchId || filters?.branchId;
+						if (currentBranchFilter) {
 							const hasBranchAccess = data.roleAssignments?.some(
 								(assignment: any) =>
-									assignment.branchId === filters.branchId &&
+									assignment.branchId === currentBranchFilter &&
 									assignment.isActive === true
 							);
 							if (!hasBranchAccess) return;
@@ -180,7 +183,7 @@ export default function WorkersPage() {
 		} catch (error) {
 			console.error("❌ Error setting up workers collection listener:", error);
 		}
-	}, [filters]);
+	}, [filters, selectedBranchId]);
 
 	// Load data
 	useEffect(() => {
@@ -188,7 +191,7 @@ export default function WorkersPage() {
 			loadWorkers();
 			loadBranches();
 		}
-	}, [user, hasWorkerManagementAccess, filters]);
+	}, [user, hasWorkerManagementAccess, filters, selectedBranchId]);
 
 	// Cleanup subscriptions on unmount
 	useEffect(() => {
@@ -202,9 +205,14 @@ export default function WorkersPage() {
 		try {
 			setLoading(true);
 
-			// Apply branch filtering based on user permissions
+			// Apply branch filtering based on selected branch for admins
 			let workerFilters = { ...filters };
-			if (!user?.isAdmin) {
+			if (user?.isAdmin) {
+				// For admins, use the selected branch filter
+				if (selectedBranchId) {
+					workerFilters.branchId = selectedBranchId;
+				}
+			} else {
 				// Non-admin users can only see workers from their accessible branches
 				const accessibleBranches = getAccessibleBranches();
 				if (accessibleBranches.length > 0) {
@@ -279,6 +287,12 @@ export default function WorkersPage() {
 
 	const handleFiltersChange = (newFilters: WorkerFiltersType) => {
 		setFilters(newFilters);
+	};
+
+	const handleBranchChange = (branchId: string) => {
+		setSelectedBranchId(branchId);
+		// Clear any existing filters when changing branch
+		setFilters({});
 	};
 
 	const handleModalClose = () => {
@@ -363,8 +377,25 @@ export default function WorkersPage() {
 					</div>
 
 					<div className='flex items-center gap-4'>
-						{/* View Toggle */}
-						<div className='flex bg-gray-100 rounded-lg p-1'>
+						{/* Branch Selector - Only show for admins */}
+						{user?.isAdmin && (
+							<div className='min-w-48'>
+								<select
+									value={selectedBranchId}
+									onChange={(e) => handleBranchChange(e.target.value)}
+									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white'>
+									<option value=''>All Branches</option>
+									{branches.map((branch) => (
+										<option key={branch.id} value={branch.id}>
+											{branch.name}
+										</option>
+									))}
+								</select>
+							</div>
+						)}
+
+						{/* View Toggle : FOR NOW DISABLE */}
+						{/* <div className='flex bg-gray-100 rounded-lg p-1'>
 							<button
 								onClick={() => setViewMode("workers")}
 								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
@@ -374,8 +405,8 @@ export default function WorkersPage() {
 								}`}>
 								Workers
 							</button>
-							{/* For now disable analytics and schedule*/}
-							{/* <button
+							
+							<button
 								onClick={() => setViewMode("analytics")}
 								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 									viewMode === "analytics"
@@ -392,16 +423,20 @@ export default function WorkersPage() {
 										: "text-gray-600 hover:text-gray-900"
 								}`}>
 								Schedule
-							</button> */}
-						</div>
+							</button>
+						</div> */}
 
 						{/* Add Worker Button - only show in workers view */}
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='bg-[var(--accent)] text-[var(--primary)] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95 flex items-center gap-2'>
-								<PlusIcon />
-								Add Worker
+								className='bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+									<div className='size-4'>
+										<PlusIcon className='drop-shadow-lg' />
+									</div>
+									<span className='mt-[2px]'>ADD WORKER</span>
+								</div>
 							</button>
 						)}
 					</div>
@@ -417,6 +452,7 @@ export default function WorkersPage() {
 						onFiltersChange={handleFiltersChange}
 						userAccessibleBranches={getAccessibleBranches()}
 						isAdmin={user?.isAdmin || false}
+						hideBranchFilter={user?.isAdmin || false}
 					/>
 				</div>
 			)}
@@ -481,8 +517,15 @@ export default function WorkersPage() {
 				onClose={handleModalClose}
 				onSuccess={handleWorkerCreated}
 				branches={branches}
-				userAccessibleBranches={getAccessibleBranches()}
+				userAccessibleBranches={
+					user?.isAdmin
+						? selectedBranchId
+							? [selectedBranchId]
+							: []
+						: getAccessibleBranches()
+				}
 				isAdmin={user?.isAdmin || false}
+				defaultBranchId={selectedBranchId}
 			/>
 
 			<EditWorkerModal
@@ -490,6 +533,15 @@ export default function WorkersPage() {
 				worker={selectedWorker}
 				onClose={handleModalClose}
 				onSuccess={handleWorkerUpdated}
+				branches={branches}
+				userAccessibleBranches={
+					user?.isAdmin
+						? selectedBranchId
+							? [selectedBranchId]
+							: []
+						: getAccessibleBranches()
+				}
+				isAdmin={user?.isAdmin || false}
 			/>
 
 			<DeleteWorkerModal
@@ -512,7 +564,13 @@ export default function WorkersPage() {
 				isOpen={isAssignBranchModalOpen}
 				worker={selectedWorker}
 				branches={branches}
-				userAccessibleBranches={getAccessibleBranches()}
+				userAccessibleBranches={
+					user?.isAdmin
+						? selectedBranchId
+							? [selectedBranchId]
+							: []
+						: getAccessibleBranches()
+				}
 				isAdmin={user?.isAdmin || false}
 				onClose={handleModalClose}
 				onSuccess={handleWorkerUpdated}

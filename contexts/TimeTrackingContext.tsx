@@ -119,13 +119,8 @@ export function TimeTrackingProvider({
 				let currentSession = null;
 				let workingDuration = 0;
 
-				// Check if user needs time tracking (non-admin or admin with manager role assignments)
-				const needsTimeTracking =
-					!workerData.isAdmin ||
-					(workerData.isAdmin &&
-						workerData.roleAssignments.some(
-							(assignment) => assignment.role === "manager"
-						));
+				// Admins don't need time tracking since they're not assigned to branches
+				const needsTimeTracking = !workerData.isAdmin;
 
 				if (isWorking && needsTimeTracking) {
 					try {
@@ -197,16 +192,10 @@ export function TimeTrackingProvider({
 				throw new Error("Unable to clock in");
 			}
 
-			// Check if admin is exempt from time tracking (admin without manager role assignments)
-			const isExemptAdmin =
-				state.worker.isAdmin &&
-				!state.worker.roleAssignments.some(
-					(assignment) => assignment.role === "manager"
-				);
-
-			if (isExemptAdmin) {
+			// Admins don't use time tracking
+			if (state.worker.isAdmin) {
 				throw new Error(
-					"Unable to clock in - admin without manager role assignments"
+					"Admins don't need to clock in - you have global access"
 				);
 			}
 
@@ -318,17 +307,10 @@ export function usePOSAccessControl(branchId?: string) {
 	const canAccessPOS = useCallback(() => {
 		if (!user || !timeTracking.worker) return false;
 
-		// Check if admin is exempt from time tracking (admin without manager role assignments)
-		const isExemptAdmin =
-			timeTracking.worker.isAdmin &&
-			!timeTracking.worker.roleAssignments.some(
-				(assignment) => assignment.role === "manager"
-			);
+		// Admins always have full access to POS (no time tracking required)
+		if (timeTracking.worker.isAdmin) return true;
 
-		// Exempt admins always have access
-		if (isExemptAdmin) return true;
-
-		// Non-exempt users (workers and admins with manager roles) must be clocked in to access POS
+		// Non-admin users must be clocked in to access POS
 		if (!timeTracking.isWorking) return false;
 
 		// Check branch access if specified
@@ -347,15 +329,9 @@ export function usePOSAccessControl(branchId?: string) {
 			return "Please log in to access the POS system";
 		}
 
-		// Check if admin is exempt from time tracking (admin without manager role assignments)
-		const isExemptAdmin =
-			timeTracking.worker.isAdmin &&
-			!timeTracking.worker.roleAssignments.some(
-				(assignment) => assignment.role === "manager"
-			);
-
-		if (isExemptAdmin) {
-			return null; // No restrictions for exempt admins
+		// Admins have no access restrictions
+		if (timeTracking.worker.isAdmin) {
+			return null;
 		}
 
 		if (!timeTracking.isWorking) {

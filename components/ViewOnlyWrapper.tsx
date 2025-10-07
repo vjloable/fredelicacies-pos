@@ -54,7 +54,7 @@ export default function ViewOnlyWrapper({
 									{accessMessage}
 								</p>
 
-								{/* Current Status */}
+								{/* Current Status - Only show for non-admins */}
 								{timeTracking.worker && !timeTracking.worker.isAdmin && (
 									<div className='mt-3 p-2 bg-gray-50 rounded-md'>
 										<div className='flex items-center justify-between text-xs'>
@@ -66,6 +66,18 @@ export default function ViewOnlyWrapper({
 														: "text-gray-900"
 												}`}>
 												{timeTracking.isWorking ? "Clocked In" : "Clocked Out"}
+											</span>
+										</div>
+									</div>
+								)}
+
+								{/* Admin Status */}
+								{timeTracking.worker && timeTracking.worker.isAdmin && (
+									<div className='mt-3 p-2 bg-blue-50 rounded-md'>
+										<div className='flex items-center justify-between text-xs'>
+											<span className='text-gray-500'>Role:</span>
+											<span className='font-medium text-blue-600'>
+												Admin (Global Access)
 											</span>
 										</div>
 									</div>

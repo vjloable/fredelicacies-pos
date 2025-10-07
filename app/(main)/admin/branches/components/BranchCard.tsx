@@ -5,7 +5,7 @@ import styles from "../page.module.css";
 import ViewBranchIcon from "./icons/ViewBranchIcon";
 import DeleteBranchIcon from "./icons/DeleteBranchIcon";
 import EditBranchIcon from "./icons/EditBranchIcon";
-
+import Image from "next/image";
 interface BranchCardProps {
 	branch: {
 		branchId: string;
@@ -50,9 +50,11 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			} ${onClick ? "cursor-pointer" : ""}`}>
 			<div className='relative h-32 sm:h-40 w-full bg-[var(--accent)] flex items-center justify-center overflow-hidden'>
 				{branch.imgUrl ? (
-					<img
+					<Image
 						src={branch.imgUrl}
 						alt={branch.name + " branch"}
+						width={400}
+						height={160}
 						className='w-full h-full object-cover drop-shadow-lg'
 						style={{
 							filter: branch.isActive ? "none" : "grayscale(1) opacity(0.5)",

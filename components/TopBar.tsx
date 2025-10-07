@@ -51,12 +51,8 @@ export default function TopBar({
 
 	// Handle time tracking actions
 	const handleTimeTrackingClick = async () => {
-		// Check if admin is exempt from time tracking (admin without manager role assignments)
-		const isExemptAdmin =
-			timeTracking.worker?.isAdmin &&
-			!timeTracking.worker.roleAssignments.some(
-				(assignment) => assignment.role === "manager"
-			);
+		// Admins are exempt from time tracking since they're not assigned to branches
+		const isExemptAdmin = timeTracking.worker?.isAdmin;
 
 		if (!timeTracking.worker || isExemptAdmin || isTimeTracking) return;
 
@@ -114,13 +110,10 @@ export default function TopBar({
 						</div>
 					)}
 
-					{/* Work Status Badge - Only for workers and admins with manager roles when time tracking is enabled */}
+					{/* Work Status Badge - Only for workers and managers, not admins */}
 					{showTimeTracking &&
 						timeTracking.worker &&
-						(!timeTracking.worker.isAdmin ||
-							timeTracking.worker.roleAssignments.some(
-								(assignment) => assignment.role === "manager"
-							)) && (
+						!timeTracking.worker.isAdmin && (
 							<div className='flex-shrink-0'>
 								<button
 									onClick={handleTimeTrackingClick}

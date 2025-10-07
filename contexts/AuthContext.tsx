@@ -53,6 +53,10 @@ interface AuthContextType {
 	canDeleteWorker: () => boolean;
 	canAssignToAdmin: () => boolean;
 	hasWorkerManagementAccess: () => boolean;
+
+	// Role hierarchy helpers
+	getUserHierarchyLevel: () => "admin" | "manager" | "worker" | null;
+	canManageRole: (targetRole: "admin" | "manager" | "worker") => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -186,6 +190,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	// Worker Management helper methods
 	const isManager = () => {
 		if (!user) return false;
+		// Admins are above managers in hierarchy, so they're not "managers"
+		if (user.isAdmin) return false;
 		return user.roleAssignments.some(
 			(assignment) =>
 				assignment.role === "manager" && assignment.isActive !== false
@@ -194,12 +200,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const isWorker = () => {
 		if (!user) return false;
-		return (
-			user.roleAssignments.some(
-				(assignment) =>
-					assignment.role === "worker" && assignment.isActive !== false
-			) && !user.isAdmin
+		// Admins are never considered "workers" - they are above the hierarchy
+		if (user.isAdmin) return false;
+		// Check if user has any worker role assignments (but no manager roles)
+		const hasWorkerRole = user.roleAssignments.some(
+			(assignment) =>
+				assignment.role === "worker" && assignment.isActive !== false
 		);
+		const hasManagerRole = user.roleAssignments.some(
+			(assignment) =>
+				assignment.role === "manager" && assignment.isActive !== false
+		);
+		// Pure worker: has worker role but no manager role
+		return hasWorkerRole && !hasManagerRole;
 	};
 
 	const canManageWorkers = () => {
@@ -210,11 +223,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	const getAccessibleBranches = () => {
 		if (!user) return [];
 		if (user.isAdmin) {
-			// Admin can access all branches - this would need to be fetched from branch service
-			// For now, return all assigned branches as a starting point
-			return user.roleAssignments
-				.filter((assignment) => assignment.isActive !== false)
-				.map((assignment) => assignment.branchId);
+			// Admins have access to all branches but are not assigned to specific branches
+			// They get access through their admin status, not through roleAssignments
+			// For now, return empty array since admins should not be assigned to specific branches
+			// In practice, admin access would be handled globally through branch service
+			return [];
 		}
 		// Managers can only access branches they manage
 		return user.roleAssignments
@@ -263,6 +276,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		return user.isAdmin || isManager();
 	};
 
+	// Role hierarchy helpers
+	const getUserHierarchyLevel = (): "admin" | "manager" | "worker" | null => {
+		if (!user) return null;
+
+		// Admin is the highest level
+		if (user.isAdmin) return "admin";
+
+		// Check for manager role
+		const hasManagerRole = user.roleAssignments.some(
+			(assignment) =>
+				assignment.role === "manager" && assignment.isActive !== false
+		);
+		if (hasManagerRole) return "manager";
+
+		// Check for worker role
+		const hasWorkerRole = user.roleAssignments.some(
+			(assignment) =>
+				assignment.role === "worker" && assignment.isActive !== false
+		);
+		if (hasWorkerRole) return "worker";
+
+		return null;
+	};
+
+	const canManageRole = (
+		targetRole: "admin" | "manager" | "worker"
+	): boolean => {
+		const currentLevel = getUserHierarchyLevel();
+		if (!currentLevel) return false;
+
+		// Hierarchy: admin > manager > worker
+		// Each level can manage those below them
+		if (currentLevel === "admin") {
+			return targetRole === "manager" || targetRole === "worker";
+		}
+		if (currentLevel === "manager") {
+			return targetRole === "worker";
+		}
+		// Workers cannot manage anyone
+		return false;
+	};
+
 	const value = {
 		user,
 		loading,
@@ -285,6 +340,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		canDeleteWorker,
 		canAssignToAdmin,
 		hasWorkerManagementAccess,
+		// Role hierarchy helpers
+		getUserHierarchyLevel,
+		canManageRole,
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

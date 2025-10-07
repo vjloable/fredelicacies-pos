@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Branch } from "@/services/branchService";
 import { workerService } from "@/services/workerService";
 import { CreateWorkerRequest } from "@/types/WorkerTypes";
@@ -11,6 +11,7 @@ interface CreateWorkerModalProps {
 	branches: Branch[];
 	userAccessibleBranches: string[];
 	isAdmin: boolean;
+	defaultBranchId?: string;
 }
 
 export default function CreateWorkerModal({
@@ -20,6 +21,7 @@ export default function CreateWorkerModal({
 	branches,
 	userAccessibleBranches,
 	isAdmin,
+	defaultBranchId,
 }: CreateWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,9 @@ export default function CreateWorkerModal({
 	});
 
 	// Single branch assignment state
-	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+	const [selectedBranchId, setSelectedBranchId] = useState<string>(
+		defaultBranchId || ""
+	);
 	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
 		"worker"
 	);
@@ -45,10 +49,63 @@ export default function CreateWorkerModal({
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
+	// Reset form when modal opens or defaultBranchId changes
+	useEffect(() => {
+		if (isOpen) {
+			setFormData({
+				name: "",
+				email: "",
+				password: "",
+				phoneNumber: "",
+				employeeId: "",
+				branchAssignments: [],
+				isAdmin: false,
+			});
+
+			// Set default branch: use defaultBranchId or auto-select if only one branch available
+			const currentAvailableBranches = isAdmin
+				? branches
+				: branches.filter((branch) =>
+						userAccessibleBranches.includes(branch.id)
+				  );
+
+			const initialBranchId =
+				defaultBranchId ||
+				(currentAvailableBranches.length === 1
+					? currentAvailableBranches[0].id
+					: "");
+			setSelectedBranchId(initialBranchId);
+			setSelectedRole("worker");
+			setError(null);
+
+			// If branch is auto-selected, update form data
+			if (initialBranchId) {
+				setFormData((prev) => ({
+					...prev,
+					branchAssignments: [{ branchId: initialBranchId, role: "worker" }],
+				}));
+			}
+		}
+	}, [isOpen, defaultBranchId, isAdmin, branches, userAccessibleBranches]);
+
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 	) => {
 		const { name, value, type } = e.target;
+
+		// If admin is being checked, clear branch assignment
+		if (name === "isAdmin" && type === "checkbox") {
+			const checked = (e.target as HTMLInputElement).checked;
+			if (checked) {
+				setSelectedBranchId("");
+				setFormData((prev) => ({
+					...prev,
+					[name]: checked,
+					branchAssignments: [], // Clear branch assignments for admins
+				}));
+				return;
+			}
+		}
 		const checked = (e.target as HTMLInputElement).checked;
 
 		setFormData((prev) => ({
@@ -84,6 +141,14 @@ export default function CreateWorkerModal({
 			!formData.password.trim()
 		) {
 			setError("Please fill in all required fields");
+			return;
+		}
+
+		// Admins should not be assigned to branches
+		if (formData.isAdmin && selectedBranchId) {
+			setError(
+				"Admins cannot be assigned to specific branches. Please uncheck admin or clear branch assignment."
+			);
 			return;
 		}
 
@@ -297,38 +362,46 @@ export default function CreateWorkerModal({
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
 											Assign to Branch *
 										</label>
-										<DropdownField
-											options={[
-												"Select a branch",
-												...availableBranches.map((branch) => branch.name),
-											]}
-											defaultValue={
-												selectedBranchId
-													? availableBranches.find(
-															(b) => b.id === selectedBranchId
-													  )?.name
-													: "Select a branch"
-											}
-											onChange={(value) => {
-												if (value === "Select a branch") {
-													handleBranchChange("");
-												} else {
-													const branch = availableBranches.find(
-														(b) => b.name === value
-													);
-													if (branch) {
-														handleBranchChange(branch.id);
-													}
+										{availableBranches.length === 1 ? (
+											// For managers - show readonly branch name
+											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700'>
+												{availableBranches[0].name}
+											</div>
+										) : (
+											// For admins - show dropdown
+											<DropdownField
+												options={[
+													"Select a branch",
+													...availableBranches.map((branch) => branch.name),
+												]}
+												defaultValue={
+													selectedBranchId
+														? availableBranches.find(
+																(b) => b.id === selectedBranchId
+														  )?.name
+														: "Select a branch"
 												}
-											}}
-											roundness='lg'
-											height={42}
-											valueAlignment='left'
-											shadow={false}
-											fontSize='14px'
-											padding='12px'
-											maxVisibleOptions={3}
-										/>
+												onChange={(value) => {
+													if (value === "Select a branch") {
+														handleBranchChange("");
+													} else {
+														const branch = availableBranches.find(
+															(b) => b.name === value
+														);
+														if (branch) {
+															handleBranchChange(branch.id);
+														}
+													}
+												}}
+												roundness='lg'
+												height={42}
+												valueAlignment='left'
+												shadow={false}
+												fontSize='14px'
+												padding='12px'
+												maxVisibleOptions={3}
+											/>
+										)}
 									</div>
 									<div>
 										<label className='block text-sm font-medium text-gray-700 mb-2'>

@@ -26,7 +26,7 @@ interface NavItem {
 
 export default function SidebarNav() {
 	const { logout, isUserAdmin, user, getUserRoleForBranch } = useAuth();
-	const { currentBranch } = useBranch();
+	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const router = useRouter();
 
@@ -36,6 +36,12 @@ export default function SidebarNav() {
 	const isManagerForCurrentBranch = currentBranch
 		? getUserRoleForBranch(currentBranch.id) === "manager"
 		: false;
+
+	// For admins, only show admin section if no branch is selected
+	const shouldShowWorkerSection = !isUserAdmin() || currentBranch;
+	const shouldShowManagerSection =
+		(!isUserAdmin() && (isManagerForCurrentBranch || isUserAdmin())) ||
+		(isUserAdmin() && currentBranch);
 
 	// Worker Section - Available to all users (workers, managers, admins)
 	const workerNavItems: NavItem[] = [
@@ -177,29 +183,54 @@ export default function SidebarNav() {
 				</div>
 
 				{/* Branch Selector - Only visible on large screens */}
-				<div className='hidden lg:block border-b border-gray-200 p-3'>
-					<BranchSelector
-						showLabel={false}
-						redirectOnChange={true}
-						className='w-full flex flex-row flex-1'
-					/>
-				</div>
+
+				{/* Back to Admin Button - Show for admins when they're in a branch */}
+				{isUserAdmin() && currentBranch && (
+					<div className='px-3 py-2 border-b border-gray-200'>
+						<button
+							onClick={() => {
+								clearCurrentBranch();
+								router.push("/admin/branches");
+							}}
+							className='w-full flex items-center justify-center lg:justify-start text-sm text-[var(--secondary)]/70 hover:text-[var(--secondary)] transition-colors'>
+							<svg
+								className='w-4 h-4 mr-2'
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth={2}
+									d='M10 19l-7-7m0 0l7-7m-7 7h18'
+								/>
+							</svg>
+							<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+								Back to Admin
+							</span>
+						</button>
+					</div>
+				)}
 
 				{/* Navigation */}
 				<nav className='flex-1 py-[8px]'>
 					<ul className='space-y-[2px]'>
-						{/* Worker Section - Always visible */}
-						<li>
-							<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
-								<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
-									Worker
-								</span>
-							</div>
-						</li>
-						{workerNavItems.map((item) => renderNavItem(item))}
+						{/* Worker Section - Show for non-admins or admins with selected branch */}
+						{shouldShowWorkerSection && (
+							<>
+								<li>
+									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
+										<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+											Worker
+										</span>
+									</div>
+								</li>
+								{workerNavItems.map((item) => renderNavItem(item))}
+							</>
+						)}
 
-						{/* Manager Section - Visible to managers and admins */}
-						{(isManagerForCurrentBranch || isUserAdmin()) && (
+						{/* Manager Section - Visible to managers and admins with selected branch */}
+						{shouldShowManagerSection && (
 							<>
 								<li className='pt-4'>
 									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>

@@ -34,6 +34,7 @@ interface BranchContextType {
 
 	// Functions
 	setCurrentBranchId: (branchId: string) => void;
+	clearCurrentBranch: () => void;
 	refreshBranches: () => Promise<void>;
 	canUserAccessBranch: (branchId: string) => boolean;
 	canAccess: (branchId: string) => boolean;
@@ -193,8 +194,9 @@ export function BranchProvider({
 				// Use the branch from URL if valid
 				const branch = availableBranches.find((b) => b.id === initialBranchId);
 				setCurrentBranch(branch || null);
-			} else if (availableBranches.length > 0) {
-				// Default to first available branch
+			} else if (availableBranches.length > 0 && !isUserAdmin()) {
+				// For non-admins: Default to first available branch
+				// For admins: Don't auto-select a branch, let them choose from branch management
 				setCurrentBranch(availableBranches[0]);
 			} else {
 				setCurrentBranch(null);
@@ -222,6 +224,11 @@ export function BranchProvider({
 		} else {
 			console.warn(`Cannot access branch ${branchId} or branch not found`);
 		}
+	};
+
+	// Function to clear current branch (for admins to return to admin-only view)
+	const clearCurrentBranch = () => {
+		setCurrentBranch(null);
 	};
 
 	// Function to refresh branches
@@ -256,6 +263,7 @@ export function BranchProvider({
 
 		// Functions
 		setCurrentBranchId,
+		clearCurrentBranch,
 		refreshBranches,
 		canUserAccessBranch,
 		canAccess,

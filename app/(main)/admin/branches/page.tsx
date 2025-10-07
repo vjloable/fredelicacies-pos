@@ -6,11 +6,9 @@ import AddBranchModal from "./components/AddBranchModal";
 import EditBranchModal from "./components/EditBranchModal";
 import ViewBranchModal from "./components/ViewBranchModal";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
-import BranchSelector from "@/components/BranchSelector";
 import { useAuth } from "@/contexts/AuthContext";
 import { branchService, Branch } from "@/services/branchService";
 import { useRouter } from "next/navigation";
-import styles from "./page.module.css";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { subscribeToBranches } from "@/stores/dataStore";
 import TopBar from "@/components/TopBar";
@@ -174,7 +172,7 @@ export default function BranchesPage() {
 			<div className='px-6 py-4 border-b border-gray-200'>
 				<div className='flex items-center justify-between'>
 					<div>
-						<h2 className='text-lg font-semibold text-[var(--secondary)] mb-1'>
+						<h2 className='text-2xl font-bold text-[var(--secondary)] mb-1'>
 							Branch Management
 						</h2>
 						<p className='text-sm text-[var(--secondary)]/70'>

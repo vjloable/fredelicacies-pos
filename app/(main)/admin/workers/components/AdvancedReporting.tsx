@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
 import { workSessionService } from "@/services/workSessionService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
+import { Timestamp } from "firebase/firestore";
 
 interface ReportFilters {
 	dateRange: {
@@ -69,7 +70,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		}
 	}, [filters]);
 
-	const generateSummaryReport = async () => {
+	const generateSummaryReport = useCallback(async () => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -97,8 +98,8 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 				try {
 					const sessions =
 						(await workSessionService.listWorkSessions(worker.id, {
-							startDate: filters.dateRange.startDate as any,
-							endDate: filters.dateRange.endDate as any,
+							startDate: Timestamp.fromDate(filters.dateRange.startDate),
+							endDate: Timestamp.fromDate(filters.dateRange.endDate),
 						})) || [];
 
 					allSessions.push(
@@ -122,7 +123,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [filters, workers, allBranches]);
 
 	const calculateSummaryMetrics = (
 		workers: Worker[],

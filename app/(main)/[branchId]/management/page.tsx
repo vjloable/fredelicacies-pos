@@ -566,6 +566,7 @@ export default function ManagementPage() {
 					branches={branches.filter((branch) => branch.id === branchId)}
 					userAccessibleBranches={[branchId as string]}
 					isAdmin={false} // Managers can only add workers to their branch
+					defaultBranchId={branchId as string}
 				/>
 
 				<EditWorkerModal
@@ -573,6 +574,9 @@ export default function ManagementPage() {
 					worker={selectedWorker}
 					onClose={handleModalClose}
 					onSuccess={handleWorkerUpdated}
+					branches={branches.filter((branch) => branch.id === branchId)}
+					userAccessibleBranches={[branchId as string]}
+					isAdmin={false}
 				/>
 
 				<DeleteWorkerModal

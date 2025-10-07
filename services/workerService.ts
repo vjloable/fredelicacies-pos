@@ -300,8 +300,8 @@ export const workerService: WorkerService = {
 					if (!matchesSearch) return;
 				}
 
-				// Apply branch filter locally
-				if (filters?.branchId) {
+				// Apply branch filter locally (skip for admins as they have global access)
+				if (filters?.branchId && !data.isAdmin) {
 					const hasBranchAccess = data.roleAssignments?.some(
 						(assignment: any) =>
 							assignment.branchId === filters.branchId &&
@@ -313,6 +313,11 @@ export const workerService: WorkerService = {
 				// Apply excludeAdmins filter locally (for managers who shouldn't see admins)
 				if (filters?.excludeAdmins && data.isAdmin) {
 					return;
+				}
+
+				// Admins should not have branch assignments, so skip branch filter for them
+				if (filters?.branchId && data.isAdmin) {
+					// For admins, we continue processing since they have global access
 				}
 
 				// Apply role filter locally
