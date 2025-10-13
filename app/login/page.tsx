@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import { FirebaseError } from "@firebase/util";
 import { b } from "motion/react-client";
+import Link from "next/link";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -25,9 +26,13 @@ export default function LoginPage() {
 			if (isUserAdmin()) {
 				setIsLoading(false);
 				router.push('/branches');
-			} else {
+			} else if (user.roleAssignments.length > 0) {
 				setIsLoading(false);
 				router.push(`/${branchId}/store`);
+			} else {
+				// User has no role assignments, send to waiting room
+				setIsLoading(false);
+				router.push('/waiting-room');
 			}
 		}
 	}, [user, router, branchId, isUserAdmin])
@@ -188,6 +193,18 @@ export default function LoginPage() {
 								)}
 							</button>
 						</form>
+
+						{/* Sign Up Link */}
+						<div className='mt-6 text-center'>
+							<p className='text-sm text-[var(--secondary)]'>
+								Don't have an account?{' '}
+								<Link
+									href='/signup'
+									className='font-medium text-[var(--accent)] hover:text-[var(--accent)]/80 transition-colors'>
+									Create account
+								</Link>
+							</p>
+						</div>
 
 						{/* Footer */}
 						<div className='mt-6 text-center'>
