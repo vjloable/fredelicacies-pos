@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import { FirebaseError } from "@firebase/util";
 
+import Link from "next/link";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -24,7 +25,7 @@ export default function LoginPage() {
 				// Admin redirects to branch management
 				setIsLoading(false);
 				router.push("/admin/branches");
-			} else {
+			} else if (user.roleAssignments.length > 0) {
 				// Check if user has valid branch assignments
 				const branchId = user?.roleAssignments?.[0]?.branchId;
 				if (branchId) {
@@ -43,6 +44,10 @@ export default function LoginPage() {
 					}
 					setIsLoading(false);
 				}
+			} else {
+				// User has no role assignments, send to waiting room
+				setIsLoading(false);
+				router.push('/waiting-room');
 			}
 		}
 	}, [user, router, isUserAdmin]);
@@ -205,6 +210,18 @@ export default function LoginPage() {
 								)}
 							</button>
 						</form>
+
+						{/* Sign Up Link */}
+						<div className='mt-6 text-center'>
+							<p className='text-sm text-[var(--secondary)]'>
+								Don't have an account?{' '}
+								<Link
+									href='/signup'
+									className='font-medium text-[var(--accent)] hover:text-[var(--accent)]/80 transition-colors'>
+									Create account
+								</Link>
+							</p>
+						</div>
 
 						{/* Footer */}
 						<div className='mt-6 text-center'>

@@ -35,6 +35,12 @@ export default function AuthGuard({
 		}
 
 		if (!loading && isAuthenticated && user) {
+			// Check if user has no role assignments and is not admin (needs approval)
+			if (!isUserAdmin() && user.roleAssignments.length === 0) {
+				router.push("/waiting-room");
+				return;
+			}
+
 			// Check admin-only access
 			if (adminOnly && !isUserAdmin()) {
 				router.push("/login");
@@ -88,6 +94,19 @@ export default function AuthGuard({
 	// If not authenticated, don't render children (redirect will happen)
 	if (!isAuthenticated || !user) {
 		return null;
+	}
+
+	// Check if user has no role assignments (should be handled by redirect, but just in case)
+	if (!isUserAdmin() && user.roleAssignments.length === 0) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='text-center'>
+					<p className='text-[var(--secondary)]'>
+						Your account is pending approval. Please wait for an administrator to assign you to a branch.
+					</p>
+				</div>
+			</div>
+		);
 	}
 
 	// Check admin-only access after authentication
