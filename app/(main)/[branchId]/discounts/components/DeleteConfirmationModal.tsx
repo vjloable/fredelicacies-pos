@@ -1,0 +1,72 @@
+'use client';
+
+import React, { useState } from 'react';
+
+interface DeleteConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+}
+
+export default function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Delete',
+  cancelText = 'Cancel'
+}: DeleteConfirmationModalProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch (error) {
+      console.error('Error during confirmation:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          {title}
+        </h2>
+        
+        <p className="text-gray-600 mb-6">
+          {message}
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+          >
+            {cancelText}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
+          >
+            {loading ? 'Deleting...' : confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -8,7 +8,8 @@ import {
   query, 
   orderBy,
   onSnapshot,
-  Timestamp 
+  Timestamp, 
+  where
 } from 'firebase/firestore';
 import { db } from '../firebase-config';
 
@@ -21,6 +22,7 @@ export interface InventoryItem {
   stock: number;
   description: string;
   imgUrl?: string;
+  branchId: string; // Branch ID field within the document
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -34,10 +36,11 @@ export interface Category {
 const COLLECTION_NAME = 'inventory';
 
 // Create a new inventory item
-export const createInventoryItem = async (item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createInventoryItem = async (branchId: string, item: Omit<InventoryItem, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
     const itemData = {
       ...item,
+      branchId,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
@@ -51,10 +54,14 @@ export const createInventoryItem = async (item: Omit<InventoryItem, 'id' | 'crea
   }
 };
 
-// Get all inventory items
-export const getInventoryItems = async (): Promise<InventoryItem[]> => {
+// Get all inventory items for a branch
+export const getInventoryItems = async (branchId: string): Promise<InventoryItem[]> => {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, COLLECTION_NAME), 
+      where('branchId', '==', branchId),
+      orderBy('createdAt', 'desc')
+    );
     const querySnapshot = await getDocs(q);
     
     const items: InventoryItem[] = [];
@@ -74,9 +81,13 @@ export const getInventoryItems = async (): Promise<InventoryItem[]> => {
 };
 
 // Real-time listener for inventory items
-export const subscribeToInventoryItems = (callback: (items: InventoryItem[]) => void) => {
+export const subscribeToInventoryItems = (branchId: string, callback: (items: InventoryItem[]) => void) => {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, COLLECTION_NAME), 
+      where('branchId', '==', branchId),
+      orderBy('createdAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items: InventoryItem[] = [];
@@ -101,11 +112,12 @@ export const subscribeToInventoryItems = (callback: (items: InventoryItem[]) => 
 };
 
 // Update an inventory item
-export const updateInventoryItem = async (id: string, updates: Partial<Omit<InventoryItem, 'id' | 'createdAt'>>): Promise<void> => {
+export const updateInventoryItem = async (branchId: string, id: string, updates: Partial<Omit<InventoryItem, 'id' | 'createdAt'>>): Promise<void> => {
   try {
     const itemRef = doc(db, COLLECTION_NAME, id);
     const updateData = {
       ...updates,
+      branchId, // Ensure branchId is maintained
       updatedAt: Timestamp.now()
     };
     
@@ -118,7 +130,7 @@ export const updateInventoryItem = async (id: string, updates: Partial<Omit<Inve
 };
 
 // Delete an inventory item
-export const deleteInventoryItem = async (id: string): Promise<void> => {
+export const deleteInventoryItem = async (branchId: string, id: string): Promise<void> => {
   try {
     const itemRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(itemRef);
@@ -130,9 +142,9 @@ export const deleteInventoryItem = async (id: string): Promise<void> => {
 };
 
 // Helper function to check if inventory is empty
-export const isInventoryEmpty = async (): Promise<boolean> => {
+export const isInventoryEmpty = async (branchId: string): Promise<boolean> => {
   try {
-    const items = await getInventoryItems();
+    const items = await getInventoryItems(branchId);
     return items.length === 0;
   } catch (error) {
     console.error('Error checking if inventory is empty:', error);
@@ -141,10 +153,10 @@ export const isInventoryEmpty = async (): Promise<boolean> => {
 };
 
 // Bulk operations
-export const bulkUpdateStock = async (updates: { id: string; stock: number }[]): Promise<void> => {
+export const bulkUpdateStock = async (branchId: string, updates: { id: string; stock: number }[]): Promise<void> => {
   try {
     // Get current items to calculate new stock values
-    const currentItems = await getInventoryItems();
+    const currentItems = await getInventoryItems(branchId);
     const itemsMap = new Map(currentItems.map(item => [item.id, item]));
     
     const updatePromises = updates.map(({ id, stock }) => {
@@ -158,7 +170,7 @@ export const bulkUpdateStock = async (updates: { id: string; stock: number }[]):
       const newStock = Math.max(0, currentItem.stock + stock);
       console.log(`Updating stock for ${currentItem.name}: ${currentItem.stock} + (${stock}) = ${newStock}`);
       
-      return updateInventoryItem(id, { stock: newStock });
+      return updateInventoryItem(branchId, id, { stock: newStock });
     });
     
     await Promise.all(updatePromises);
@@ -170,9 +182,9 @@ export const bulkUpdateStock = async (updates: { id: string; stock: number }[]):
 };
 
 // Search and filter functions
-export const searchInventoryItems = async (searchTerm: string): Promise<InventoryItem[]> => {
+export const searchInventoryItems = async (branchId: string, searchTerm: string): Promise<InventoryItem[]> => {
   try {
-    const allItems = await getInventoryItems();
+    const allItems = await getInventoryItems(branchId);
     
     const filteredItems = allItems.filter(item => 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,9 +200,9 @@ export const searchInventoryItems = async (searchTerm: string): Promise<Inventor
 };
 
 // Search items by category
-export const searchItemsByCategory = async (categoryId: string): Promise<InventoryItem[]> => {
+export const searchItemsByCategory = async (branchId: string, categoryId: string): Promise<InventoryItem[]> => {
   try {
-    const allItems = await getInventoryItems();
+    const allItems = await getInventoryItems(branchId);
     const categoryItems = allItems.filter(item => item.categoryId === categoryId);
     return categoryItems;
   } catch (error) {
@@ -200,9 +212,9 @@ export const searchItemsByCategory = async (categoryId: string): Promise<Invento
 };
 
 // Stock management helpers
-export const getLowStockItems = async (threshold: number = 5): Promise<InventoryItem[]> => {
+export const getLowStockItems = async (branchId: string, threshold: number = 5): Promise<InventoryItem[]> => {
   try {
-    const allItems = await getInventoryItems();
+    const allItems = await getInventoryItems(branchId);
     
     const lowStockItems = allItems.filter(item => item.stock <= threshold);
     
@@ -213,3 +225,7 @@ export const getLowStockItems = async (threshold: number = 5): Promise<Inventory
     throw new Error('Failed to get low stock items');
   }
 };
+
+// Note: getInventoryByBranch is now handled by getInventoryItems
+// Note: addItemToBranch is now handled by createInventoryItem  
+// Note: updateItemInBranch is now handled by updateInventoryItem
