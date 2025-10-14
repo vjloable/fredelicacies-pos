@@ -84,10 +84,10 @@ function DeleteIcon() {
 	);
 }
 
-function BranchIcon() {
+function BranchIcon({ className }: { className?: string }) {
 	return (
 		<svg
-			className='w-4 h-4'
+			className={`w-4 h-4 ${className}`}
 			fill='none'
 			stroke='currentColor'
 			viewBox='0 0 24 24'>
@@ -182,10 +182,10 @@ export default function WorkerRow({
 			</td>
 
 			{/* Roles */}
-			<td className='px-6 py-4 whitespace-nowrap'>
-				<div className='flex flex-col gap-1'>
+			<td className='px-6 py-4'>
+				<div className='flex gap-1'>
 					{worker.isAdmin && (
-						<span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800'>
+						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-[var(--accent)] text-[var(--primary)] min-w-[100px] text-shadow-md'>
 							Admin
 						</span>
 					)}
@@ -194,12 +194,12 @@ export default function WorkerRow({
 						.map((assignment) => (
 							<span
 								key={assignment.branchId}
-								className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+								className={`inline-flex justify-center items-center px-3 py-1 text-xs font-semibold min-w-[100px] text-center ${
 									assignment.role === "manager"
-										? "bg-blue-100 text-blue-800"
-										: "bg-green-100 text-green-800"
+										? "bg-[var(--accent)] text-[var(--primary)] text-shadow-md"
+										: "bg-[var(--accent)] text-[var(--primary)] text-shadow-md rounded-full"
 								}`}>
-								{assignment.role}
+								{String(assignment.role).charAt(0).toUpperCase() + String(assignment.role).slice(1)}
 							</span>
 						))}
 				</div>
@@ -281,9 +281,9 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onAssignBranch(worker);
 							}}
-							className='text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50'
+							className='text-[var(--accent)] hover:text-[var(--accent)] p-1 rounded hover:bg-[var(--accent)]/10'
 							title='Manage Branches'>
-							<BranchIcon />
+							<BranchIcon className='drop-shadow-md' />
 						</button>
 					)}
 

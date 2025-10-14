@@ -558,6 +558,7 @@ export default function WorkersPage() {
 						: getAccessibleBranches()
 				}
 				isAdmin={user?.isAdmin || false}
+				currentUserId={user?.uid}
 			/>
 
 			<DeleteWorkerModal

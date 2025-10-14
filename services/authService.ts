@@ -1,11 +1,21 @@
 import { RoleAssignment } from "@/contexts/AuthContext";
-import { doc, Timestamp, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { 
+	doc, 
+	Timestamp, 
+	getDoc, 
+	updateDoc, 
+	setDoc,
+	collection,
+	query,
+	where,
+	orderBy,
+	getDocs
+} from "firebase/firestore";
 import { auth, db } from "@/firebase-config";
 import {
 	createUserWithEmailAndPassword,
 	updateProfile,
 	sendPasswordResetEmail,
-	where,
 } from "firebase/auth";
 
 interface UserData {

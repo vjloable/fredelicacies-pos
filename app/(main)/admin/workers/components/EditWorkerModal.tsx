@@ -11,6 +11,7 @@ interface EditWorkerModalProps {
 	branches?: Branch[];
 	userAccessibleBranches?: string[];
 	isAdmin?: boolean;
+	currentUserId?: string;
 }
 
 export default function EditWorkerModal({
@@ -21,6 +22,7 @@ export default function EditWorkerModal({
 	branches = [],
 	userAccessibleBranches = [],
 	isAdmin = false,
+	currentUserId,
 }: EditWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -42,11 +44,49 @@ export default function EditWorkerModal({
 	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
 		"worker"
 	);
+	const [originalRole, setOriginalRole] = useState<"manager" | "worker" | null>(null);
 
 	// Get available branches based on user permissions
 	const availableBranches = isAdmin
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
+
+	// Check if the current user can change roles for this worker
+	const canDemoteWorker = (worker: Worker | null): boolean => {
+		if (!worker || !currentUserId) return false;
+		
+		// Admins can change any role
+		if (isAdmin) return true;
+		
+		// Managers cannot demote themselves
+		if (worker.id === currentUserId) return false;
+		
+		// Managers cannot demote other managers - check if worker is a manager
+		const isWorkerManager = worker.roleAssignments.some(
+			assignment => assignment.role === "manager" && assignment.isActive !== false
+		);
+		
+		if (isWorkerManager) return false;
+		
+		// Managers can only change worker roles (not demote managers)
+		return true;
+	};
+
+	// Get available role options based on permissions
+	const getAvailableRoleOptions = (): string[] => {
+		if (!worker) return ["Worker"];
+		
+		if (!canDemoteWorker(worker)) {
+			// If can't demote, only show current role
+			const currentRole = worker.roleAssignments.find(
+				assignment => assignment.isActive !== false
+			)?.role || "worker";
+			return [currentRole === "worker" ? "Worker" : "Manager"];
+		}
+		
+		// Full options if can demote
+		return ["Worker", "Manager"];
+	};
 
 	// Initialize form data when worker changes
 	useEffect(() => {
@@ -62,6 +102,9 @@ export default function EditWorkerModal({
 				workerName: worker.name,
 				roleAssignments: worker.roleAssignments,
 				activeBranchAssignments: branchAssignments,
+				isAdmin,
+				availableBranches: availableBranches.length,
+				userAccessibleBranches
 			});
 
 			setFormData({
@@ -82,20 +125,43 @@ export default function EditWorkerModal({
 
 			// Set single branch assignment
 			if (branchAssignments.length > 0) {
-				setSelectedBranchId(branchAssignments[0].branchId);
-				setSelectedRole(branchAssignments[0].role);
+				const currentAssignment = branchAssignments[0];
+				setSelectedBranchId(currentAssignment.branchId);
+				setSelectedRole(currentAssignment.role);
+				setOriginalRole(currentAssignment.role);
+				console.log("✅ Initialized with existing assignment:", { 
+					branchId: currentAssignment.branchId, 
+					role: currentAssignment.role 
+				});
 			} else if (currentAvailableBranches.length === 1) {
 				// Auto-select the only available branch for managers
 				setSelectedBranchId(currentAvailableBranches[0].id);
 				setSelectedRole("worker");
+				setOriginalRole("worker");
+				console.log("✅ Auto-selected branch for manager:", currentAvailableBranches[0].id);
 			} else {
 				setSelectedBranchId("");
 				setSelectedRole("worker");
+				setOriginalRole("worker");
+				console.log("⚠️ No branch assignments found");
 			}
 
 			setError(null);
 		}
 	}, [worker, isOpen, isAdmin, branches, userAccessibleBranches]);
+
+	// Debug logging for render conditions
+	useEffect(() => {
+		if (isOpen && worker) {
+			console.log("🎯 Modal render state:", {
+				workerIsAdmin: formData.isAdmin,
+				availableBranches: availableBranches.length,
+				selectedRole,
+				selectedBranchId,
+				shouldShowRoleDropdown: !formData.isAdmin
+			});
+		}
+	}, [isOpen, formData.isAdmin, availableBranches.length, selectedRole, selectedBranchId]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -118,12 +184,21 @@ export default function EditWorkerModal({
 	};
 
 	const handleRoleChange = (role: "manager" | "worker") => {
+		console.log("🔄 Role change attempted:", { role, selectedBranchId, isAdmin });
 		setSelectedRole(role);
 		if (selectedBranchId) {
+			const updatedAssignments = [{ branchId: selectedBranchId, role }];
 			setFormData((prev) => ({
 				...prev,
-				branchAssignments: [{ branchId: selectedBranchId, role }],
+				branchAssignments: updatedAssignments,
 			}));
+			console.log("✅ Role change updated in form data:", { 
+				role, 
+				branchId: selectedBranchId,
+				branchAssignments: updatedAssignments
+			});
+		} else {
+			console.log("⚠️ No branch selected, cannot update role");
 		}
 	};
 
@@ -132,6 +207,15 @@ export default function EditWorkerModal({
 
 		if (!worker) return;
 
+		console.log("🚀 Form submission started:", {
+			workerId: worker.id,
+			currentRole: worker.roleAssignments,
+			newRole: selectedRole,
+			selectedBranchId,
+			isAdmin: formData.isAdmin,
+			availableBranches: availableBranches.length
+		});
+
 		if (!formData.name.trim() || !formData.email.trim()) {
 			setError("Please fill in all required fields");
 			return;
@@ -139,6 +223,17 @@ export default function EditWorkerModal({
 
 		if (!selectedBranchId && !formData.isAdmin) {
 			setError("Please select a branch assignment or make them an admin");
+			return;
+		}
+
+		if (!formData.isAdmin && !selectedRole) {
+			setError("Please select a role for the worker");
+			return;
+		}
+
+		// Additional validation for manager permissions
+		if (!isAdmin && !canDemoteWorker(worker)) {
+			setError("You do not have permission to change this user's role");
 			return;
 		}
 
@@ -164,34 +259,69 @@ export default function EditWorkerModal({
 				}
 			}
 
-			// Update branch assignments if not admin
-			if (!formData.isAdmin) {
-				const currentAssignments = worker.roleAssignments.filter(
-					(a) => a.isActive !== false
+		// Update branch assignments if not admin
+		if (!formData.isAdmin) {
+			const currentAssignments = worker.roleAssignments.filter(
+				(a) => a.isActive !== false
+			);
+
+			// Check if role actually changed
+			const currentRole = currentAssignments.find(a => a.branchId === selectedBranchId)?.role;
+			const roleChanged = currentRole !== selectedRole;
+
+			console.log("🔄 Updating branch assignments:", {
+				workerId: worker.id,
+				currentAssignments,
+				currentRole,
+				newRole: selectedRole,
+				newBranch: selectedBranchId,
+				roleChanged
+			});
+
+			// Remove all old assignments first
+			for (const currentAssignment of currentAssignments) {
+				console.log("🗑️ Removing assignment:", currentAssignment);
+				await workerService.removeWorkerFromBranch(
+					worker.id,
+					currentAssignment.branchId
 				);
-
-				// Remove all old assignments first
-				for (const currentAssignment of currentAssignments) {
-					await workerService.removeWorkerFromBranch(
-						worker.id,
-						currentAssignment.branchId
-					);
-				}
-
-				// Add the new single assignment if selected
-				if (selectedBranchId) {
-					await workerService.assignWorkerToBranch(
-						worker.id,
-						selectedBranchId,
-						selectedRole
-					);
-				}
 			}
 
-			onSuccess();
+			// Add the new single assignment if selected
+			if (selectedBranchId) {
+				console.log("➕ Adding new assignment:", { 
+					branchId: selectedBranchId, 
+					role: selectedRole,
+					changed: roleChanged
+				});
+				await workerService.assignWorkerToBranch(
+					worker.id,
+					selectedBranchId,
+					selectedRole
+				);
+			}
+		}			
+			console.log("✅ Worker updated successfully!");
+			
+			// Check if role was changed to determine if we need to reload
+			const roleChanged = originalRole !== selectedRole;
+			console.log("🔄 Role change status:", { originalRole, selectedRole, roleChanged });
+			
+			if (roleChanged) {
+				console.log("🔄 Role was changed, reloading page...");
+				// Close modal first
+				onSuccess();
+				// Small delay to ensure modal closes, then reload
+				setTimeout(() => {
+					window.location.reload();
+				}, 500);
+			} else {
+				onSuccess();
+			}
 		} catch (err: unknown) {
-			console.error("Error updating worker:", err);
-			setError(err instanceof Error ? err.message : "Failed to update worker");
+			console.error("❌ Error updating worker:", err);
+			const errorMessage = err instanceof Error ? err.message : "Failed to update worker";
+			setError(`Update failed: ${errorMessage}`);
 		} finally {
 			setLoading(false);
 		}
@@ -207,7 +337,7 @@ export default function EditWorkerModal({
 	if (!isOpen || !worker) return null;
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto'>
 				{loading ? (
 					<div className='text-center py-12'>
@@ -403,23 +533,36 @@ export default function EditWorkerModal({
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
 											Role *
 										</label>
-										<DropdownField
-											options={["Worker", "Manager"]}
-											defaultValue={
-												selectedRole === "worker" ? "Worker" : "Manager"
-											}
-											onChange={(value) =>
-												handleRoleChange(
-													value.toLowerCase() as "manager" | "worker"
-												)
-											}
-											roundness='lg'
-											height={42}
-											valueAlignment='left'
-											shadow={false}
-											fontSize='14px'
-											padding='12px'
-										/>
+										{canDemoteWorker(worker) ? (
+											<DropdownField
+												options={getAvailableRoleOptions()}
+												defaultValue={
+													selectedRole === "worker" ? "Worker" : "Manager"
+												}
+												onChange={(value) => {
+													handleRoleChange(
+														value.toLowerCase() as "manager" | "worker"
+													);
+												}}
+												roundness='lg'
+												height={42}
+												valueAlignment='left'
+												shadow={false}
+												fontSize='14px'
+												padding='12px'
+											/>
+										) : (
+											// Show readonly role when cannot demote
+											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 flex items-center justify-between'>
+												<span>{selectedRole === "worker" ? "Worker" : "Manager"}</span>
+												{worker?.id === currentUserId && (
+													<span className='text-xs text-gray-500'>(Cannot change own role)</span>
+												)}
+												{worker?.roleAssignments.some(a => a.role === "manager" && a.isActive !== false) && worker?.id !== currentUserId && (
+													<span className='text-xs text-gray-500'>(Cannot demote managers)</span>
+												)}
+											</div>
+										)}
 									</div>
 								</div>
 							)}

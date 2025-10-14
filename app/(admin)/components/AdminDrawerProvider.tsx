@@ -1,26 +1,46 @@
-"use client";
+'use client';
 
+import {
+	useState,
+	useEffect,
+	createContext,
+	useContext,
+	useCallback,
+	useMemo,
+} from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
 import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
 import LogoutIcon from "@/components/icons/SidebarNav/LogoutIcon";
-import { useAdminDrawer } from "./AdminDrawerProvider";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 import UsersIcon from "@/components/icons/SidebarNav/UsersIcon";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
 
-export default function AdminSidebar() {
+interface AdminDrawerContextType {
+	isOpen: boolean;
+	toggle: () => void;
+}
+
+const AdminDrawerContext = createContext<AdminDrawerContextType | undefined>(undefined);
+
+export const useAdminDrawer = () => {
+	const context = useContext(AdminDrawerContext);
+	if (context === undefined) {
+		throw new Error("useAdminDrawer must be used within an AdminDrawer component");
+	}
+	return context;
+};
+
+function AdminSidebarContent() {
 	const pathname = usePathname();
 	const { logout } = useAuth();
 	const router = useRouter();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
-	const isBranches =
-		pathname === "/branches" || pathname.startsWith("/branches");
-	const isUsers = 
-		pathname === "/users" || pathname.startsWith("/users");
 	const { isOpen } = useAdminDrawer();
+	
+	const isBranches = pathname === "/branches" || pathname.startsWith("/branches");
+	const isUsers = pathname === "/users" || pathname.startsWith("/users");
 
 	const asideWidthClass = isOpen ? "max-w-[80px] lg:max-w-[260px]" : "max-w-0";
 	
@@ -103,4 +123,86 @@ export default function AdminSidebar() {
 			</div>
 		</aside>
 	);
+}
+
+interface AdminDrawerProps {
+	isOpen?: boolean;
+	onToggle?: (isOpen: boolean) => void;
+	children?: React.ReactNode;
+}
+
+function AdminDrawer({
+	isOpen: externalIsOpen,
+	onToggle,
+	children,
+}: AdminDrawerProps) {
+	const [internalIsOpen, setInternalIsOpen] = useState(true);
+
+	// Use external state if provided, otherwise use internal state
+	const isDrawerOpen =
+		externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+
+	const toggleDrawer = useCallback(() => {
+		const newState = !isDrawerOpen;
+		if (onToggle) {
+			onToggle(newState);
+		} else {
+			setInternalIsOpen(newState);
+		}
+	}, [isDrawerOpen, onToggle]);
+
+	// Handle ESC key to close drawer
+	useEffect(() => {
+		const handleEscKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && isDrawerOpen) {
+				toggleDrawer();
+			}
+		};
+
+		document.addEventListener("keydown", handleEscKey);
+		return () => document.removeEventListener("keydown", handleEscKey);
+	}, [isDrawerOpen, toggleDrawer]);
+
+	const contextValue = useMemo(
+		() => ({
+			isOpen: isDrawerOpen,
+			toggle: toggleDrawer,
+		}),
+		[isDrawerOpen, toggleDrawer]
+	);
+
+	return (
+		<AdminDrawerContext.Provider value={contextValue}>
+			<div className='flex h-full w-full'>
+				{/* Left Sidebar/Drawer - Takes up space in layout */}
+				<div
+					className={`
+					${isDrawerOpen ? "w-[80px] lg:w-[271px]" : "w-0"} 
+					transition-all duration-300 ease-in-out overflow-hidden
+					`}>
+					<AdminSidebarContent />
+				</div>
+
+				{/* Main Content - Adjusts based on sidebar width */}
+				<div className='flex-1 flex flex-col h-full overflow-hidden'>
+					{/* Content Area */}
+					{children}
+				</div>
+			</div>
+		</AdminDrawerContext.Provider>
+	);
+}
+
+interface AdminDrawerProviderProps {
+  children: React.ReactNode;
+}
+
+export default function AdminDrawerProvider({ children }: AdminDrawerProviderProps) {
+  return (
+    <div className="flex h-screen bg-[var(--background)] overflow-hidden fixed inset-0">
+      <AdminDrawer>
+        {children}
+      </AdminDrawer>
+    </div>
+  );
 }

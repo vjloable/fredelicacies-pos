@@ -62,7 +62,7 @@ export default function SidebarNav() {
 		{
 			href: "management",
 			label: "Management",
-			icon: BranchesIcon, // You may want to create a specific management icon
+			icon: BranchesIcon,
 			managerOnly: true,
 		},
 		{

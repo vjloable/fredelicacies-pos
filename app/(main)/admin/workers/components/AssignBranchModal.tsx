@@ -156,7 +156,7 @@ export default function AssignBranchModal({
 	}
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto'>
 				{loading ? (
 					<div className='text-center py-12'>

@@ -477,13 +477,13 @@ export default function ManagementPage() {
 
 								<div className='flex items-center gap-4'>
 									{/* View Toggle */}
-									<div className='flex bg-gray-100 rounded-lg p-1'>
+									<div className='flex bg-[var(--accent)]/20 rounded-lg p-1 border-[var(--accent)]/30 border'>
 										<button
 											onClick={() => setViewMode("workers")}
 											className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "workers"
-													? "bg-white text-gray-900 shadow-sm"
-													: "text-gray-600 hover:text-gray-900"
+													? "bg-white text-[var(--secondary)] shadow-sm"
+													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
 											}`}>
 											Workers
 										</button>
@@ -491,8 +491,8 @@ export default function ManagementPage() {
 											onClick={() => setViewMode("attendance")}
 											className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "attendance"
-													? "bg-white text-gray-900 shadow-sm"
-													: "text-gray-600 hover:text-gray-900"
+													? "bg-white text-[var(--secondary)] shadow-sm"
+													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
 											}`}>
 											Attendance
 										</button>
@@ -503,9 +503,9 @@ export default function ManagementPage() {
 										<button
 											onClick={handleCreateWorker}
 											className='bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-											<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-lg font-black text-[14px]'>
+											<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-sm font-black text-[14px]'>
 												<div className='w-4 h-4'>
-													<PlusIcon className='drop-shadow-lg' />
+													<PlusIcon className='drop-shadow-sm' />
 												</div>
 												<span className='mt-[2px]'>ADD WORKER</span>
 											</div>
@@ -595,6 +595,7 @@ export default function ManagementPage() {
 					branches={branches.filter((branch) => branch.id === branchId)}
 					userAccessibleBranches={[branchId as string]}
 					isAdmin={false}
+					currentUserId={user?.uid}
 				/>
 
 				<DeleteWorkerModal
