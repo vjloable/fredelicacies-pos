@@ -74,8 +74,7 @@ export default function WorkersTable({
 					No Workers Found
 				</h3>
 				<p className='text-gray-500'>
-					No workers match your current filters. Try adjusting your search
-					criteria.
+					No workers match your current filters. Try adjusting your search featcriteria.
 				</p>
 			</div>
 		);
