@@ -87,7 +87,7 @@ export default function MobileTopBar({
 					<MenuBurger />
 				</button>
 				<div className='flex-1 flex justify-center'>
-					<div className='items-center justify-center rounded-[100px] bg-[var(--accent)] py-3 '>
+					<div className='items-center justify-center rounded-[100px] bg-[var(--accent)] py-3 shadow-md '>
 						<TextLogo className='h-5 items-center' />
 					</div>
 				</div>{" "}
