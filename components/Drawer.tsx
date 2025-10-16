@@ -76,18 +76,34 @@ export default function Drawer({
 
 	return (
 		<DrawerContext.Provider value={contextValue}>
-			<div className='flex h-full w-full'>
-				{/* Left Sidebar/Drawer - Takes up space in layout */}
+			<div className='relative flex h-full w-full'>
+				{/* Overlay backdrop for mobile/tablet - only visible when drawer is open on small screens */}
+				{!isAdminPage && isDrawerOpen && (
+					<div
+						className='fixed inset-0 z-40 xl:hidden'
+						onClick={toggleDrawer}
+						aria-hidden='true'
+					/>
+				)}
+
+				{/* Left Sidebar/Drawer */}
 				<div
 					className={`
-					${isAdminPage ? "w-0" : isDrawerOpen ? "w-[80px] lg:w-[271px]" : "w-0"} 
-					transition-all duration-300 ease-in-out overflow-hidden
+						${isAdminPage ? "hidden" : ""} 
+						${
+							isDrawerOpen
+								? "translate-x-0 w-[271px] xl:w-[271px]"
+								: "-translate-x-full xl:translate-x-0 w-[271px] xl:w-0"
+						}
+						fixed xl:relative z-50 xl:z-auto h-full
+						transition-all duration-300 ease-in-out
+						overflow-hidden
 					`}>
 					{!isAdminPage && <SidebarNav />}
 				</div>
 
-				{/* Main Content - Adjusts based on sidebar width */}
-				<div className='flex-1 flex flex-col h-full overflow-hidden'>
+				{/* Main Content - Full width on mobile/tablet, adjusts on desktop */}
+				<div className='flex-1 flex flex-col h-full overflow-hidden w-full'>
 					{/* Content Area */}
 					{children}
 				</div>

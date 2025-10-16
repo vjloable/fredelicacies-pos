@@ -2,6 +2,7 @@
 
 import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
 // Web Bluetooth API type declarations
@@ -122,7 +123,14 @@ export default function LogsScreen() {
 				{/* Main Content Area */}
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					{/* Header Section - Fixed */}
-					<TopBar title='Logs' icon={<LogsIcon />} />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Logs' icon={<LogsIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Logs' icon={<LogsIcon />} />
+					</div>
 
 					{/* Main Content - Scrollable */}
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>

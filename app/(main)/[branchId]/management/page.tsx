@@ -24,6 +24,7 @@ import WorkerDetailModal from "@/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 
 export default function ManagementPage() {
@@ -370,13 +371,33 @@ export default function ManagementPage() {
 		});
 	}, [workers, sortConfig, filters]);
 
-	// Show loading state while auth is loading
-	if (authLoading) {
+	// Show loading state while auth is loading OR while data is loading
+	if (authLoading || loading) {
 		return (
-			<div className='flex items-center justify-center h-full'>
-				<div className='text-center'>
-					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
-					<p className='text-gray-500'>Loading...</p>
+			<div className='flex h-full overflow-hidden'>
+				<div className='flex flex-col flex-1 h-full overflow-hidden'>
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					<div className='flex-1 flex items-center justify-center'>
+						<div className='text-center'>
+							<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
+							<p className='text-gray-500'>Loading...</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		);
@@ -385,27 +406,68 @@ export default function ManagementPage() {
 	// Show access denied only after auth loading is complete
 	if (!user) {
 		return (
-			<div className='flex items-center justify-center h-full'>
-				<div className='text-center'>
-					<div className='text-2xl text-gray-400 mb-4'>🚫</div>
-					<h2 className='text-xl font-semibold text-gray-700 mb-2'>
-						Access Denied
-					</h2>
-					<p className='text-gray-500'>
-						You need to be logged in to access this page.
-					</p>
+			<div className='flex h-full overflow-hidden'>
+				<div className='flex flex-col flex-1 h-full overflow-hidden'>
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					<div className='flex-1 flex items-center justify-center'>
+						<div className='text-center'>
+							<div className='text-2xl text-gray-400 mb-4'>🚫</div>
+							<h2 className='text-xl font-semibold text-gray-700 mb-2'>
+								Access Denied
+							</h2>
+							<p className='text-gray-500'>
+								You need to be logged in to access this page.
+							</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		);
 	}
 
+	// Show error state (after loading is complete)
 	if (error) {
 		return (
-			<div className='flex items-center justify-center h-full'>
-				<div className='text-center'>
-					<div className='text-2xl text-red-400 mb-4'>⚠️</div>
-					<h2 className='text-xl font-semibold text-red-700 mb-2'>Error</h2>
-					<p className='text-red-500'>{error}</p>
+			<div className='flex h-full overflow-hidden'>
+				<div className='flex flex-col flex-1 h-full overflow-hidden'>
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar
+							title='Management'
+							icon={<BranchesIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+					<div className='flex-1 flex items-center justify-center'>
+						<div className='text-center'>
+							<div className='text-2xl text-red-400 mb-4'>⚠️</div>
+							<h2 className='text-xl font-semibold text-red-700 mb-2'>Error</h2>
+							<p className='text-red-500'>{error}</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		);
@@ -416,13 +478,28 @@ export default function ManagementPage() {
 			{/* Main Content Area */}
 			<div className='flex flex-col flex-1 h-full overflow-hidden'>
 				{/* Header Section - Fixed */}
-				<TopBar
-					title={`${
-						branches.find((branch) => branch.id === branchId)?.name || "Branch"
-					} Management`}
-					icon={<BranchesIcon />}
-					showTimeTracking={true}
-				/>
+				{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+				<div className='xl:hidden w-full'>
+					<MobileTopBar
+						title={`${
+							branches.find((branch) => branch.id === branchId)?.name ||
+							"Branch"
+						} Management`}
+						icon={<BranchesIcon />}
+						showTimeTracking={true}
+					/>
+				</div>
+				{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+				<div className='hidden xl:block w-full'>
+					<TopBar
+						title={`${
+							branches.find((branch) => branch.id === branchId)?.name ||
+							"Branch"
+						} Management`}
+						icon={<BranchesIcon />}
+						showTimeTracking={true}
+					/>
+				</div>
 				<span className='flex h-6'></span>
 
 				{/* Error Display */}

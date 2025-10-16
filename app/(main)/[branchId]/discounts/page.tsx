@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import { Discount, deleteDiscount } from "@/services/discountService";
 import { subscribeToDiscounts } from "@/stores/dataStore";
 import { subscribeToCategories } from "@/stores/dataStore";
@@ -125,7 +126,14 @@ export default function DiscountsScreen() {
 		return (
 			<div className='flex h-full overflow-hidden'>
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
-					<TopBar title='Discounts' />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Discounts' icon={<DiscountsIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Discounts' icon={<DiscountsIcon />} />
+					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
 					</div>
@@ -138,7 +146,14 @@ export default function DiscountsScreen() {
 		<ViewOnlyWrapper branchId={currentBranch?.id} pageName='discounts'>
 			<div className='flex h-full overflow-hidden'>
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
-					<TopBar title='Discounts' icon={<DiscountsIcon />} />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Discounts' icon={<DiscountsIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Discounts' icon={<DiscountsIcon />} />
+					</div>
 
 					<div className='flex-1 overflow-auto p-6'>
 						<div className='space-y-3'>

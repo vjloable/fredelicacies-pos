@@ -11,6 +11,7 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { subscribeToOrders } from "@/stores/dataStore";
 import { Order } from "@/services/orderService";
@@ -283,7 +284,14 @@ export default function SalesScreen() {
 		return (
 			<div className='flex h-full overflow-hidden'>
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
-					<TopBar title='Sales' />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Sales' icon={<SalesIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Sales' icon={<SalesIcon />} />
+					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<LoadingSpinner />
 					</div>
@@ -296,7 +304,14 @@ export default function SalesScreen() {
 		<ViewOnlyWrapper branchId={currentBranch?.id} pageName='sales'>
 			<div className='flex h-full overflow-hidden'>
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
-					<TopBar title='Sales' icon={<SalesIcon />} />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Sales' icon={<SalesIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Sales' icon={<SalesIcon />} />
+					</div>
 
 					{/* Main Content */}
 					<div className='flex-1 overflow-y-auto pt-4'>

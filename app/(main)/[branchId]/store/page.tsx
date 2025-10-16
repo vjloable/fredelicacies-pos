@@ -32,6 +32,7 @@ import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import MobileTopBar from "@/components/MobileTopBar";
 
 // Toast notification component
 const SuccessToast = ({
@@ -124,6 +125,7 @@ export default function StoreScreen() {
 	const [isClient, setIsClient] = useState(false);
 	const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
+	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
 	const [cart, setCart] = useState<
 		Array<{
@@ -492,14 +494,26 @@ export default function StoreScreen() {
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					{/* Header Section - Fixed */}
 					<div className='flex items-center justify-between'>
-						<TopBar
-							title='Store'
-							icon={<StoreIcon />}
-							showTimeTracking={true}
-						/>
-						{/* Time Tracking Widget in Header */}
-					</div>
-
+						{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+						<div className='xl:hidden w-full'>
+							<MobileTopBar
+								title='Store'
+								icon={<StoreIcon />}
+								showTimeTracking={true}
+								onOrderClick={() => {
+									setShowOrderMenu(!showOrderMenu);
+								}}
+							/>
+						</div>
+						{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+						<div className='hidden xl:block w-full'>
+							<TopBar
+								title='Store'
+								icon={<StoreIcon />}
+								showTimeTracking={true}
+							/>
+						</div>
+					</div>{" "}
 					{/* Search Section - Fixed */}
 					<div className='px-6 py-4'>
 						<div className='relative'>
@@ -523,7 +537,6 @@ export default function StoreScreen() {
 							</div>
 						</div>
 					</div>
-
 					{/* Results Header - Fixed */}
 					<div className='flex items-center justify-between px-6 py-2'>
 						<div className='flex flex-col'>
@@ -537,7 +550,6 @@ export default function StoreScreen() {
 							)}
 						</div>
 					</div>
-
 					{/* Category Selector - Fixed */}
 					<div className='px-6 py-2 flex gap-2 overflow-x-auto flex-wrap'>
 						{displayCategories.map((category) => (
@@ -576,7 +588,6 @@ export default function StoreScreen() {
 							</button>
 						))}
 					</div>
-
 					{/* Menu Items - Scrollable */}
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>
 						{loading ? (
@@ -656,7 +667,7 @@ export default function StoreScreen() {
 								)}
 							</div>
 						) : (
-							<div className='grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4 justify-center gap-6'>
+							<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 justify-center gap-6'>
 								{filteredItems.map((item, index) => {
 									const availableStock = getAvailableStock(item.id || "0");
 									const isOutOfStock = availableStock <= 0;
@@ -670,7 +681,7 @@ export default function StoreScreen() {
 											key={item.id || index}
 											onClick={() => !isOutOfStock && addToCart(item)}
 											className={`
-                                            bg-[var(--primary)] rounded-lg p-4 h-85 md:h-95 lg:h-75 cursor-pointer shadow-md
+                                            bg-[var(--primary)] rounded-lg p-3 cursor-pointer shadow-md
                                             hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
                                             ${
 																							isOutOfStock
@@ -679,7 +690,7 @@ export default function StoreScreen() {
 																						}
                                         `}>
 											{/* Item Image Placeholder */}
-											<div className='w-full h-60 md:h-70 lg:h-50 bg-[#F7F7F7] rounded-lg mb-3 relative overflow-hidden'>
+											<div className='w-full h-32 sm:h-40 md:h-44 lg:h-48 bg-[#F7F7F7] rounded-lg mb-2 relative overflow-hidden'>
 												{item.imgUrl ? (
 													<SafeImage
 														src={item.imgUrl}
@@ -688,14 +699,14 @@ export default function StoreScreen() {
 													/>
 												) : (
 													<div className='w-full h-full flex items-center justify-center'>
-														<LogoIcon className='w-20 h-20' />
+														<LogoIcon className='w-12 h-12 md:w-16 md:h-16' />
 													</div>
 												)}
 
 												{/* Stock indicator badges */}
 												{isOutOfStock && (
 													<div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
-														<span className='text-white font-semibold select-none'>
+														<span className='text-white text-xs sm:text-sm font-semibold select-none'>
 															OUT OF STOCK
 														</span>
 													</div>
@@ -719,20 +730,20 @@ export default function StoreScreen() {
 											</div>
 
 											{/* Item Details */}
-											<div className='flex items-center justify-between mb-1'>
-												<h3 className='font-semibold text-[var(--secondary)] truncate text-[14px]'>
+											<div className='flex items-center justify-between mb-1 gap-2'>
+												<h3 className='font-semibold text-[var(--secondary)] truncate text-xs sm:text-sm'>
 													{isSearching
 														? highlightSearchTerm(item.name, searchQuery)
 														: item.name}
 												</h3>
 
-												<span className='font-regular text-[var(--secondary)] text-[14px]'>
+												<span className='font-regular text-[var(--secondary)] text-xs sm:text-sm whitespace-nowrap'>
 													{formatCurrency(item.price)}
 												</span>
 											</div>
-											<div className='flex items-center justify-between'>
+											<div className='flex items-center justify-between gap-2'>
 												<span
-													className={`text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full`}
+													className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
 													style={{
 														backgroundColor: getCategoryColor(item.categoryId),
 													}}>
@@ -743,7 +754,7 @@ export default function StoreScreen() {
 														  )
 														: getCategoryName(item.categoryId)}
 												</span>
-												<span className='text-[14px] font-light'>
+												<span className='text-xs sm:text-sm font-light whitespace-nowrap'>
 													Stock: {availableStock}
 												</span>
 											</div>
@@ -755,8 +766,266 @@ export default function StoreScreen() {
 					</div>
 				</div>
 
-				{/* Right Side Panel - Order Summary */}
-				<div className='flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0'>
+				{/* Mobile Order Menu Overlay - visible below xl: breakpoint (< 1280px) */}
+				<AnimatePresence>
+					{showOrderMenu && (
+						<div className='fixed inset-0 z-50 xl:hidden'>
+							{/* Backdrop */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={{ duration: 0.3 }}
+								className='absolute inset-0 bg-black/50'
+								onClick={() => setShowOrderMenu(false)}
+							/>
+
+							{/* Order Panel */}
+							<motion.div
+								initial={{ x: "100%" }}
+								animate={{ x: 0 }}
+								exit={{ x: "100%" }}
+								transition={{ type: "spring", damping: 25, stiffness: 300 }}
+								className='absolute top-0 right-0 bottom-0 w-full bg-[var(--primary)] flex flex-col shadow-2xl'>
+								{/* Header with Close Button */}
+								<div className='flex-shrink-0 flex items-center justify-between p-4 border-b-2 border-[var(--accent)]'>
+									<h2 className='text-xl font-bold text-[var(--secondary)]'>
+										Current Order
+									</h2>
+									<button
+										onClick={() => setShowOrderMenu(false)}
+										className='w-10 h-10 flex items-center justify-center bg-[var(--light-accent)] rounded-full hover:bg-[var(--accent)] transition-all'>
+										<svg
+											className='w-6 h-6 text-[var(--secondary)]'
+											fill='none'
+											stroke='currentColor'
+											viewBox='0 0 24 24'>
+											<path
+												strokeLinecap='round'
+												strokeLinejoin='round'
+												strokeWidth={2}
+												d='M6 18L18 6M6 6l12 12'
+											/>
+										</svg>
+									</button>
+								</div>
+
+								{/* Order Type Dropdown */}
+								<div className='flex-shrink-0 h-16 p-3 border-b-2 border-[var(--accent)]'>
+									<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
+										<DropdownField
+											options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
+											defaultValue='TAKE OUT'
+											dropdownPosition='bottom-right'
+											dropdownOffset={{ top: 2, right: 0 }}
+											onChange={(value) =>
+												setOrderType(
+													value as "DINE-IN" | "TAKE OUT" | "DELIVERY"
+												)
+											}
+											roundness={"full"}
+											height={42}
+											valueAlignment={"left"}
+											padding=''
+											shadow={false}
+										/>
+									</div>
+								</div>
+
+								{/* Cart Items - Scrollable */}
+								<div className='flex-1 overflow-y-auto px-3 p-6'>
+									{cart.length === 0 ? (
+										<div className='flex flex-col items-center justify-center h-full py-12'>
+											<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
+												<EmptyOrderIllustration />
+											</div>
+											<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
+												Order List is Empty
+											</h3>
+											<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+												Add items from the menu to start building your order.
+												Click on any menu item to add it to your cart.
+											</p>
+										</div>
+									) : (
+										<div className='space-y-0'>
+											<AnimatePresence mode='popLayout'>
+												{cart.map((item, index) => (
+													<motion.div
+														key={item.id}
+														initial={{ opacity: 0, x: 100, scale: 0.9 }}
+														animate={{ opacity: 1, x: 0, scale: 1 }}
+														exit={{
+															opacity: 0,
+															x: -100,
+															scale: 0.8,
+															height: 0,
+														}}
+														transition={{
+															duration: 0.3,
+															type: "spring",
+															stiffness: 300,
+															damping: 25,
+															delay: index * 0.05,
+														}}
+														layout
+														layoutId={`mobile-cart-item-${item.id}`}
+														className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
+														<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
+															<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+																{item.imgUrl ? (
+																	<SafeImage
+																		src={item.imgUrl}
+																		alt={item.name}
+																	/>
+																) : null}
+																{!item.imgUrl && (
+																	<div className='w-full h-full flex items-center justify-center'>
+																		<LogoIcon className='w-10 h-10' />
+																	</div>
+																)}
+															</div>
+
+															<div className='flex flex-col items-start gap-3 w-full h-[100px] flex-grow'>
+																<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
+																	<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
+																		<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+																			{item.name}
+																		</span>
+																	</div>
+																	<div className='flex flex-row items-center justify-between w-full h-[21px]'>
+																		<span className='space-x-2 flex items-center'>
+																			<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																				{formatCurrency(item.price)}
+																			</span>
+																			<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+																				×{item.quantity}
+																			</span>
+																		</span>
+																		<span className='space-x-2 flex items-center'>
+																			<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																				=
+																			</span>
+																			<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																				{formatCurrency(
+																					item.price * item.quantity
+																				)}
+																			</span>
+																		</span>
+																	</div>
+																</div>
+
+																<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
+																	<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
+																		<button
+																			onClick={() =>
+																				updateQuantity(item.id, -1)
+																			}
+																			className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																			<MinusIcon />
+																		</button>
+
+																		<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																			{item.quantity}
+																		</span>
+
+																		<button
+																			onClick={() => updateQuantity(item.id, 1)}
+																			className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																			<PlusIcon />
+																		</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+														<AnimatePresence>
+															<motion.div
+																key={`mobile-divider-${index}`}
+																initial={{ opacity: 0 }}
+																animate={{
+																	opacity: index === cart.length - 1 ? 0 : 1,
+																}}
+																transition={{
+																	duration: 0.3,
+																	type: "spring",
+																	stiffness: 300,
+																	damping: 25,
+																	delay: index * 0.05,
+																}}
+																className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
+															/>
+														</AnimatePresence>
+													</motion.div>
+												))}
+											</AnimatePresence>
+										</div>
+									)}
+								</div>
+
+								{/* Order Summary */}
+								<div className='flex-shrink-0 border-t-2 border-[var(--accent)] pb-4'>
+									<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
+										<span>Subtotal</span>
+										<span>{formatCurrency(subtotal)}</span>
+									</div>
+									<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
+										<span>Discount</span>
+										<span>-{formatCurrency(discountAmount)}</span>
+									</div>
+
+									<div className='gap-2 p-3'>
+										<DiscountDropdown
+											value={discountCode}
+											onChange={setDiscountCode}
+											onDiscountApplied={handleDiscountApplied}
+											subtotal={subtotal}
+											cartCategoryIds={getCartCategoryIds()}
+											categories={categories}
+										/>
+									</div>
+
+									<div className='border-t-1 border-dashed border-[var(--accent)]'>
+										<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
+											<span>Total</span>
+											<span>{formatCurrency(total)}</span>
+										</div>
+
+										<div className='px-3 pb-3 flex gap-2'>
+											{cart.length > 0 && (
+												<button
+													onClick={clearCart}
+													className='flex-1 py-4 font-black text-[14px] text-[var(--error)] bg-white border-2 border-[var(--error)] rounded-lg hover:bg-[var(--error)] hover:text-white transition-all'>
+													CLEAR CART
+												</button>
+											)}
+											<button
+												onClick={handlePlaceOrder}
+												disabled={cart.length === 0 || isPlacingOrder || !user}
+												className={`flex-1 py-4 font-black text-[14px] rounded-lg transition-all ${
+													cart.length === 0 || isPlacingOrder || !user
+														? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
+														: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+												}`}>
+												<span>
+													{!user
+														? "LOGIN TO ORDER"
+														: isPlacingOrder
+														? "PLACING..."
+														: cart.length === 0
+														? "ADD ITEMS"
+														: "PLACE ORDER"}
+												</span>
+											</button>
+										</div>
+									</div>
+								</div>
+							</motion.div>
+						</div>
+					)}
+				</AnimatePresence>
+
+				{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
+				<div className='hidden xl:flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0'>
 					{/* Header Section - Fixed at top (154px total) */}
 					<div className='flex-shrink-0'>
 						<div className='w-full h-[90px] bg-[var(--primary)] border-b border-[var(--secondary)]/20 border-dashed'>
@@ -1150,6 +1419,26 @@ export default function StoreScreen() {
 					onClose={handleCloseToast}
 					orderId={successOrderId}
 				/>
+
+				<button
+					onClick={() => setShowOrderMenu(!showOrderMenu)}
+					className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-4 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all font-medium text-sm gap-3'>
+					<div className='flex-1 flex justify-between items-center'>
+						<span className='text-sm'>
+							{cart.length === 0
+								? "No Items Selected"
+								: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
+						</span>
+						<span className='font-medium text-sm'>
+							{formatCurrency(subtotal)}
+						</span>
+					</div>
+					<div className='rounded-full bg-white p-2 flex items-center justify-center'>
+						<div className='scale-75'>
+							<OrderCartIcon />
+						</div>
+					</div>
+				</button>
 			</div>
 		</ViewOnlyWrapper>
 	);

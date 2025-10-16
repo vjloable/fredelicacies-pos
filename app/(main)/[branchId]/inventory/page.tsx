@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import EditItemModal from "./components/EditItemModal";
 import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
@@ -183,7 +184,14 @@ export default function InventoryScreen() {
 				{/* Main Content Area */}
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					{/* Header Section - Fixed */}
-					<TopBar title='Inventory' icon={<InventoryIcon />} />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Inventory' icon={<InventoryIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Inventory' icon={<InventoryIcon />} />
+					</div>
 					<span className='flex h-6'></span>
 
 					{/* Show loading until client is ready */}
