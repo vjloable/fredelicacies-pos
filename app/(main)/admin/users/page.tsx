@@ -19,6 +19,7 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import AdvancedReporting from "./components/AdvancedReporting";
 import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function WorkersPage() {
 	const {
@@ -326,8 +327,8 @@ export default function WorkersPage() {
 	// Sort workers
 	const sortedWorkers = React.useMemo(() => {
 		return [...workers].sort((a, b) => {
-			const aValue = a[sortConfig.column as keyof Worker] as any;
-			const bValue = b[sortConfig.column as keyof Worker] as any;
+			const aValue = a[sortConfig.column as keyof Worker] as String;
+			const bValue = b[sortConfig.column as keyof Worker] as String;
 
 			if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
 			if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -340,7 +341,7 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
+					<LoadingSpinner size="md" />
 					<p className='text-gray-500'>Loading...</p>
 				</div>
 			</div>
@@ -385,10 +386,10 @@ export default function WorkersPage() {
 				<div className='flex items-center justify-between'>
 					<div>
 						<h2 className='text-2xl font-bold text-[var(--secondary)] mb-1'>
-							Worker Management
+							Users Management
 						</h2>
 						<p className='text-sm text-[var(--secondary)]/70'>
-							Manage workers, track time, and assign roles across branches
+							Manage users, track time, and assign roles across branches
 						</p>
 					</div>
 
@@ -477,14 +478,13 @@ export default function WorkersPage() {
 			<div className='flex-1 overflow-auto px-6 py-4'>
 				{loading ? (
 					<div className='flex items-center justify-center h-64'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]'></div>
+						<LoadingSpinner size='md' />
 						<span className='ml-3 text-[var(--secondary)]'>
 							Loading workers...
 						</span>
 					</div>
 				) : error ? (
 					<div className='text-center py-12'>
-						<div className='text-2xl text-gray-400 mb-4'>⚠️</div>
 						<h3 className='text-lg font-semibold text-gray-700 mb-2'>
 							Error Loading Workers
 						</h3>

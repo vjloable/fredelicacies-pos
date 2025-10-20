@@ -6,8 +6,8 @@ import { branchService, Branch } from "@/services/branchService";
 import { workSessionService, WorkSession } from "@/services/workSessionService";
 import { Timestamp } from "firebase/firestore";
 import AdminTopBar from "../components/AdminTopBar";
-import UsersIcon from "@/components/icons/SidebarNav/UsersIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import UserIcon from "@/components/icons/UserIcon";
 
 interface User {
   id: string;
@@ -18,10 +18,10 @@ interface User {
   isAdmin: boolean;
   currentStatus?: "clocked_in" | "clocked_out";
   currentBranchId?: string;
-  lastTimeIn?: any;
-  lastTimeOut?: any;
-  createdAt?: any;
-  updatedAt?: any;
+  lastTimeIn?: Timestamp;
+  lastTimeOut?: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 interface RoleAssignmentModalProps {
@@ -50,6 +50,40 @@ function AttendanceModal({
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month">("week");
 
   useEffect(() => {
+    const loadWorkSessions = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const endDate = new Date();
+        const startDate = new Date();
+        
+        if (selectedPeriod === "week") {
+          startDate.setDate(endDate.getDate() - 7);
+        } else {
+          startDate.setMonth(endDate.getMonth() - 1);
+        }
+
+        const sessions = await workSessionService.getSessionsByDateRange(
+          user.id,
+          startDate,
+          endDate
+        );
+        
+        // Convert to sessions with id for display
+        const sessionsWithId = sessions.map((session, index) => ({
+          ...session,
+          id: `session-${index}` // This would be the actual doc ID in real implementation
+        }));
+        
+        setWorkSessions(sessionsWithId);
+      } catch (error) {
+        console.error("Error loading work sessions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen && user) {
       loadWorkSessions();
     }
@@ -403,7 +437,7 @@ function UserCard({
 
   const calculateCurrentDuration = () => {
     if (user.currentStatus === 'clocked_in' && user.lastTimeIn) {
-      const timeIn = user.lastTimeIn.toDate ? user.lastTimeIn.toDate() : new Date(user.lastTimeIn);
+      const timeIn = user.lastTimeIn.toDate ? user.lastTimeIn.toDate() : new Date(user.lastTimeIn.toDate());
       const now = new Date();
       const diffMs = now.getTime() - timeIn.getTime();
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
@@ -683,7 +717,7 @@ export default function UsersManagementPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
-        <AdminTopBar title="User Management" icon={<UsersIcon />} />
+        <AdminTopBar title="User Management" icon={<UserIcon />} />
         <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner />
         </div>
@@ -835,7 +869,7 @@ export default function UsersManagementPage() {
 
             {users.length === 0 && (
               <div className="text-center py-12">
-                <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
                 <p className="text-gray-500">Users will appear here when they register for the system.</p>
               </div>

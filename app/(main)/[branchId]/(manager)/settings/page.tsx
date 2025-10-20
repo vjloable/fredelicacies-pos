@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import {
 	AppSettings,
@@ -133,7 +134,14 @@ export default function SettingsScreen() {
 				{/* Main Content Area */}
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					{/* Header Section - Fixed */}
-					<TopBar title='Settings' icon={<SettingsIcon />} />
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar title='Settings' icon={<SettingsIcon />} />
+					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar title='Settings' icon={<SettingsIcon />} />
+					</div>
 
 					{isLoading && (
 						<div className='flex-1 flex items-center justify-center'>

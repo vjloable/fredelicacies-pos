@@ -12,8 +12,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useState } from "react";
-import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
-
+import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
+import UsersIcon from "./icons/SidebarNav/UsersIcon";
 
 // Import icons for new sections (create if they don't exist)
 interface NavItem {
@@ -62,7 +62,7 @@ export default function SidebarNav() {
 		{
 			href: "management",
 			label: "Management",
-			icon: BranchesIcon,
+			icon: ManagementIcon,
 			managerOnly: true,
 		},
 		{
@@ -95,19 +95,18 @@ export default function SidebarNav() {
 	const adminNavItems: NavItem[] = [
 		{
 			href: "/admin/branches",
-			label: "Branch Management",
+			label: "Branches",
 			icon: BranchesIcon,
 			adminOnly: true,
 		},
 		{
-			href: "/admin/workers",
-			label: "Worker Management",
-			icon: StoreIcon, // You may want to create a specific worker management icon
+			href: "/admin/users",
+			label: "Users",
+			icon: UsersIcon, // You may want to create a specific worker management icon
 			adminOnly: true,
 		},
 	];
 
-	// Helper function to render navigation items
 	const renderNavItem = (item: NavItem, isAdminItem = false) => {
 		const IconComponent = item.icon;
 		const isActive = isAdminItem
@@ -124,7 +123,7 @@ export default function SidebarNav() {
 							? "bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg"
 							: "bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]"
 					}`}>
-					<div className='w-full flex items-center justify-center lg:justify-start'>
+					<div className='w-full flex items-center justify-start'>
 						<IconComponent
 							className={`w-8 h-8 mx-3 gap-3 ${
 								isActive
@@ -132,7 +131,7 @@ export default function SidebarNav() {
 									: "text-[var(--secondary)]"
 							} transition-all duration-300`}
 						/>
-						<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+						<span className='w-auto opacity-100 transition-all duration-300'>
 							{item.label}
 						</span>
 					</div>
@@ -174,15 +173,12 @@ export default function SidebarNav() {
 
 	return (
 		// Sidebar container
-		<div className='h-full w-[80px] lg:w-[271px] bg-[var(--primary)] border-r border-gray-200 duration-400'>
+		<div className='h-full w-[271px] bg-[var(--primary)] border-r border-gray-200 shadow-xl xl:shadow-none duration-400'>
 			<div className='flex flex-col h-full'>
 				{/* Logo */}
-				<div className='flex items-center border-b border-gray-200 bg-[var(--accent)] h-[90px] px-6'>
-					<HorizontalLogo className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all' />
-					<LogoIcon className='visible w-auto lg:invisible lg:w-0 opacity-100 lg:opacity-0 transition-all' />
+				<div className='flex items-center justify-center border-b border-gray-200 bg-[var(--accent)] h-[90px] px-6'>
+					<HorizontalLogo className='w-auto opacity-100 transition-all' />
 				</div>
-
-				{/* Branch Selector - Only visible on large screens */}
 
 				{/* Back to Admin Button - Show for admins when they're in a branch */}
 				{isUserAdmin() && currentBranch && (
@@ -192,7 +188,7 @@ export default function SidebarNav() {
 								clearCurrentBranch();
 								router.push("/admin/branches");
 							}}
-							className='w-full flex items-center justify-center lg:justify-start text-sm text-[var(--secondary)]/70 hover:text-[var(--secondary)] transition-colors'>
+							className='w-full flex items-center justify-start text-sm text-[var(--secondary)]/70 hover:text-[var(--secondary)] transition-colors'>
 							<svg
 								className='w-4 h-4 mr-2'
 								fill='none'
@@ -205,7 +201,7 @@ export default function SidebarNav() {
 									d='M10 19l-7-7m0 0l7-7m-7 7h18'
 								/>
 							</svg>
-							<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+							<span className='w-auto opacity-100 transition-all duration-300'>
 								Back to Admin
 							</span>
 						</button>
@@ -220,7 +216,7 @@ export default function SidebarNav() {
 							<>
 								<li>
 									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
-										<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+										<span className='w-auto opacity-100 transition-all duration-300'>
 											Worker
 										</span>
 									</div>
@@ -234,7 +230,7 @@ export default function SidebarNav() {
 							<>
 								<li className='pt-4'>
 									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
-										<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+										<span className='w-auto opacity-100 transition-all duration-300'>
 											Manager
 										</span>
 									</div>
@@ -248,7 +244,7 @@ export default function SidebarNav() {
 							<>
 								<li className='pt-4'>
 									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
-										<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300'>
+										<span className='w-auto opacity-100 transition-all duration-300'>
 											Admin
 										</span>
 									</div>
@@ -262,12 +258,12 @@ export default function SidebarNav() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className='group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-400'>
-								<div className='w-full flex items-center justify-center lg:justify-start transition-all duration-300'>
+								className='group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-100'>
+								<div className='w-full flex items-center justify-start transition-all duration-100'>
 									<span className='size-8 mx-3'>
 										<LogoutIcon className='gap-3 text-[var(--error)] group-hover:text-[var(--primary)]' />
 									</span>
-									<span className='invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100 transition-all duration-300 '>
+									<span className='w-0 visible lg:w-auto opacity-100 transition-all duration-100 '>
 										{"Logout"}
 									</span>
 								</div>

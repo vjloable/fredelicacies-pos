@@ -11,11 +11,27 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
-import LogoIcon from "@/app/(main)/[branchId]/store/icons/LogoIcon";
+import LogoIcon from "@/app/(main)/[branchId]/(worker)/store/icons/LogoIcon";
 import LogoutIcon from "@/components/icons/SidebarNav/LogoutIcon";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
-import UsersIcon from "@/components/icons/SidebarNav/UsersIcon";
 import { useAuth } from "@/contexts/AuthContext";
+import UserIcon from "@/components/icons/UserIcon";
+
+// Custom hook to detect if screen is below sm breakpoint (640px)
+function useIsSmallScreen() {
+	const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+	useEffect(() => {
+		const checkScreenSize = () => {
+			setIsSmallScreen(window.innerWidth < 1024);
+		};
+		checkScreenSize();
+		window.addEventListener('resize', checkScreenSize);
+		return () => window.removeEventListener('resize', checkScreenSize);
+	}, []);
+
+	return isSmallScreen;
+}
 
 interface AdminDrawerContextType {
 	isOpen: boolean;
@@ -38,11 +54,14 @@ function AdminSidebarContent() {
 	const router = useRouter();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const { isOpen } = useAdminDrawer();
+	const isSmallScreen = useIsSmallScreen();
 	
 	const isBranches = pathname === "/branches" || pathname.startsWith("/branches");
 	const isUsers = pathname === "/users" || pathname.startsWith("/users");
 
-	const asideWidthClass = isOpen ? "max-w-[80px] lg:max-w-[260px]" : "max-w-0";
+	// Force closed appearance on small screens
+	const effectiveIsOpen = isSmallScreen ? false : isOpen;
+	const asideWidthClass = effectiveIsOpen ? "max-w-[80px] lg:max-w-[260px]" : "max-w-0";
 	
 	const handleLogout = async () => {
 		if (isLoggingOut) return;
@@ -83,7 +102,7 @@ function AdminSidebarContent() {
 							>
 								<div className="w-full flex items-center justify-center lg:justify-start">
 									<BranchesIcon className={`w-8 h-8 mx-3 gap-3 ${isBranches ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
-									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Branches</span>
+									<span className={`${effectiveIsOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Branches</span>
 								</div>
 							</Link>
 						</li>
@@ -97,8 +116,8 @@ function AdminSidebarContent() {
 								}`}
 							>
 								<div className="w-full flex items-center justify-center lg:justify-start">
-									<UsersIcon className={`w-8 h-8 mx-3 gap-3 ${isUsers ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
-									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Users</span>
+									<UserIcon className={`w-8 h-8 mx-3 gap-3 ${isUsers ? "text-[var(--primary)] drop-shadow-lg" : "text-[var(--secondary)]"} transition-all duration-300`} />
+									<span className={`${effectiveIsOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>Users</span>
 								</div>
 							</Link>
 						</li>
@@ -112,7 +131,7 @@ function AdminSidebarContent() {
 									<span className="size-8 mx-3">
 										<LogoutIcon className="gap-3 text-[var(--error)] group-hover:text-[var(--primary)] transition-colors duration-300" />
 									</span>
-									<span className={`${isOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>
+									<span className={`${effectiveIsOpen ? "invisible w-0 lg:visible lg:w-auto opacity-0 lg:opacity-100" : "invisible w-0 opacity-0"} transition-all duration-300`}>
 										Logout
 									</span>
 								</div>
@@ -137,19 +156,36 @@ function AdminDrawer({
 	children,
 }: AdminDrawerProps) {
 	const [internalIsOpen, setInternalIsOpen] = useState(true);
+	const isSmallScreen = useIsSmallScreen();
 
 	// Use external state if provided, otherwise use internal state
 	const isDrawerOpen =
 		externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
 
+	// Auto-close drawer on small screens
+	useEffect(() => {
+		if (isSmallScreen && isDrawerOpen) {
+			if (onToggle) {
+				onToggle(false);
+			} else {
+				setInternalIsOpen(false);
+			}
+		}
+	}, [isSmallScreen, isDrawerOpen, onToggle]);
+
 	const toggleDrawer = useCallback(() => {
+		// Prevent opening drawer on small screens
+		if (isSmallScreen) {
+			return;
+		}
+		
 		const newState = !isDrawerOpen;
 		if (onToggle) {
 			onToggle(newState);
 		} else {
 			setInternalIsOpen(newState);
 		}
-	}, [isDrawerOpen, onToggle]);
+	}, [isDrawerOpen, onToggle, isSmallScreen]);
 
 	// Handle ESC key to close drawer
 	useEffect(() => {
@@ -165,10 +201,10 @@ function AdminDrawer({
 
 	const contextValue = useMemo(
 		() => ({
-			isOpen: isDrawerOpen,
+			isOpen: isSmallScreen ? false : isDrawerOpen, // Force closed on small screens
 			toggle: toggleDrawer,
 		}),
-		[isDrawerOpen, toggleDrawer]
+		[isDrawerOpen, toggleDrawer, isSmallScreen]
 	);
 
 	return (
@@ -177,7 +213,7 @@ function AdminDrawer({
 				{/* Left Sidebar/Drawer - Takes up space in layout */}
 				<div
 					className={`
-					${isDrawerOpen ? "w-[80px] lg:w-[271px]" : "w-0"} 
+					${isSmallScreen ? "w-0" : (isDrawerOpen ? "w-[80px] lg:w-[271px]" : "w-0")} 
 					transition-all duration-300 ease-in-out overflow-hidden
 					`}>
 					<AdminSidebarContent />

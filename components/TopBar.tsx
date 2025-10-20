@@ -1,6 +1,5 @@
 "use client";
 
-import MenuBurger from "@/components/icons/MenuBurger";
 import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
@@ -12,6 +11,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
+import MenuBurgerIcon from "@/components/icons/MenuBurger";
 
 
 interface TopBarProps {
@@ -82,8 +82,8 @@ export default function TopBar({
 				<div className='flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto'>
 					<button
 						onClick={toggleDrawer}
-						className='ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer flex-shrink-0'>
-						<MenuBurger />
+						className='ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-105 hover:shadow-md transition-all cursor-pointer flex-shrink-0'>
+						<MenuBurgerIcon className="text-[var(--secondary)]" />
 					</button>
 
 					{/* User Info*/}
@@ -100,11 +100,11 @@ export default function TopBar({
 					{isUserAdmin() && (
 						<div className='flex-shrink-0'>
 							<div className='h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-[12px] lg:text-[14px] '>
-								<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-xs font-bold'>
+								<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-lg font-bold'>
 									A
 								</span>
 								<span className='text-[var(--secondary)] font-medium'>
-									Admin
+									Administrator
 								</span>
 							</div>
 						</div>
@@ -216,7 +216,7 @@ export default function TopBar({
 
 					<div className='flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
 						<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]'>
-							<CalendarIcon />
+							<CalendarIcon className="text-[var(--secondary)]" />
 						</span>
 						<div className='flex flex-col items-start'>
 							{isLoading && !date ? (
@@ -233,8 +233,8 @@ export default function TopBar({
 					</div>
 					<span className='hidden sm:inline'>-</span>
 					<div className='flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
-						<span className='w-8 h-8 pl-[2px] bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm'>
-							<ClockIcon />
+						<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm'>
+							<ClockIcon className="text-[var(--secondary)]"/>
 						</span>
 						<div className='flex flex-row items-center gap-2'>
 							{isLoading && !time ? (
@@ -268,7 +268,7 @@ export default function TopBar({
 
 			{/* Page Title */}
 			{title && (
-				<div className='flex items-center justify-start ml-6 mt-[8px] py-[4px]'>
+				<div className='flex items-center justify-start ml-6 py-[4px]'>
 					{icon}
 					<h1 className='text-[var(--secondary)] text-2xl font-bold'>
 						{title}

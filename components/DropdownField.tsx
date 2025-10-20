@@ -25,6 +25,7 @@ interface DropdownFieldProps {
 	fontSize?: string;
 	padding?: string;
 	maxVisibleOptions?: number;
+	hasAllOptionsVisible?: boolean;
 }
 
 export default function DropdownField({
@@ -40,9 +41,13 @@ export default function DropdownField({
 	fontSize = "14px",
 	padding = "12px",
 	maxVisibleOptions,
+	hasAllOptionsVisible = false,
 }: DropdownFieldProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const [selectedValue, setSelectedValue] = useState(defaultValue);
+	
+	// Set default value to "ALL" if hasAllOptionsVisible is true and no defaultValue is provided
+	const initialValue = defaultValue || (hasAllOptionsVisible ? "ALL" : undefined);
+	const [selectedValue, setSelectedValue] = useState(initialValue);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	// Close dropdown when clicking outside
@@ -64,14 +69,18 @@ export default function DropdownField({
 
 	// Update selectedValue when defaultValue changes
 	useEffect(() => {
-		setSelectedValue(defaultValue);
-	}, [defaultValue]);
+		const newValue = defaultValue || (hasAllOptionsVisible ? "ALL" : undefined);
+		setSelectedValue(newValue);
+	}, [defaultValue, hasAllOptionsVisible]);
 
 	const handleSelect = (value: string) => {
 		setSelectedValue(value);
 		setIsOpen(false);
 		onChange?.(value);
 	};
+
+	// Create the final options array including "ALL" if needed
+	const finalOptions = hasAllOptionsVisible ? ["ALL", ...options] : options;
 
 	const getDropdownClasses = () => {
 		// Calculate max height based on maxVisibleOptions if provided
@@ -107,7 +116,9 @@ export default function DropdownField({
 			// Approximate height per option (40px) + padding (8px)
 			const optionHeight = 40;
 			const padding = 8;
-			style.maxHeight = `${maxVisibleOptions * optionHeight + padding}px`;
+			// Account for the ALL option if it's included
+			const totalOptions = hasAllOptionsVisible ? maxVisibleOptions + 1 : maxVisibleOptions;
+			style.maxHeight = `${totalOptions * optionHeight + padding}px`;
 		}
 
 		return style;
@@ -122,14 +133,11 @@ export default function DropdownField({
 					type='button'
 					onClick={() => setIsOpen(!isOpen)}
 					className={`py-[${padding}] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
-            text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
-            rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
-            hover:bg-[var(--accent)] transition-colors 
-            ${
-							shadow
-								? "shadow-md border-none"
-								: "shadow-none border-2 border-[var(--secondary)]/20"
-						}`}
+								text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
+								rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
+								hover:bg-[var(--accent)] transition-colors 
+            					${shadow ? "shadow-md border-none" : "shadow-none border-2 border-[var(--secondary)]/20"
+							}`}
 					style={height ? { height: `${height}px` } : {}}>
 					{selectedValue}
 				</button>
@@ -154,19 +162,26 @@ export default function DropdownField({
 				{isOpen && (
 					<div className={getDropdownClasses()} style={getDropdownStyle()}>
 						<div className='py-1'>
-							{options.map((option, index) => (
-								<button
-									key={index}
-									type='button'
-									onClick={() => handleSelect(option)}
-									className={`w-full text-${valueAlignment} px-4 py-2 text-sm hover:bg-[var(--accent)]/50 hover:text-[var(--secondary)] transition-colors ${
-										selectedValue === option
-											? "bg-[var(--accent)] text-[var(--primary)] font-medium"
-											: "text-[var(--secondary)]"
-									}`}>
-									{option}
-								</button>
-							))}
+							{finalOptions.map((option, index) => {
+								const isAllOption = hasAllOptionsVisible && option === "ALL";
+								return (
+									<button
+										key={index}
+										type='button'
+										onClick={() => handleSelect(option)}
+										className={`w-full text-${valueAlignment} px-4 py-2 text-sm hover:bg-[var(--accent)]/50 hover:text-[var(--secondary)] transition-colors ${
+											selectedValue === option
+												? "bg-[var(--accent)] text-[var(--primary)] font-medium"
+												: "text-[var(--secondary)]"
+										} ${
+											isAllOption 
+												? "font-semibold border-b border-gray-200 mb-1" 
+												: ""
+										}`}>
+										{option}
+									</button>
+								);
+							})}
 						</div>
 					</div>
 				)}

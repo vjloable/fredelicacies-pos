@@ -87,7 +87,7 @@ export default function QuickTimeWidget({
 				<div className='flex items-center space-x-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1'>
 					<div
 						className={`w-2 h-2 rounded-full ${
-							isWorking ? "bg-green-400 animate-pulse" : "bg-gray-300"
+							isWorking ? "bg-[var(--success)] animate-pulse" : "bg-gray-300"
 						}`}></div>
 					<span className='text-xs font-medium -text[var(--secondary)]'>
 						{isWorking ? formatWorkingTime() : "Off"}
