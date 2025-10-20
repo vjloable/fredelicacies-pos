@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
-import Link from "next/link";
 
 export default function WaitingRoomPage() {
   const { user, logout, refreshUserData } = useAuth();

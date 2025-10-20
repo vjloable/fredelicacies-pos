@@ -5,7 +5,7 @@ import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
 import RefreshIcon from "@/components/icons/RefreshIcon";
-import OrderCartIcon from "@/app/(main)/[branchId]/store/icons/OrderCartIcon";
+import OrderCartIcon from "@/app/(main)/[branchId]/(worker)/store/icons/OrderCartIcon";
 import TextLogo from "@/components/icons/TextLogo";
 import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
@@ -83,21 +83,23 @@ export default function MobileTopBar({
 			<div className='flex items-center justify-between h-[70px] px-4 '>
 				<button
 					onClick={toggleDrawer}
-					className='h-12 w-12 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer'>
-					<MenuBurger />
+					className='h-12 w-12 bg-[var(--accent)] xl:bg-[var(--primary)] rounded-xl flex justify-center items-center opacity-100 hover:opacity-50 transition-all cursor-pointer'>
+					<MenuBurger className="text-[var(--primary)]"/>
 				</button>
 				<div className='flex-1 flex justify-center'>
-					<div className='items-center justify-center rounded-[100px] bg-[var(--accent)] py-3 shadow-md '>
+					<div className='items-center justify-center rounded-[100px] bg-[var(--accent)] pt-3 pb-2 '>
 						<TextLogo className='h-5 items-center' />
 					</div>
 				</div>{" "}
-				{onOrderClick && (
+				{onOrderClick ? (
 					<button
 						onClick={onOrderClick}
-						className='h-12 w-12 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer'>
-						<OrderCartIcon />
+						className='h-12 w-12 bg-[var(--accent)] xl:bg-[var(--primary)] rounded-xl flex justify-center items-center opacity-100 hover:opacity-50 transition-all cursor-pointer'>
+						<OrderCartIcon className="h-6 w-6 text-[var(--primary)]" />
 					</button>
-				)}
+				) :
+					<div className='h-12 w-12' />
+				}
 			</div>
 			<div className='flex items-center gap-3 px-4 py-2 overflow-x-auto'>
 				<div className='flex-1 h-12 px-3 py-2 flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-xs'>
@@ -156,7 +158,7 @@ export default function MobileTopBar({
 							<LoadingSpinner size='sm' />
 						) : (
 							<>
-								<span>{date}</span>
+								<span className="truncate">{date}</span>
 								{!isInternetTime && date && (
 									<span className='text-[10px] opacity-70'>(Local)</span>
 								)}
@@ -179,7 +181,7 @@ export default function MobileTopBar({
 								) : (
 									<span className='bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin' />
 								)}
-								<span className='animate-pulse'>{time}</span>
+								<span className='truncate animate-pulse'>{time}</span>
 							</>
 						)}
 					</div>

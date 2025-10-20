@@ -21,15 +21,15 @@ function BranchCard({ branch, onNavigate }: BranchCardProps) {
 						<h3 className="text-lg font-semibold text-[var(--secondary)]">{branch.name}</h3>
 						<span className={`px-2 py-1 text-xs rounded-full font-medium ${
 							branch.isActive 
-								? 'bg-green-100 text-green-800' 
-								: 'bg-red-100 text-red-800'
+								? 'bg-[var(--success)] text-[var(--success)]/80' 
+								: 'bg-[var(--error)] text-[var(--error)]/80'
 						}`}>
 							{branch.isActive ? 'Active' : 'Inactive'}
 						</span>
 					</div>
-					<p className="text-sm text-gray-600 mb-1">{branch.location}</p>
-					<p className="text-xs text-gray-500">
-						Created: {branch.createdAt.toDate().toLocaleDateString()}
+					<p className="text-sm text-[var(--secondary)] mb-1">{branch.location}</p>
+					<p className="text-xs text-[var(--secondary)]/10">
+						Created:: {branch.createdAt.toDate().toLocaleDateString()}
 					</p>
 				</div>
 			</div>
@@ -78,7 +78,7 @@ export default function BranchesPage() {
 				<AdminTopBar title="Branch Management" />
 				<div className="flex-1 flex items-center justify-center">
 					<div className="text-center">
-						<p className="text-red-600">Access denied. Admin privileges required.</p>
+						<p className="text-[var(--error)]">Access denied. Admin privileges required.</p>
 					</div>
 				</div>
 			</div>
@@ -105,18 +105,18 @@ export default function BranchesPage() {
 					{/* Stats */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div className="bg-white rounded-lg border border-gray-200 p-4">
-							<h3 className="text-sm font-medium text-gray-500">Total Branches</h3>
+							<h3 className="text-sm font-medium text-[var(--secondary)]">Total Branches</h3>
 							<p className="text-2xl font-bold text-[var(--secondary)]">{branches.length}</p>
 						</div>
 						<div className="bg-white rounded-lg border border-gray-200 p-4">
 							<h3 className="text-sm font-medium text-gray-500">Active Branches</h3>
-							<p className="text-2xl font-bold text-green-600">
+							<p className="text-2xl font-bold text-[var(--success)]">
 								{branches.filter(b => b.isActive).length}
 							</p>
 						</div>
 						<div className="bg-white rounded-lg border border-gray-200 p-4">
 							<h3 className="text-sm font-medium text-gray-500">Inactive Branches</h3>
-							<p className="text-2xl font-bold text-red-600">
+							<p className="text-2xl font-bold text-[var(--error)]">
 								{branches.filter(b => !b.isActive).length}
 							</p>
 						</div>

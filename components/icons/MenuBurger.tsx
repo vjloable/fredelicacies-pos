@@ -1,17 +1,8 @@
 // components/icons/HomeIcon.tsx
-export default function MenuBurger({ className }: { className?: string }) {
+export default function MenuBurgerIcon({ className }: { className?: string }) {
 	return (
-		<svg
-			className={className}
-			width='22'
-			height='20'
-			viewBox='0 0 22 20'
-			fill='none'>
-			<path
-				d='M0.548981 1.36819H21.6482M21.6482 18.6324H0.548981M21.6482 10.0003H0.548981'
-				stroke='#4C2E24'
-				strokeWidth='2'
-			/>
+		<svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className={className}>
+			<path d="M14.3691 11.7578V14.2578H0V11.7578H14.3691ZM14.3691 5.87891V8.37891H0V5.87891H14.3691ZM14.3691 0V2.5H0V0H14.3691Z" fill="currentColor"/>
 		</svg>
 	);
 }

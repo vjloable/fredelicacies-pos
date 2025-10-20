@@ -33,6 +33,7 @@ import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import MobileTopBar from "@/components/MobileTopBar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Toast notification component
 const SuccessToast = ({
@@ -492,6 +493,7 @@ export default function StoreScreen() {
 			<div className='flex h-full overflow-hidden'>
 				{/* Menu Area - This should expand to fill available space */}
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
+
 					{/* Header Section - Fixed */}
 					<div className='flex items-center justify-between'>
 						{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
@@ -514,6 +516,7 @@ export default function StoreScreen() {
 							/>
 						</div>
 					</div>{" "}
+
 					{/* Search Section - Fixed */}
 					<div className='px-6 py-4'>
 						<div className='relative'>
@@ -537,6 +540,7 @@ export default function StoreScreen() {
 							</div>
 						</div>
 					</div>
+
 					{/* Results Header - Fixed */}
 					<div className='flex items-center justify-between px-6 py-2'>
 						<div className='flex flex-col'>
@@ -550,6 +554,7 @@ export default function StoreScreen() {
 							)}
 						</div>
 					</div>
+
 					{/* Category Selector - Fixed */}
 					<div className='px-6 py-2 flex gap-2 overflow-x-auto flex-wrap'>
 						{displayCategories.map((category) => (
@@ -588,11 +593,12 @@ export default function StoreScreen() {
 							</button>
 						))}
 					</div>
+
 					{/* Menu Items - Scrollable */}
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>
 						{loading ? (
 							<div className='flex flex-col items-center justify-center py-8 gap-4'>
-								<div className='animate-spin rounded-full h-20 w-20 border-b-4 border-[var(--accent)]'></div>
+								<LoadingSpinner size="lg"/>
 								<span className='ml-3 text-[var(--secondary)]'>
 									Loading menu...
 								</span>
@@ -785,7 +791,7 @@ export default function StoreScreen() {
 								initial={{ x: "100%" }}
 								animate={{ x: 0 }}
 								exit={{ x: "100%" }}
-								transition={{ type: "spring", damping: 25, stiffness: 300 }}
+								transition={{ type: "spring", damping: 50, stiffness: 300 }}
 								className='absolute top-0 right-0 bottom-0 w-full bg-[var(--primary)] flex flex-col shadow-2xl'>
 								{/* Header with Close Button */}
 								<div className='flex-shrink-0 flex items-center justify-between p-4 border-b-2 border-[var(--accent)]'>
@@ -1032,7 +1038,7 @@ export default function StoreScreen() {
 							{/* Order Header */}
 							<div className='flex items-center gap-3 p-3'>
 								<div className='bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative'>
-									<OrderCartIcon />
+									<OrderCartIcon className="w-6 h-6"/>
 									{cart.length > 0 && (
 										<div className='absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1'>
 											{cart.reduce((sum, item) => sum + item.quantity, 0)}
@@ -1422,20 +1428,20 @@ export default function StoreScreen() {
 
 				<button
 					onClick={() => setShowOrderMenu(!showOrderMenu)}
-					className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-4 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all font-medium text-sm gap-3'>
-					<div className='flex-1 flex justify-between items-center'>
+					className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
+					<div className='flex-1 flex justify-between items-center text-[var(--secondary)]'>
 						<span className='text-sm'>
 							{cart.length === 0
 								? "No Items Selected"
 								: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
 						</span>
-						<span className='font-medium text-sm'>
+						<span className='text-sm text-[var(--secondary)] font-semibold'>
 							{formatCurrency(subtotal)}
 						</span>
 					</div>
-					<div className='rounded-full bg-white p-2 flex items-center justify-center'>
+					<div className='rounded-full h-8 w-8 bg-[var(--primary)] p-2 flex items-center justify-center'>
 						<div className='scale-75'>
-							<OrderCartIcon />
+							<OrderCartIcon className="text-[var(--secondary)]" />
 						</div>
 					</div>
 				</button>

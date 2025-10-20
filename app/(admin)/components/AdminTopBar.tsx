@@ -44,7 +44,7 @@ export default function TopBar({ title, icon }: TopBarProps) {
 				<div className='flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto'>
 					<button
 						onClick={toggleDrawer}
-						className='ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-lg transition-all cursor-pointer flex-shrink-0'>
+						className='ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-110 hover:shadow-sm transition-all cursor-pointer flex-shrink-0'>
 						<MenuBurger />
 					</button>
 

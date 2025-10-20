@@ -17,7 +17,7 @@ import {
 } from "@/services/categoryService";
 import { useBranch } from "@/contexts/BranchContext";
 import EditIcon from "../store/icons/EditIcon";
-import PlusIcon from "../../../../components/icons/PlusIcon";
+import PlusIcon from "../../../../../components/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import EmptyInventory from "./illustrations/EmptyInventory";

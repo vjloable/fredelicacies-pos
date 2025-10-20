@@ -17,7 +17,7 @@ import { subscribeToOrders } from "@/stores/dataStore";
 import { Order } from "@/services/orderService";
 import { formatCurrency } from "@/services/salesService";
 import { useBranch } from "@/contexts/BranchContext";
-import SearchIcon from "../store/icons/SearchIcon";
+import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
