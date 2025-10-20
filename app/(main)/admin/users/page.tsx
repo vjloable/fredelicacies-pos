@@ -327,8 +327,8 @@ export default function WorkersPage() {
 	// Sort workers
 	const sortedWorkers = React.useMemo(() => {
 		return [...workers].sort((a, b) => {
-			const aValue = a[sortConfig.column as keyof Worker] as any;
-			const bValue = b[sortConfig.column as keyof Worker] as any;
+			const aValue = a[sortConfig.column as keyof Worker] as String;
+			const bValue = b[sortConfig.column as keyof Worker] as String;
 
 			if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
 			if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -341,7 +341,7 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
+					<LoadingSpinner size="md" />
 					<p className='text-gray-500'>Loading...</p>
 				</div>
 			</div>

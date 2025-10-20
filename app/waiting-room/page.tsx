@@ -119,7 +119,7 @@ export default function WaitingRoomPage() {
                     </p>
                     <p className="text-xs text-yellow-700">
                       Please contact your administrator or manager to assign you to a branch. 
-                      You'll be able to access the system once your role has been configured.
+                      You will be able to access the system once your role has been configured.
                     </p>
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export default function WaitingRoomPage() {
                 <li>• Provide them with your email address: <span className="font-medium">{user?.email}</span></li>
                 <li>• Ask them to assign you to a branch in the system</li>
                 <li>• Check back here or click "Check Access Status" periodically</li>
-                <li>• You'll be automatically redirected once access is granted</li>
+                <li>• You will be automatically redirected once access is granted</li>
               </ul>
             </div>
 

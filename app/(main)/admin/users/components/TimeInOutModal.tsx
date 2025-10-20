@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import { workSessionService } from "@/services/workSessionService";
@@ -200,9 +201,11 @@ export default function TimeInOutModal({
 						<div className='bg-gray-50 rounded-lg p-4 mb-6'>
 							<div className='flex items-center'>
 								{worker.profilePicture ? (
-									<img
+									<Image
 										src={worker.profilePicture}
 										alt={`${worker.name} profile`}
+										width={40}
+										height={40}
 										className='w-10 h-10 rounded-full mr-3'
 									/>
 								) : (

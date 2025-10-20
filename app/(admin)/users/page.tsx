@@ -18,10 +18,10 @@ interface User {
   isAdmin: boolean;
   currentStatus?: "clocked_in" | "clocked_out";
   currentBranchId?: string;
-  lastTimeIn?: any;
-  lastTimeOut?: any;
-  createdAt?: any;
-  updatedAt?: any;
+  lastTimeIn?: Timestamp;
+  lastTimeOut?: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 interface RoleAssignmentModalProps {
@@ -50,6 +50,40 @@ function AttendanceModal({
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month">("week");
 
   useEffect(() => {
+    const loadWorkSessions = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const endDate = new Date();
+        const startDate = new Date();
+        
+        if (selectedPeriod === "week") {
+          startDate.setDate(endDate.getDate() - 7);
+        } else {
+          startDate.setMonth(endDate.getMonth() - 1);
+        }
+
+        const sessions = await workSessionService.getSessionsByDateRange(
+          user.id,
+          startDate,
+          endDate
+        );
+        
+        // Convert to sessions with id for display
+        const sessionsWithId = sessions.map((session, index) => ({
+          ...session,
+          id: `session-${index}` // This would be the actual doc ID in real implementation
+        }));
+        
+        setWorkSessions(sessionsWithId);
+      } catch (error) {
+        console.error("Error loading work sessions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen && user) {
       loadWorkSessions();
     }
@@ -403,7 +437,7 @@ function UserCard({
 
   const calculateCurrentDuration = () => {
     if (user.currentStatus === 'clocked_in' && user.lastTimeIn) {
-      const timeIn = user.lastTimeIn.toDate ? user.lastTimeIn.toDate() : new Date(user.lastTimeIn);
+      const timeIn = user.lastTimeIn.toDate ? user.lastTimeIn.toDate() : new Date(user.lastTimeIn.toDate());
       const now = new Date();
       const diffMs = now.getTime() - timeIn.getTime();
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
