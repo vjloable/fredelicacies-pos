@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/currency_formatter";
 import EmptyInventory from "./illustrations/EmptyInventory";
 import InventoryIcon from "@/components/icons/SidebarNav/InventoryIcon";
 import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Item extends InventoryItem {
 	id: string; // Make id required for local state
@@ -197,7 +198,7 @@ export default function InventoryScreen() {
 					{/* Show loading until client is ready */}
 					{!isClient ? (
 						<div className='flex items-center justify-center py-8'>
-							<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]'></div>
+							<LoadingSpinner size="md"/>
 							<span className='ml-3 text-[var(--secondary)]'>
 								Initializing...
 							</span>
@@ -233,7 +234,7 @@ export default function InventoryScreen() {
 							{/* Loading State */}
 							{loading && (
 								<div className='flex items-center justify-center py-8'>
-									<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-dashed border-[var(--accent)]'></div>
+									<LoadingSpinner size="md"/>
 									<span className='ml-3 text-[var(--secondary)]'>
 										Loading inventory...
 									</span>

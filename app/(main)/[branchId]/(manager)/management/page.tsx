@@ -26,6 +26,8 @@ import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ManagementIcon from "@/components/icons/SidebarNav/ManagementIcon";
 
 export default function ManagementPage() {
 	const {
@@ -380,7 +382,7 @@ export default function ManagementPage() {
 					<div className='xl:hidden w-full'>
 						<MobileTopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
@@ -388,15 +390,13 @@ export default function ManagementPage() {
 					<div className='hidden xl:block w-full'>
 						<TopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
-					<div className='flex-1 flex items-center justify-center'>
-						<div className='text-center'>
-							<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-4'></div>
-							<p className='text-gray-500'>Loading...</p>
-						</div>
+					<div className='flex-1 flex items-center justify-center gap-4'>
+						<LoadingSpinner size="md"/>
+						<p className='text-gray-500'>Loading...</p>
 					</div>
 				</div>
 			</div>
@@ -412,7 +412,7 @@ export default function ManagementPage() {
 					<div className='xl:hidden w-full'>
 						<MobileTopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
@@ -420,13 +420,12 @@ export default function ManagementPage() {
 					<div className='hidden xl:block w-full'>
 						<TopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<div className='text-2xl text-gray-400 mb-4'>🚫</div>
 							<h2 className='text-xl font-semibold text-gray-700 mb-2'>
 								Access Denied
 							</h2>
@@ -449,7 +448,7 @@ export default function ManagementPage() {
 					<div className='xl:hidden w-full'>
 						<MobileTopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
@@ -457,15 +456,14 @@ export default function ManagementPage() {
 					<div className='hidden xl:block w-full'>
 						<TopBar
 							title='Management'
-							icon={<BranchesIcon />}
+							icon={<ManagementIcon />}
 							showTimeTracking={true}
 						/>
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<div className='text-2xl text-red-400 mb-4'>⚠️</div>
-							<h2 className='text-xl font-semibold text-red-700 mb-2'>Error</h2>
-							<p className='text-red-500'>{error}</p>
+							<h2 className='text-xl font-semibold text-[var(--error)] mb-2'>Error</h2>
+							<p className='text-[var(--error)]'>{error}</p>
 						</div>
 					</div>
 				</div>
@@ -481,22 +479,16 @@ export default function ManagementPage() {
 				{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
 				<div className='xl:hidden w-full'>
 					<MobileTopBar
-						title={`${
-							branches.find((branch) => branch.id === branchId)?.name ||
-							"Branch"
-						} Management`}
-						icon={<BranchesIcon />}
+						title={`Management`}
+						icon={<ManagementIcon />}
 						showTimeTracking={true}
 					/>
 				</div>
 				{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
 				<div className='hidden xl:block w-full'>
 					<TopBar
-						title={`${
-							branches.find((branch) => branch.id === branchId)?.name ||
-							"Branch"
-						} Management`}
-						icon={<BranchesIcon />}
+						title={`Management`}
+						icon={<ManagementIcon />}
 						showTimeTracking={true}
 					/>
 				</div>
@@ -531,7 +523,7 @@ export default function ManagementPage() {
 				{/* Loading State */}
 				{loading && (
 					<div className='flex items-center justify-center py-8'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-dashed border-[var(--accent)]'></div>
+						<LoadingSpinner size='md' />
 						<span className='ml-3 text-[var(--secondary)]'>
 							Loading workers...
 						</span>

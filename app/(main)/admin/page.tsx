@@ -14,7 +14,7 @@ export default function AdminPage() {
 
 	return (
 		<div className='flex items-center justify-center h-full'>
-			<LoadingSpinner size='md' />
+			<LoadingSpinner size='lg' />
 			<span className='ml-3 text-[var(--secondary)]'>Loading admin...</span>
 		</div>
 	);

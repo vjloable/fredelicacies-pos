@@ -20,6 +20,7 @@ import AdvancedReporting from "./components/AdvancedReporting";
 import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DropdownField from "@/components/DropdownField";
 
 export default function WorkersPage() {
 	const {
@@ -94,7 +95,7 @@ export default function WorkersPage() {
 				q,
 				(querySnapshot) => {
 					console.log(
-						`📤 Real-time update: ${querySnapshot.size} workers received from Firestore`
+						`Real-time update: ${querySnapshot.size} workers received from Firestore`
 					);
 
 					const updatedWorkers: Worker[] = [];
@@ -342,7 +343,7 @@ export default function WorkersPage() {
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
 					<LoadingSpinner size="md" />
-					<p className='text-gray-500'>Loading...</p>
+					<p className='text-[var(--secondary)]'>Loading...</p>
 				</div>
 			</div>
 		);
@@ -353,7 +354,6 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<div className='text-2xl text-gray-400 mb-4'>🚫</div>
 					<h2 className='text-xl font-semibold text-gray-700 mb-2'>
 						Access Denied
 					</h2>
@@ -369,9 +369,8 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<div className='text-2xl text-red-400 mb-4'>⚠️</div>
-					<h2 className='text-xl font-semibold text-red-700 mb-2'>Error</h2>
-					<p className='text-red-500'>{error}</p>
+					<h2 className='text-xl font-semibold text-[var(--error)] mb-2'>Error</h2>
+					<p className='text-[var(--error)]'>{error}</p>
 				</div>
 			</div>
 		);
@@ -382,7 +381,7 @@ export default function WorkersPage() {
 			<TopBar />
 
 			{/* Header */}
-			<div className='px-6 py-4 border-b border-gray-200'>
+			<div className='px-6 py-4 border-b border-[var(--secondary)]/20'>
 				<div className='flex items-center justify-between'>
 					<div>
 						<h2 className='text-2xl font-bold text-[var(--secondary)] mb-1'>
@@ -397,51 +396,27 @@ export default function WorkersPage() {
 						{/* Branch Selector - Only show for admins */}
 						{user?.isAdmin && (
 							<div className='min-w-48'>
-								<select
-									value={selectedBranchId}
-									onChange={(e) => handleBranchChange(e.target.value)}
-									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white'>
-									<option value=''>All Branches</option>
-									{branches.map((branch) => (
-										<option key={branch.id} value={branch.id}>
-											{branch.name}
-										</option>
-									))}
-								</select>
+								<DropdownField
+									options={branches.map((branch) => branch.name)}
+									hasAllOptionsVisible={true}
+									defaultValue="ALL BRANCHES"
+									allSuffix="BRANCHES"
+									dropdownPosition='bottom-right'
+									dropdownOffset={{ top: 2, right: 0 }}
+									onChange={(selectedName: string) => {
+										const selectedBranch = branches.find(
+											(branch) => branch.name === selectedName
+										);
+										handleBranchChange(selectedBranch?.id || "");
+									}}
+									roundness={"[12px]"}
+									height={42}
+									valueAlignment={"left"}
+									padding=''
+									shadow={true}
+								/>
 							</div>
 						)}
-
-						{/* View Toggle : FOR NOW DISABLE */}
-						{/* <div className='flex bg-gray-100 rounded-lg p-1'>
-							<button
-								onClick={() => setViewMode("workers")}
-								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-									viewMode === "workers"
-										? "bg-white text-gray-900 shadow-sm"
-										: "text-gray-600 hover:text-gray-900"
-								}`}>
-								Workers
-							</button>
-							
-							<button
-								onClick={() => setViewMode("analytics")}
-								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-									viewMode === "analytics"
-										? "bg-white text-gray-900 shadow-sm"
-										: "text-gray-600 hover:text-gray-900"
-								}`}>
-								Analytics
-							</button>
-							<button
-								onClick={() => setViewMode("schedule")}
-								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-									viewMode === "schedule"
-										? "bg-white text-gray-900 shadow-sm"
-										: "text-gray-600 hover:text-gray-900"
-								}`}>
-								Schedule
-							</button>
-						</div> */}
 
 						{/* Add Worker Button - only show in workers view */}
 						{viewMode === "workers" && (
@@ -462,7 +437,7 @@ export default function WorkersPage() {
 
 			{/* Filters - only show in workers view */}
 			{viewMode === "workers" && (
-				<div className='px-6 py-4 border-b border-gray-200 bg-gray-50'>
+				<div className='px-6 py-4 border-b border-[var(--secondary)]/20 bg-[var(--secondary)]/5'>
 					<WorkerFiltersComponent
 						filters={filters}
 						branches={branches}

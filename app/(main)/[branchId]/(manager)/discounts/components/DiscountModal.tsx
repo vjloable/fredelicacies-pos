@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Discount } from '@/services/discountService';
 import { createDiscount, updateDiscount } from '@/services/discountService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBranch } from '@/contexts/BranchContext';
 import { subscribeToCategories } from '@/stores/dataStore';
 import { Category } from '@/services/categoryService';
 import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
+import DropdownField from '@/components/DropdownField';
 
 interface DiscountModalProps {
   isOpen: boolean;
@@ -17,6 +19,7 @@ interface DiscountModalProps {
 
 export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: DiscountModalProps) {
   const { user } = useAuth();
+  const { currentBranch } = useBranch();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [valueInput, setValueInput] = useState('');
@@ -26,7 +29,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
     discount_code: '',
     type: 'flat' as 'percentage' | 'flat',
     value: 0,
-    applies_to: null as string | null
+    applies_to: null as string | null,
+    scope: 'specific_branch' as 'all_branches' | 'specific_branch'
   });
 
   // Load categories
@@ -45,7 +49,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         discount_code: discount.discount_code,
         type: discount.type,
         value: discount.value,
-        applies_to: discount.applies_to
+        applies_to: discount.applies_to,
+        scope: discount.scope || 'specific_branch'
       });
       setValueInput(discount.value > 0 ? discount.value.toString() : '');
     } else {
@@ -53,7 +58,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         discount_code: '',
         type: 'flat',
         value: 0,
-        applies_to: null
+        applies_to: null,
+        scope: 'specific_branch'
       });
       setValueInput('');
     }
@@ -69,6 +75,11 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
     
     if (!user || !user.uid) {
       alert('You must be logged in to create/update discounts');
+      return;
+    }
+
+    if (!currentBranch?.id) {
+      alert('No branch selected. Please select a branch first.');
       return;
     }
 
@@ -96,6 +107,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           type: formData.type,
           value: formData.value,
           applies_to: formData.applies_to,
+          scope: formData.scope,
           modified_by: user.uid
         });
       } else {
@@ -105,6 +117,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           type: formData.type,
           value: formData.value,
           applies_to: formData.applies_to,
+          scope: formData.scope,
+          branchId: currentBranch.id,
           created_by: user.uid
         });
       }
@@ -145,20 +159,20 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Discount Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Discount Code *
+            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
+              Discount Code <span className="text-[var(--error)]">*</span>
             </label>
             <input
               type="text"
               value={formData.discount_code}
               onChange={(e) => handleInputChange('discount_code', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="e.g., SAVE20, WELCOME10"
-              disabled={!!discount} // Can't change discount code for existing discounts
+              disabled={!!discount}
               required
             />
             {discount && (
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-[var(--secondary)]/50 mt-1">
                 Discount code cannot be changed
               </p>
             )}
@@ -166,23 +180,54 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Discount Type *
+            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
+              Discount Type <span className="text-[var(--error)]">*</span>
             </label>
-            <select
-              value={formData.type}
-              onChange={(e) => handleInputChange('type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="flat">Flat Amount</option>
-              <option value="percentage">Percentage</option>
-            </select>
+            <DropdownField
+              options={["FLAT AMOUNT", "PERCENTAGE"]}
+              hasAllOptionsVisible={false}
+              defaultValue="FLAT AMOUNT"
+              dropdownPosition='bottom-right'
+              dropdownOffset={{ top: 2, right: 0 }}
+              onChange={(e) => handleInputChange('type', e)}
+              roundness={"[6px]"}
+              height={42}
+              valueAlignment={"left"}
+              padding=''
+              shadow={false}
+            />
+          </div>
+
+          {/* Scope */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
+              Discount Scope <span className="text-[var(--error)]">*</span>
+            </label>
+            <DropdownField
+              options={["THIS BRANCH ONLY", "ALL BRANCHES"]}
+              hasAllOptionsVisible={false}
+              defaultValue={formData.scope === 'specific_branch' ? "THIS BRANCH ONLY" : "ALL BRANCHES"}
+              dropdownPosition='bottom-right'
+              dropdownOffset={{ top: 2, right: 0 }}
+              onChange={(e) => {
+                const scope = e === "ALL BRANCHES" ? 'all_branches' : 'specific_branch';
+                handleInputChange('scope', scope);
+              }}
+              roundness={"[6px]"}
+              height={42}
+              valueAlignment={"left"}
+              padding=''
+              shadow={false}
+            />
+            <p className="text-sm text-[var(--secondary)]/50 mt-1">
+              Choose whether this discount applies to all branches or just this branch
+            </p>
           </div>
 
           {/* Value */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Discount Value *
+            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
+              Discount Value <span className="text-[var(--error)]">*</span>
             </label>
             <div className="relative">
               <input
@@ -224,36 +269,38 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                     setValueInput('');
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder={formData.type === 'percentage' ? '10' : '100'}
                 inputMode="decimal"
                 required
               />
-              <span className="absolute right-3 top-2 text-gray-500">
+              <span className="absolute right-3 top-2 text-[var(--secondary)]/50">
                 {formData.type === 'percentage' ? '%' : '$'}
               </span>
             </div>
           </div>
 
           {/* Applies To */}
+          <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
+            Applies To
+          </label>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Applies To
-            </label>
-            <select
-              value={formData.applies_to || ''}
-              onChange={(e) => handleInputChange('applies_to', e.target.value || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Items</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-sm text-gray-500 mt-1">
-              Leave as {"All Items"} to apply discount to entire order
+            <DropdownField
+              options={categories.map((category) => category.name)}
+              hasAllOptionsVisible={true}
+              defaultValue="ALL CATEGORIES"
+              allSuffix="CATEGORIES"
+              dropdownPosition='bottom-right'
+              dropdownOffset={{ top: 2, right: 0 }}
+              onChange={(e) => handleInputChange('applies_to', e || null)}
+              roundness={"[6px]"}
+              height={42}
+              valueAlignment={"left"}
+              padding=''
+              shadow={false}
+            />
+            <p className="text-sm text-[var(--secondary)]/50 mt-2">
+              Leave as {"ALL CATEGORIES"} to apply discount to entire order
             </p>
           </div>
 
@@ -262,14 +309,14 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-[var(--secondary)]/30 text-[var(--secondary)] rounded-md hover:bg-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? 'Saving...' : (discount ? 'Update' : 'Create')}

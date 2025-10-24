@@ -12,8 +12,8 @@ export default function StatusBadge({
 	// Admins don't have status tracking
 	if (isAdmin) {
 		return (
-			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
-				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-blue-400' />
+			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]'>
+				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-[var(--accent)]' />
 				Admin
 			</span>
 		);
@@ -24,20 +24,20 @@ export default function StatusBadge({
 			case "clocked_in":
 				return {
 					label: "Clocked In",
-					className: "bg-green-100 text-green-800",
-					dotClassName: "bg-green-400",
+					className: "bg-[var(--success)]/10 text-[var(--success)]",
+					dotClassName: "bg-[var(--success)]",
 				};
 			case "clocked_out":
 				return {
 					label: "Clocked Out",
-					className: "bg-yellow-100 text-yellow-800",
-					dotClassName: "bg-yellow-400",
+					className: "bg-[var(--error)]/10 text-[var(--error)]",
+					dotClassName: "bg-[var(--error)]",
 				};
 			default:
 				return {
 					label: "Clocked Out",
-					className: "bg-yellow-100 text-yellow-800",
-					dotClassName: "bg-yellow-400",
+					className: "bg-[var(--error)]/10 text-[var(--error)]",
+					dotClassName: "bg-[var(--error)]",
 				};
 		}
 	};

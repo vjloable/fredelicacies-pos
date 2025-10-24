@@ -95,11 +95,11 @@ export default function WorkerDetailModal({
 		const baseClasses = "px-2 py-1 text-xs rounded-full font-medium";
 		switch (status) {
 			case "clocked_in":
-				return `${baseClasses} bg-green-100 text-green-800`;
+				return `${baseClasses} bg-[var(--success)]/10 text-[var(--success)]`;
 			case "clocked_out":
-				return `${baseClasses} bg-gray-100 text-gray-800`;
+				return `${baseClasses} bg-[var(--error)]/10 text-[var(--error)]`;
 			default:
-				return `${baseClasses} bg-gray-100 text-gray-600`;
+				return `${baseClasses} bg-[var(--secondary)]/10 text-[var(--secondary)]`;
 		}
 	};
 
@@ -121,28 +121,28 @@ export default function WorkerDetailModal({
 		<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
 			<div className='bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
 				{/* Header */}
-				<div className='flex items-center justify-between p-6 border-b border-gray-200'>
+				<div className='flex items-center justify-between p-6 border-b border-[var(--secondary)]/20'>
 					<div className='flex items-center gap-4'>
-						<div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center'>
-							<span className='text-blue-800 font-bold text-lg'>
+						<div className='w-12 h-12 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center'>
+							<span className='text-[var(--secondary)] font-bold text-md'>
 								{worker.name?.charAt(0) || worker.email.charAt(0)}
 							</span>
 						</div>
 						<div>
-							<h2 className='text-xl font-bold text-gray-900'>
+							<h2 className='text-sm font-bold text-[var(--secondary)]'>
 								{worker.name || "Unnamed Worker"}
 							</h2>
-							<p className='text-gray-600'>{worker.email}</p>
+							<p className='text-[var(--secondary)] text-sm'>{worker.email}</p>
 						</div>
 						{worker.isAdmin && (
-							<span className='bg-red-100 text-red-800 px-2 py-1 text-xs rounded-full font-medium'>
-								Admin
+							<span className='bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 text-xs rounded-full font-medium'>
+								Administrator
 							</span>
 						)}
 					</div>
 					<button
 						onClick={onClose}
-						className='text-gray-400 hover:text-gray-600 transition-colors'>
+						className='text-[var(--secondary)] hover:text-[var(--secondary)]/60 transition-colors'>
 						<svg
 							className='w-6 h-6'
 							fill='none'
@@ -164,8 +164,8 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("details")}
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "details"
-								? "text-blue-600 border-b-2 border-blue-600"
-								: "text-gray-500 hover:text-gray-700"
+								? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+								: "text-[var(--secondary)] hover:text-[var(--secondary)]/60"
 						}`}>
 						Worker Details
 					</button>
@@ -173,8 +173,8 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("sessions")}
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "sessions"
-								? "text-blue-600 border-b-2 border-blue-600"
-								: "text-gray-500 hover:text-gray-700"
+								? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+								: "text-[var(--secondary)] hover:text-[var(--secondary)]/60"
 						}`}>
 						Work Sessions (Last 30 Days)
 					</button>
@@ -185,26 +185,26 @@ export default function WorkerDetailModal({
 					{activeTab === "details" && (
 						<div className='space-y-6'>
 							{/* Basic Information */}
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+							<div className='grid grid-cols-1 md:grid-cols-1 gap-6'>
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-gray-900'>
+									<h3 className='text-lg font-semibold text-[var(--secondary)]'>
 										Basic Information
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Employee ID:</span>
-											<span className='font-medium'>{worker.id}</span>
+											<span className='text-[var(--secondary)] text-sm'>Employee ID:</span>
+											<span className='font-medium text-sm'>{worker.id}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Email:</span>
-											<span className='font-medium'>{worker.email}</span>
+											<span className='text-[var(--secondary)] text-sm'>Email:</span>
+											<span className='font-medium text-sm'>{worker.email}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Phone:</span>
-											<span className='font-medium'>Not provided</span>
+											<span className='text-[var(--secondary)] text-sm'>Phone:</span>
+											<span className='font-medium text-sm'>Not provided</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Current Status:</span>
+											<span className='text-[var(--secondary)] text-sm'>Current Status:</span>
 											<span
 												className={getStatusBadge(
 													worker.currentStatus || "clocked_out"
@@ -218,19 +218,19 @@ export default function WorkerDetailModal({
 								</div>
 
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-gray-900'>
+									<h3 className='text-lg font-semibold text-[var(--secondary)]'>
 										Employment Details
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Joined:</span>
-											<span className='font-medium'>
+											<span className='text-[var(--secondary)] text-sm'>Joined:</span>
+											<span className='font-medium text-sm'>
 												{formatDate(worker.createdAt)}
 											</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-gray-600'>Last Updated:</span>
-											<span className='font-medium'>
+											<span className='text-[var(--secondary)] text-sm'>Last Updated:</span>
+											<span className='font-medium text-sm'>
 												{formatDate(worker.updatedAt)}
 											</span>
 										</div>
@@ -240,7 +240,7 @@ export default function WorkerDetailModal({
 
 							{/* Role Assignments */}
 							<div className='space-y-4'>
-								<h3 className='text-lg font-semibold text-gray-900'>
+								<h3 className='text-lg font-semibold text-[var(--secondary)]'>
 									Role Assignments
 								</h3>
 								{worker.roleAssignments && worker.roleAssignments.length > 0 ? (
@@ -248,7 +248,7 @@ export default function WorkerDetailModal({
 										{worker.roleAssignments.map((assignment, index) => (
 											<div
 												key={index}
-												className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+												className='flex items-center justify-between p-4 bg-[var(--secondary)]/50 rounded-lg'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
 														{`Branch ${assignment.branchId}`}
@@ -261,8 +261,8 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															assignment.isActive
-																? "bg-green-100 text-green-800"
-																: "bg-red-100 text-red-800"
+																? "bg-[var(--success)]/10 text-[var(--success)]"
+																: "bg-[var(--error)]/10 text-[var(--error)]"
 														}`}>
 														{assignment.isActive ? "Active" : "Inactive"}
 													</span>
@@ -271,7 +271,7 @@ export default function WorkerDetailModal({
 										))}
 									</div>
 								) : (
-									<p className='text-gray-500 italic'>No role assignments</p>
+									<p className='text-[var(--secondary)]/50 italic text-sm'>No role assignments</p>
 								)}
 							</div>
 						</div>

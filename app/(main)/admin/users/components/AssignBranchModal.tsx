@@ -119,12 +119,12 @@ export default function AssignBranchModal({
 	// Prevent assigning branches to admins
 	if (worker.isAdmin) {
 		return (
-			<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+			<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl'>
 					<div className='text-center py-8'>
-						<div className='w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center'>
+						<div className='w-16 h-16 mx-auto mb-4 bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
 							<svg
-								className='w-8 h-8 text-yellow-600'
+								className='w-8 h-8 text-[var(--accent)]'
 								fill='none'
 								stroke='currentColor'
 								viewBox='0 0 24 24'>
@@ -136,10 +136,10 @@ export default function AssignBranchModal({
 								/>
 							</svg>
 						</div>
-						<h3 className='text-xl font-bold text-gray-900 mb-2'>
+						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
 							Cannot Assign Admin
 						</h3>
-						<p className='text-gray-600 mb-6'>
+						<p className='text-[var(--secondary)]/60 mb-6'>
 							Admins have global access and cannot be assigned to specific
 							branches. They automatically have access to all branches through
 							their admin privileges.
@@ -175,9 +175,9 @@ export default function AssignBranchModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div className='flex items-center'>
-								<div className='w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4'>
+								<div className='w-12 h-12 bg-[var(--light-accent)] rounded-full flex items-center justify-center mr-4'>
 									<svg
-										className='w-6 h-6 text-purple-600'
+										className='w-6 h-6 text-[var(--accent)]'
 										fill='none'
 										stroke='currentColor'
 										viewBox='0 0 24 24'>
@@ -200,7 +200,7 @@ export default function AssignBranchModal({
 							</div>
 							<button
 								onClick={handleClose}
-								className='text-gray-400 hover:text-gray-600 p-2'>
+								className='text-[var(--secondary)]/40 hover:text-[var(--secondary)]/60 p-2'>
 								<svg
 									className='w-6 h-6'
 									fill='none'
@@ -217,7 +217,7 @@ export default function AssignBranchModal({
 						</div>
 
 						{/* Worker Info */}
-						<div className='bg-gray-50 rounded-lg p-4 mb-6'>
+						<div className='bg-[var(--secondary)]/5 rounded-lg p-4 mb-6'>
 							<div className='flex items-center'>
 								{worker.profilePicture ? (
 									<img
@@ -226,17 +226,17 @@ export default function AssignBranchModal({
 										className='w-12 h-12 rounded-full mr-4'
 									/>
 								) : (
-									<div className='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-4'>
-										<span className='text-lg font-medium text-gray-700'>
+									<div className='w-12 h-12 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center mr-4'>
+										<span className='text-lg font-medium text-[var(--secondary)]/70'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<div>
-									<div className='font-medium text-gray-900'>{worker.name}</div>
-									<div className='text-sm text-gray-500'>{worker.email}</div>
+									<div className='font-medium text-[var(--secondary)]'>{worker.name}</div>
+									<div className='text-sm text-[var(--secondary)]/50'>{worker.email}</div>
 									{worker.isAdmin && (
-										<div className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1'>
+										<div className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]/80 mt-1'>
 											Admin
 										</div>
 									)}
@@ -246,10 +246,10 @@ export default function AssignBranchModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-lg'>
+							<div className='mb-6 p-4 bg-[var(--error)]/5 border border-[var(--error)]/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-red-400 mr-2'
+										className='w-5 h-5 text-[var(--error)]/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -258,7 +258,7 @@ export default function AssignBranchModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-[var(--error)] text-sm'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -267,14 +267,14 @@ export default function AssignBranchModal({
 						<form onSubmit={handleSubmit} className='space-y-6'>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
 										Assign to Branch
 										{!worker.isAdmin && (
-											<span className='text-red-500 ml-1'>*</span>
+											<span className='text-[var(--error)]/50 ml-1'>*</span>
 										)}
 									</label>
 									{availableBranches.length === 0 ? (
-										<div className='text-center py-4 text-gray-500 border border-gray-200 rounded-lg'>
+										<div className='text-center py-4 text-[var(--secondary)]/50 border border-[var(--secondary)]/20 rounded-lg'>
 											No branches available
 										</div>
 									) : (
@@ -316,7 +316,7 @@ export default function AssignBranchModal({
 									<label className='block text-sm font-medium text-gray-700 mb-2'>
 										Role
 										{!worker.isAdmin && (
-											<span className='text-red-500 ml-1'>*</span>
+											<span className='text-[var(--error)]/50 ml-1'>*</span>
 										)}
 									</label>
 									<DropdownField

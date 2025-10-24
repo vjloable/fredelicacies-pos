@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { subscribeToBranches } from "@/stores/dataStore";
 import TopBar from "@/components/TopBar";
+import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 function formatDate(date: Date) {
 	return (
@@ -200,7 +202,7 @@ export default function BranchesPage() {
 			<div className='p-6'>
 				{loading && (
 					<div className='flex items-center justify-center py-8'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]'></div>
+						<LoadingSpinner size="md"/>
 						<span className='ml-3 text-[var(--secondary)]'>
 							Loading branches...
 						</span>
@@ -247,19 +249,8 @@ export default function BranchesPage() {
 
 				{!loading && !error && branches.length === 0 && (
 					<div className='text-center py-12'>
-						<div className='w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4'>
-							<svg
-								className='w-8 h-8 text-gray-400'
-								fill='none'
-								stroke='currentColor'
-								viewBox='0 0 24 24'>
-								<path
-									strokeLinecap='round'
-									strokeLinejoin='round'
-									strokeWidth={2}
-									d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'
-								/>
-							</svg>
+						<div className='w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center mx-auto mb-4'>
+							<BranchesIcon className="text-[var(--accent)]" />
 						</div>
 						<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
 							No Branches Found
@@ -275,7 +266,7 @@ export default function BranchesPage() {
 						<div className='mb-4 flex items-center justify-between'>
 							<div>
 								<h3 className='text-lg font-semibold text-[var(--secondary)]'>
-									All Branches ({branches.length})
+									All Branches <span className='ml-2 text-[var(--primary)] text-xs bg-[var(--accent)] w-1 h-1 rounded-full px-2 py-0.5'>{branches.length}</span>
 								</h3>
 								<p className='text-sm text-[var(--secondary)]/70'>
 									Click on a branch to navigate to its management interface

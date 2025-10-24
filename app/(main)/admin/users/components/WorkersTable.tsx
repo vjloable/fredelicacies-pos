@@ -4,6 +4,7 @@ import { Branch } from "@/services/branchService";
 import { User } from "@/contexts/AuthContext";
 import WorkerRow from "./WorkerRow";
 import TableHeader from "./TableHeader";
+import ManagementIcon from "@/components/icons/SidebarNav/ManagementIcon";
 
 interface WorkersTableProps {
 	workers: Worker[];
@@ -41,22 +42,22 @@ export default function WorkersTable({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
+			<div className='bg-white rounded-lg shadow-sm border border-[var(--secondary)] overflow-hidden'>
 				<div className='animate-pulse'>
 					{/* Header */}
-					<div className='bg-gray-50 px-6 py-3 border-b border-gray-200'>
+					<div className='bg-gray-50 px-6 py-3 border-b border-[var(--secondary)]'>
 						<div className='flex space-x-4'>
 							{[1, 2, 3, 4, 5].map((i) => (
-								<div key={i} className='h-4 bg-gray-200 rounded flex-1'></div>
+								<div key={i} className='h-4 bg-[var(--secondary)] rounded flex-1'></div>
 							))}
 						</div>
 					</div>
 					{/* Rows */}
 					{[1, 2, 3, 4, 5].map((i) => (
-						<div key={i} className='px-6 py-4 border-b border-gray-200'>
+						<div key={i} className='px-6 py-4 border-b border-[var(--secondary)]'>
 							<div className='flex space-x-4'>
 								{[1, 2, 3, 4, 5].map((j) => (
-									<div key={j} className='h-4 bg-gray-200 rounded flex-1'></div>
+									<div key={j} className='h-4 bg-[var(--secondary)] rounded flex-1'></div>
 								))}
 							</div>
 						</div>
@@ -68,12 +69,14 @@ export default function WorkersTable({
 
 	if (workers.length === 0) {
 		return (
-			<div className='bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center'>
-				<div className='text-6xl text-gray-300 mb-4'>👥</div>
-				<h3 className='text-lg font-medium text-gray-700 mb-2'>
+			<div className='bg-white rounded-lg shadow-md p-12 text-center'>
+				<div className='w-16 h-16 mx-auto mb-4 bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
+					<ManagementIcon className="text-[var(--accent)]"/>
+				</div>
+				<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
 					No Workers Found
 				</h3>
-				<p className='text-gray-500'>
+				<p className='text-[var(--secondary)]/50'>
 					No workers match your current filters. Try adjusting your search featcriteria.
 				</p>
 			</div>
@@ -81,9 +84,9 @@ export default function WorkersTable({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
+		<div className='bg-white rounded-lg shadow-sm border border-[var(--secondary)]/20 overflow-hidden'>
 			<div className='overflow-x-auto'>
-				<table className='min-w-full divide-y divide-gray-200'>
+				<table className='min-w-full divide-y divide-[var(--secondary)]/10'>
 					<TableHeader
 						sortConfig={sortConfig}
 						onSort={onSort}
@@ -97,7 +100,7 @@ export default function WorkersTable({
 							{ key: "actions", label: "Actions", sortable: false },
 						]}
 					/>
-					<tbody className='bg-white divide-y divide-gray-200'>
+					<tbody className='bg-white divide-y divide-[var(--secondary)]/10'>
 						{workers.map((worker) => (
 							<WorkerRow
 								key={worker.id}

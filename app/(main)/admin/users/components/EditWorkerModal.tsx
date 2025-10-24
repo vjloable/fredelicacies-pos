@@ -365,7 +365,7 @@ export default function EditWorkerModal({
 							</div>
 							<button
 								onClick={handleClose}
-								className='text-gray-400 hover:text-gray-600 p-2'>
+								className='text-[var(--secondary)]/40 hover:text-[var(--secondary)]/60 p-2'>
 								<svg
 									className='w-6 h-6'
 									fill='none'
@@ -383,10 +383,10 @@ export default function EditWorkerModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-lg'>
+							<div className='mb-6 p-4 bg-r[var(--error)]/5 border border-[var(--error)]/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-red-400 mr-2'
+										className='w-5 h-5 text-[var(--error)]/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -395,7 +395,7 @@ export default function EditWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-[var(--error)] text-sm'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -405,22 +405,22 @@ export default function EditWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Full Name *
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+										Full Name <span className="text-[var(--error)]">*</span>
 									</label>
 									<input
 										type='text'
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
 								</div>
 								<div>
 									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Email Address *
+										Email Address <span className="text-[var(--error)]">*</span>
 									</label>
 									<input
 										type='email'
@@ -471,9 +471,9 @@ export default function EditWorkerModal({
 										name='isAdmin'
 										checked={formData.isAdmin}
 										onChange={handleInputChange}
-										className='h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-gray-300 rounded'
+										className='h-5 w-5 text-[var(--primary)] focus:ring-[var(--accent)] border-[var(--secondary)]/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-gray-700'>
+									<label className='ml-2 block text-sm text-[var(--secondary)] p-1'>
 										Grant admin privileges
 									</label>
 								</div>
@@ -484,7 +484,7 @@ export default function EditWorkerModal({
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Assign to Branch *
+											Assign to Branch <span className="text-[var(--error)]">*</span>
 										</label>
 										{availableBranches.length === 1 ? (
 											// For managers - show readonly branch name
@@ -531,7 +531,7 @@ export default function EditWorkerModal({
 									</div>
 									<div>
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Role *
+											Role <span className="text-[var(--error)]">*</span>
 										</label>
 										{canDemoteWorker(worker) ? (
 											<DropdownField
@@ -568,11 +568,11 @@ export default function EditWorkerModal({
 							)}
 
 							{/* Form Actions */}
-							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200'>
+							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--secondary)]/20'>
 								<button
 									type='button'
 									onClick={handleClose}
-									className='flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors'>
+									className='flex-1 py-3 px-4 border border-[var(--secondary)]/30 rounded-lg text-[var(--secondary)]/70 font-medium hover:bg-[var(--secondary)]/20 transition-colors'>
 									Cancel
 								</button>
 								<button

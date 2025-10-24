@@ -78,12 +78,6 @@ export default function SidebarNav() {
 			managerOnly: true,
 		},
 		{
-			href: "logs",
-			label: "Logs",
-			icon: LogsIcon,
-			managerOnly: true,
-		},
-		{
 			href: "settings",
 			label: "Settings",
 			icon: SettingsIcon,
@@ -103,6 +97,12 @@ export default function SidebarNav() {
 			href: "/admin/users",
 			label: "Users",
 			icon: UsersIcon, // You may want to create a specific worker management icon
+			adminOnly: true,
+		},
+		{
+			href: "/admin/logs",
+			label: "Logs",
+			icon: LogsIcon,
 			adminOnly: true,
 		},
 	];
@@ -176,9 +176,23 @@ export default function SidebarNav() {
 		<div className='h-full w-[271px] bg-[var(--primary)] border-r border-gray-200 shadow-xl xl:shadow-none duration-400'>
 			<div className='flex flex-col h-full'>
 				{/* Logo */}
-				<div className='flex items-center justify-center border-b border-gray-200 bg-[var(--accent)] h-[90px] px-6'>
+				<div className='flex items-center justify-center border-b border-gray-200 bg-[var(--primary)] h-[90px] px-6'>
 					<HorizontalLogo className='w-auto opacity-100 transition-all' />
 				</div>
+
+				{/* Branch Information */}
+				{currentBranch && (
+					<div className='px-4 py-3 border-b border-gray-200 bg-[var(--primary)]'>
+						<div className='text-left'>
+							<h3 className='text-[14px] font-bold text-[var(--secondary)]'>
+								{currentBranch.name}
+							</h3>
+							<p className='text-[12px] text-[var(--secondary)]/70 mt-1 leading-tight'>
+								{currentBranch.location}
+							</p>
+						</div>
+					</div>
+				)}
 
 				{/* Back to Admin Button - Show for admins when they're in a branch */}
 				{isUserAdmin() && currentBranch && (

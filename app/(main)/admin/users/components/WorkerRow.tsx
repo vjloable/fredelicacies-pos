@@ -142,7 +142,7 @@ export default function WorkerRow({
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}
-			className={`hover:bg-gray-50 cursor-pointer ${
+			className={`hover:bg-[var(--accent)]/10 cursor-pointer ${
 				!worker.isAdmin && worker.currentStatus === "clocked_in"
 					? "bg-green-50"
 					: ""
@@ -157,18 +157,18 @@ export default function WorkerRow({
 							className='w-10 h-10 rounded-full mr-4'
 						/>
 					) : (
-						<div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-4'>
-							<span className='text-sm font-medium text-gray-700'>
+						<div className='w-10 h-10 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center mr-4'>
+							<span className='text-sm font-medium text-[var(--secondary)]'>
 								{worker.name.charAt(0).toUpperCase()}
 							</span>
 						</div>
 					)}
 					<div>
-						<div className='text-sm font-medium text-gray-900'>
+						<div className='text-sm font-medium text-[var(--secondary)]'>
 							{worker.name}
 						</div>
 						{worker.employeeId && (
-							<div className='text-sm text-gray-500'>
+							<div className='text-sm text-[var(--secondary)]/50'>
 								ID: {worker.employeeId}
 							</div>
 						)}
@@ -177,7 +177,7 @@ export default function WorkerRow({
 			</td>
 
 			{/* Email */}
-			<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+			<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary) font-light'>
 				{worker.email}
 			</td>
 
@@ -213,7 +213,7 @@ export default function WorkerRow({
 						.map((assignment) => (
 							<span
 								key={assignment.branchId}
-								className='inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-800'>
+								className='inline-flex items-center px-2 py-1 rounded text-xs bg-[var(--secondary)]/10 text-[var(--secondary)]'>
 								{getBranchName(assignment.branchId)}
 							</span>
 						))}
@@ -242,7 +242,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeIn(worker);
 								}}
-								className='text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50'
+								className='text-[var(--success)] hover:text-[var(--success)]/60 p-1 rounded hover:bg-[var(--success)]/10'
 								title='Time In'>
 								<TimeInIcon />
 							</button>
@@ -255,7 +255,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeOut(worker);
 								}}
-								className='text-orange-600 hover:text-orange-800 p-1 rounded hover:bg-orange-50'
+								className='text-[var(--error)] hover:text-[var(--error)]/60 p-1 rounded hover:bg-[var(--error)]/10'
 								title='Time Out'>
 								<TimeOutIcon />
 							</button>
@@ -268,7 +268,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onEdit(worker);
 							}}
-							className='text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50'
+							className='text-[var(--secondary)] hover:text-[var(--secondary)]/60 p-1 rounded hover:bg-[var(--secondary)]/10'
 							title='Edit Worker'>
 							<EditIcon />
 						</button>
@@ -281,9 +281,9 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onAssignBranch(worker);
 							}}
-							className='text-[var(--accent)] hover:text-[var(--accent)] p-1 rounded hover:bg-[var(--accent)]/10'
+							className='text-[var(--secondary)] hover:text-[var(--secondary)] p-1 rounded hover:bg-[var(--secondary)]/10'
 							title='Manage Branches'>
-							<BranchIcon className='drop-shadow-md' />
+							<BranchIcon />
 						</button>
 					)}
 
@@ -294,7 +294,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onDelete(worker);
 							}}
-							className='text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50'
+							className='text-[var(--error)] hover:text-[var(--error)]/60 p-1 rounded hover:bg-[var(--error)]/10'
 							title='Delete Worker'>
 							<DeleteIcon />
 						</button>

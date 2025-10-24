@@ -129,8 +129,8 @@ export default function LoginPage() {
 				<div className='bg-white rounded-[12px] shadow-xl'>
 					{/* Logo/Header */}
 					<div className='text-center mb-8'>
-						<div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--accent)] py-6 shadow-md rounded-t-[12px]'>
-							<div className='w-[165px] h-[100px]'>
+						<div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]'>
+							<div className='w-[165px] h-[120px]'>
 								<LogoVerticalIcon />
 							</div>
 						</div>
@@ -177,7 +177,7 @@ export default function LoginPage() {
 								<div className='bg-red-50 border border-red-200 rounded-xl p-3'>
 									<div className='flex items-center gap-2'>
 										<svg
-											className='w-5 h-5 text-red-600'
+											className='w-5 h-5 text-[var(--error)]'
 											fill='currentColor'
 											viewBox='0 0 20 20'>
 											<path
@@ -186,7 +186,7 @@ export default function LoginPage() {
 												clipRule='evenodd'
 											/>
 										</svg>
-										<span className='text-sm text-red-700'>{error}</span>
+										<span className='text-sm text-[var(--error)]'>{error}</span>
 									</div>
 								</div>
 							)}
@@ -226,7 +226,7 @@ export default function LoginPage() {
 						{/* Footer */}
 						<div className='mt-6 text-center'>
 							<p className='text-xs text-[var(--secondary)] opacity-50'>
-								FoodMood Point-of-Sales System v1.0
+								Fredelicacies Point-of-Sales System v1.0
 							</p>
 						</div>
 					</div>

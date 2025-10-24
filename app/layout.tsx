@@ -13,7 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-	title: "FoodMood POS",
+	title: "Fredelicacies POS",
 	description: "",
 };
 
@@ -25,7 +25,7 @@ export default function RootLayout({
 	return (
 		<html lang='en'>
 			<head>
-				<meta name='apple-mobile-web-app-title' content='FoodMood POS' />
+				<meta name='apple-mobile-web-app-title' content='Fredelicacies POS' />
 			</head>
 			<body className={`${poppins.variable} antialiased`}>
 				<AuthProvider>

@@ -79,8 +79,8 @@ export default function WaitingRoomPage() {
         <div className="bg-white rounded-[12px] shadow-xl">
           {/* Logo/Header */}
           <div className="text-center">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--accent)] py-6 shadow-md rounded-t-[12px]">
-              <div className="w-[165px] h-[100px]">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]">
+              <div className="w-[165px] h-[120px]">
                 <LogoVerticalIcon />
               </div>
             </div>
@@ -89,18 +89,18 @@ export default function WaitingRoomPage() {
           <div className="p-8 text-center">
             {/* Waiting Icon with Animation */}
             <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center relative">
-                <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mx-auto w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center relative">
+                <svg className="w-8 h-8 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {/* Pulse animation */}
-                <div className="absolute inset-0 rounded-full bg-yellow-200 animate-ping opacity-25"></div>
+                <div className="absolute inset-0 rounded-full bg-[var(--accent)] animate-ping opacity-25"></div>
               </div>
             </div>
 
             {/* Title */}
             <h1 className="text-2xl font-bold text-[var(--secondary)] mb-4">
-              Welcome to FoodMood POS!
+              Welcome to Fredelicacies POS!
             </h1>
 
             {/* Status Message */}
@@ -108,9 +108,9 @@ export default function WaitingRoomPage() {
               <p className="text-[var(--secondary)] mb-3">
                 Your account has been created successfully.
               </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left">
+              <div className="bg-[var(--light-accent)] border border-[var(--accent)] rounded-lg p-4 text-left">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-[var(--accent)] mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <div>
@@ -172,18 +172,6 @@ export default function WaitingRoomPage() {
               </button>
             </div>
 
-            {/* Instructions */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-left">
-              <h4 className="font-medium text-[var(--secondary)] mb-2 text-sm">Next Steps:</h4>
-              <ul className="text-xs text-[var(--secondary)] opacity-70 space-y-1">
-                <li>• Contact your store manager or administrator</li>
-                <li>• Provide them with your email address: <span className="font-medium">{user?.email}</span></li>
-                <li>• Ask them to assign you to a branch in the system</li>
-                <li>• Check back here or click "Check Access Status" periodically</li>
-                <li>• You will be automatically redirected once access is granted</li>
-              </ul>
-            </div>
-
             {/* Auto-refresh Notice */}
             <div className="mt-4">
               <p className="text-xs text-gray-500">
@@ -199,7 +187,7 @@ export default function WaitingRoomPage() {
             {/* Footer */}
             <div className="mt-6">
               <p className="text-xs text-[var(--secondary)] opacity-50">
-                FoodMood Point-of-Sales System v1.0
+                Fredelicacies Point-of-Sales System v1.0
               </p>
             </div>
           </div>

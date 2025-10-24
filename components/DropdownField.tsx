@@ -26,6 +26,7 @@ interface DropdownFieldProps {
 	padding?: string;
 	maxVisibleOptions?: number;
 	hasAllOptionsVisible?: boolean;
+	allSuffix?: string;
 }
 
 export default function DropdownField({
@@ -42,11 +43,12 @@ export default function DropdownField({
 	padding = "12px",
 	maxVisibleOptions,
 	hasAllOptionsVisible = false,
+	allSuffix = "",
 }: DropdownFieldProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	
 	// Set default value to "ALL" if hasAllOptionsVisible is true and no defaultValue is provided
-	const initialValue = defaultValue || (hasAllOptionsVisible ? "ALL" : undefined);
+	const initialValue = defaultValue || (hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}` : undefined);
 	const [selectedValue, setSelectedValue] = useState(initialValue);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +71,7 @@ export default function DropdownField({
 
 	// Update selectedValue when defaultValue changes
 	useEffect(() => {
-		const newValue = defaultValue || (hasAllOptionsVisible ? "ALL" : undefined);
+		const newValue = defaultValue || (hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}`  : undefined);
 		setSelectedValue(newValue);
 	}, [defaultValue, hasAllOptionsVisible]);
 
@@ -80,7 +82,7 @@ export default function DropdownField({
 	};
 
 	// Create the final options array including "ALL" if needed
-	const finalOptions = hasAllOptionsVisible ? ["ALL", ...options] : options;
+	const finalOptions = hasAllOptionsVisible ? [`ALL ${allSuffix.toUpperCase()}` , ...options] : options;
 
 	const getDropdownClasses = () => {
 		// Calculate max height based on maxVisibleOptions if provided
@@ -135,7 +137,7 @@ export default function DropdownField({
 					className={`py-[${padding}] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
 								text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
 								rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
-								hover:bg-[var(--accent)] transition-colors 
+								hover:bg-[var(--accent)]/50 transition-colors 
             					${shadow ? "shadow-md border-none" : "shadow-none border-2 border-[var(--secondary)]/20"
 							}`}
 					style={height ? { height: `${height}px` } : {}}>
@@ -163,7 +165,7 @@ export default function DropdownField({
 					<div className={getDropdownClasses()} style={getDropdownStyle()}>
 						<div className='py-1'>
 							{finalOptions.map((option, index) => {
-								const isAllOption = hasAllOptionsVisible && option === "ALL";
+								const isAllOption = hasAllOptionsVisible && option === `ALL ${allSuffix.toUpperCase()}` ;
 								return (
 									<button
 										key={index}

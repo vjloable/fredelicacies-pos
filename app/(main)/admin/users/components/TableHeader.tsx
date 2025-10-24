@@ -20,7 +20,7 @@ function SortIcon({ direction }: { direction?: "asc" | "desc" }) {
 		<div className='ml-2 flex flex-col'>
 			<svg
 				className={`w-3 h-3 ${
-					direction === "asc" ? "text-[var(--accent)]" : "text-gray-300"
+					direction === "asc" ? "text-[var(--accent)]" : "text-[var(--secondary)]/50"
 				}`}
 				fill='currentColor'
 				viewBox='0 0 20 20'>
@@ -28,7 +28,7 @@ function SortIcon({ direction }: { direction?: "asc" | "desc" }) {
 			</svg>
 			<svg
 				className={`w-3 h-3 -mt-1 ${
-					direction === "desc" ? "text-[var(--accent)]" : "text-gray-300"
+					direction === "desc" ? "text-[var(--accent)]" : "text-[var(--secondary)]/50"
 				}`}
 				fill='currentColor'
 				viewBox='0 0 20 20'>
@@ -49,8 +49,8 @@ export default function TableHeader({
 				{columns.map((column) => (
 					<th
 						key={column.key}
-						className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-							column.sortable ? "cursor-pointer hover:bg-gray-100" : ""
+						className={`px-6 py-3 text-left text-xs font-medium text-[var(--secondary)] uppercase tracking-wider ${
+							column.sortable ? "cursor-pointer hover:bg-[var(--accent)]/10" : ""
 						}`}
 						onClick={() => column.sortable && onSort?.(column.key)}>
 						<div className='flex items-center'>

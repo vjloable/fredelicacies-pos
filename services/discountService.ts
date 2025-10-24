@@ -7,6 +7,7 @@ import {
   deleteDoc, 
   query, 
   orderBy,
+  where,
   onSnapshot,
   Timestamp,
   setDoc 
@@ -19,6 +20,8 @@ export interface Discount {
   type: 'percentage' | 'flat';
   value: number;
   applies_to: string | null; // category document ID or null for all
+  branchId: string; // Branch ID for multi-branch support
+  scope: 'all_branches' | 'specific_branch'; // Whether discount applies to all branches or specific branch
   created_at: Timestamp;
   modified_at: Timestamp;
   created_by: string; // user ID from Firebase Auth
@@ -28,12 +31,15 @@ const COLLECTION_NAME = 'discounts';
 
 // Create a new discount (using discount_code as document ID)
 export const createDiscount = async (
-  discountData: Omit<Discount, 'id' | 'created_at' | 'modified_at'> & { created_by: string }
+  discountData: Omit<Discount, 'id' | 'created_at' | 'modified_at'> & { created_by: string; branchId: string }
 ): Promise<string> => {
   try {
-    // Validate that created_by is not undefined
+    // Validate that created_by and branchId are not undefined
     if (!discountData.created_by) {
       throw new Error('created_by field is required');
+    }
+    if (!discountData.branchId) {
+      throw new Error('branchId field is required');
     }
 
     const docData = {
@@ -41,6 +47,8 @@ export const createDiscount = async (
       type: discountData.type,
       value: discountData.value,
       applies_to: discountData.applies_to,
+      branchId: discountData.branchId,
+      scope: discountData.scope,
       created_by: discountData.created_by,
       created_at: Timestamp.now(),
       modified_at: Timestamp.now()
@@ -58,21 +66,47 @@ export const createDiscount = async (
   }
 };
 
-// Get all discounts
-export const getDiscounts = async (): Promise<Discount[]> => {
+// Get all discounts for a specific branch (includes both branch-specific and all-branches discounts)
+export const getDiscounts = async (branchId?: string): Promise<Discount[]> => {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('created_at', 'desc'));
+    let q;
+    if (branchId) {
+      // Get discounts that either apply to all branches OR are specific to this branch
+      q = query(
+        collection(db, COLLECTION_NAME),
+        orderBy('created_at', 'desc')
+      );
+    } else {
+      q = query(collection(db, COLLECTION_NAME), orderBy('created_at', 'desc'));
+    }
+    
     const querySnapshot = await getDocs(q);
     
     const discounts: Discount[] = [];
     querySnapshot.forEach((doc) => {
-      discounts.push({
-        id: doc.id,
-        ...doc.data()
-      } as Discount);
+      const discountData = doc.data() as Discount;
+      
+      // If branchId is provided, filter to include:
+      // 1. Discounts with scope 'all_branches'
+      // 2. Discounts with scope 'specific_branch' that match the branchId
+      if (branchId) {
+        if (discountData.scope === 'all_branches' || 
+           (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
+          discounts.push({
+            ...discountData,
+            id: doc.id
+          });
+        }
+      } else {
+        // No branchId filter, return all discounts
+        discounts.push({
+          ...discountData,
+          id: doc.id
+        });
+      }
     });
     
-    console.log('Retrieved', discounts.length, 'discounts');
+    console.log('Retrieved', discounts.length, 'discounts for branch:', branchId || 'all');
     return discounts;
   } catch (error) {
     console.error('Error fetching discounts:', error);
@@ -80,21 +114,31 @@ export const getDiscounts = async (): Promise<Discount[]> => {
   }
 };
 
-// Real-time listener for discounts
-export const subscribeToDiscounts = (callback: (discounts: Discount[]) => void) => {
+// Real-time listener for discounts for a specific branch (includes both branch-specific and all-branches discounts)
+export const subscribeToDiscounts = (branchId: string, callback: (discounts: Discount[]) => void) => {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('created_at', 'desc'));
+    // Query all discounts and filter in the callback
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      orderBy('created_at', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const discounts: Discount[] = [];
       querySnapshot.forEach((doc) => {
-        discounts.push({
-          id: doc.id,
-          ...doc.data()
-        } as Discount);
+        const discountData = doc.data() as Discount;
+        
+        // Include discounts that either apply to all branches OR are specific to this branch
+        if (discountData.scope === 'all_branches' || 
+           (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
+          discounts.push({
+            ...discountData,
+            id: doc.id
+          });
+        }
       });
       
-      console.log('Real-time update: Retrieved', discounts.length, 'discounts');
+      console.log('Real-time update: Retrieved', discounts.length, 'discounts for branch:', branchId);
       callback(discounts);
     }, (error) => {
       console.error('Error in discounts subscription:', error);
@@ -124,6 +168,8 @@ export const updateDiscount = async (
     if (updates.type !== undefined) updateData.type = updates.type;
     if (updates.value !== undefined) updateData.value = updates.value;
     if (updates.applies_to !== undefined) updateData.applies_to = updates.applies_to;
+    if (updates.scope !== undefined) updateData.scope = updates.scope;
+    if (updates.branchId !== undefined) updateData.branchId = updates.branchId;
     if (updates.modified_by !== undefined) updateData.modified_by = updates.modified_by;
     
     await updateDoc(discountRef, updateData);
@@ -146,10 +192,10 @@ export const deleteDiscount = async (discount_code: string): Promise<void> => {
   }
 };
 
-// Get discount by code
-export const getDiscountByCode = async (discount_code: string): Promise<Discount | null> => {
+// Get discount by code (now branch-specific)
+export const getDiscountByCode = async (discount_code: string, branchId?: string): Promise<Discount | null> => {
   try {
-    const discounts = await getDiscounts();
+    const discounts = await getDiscounts(branchId);
     return discounts.find(discount => discount.discount_code === discount_code) || null;
   } catch (error) {
     console.error('Error getting discount by code:', error);
@@ -157,10 +203,10 @@ export const getDiscountByCode = async (discount_code: string): Promise<Discount
   }
 };
 
-// Validate discount code
-export const validateDiscountCode = async (discount_code: string): Promise<boolean> => {
+// Validate discount code (now branch-specific)
+export const validateDiscountCode = async (discount_code: string, branchId?: string): Promise<boolean> => {
   try {
-    const discount = await getDiscountByCode(discount_code);
+    const discount = await getDiscountByCode(discount_code, branchId);
     return discount !== null;
   } catch (error) {
     console.error('Error validating discount code:', error);
@@ -186,10 +232,10 @@ export const calculateDiscountAmount = (
   }
 };
 
-// Helper function to check if discount is empty
-export const isDiscountsEmpty = async (): Promise<boolean> => {
+// Helper function to check if discount is empty (now branch-specific)
+export const isDiscountsEmpty = async (branchId?: string): Promise<boolean> => {
   try {
-    const discounts = await getDiscounts();
+    const discounts = await getDiscounts(branchId);
     return discounts.length === 0;
   } catch (error) {
     console.error('Error checking if discounts are empty:', error);
@@ -197,10 +243,10 @@ export const isDiscountsEmpty = async (): Promise<boolean> => {
   }
 };
 
-// Search discounts by code
-export const searchDiscountsByCode = async (searchTerm: string): Promise<Discount[]> => {
+// Search discounts by code (now branch-specific)
+export const searchDiscountsByCode = async (searchTerm: string, branchId?: string): Promise<Discount[]> => {
   try {
-    const allDiscounts = await getDiscounts();
+    const allDiscounts = await getDiscounts(branchId);
     
     const filteredDiscounts = allDiscounts.filter(discount => 
       discount.discount_code.toLowerCase().includes(searchTerm.toLowerCase())

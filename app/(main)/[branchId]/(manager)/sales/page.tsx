@@ -473,19 +473,21 @@ export default function SalesScreen() {
 
 									{currentOrders.length === 0 && (
 										<div className='text-center py-12'>
-											<div className='w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center'>
-												<svg
-													className='w-8 h-8 text-gray-400'
-													fill='currentColor'
-													viewBox='0 0 20 20'>
-													<path
-														fillRule='evenodd'
-														d='M10 2a8 8 0 100 16 8 8 0 000-16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm2 8a1 1 0 100-2 1 1 0 000 2z'
-														clipRule='evenodd'
-													/>
+											<div className='w-16 h-16 mx-auto mb-4 bg-[var(--light-accent)] text-[var(--accent)] rounded-full flex items-center justify-center'>
+												<svg width="27" height="25" viewBox="0 0 27 25" fill="none">
+													<path d="M20.0458 4.43883V4.82573L23.9231 2.58713C23.8343 2.28661 23.6997 2.00575 23.5273 1.75262C22.9874 0.959672 22.0773 0.438915 21.0458 0.438831H5.65318C3.99633 0.438831 2.65318 1.78198 2.65318 3.43883V13.8043V14.8673L6.65318 12.5579V4.43883H10.6661V4.98809C10.6661 5.54038 11.1138 5.98809 11.6661 5.98809H15.0329C15.5852 5.98809 16.0329 5.54038 16.0329 4.98809V4.43883H20.0458Z" fill="currentColor"/>
+													<path d="M13.6701 8.5067H8.06559V9.54685H11.8685L13.6701 8.5067Z" fill="currentColor"/>
+													<path d="M20.0458 20.85H6.65318V15.5951L2.65318 17.9045V18.867V21.85C2.65338 23.5066 3.99645 24.85 5.65318 24.85H21.0458C22.7024 24.8498 24.0456 23.5066 24.0458 21.85V6.51602V5.55347L20.0458 7.86287V20.85Z" fill="currentColor"/>
+													<path d="M18.6334 15.7937H8.06559V16.8338H18.6334V15.7937Z" fill="currentColor"/>
+													<path d="M18.6334 12.1502H12.6199L10.8183 13.1903H18.6334V12.1502Z" fill="currentColor"/>
+													<path d="M18.6334 9.54685V8.67832L17.129 9.54685H18.6334Z" fill="currentColor"/>
+													<path d="M2.65318 18.867V17.9045L0 19.4363V20.3988L2.65318 18.867Z" fill="currentColor"/>
+													<path d="M2.65318 14.8673V13.8043L0 15.3361V16.3992L2.65318 14.8673Z" fill="currentColor"/>
+													<path d="M23.5273 1.75262C23.6997 2.00575 23.8343 2.28661 23.9231 2.58713L26.5629 1.06303V0L23.5273 1.75262Z" fill="currentColor"/>
+													<path d="M24.0458 5.55347V6.51602L26.5629 5.06272V4.10017L24.0458 5.55347Z" fill="currentColor"/>
 												</svg>
 											</div>
-											<p className='text-gray-500'>
+											<p className='text-[var(--secondary)]'>
 												{searchTerm
 													? "No orders found matching your search"
 													: "No orders yet"}
@@ -496,7 +498,7 @@ export default function SalesScreen() {
 
 								{/* Pagination */}
 								{totalPages > 1 && (
-									<div className='px-6 py-4 border-t border-gray-200'>
+									<div className='px-6 py-4 border-t border-[var(--secondary)]/20'>
 										<div className='flex items-center justify-between'>
 											<div className='text-sm text-[var(--secondary)]/50'>
 												Showing {indexOfFirstOrder + 1}-
@@ -611,7 +613,7 @@ export default function SalesScreen() {
 								<div className='bg-[var(--primary)] p-6 rounded-xl shadow-md'>
 									<div className='flex items-center justify-between'>
 										<div>
-											<p className='text-sm font-medium text-gray-400'>
+											<p className='text-sm font-medium text-[var(--secondary)]/40'>
 												{viewPeriod === "day"
 													? "Today"
 													: viewPeriod === "week"
@@ -636,7 +638,7 @@ export default function SalesScreen() {
 											</svg>
 										</div>
 									</div>
-									<p className='text-xs text-gray-500 mt-2'>
+									<p className='text-xs text-[var(--secondary)]/50 mt-2'>
 										Profit: {formatCurrency(currentPeriodStats.totalProfit)} (
 										{currentPeriodStats.profitMargin.toFixed(1)}%)
 									</p>
@@ -645,7 +647,7 @@ export default function SalesScreen() {
 								<div className='bg-[var(--primary)] p-6 rounded-xl shadow-md'>
 									<div className='flex items-center justify-between'>
 										<div>
-											<p className='text-sm font-medium text-gray-400'>
+											<p className='text-sm font-medium text-[var(--secondary)]/40'>
 												Total Orders
 											</p>
 											<p className='text-2xl font-bold text-[var(--secondary)]'>
@@ -661,7 +663,7 @@ export default function SalesScreen() {
 											</svg>
 										</div>
 									</div>
-									<p className='text-xs text-gray-500 mt-2'>
+									<p className='text-xs text-[var(--secondary)]/50 mt-2'>
 										Avg:{" "}
 										{formatCurrency(
 											currentPeriodStats.totalOrders > 0
@@ -675,7 +677,7 @@ export default function SalesScreen() {
 								<div className='bg-[var(--primary)] p-6 rounded-xl shadow-md'>
 									<div className='flex items-center justify-between'>
 										<div>
-											<p className='text-sm font-medium text-gray-400'>
+											<p className='text-sm font-medium text-[var(--secondary)]/40'>
 												Peak {viewPeriod === "day" ? "Hour" : "Day"}
 											</p>
 											<p className='text-2xl font-bold text-[var(--secondary)]'>
@@ -701,7 +703,7 @@ export default function SalesScreen() {
 											</svg>
 										</div>
 									</div>
-									<p className='text-xs text-gray-500 mt-2'>
+									<p className='text-xs text-[var(--secondary)]/50 mt-2'>
 										{timeSeriesData.length > 0
 											? `${
 													timeSeriesData.reduce(
@@ -713,28 +715,6 @@ export default function SalesScreen() {
 											: "0 orders"}
 									</p>
 								</div>
-
-								{/* <div className="bg-[var(--primary)] p-6 rounded-xl shadow-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Growth</p>
-                    <p className="text-2xl font-bold text-[var(--secondary)]">
-                      {timeSeriesData.length >= 2 
-                        ? `${((timeSeriesData[timeSeriesData.length - 1].revenue - timeSeriesData[timeSeriesData.length - 2].revenue) / Math.max(timeSeriesData[timeSeriesData.length - 2].revenue, 1) * 100).toFixed(1)}%`
-                        : '0%'
-                      }
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  vs previous {viewPeriod === 'day' ? 'hour' : 'day'}
-                </p>
-              </div> */}
 							</div>
 
 							{/* Main Chart */}

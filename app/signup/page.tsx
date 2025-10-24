@@ -12,7 +12,6 @@ import Link from "next/link";
 interface SignUpFormData {
   firstName: string;
   lastName: string;
-  username: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -20,14 +19,12 @@ interface SignUpFormData {
 
 interface ValidationErrors {
   emailTaken?: boolean;
-  usernameTaken?: boolean;
 }
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState<SignUpFormData>({
     firstName: "",
     lastName: "",
-    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -36,7 +33,6 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const router = useRouter();
 
   // Debounced validation functions
@@ -54,32 +50,14 @@ export default function SignUpPage() {
     }
   };
 
-  const checkUsernameAvailability = async (username: string) => {
-    if (!username || username.length < 2) return;
-    
-    setIsCheckingUsername(true);
-    try {
-      const exists = await authService.checkUsernameExists(username);
-      setValidationErrors(prev => ({ ...prev, usernameTaken: exists }));
-    } catch (error) {
-      console.error("Error checking username:", error);
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  };
-
   // Debounce timers
   const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const usernameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (emailTimeoutRef.current) {
         clearTimeout(emailTimeoutRef.current);
-      }
-      if (usernameTimeoutRef.current) {
-        clearTimeout(usernameTimeoutRef.current);
       }
     };
   }, []);
@@ -102,12 +80,6 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!formData.username.trim()) {
-      setError("Username is required");
-      setIsLoading(false);
-      return;
-    }
-
     if (!formData.email.trim()) {
       setError("Email is required");
       setIsLoading(false);
@@ -126,17 +98,10 @@ export default function SignUpPage() {
       return;
     }
 
-    // Check if email or username is already taken
+    // Check if email is already taken
     const emailExists = await authService.checkEmailExists(formData.email);
     if (emailExists) {
       setError("An account with this email already exists");
-      setIsLoading(false);
-      return;
-    }
-
-    const usernameExists = await authService.checkUsernameExists(formData.username);
-    if (usernameExists) {
-      setError("This username is already taken");
       setIsLoading(false);
       return;
     }
@@ -153,7 +118,6 @@ export default function SignUpPage() {
       const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
       await authService.createUserProfile(userCredential.user.uid, {
         name: fullName,
-        username: formData.username.trim(),
         email: formData.email,
         isAdmin: false, // New users are not admin by default
         roleAssignments: [], // No branch assignments by default
@@ -203,7 +167,7 @@ export default function SignUpPage() {
     // Clear error when user starts typing
     if (error) setError("");
     
-    // Debounced validation for email and username
+    // Debounced validation for email
     if (field === "email") {
       // Clear previous timeout
       if (emailTimeoutRef.current) {
@@ -215,20 +179,6 @@ export default function SignUpPage() {
       // Set new timeout for validation
       emailTimeoutRef.current = setTimeout(() => {
         checkEmailAvailability(value);
-      }, 800); // 800ms delay
-    }
-    
-    if (field === "username") {
-      // Clear previous timeout
-      if (usernameTimeoutRef.current) {
-        clearTimeout(usernameTimeoutRef.current);
-      }
-      // Clear previous validation error
-      setValidationErrors(prev => ({ ...prev, usernameTaken: undefined }));
-      
-      // Set new timeout for validation
-      usernameTimeoutRef.current = setTimeout(() => {
-        checkUsernameAvailability(value);
       }, 800); // 800ms delay
     }
   };
@@ -248,8 +198,8 @@ export default function SignUpPage() {
         <div className="bg-white rounded-[12px] shadow-xl">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--accent)] py-6 shadow-md rounded-t-[12px]">
-              <div className="w-[165px] h-[100px]">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]">
+              <div className="w-[165px] h-[120px]">
                 <LogoVerticalIcon />
               </div>
             </div>
@@ -292,51 +242,6 @@ export default function SignUpPage() {
                     autoComplete="family-name"
                   />
                 </div>
-              </div>
-
-              {/* Username Field */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                  Username
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={handleInputChange("username")}
-                    className={`w-full px-4 py-3 pr-10 border-2 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all ${
-                      validationErrors.usernameTaken
-                        ? "border-red-300 bg-red-50"
-                        : formData.username && !isCheckingUsername && validationErrors.usernameTaken === false
-                        ? "border-green-300 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    placeholder="Choose a username"
-                    disabled={isLoading}
-                    autoComplete="username"
-                  />
-                  {/* Status Icon */}
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    {isCheckingUsername ? (
-                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                    ) : validationErrors.usernameTaken === true ? (
-                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    ) : formData.username && validationErrors.usernameTaken === false ? (
-                      <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    ) : null}
-                  </div>
-                </div>
-                {/* Validation Message */}
-                {validationErrors.usernameTaken && (
-                  <p className="mt-1 text-sm text-red-600">This username is already taken</p>
-                )}
-                {formData.username && !isCheckingUsername && validationErrors.usernameTaken === false && (
-                  <p className="mt-1 text-sm text-green-600">Username is available</p>
-                )}
               </div>
 
               {/* Email Field */}
@@ -445,16 +350,12 @@ export default function SignUpPage() {
                 disabled={
                   isLoading || 
                   validationErrors.emailTaken || 
-                  validationErrors.usernameTaken || 
-                  isCheckingEmail || 
-                  isCheckingUsername
+                  isCheckingEmail
                 }
                 className={`w-full py-3 rounded-[6px] font-semibold transition-all shadow-lg ${
                   isLoading || 
                   validationErrors.emailTaken || 
-                  validationErrors.usernameTaken || 
-                  isCheckingEmail || 
-                  isCheckingUsername
+                  isCheckingEmail
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95"
                 }`}
@@ -486,7 +387,7 @@ export default function SignUpPage() {
             {/* Footer */}
             <div className="mt-6 text-center">
               <p className="text-xs text-[var(--secondary)] opacity-50">
-                FoodMood Point-of-Sales System v1.0
+                Fredelicacies Point-of-Sales System v1.0
               </p>
             </div>
           </div>

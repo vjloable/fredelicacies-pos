@@ -2,16 +2,16 @@
 
 :root {
   --primary: #ffffff;
-  --secondary: #60604A;
-  --background: #f0f0f0;
-  --accent: #FBD508;
-  --light-accent: #FFF6C8;
-  --foreground: #60604A;
-  --error: #FF7373;
-  --success: #76CC62;
+  --secondary: #4C2E24;
+  --background: #FFF9F5;
+  --accent: #DA834D;
+  --light-accent: #FFDEC9;
+  --foreground: #4C2E24;
+  --error: #DA300A;
+  --success: #7ED300;
 }
 
-@theme inline {
+@theme inline { 
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-background: var(--background);
@@ -23,13 +23,13 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --primary: #ffffff;
-    --secondary: #60604A;
-    --background: #f0f0f0;
-    --accent: #FBD508;
-    --light-accent: #FFF6C8;
-    --foreground: #60604A;
-    --error: #FF7373;
-    --success: #76CC62;
+    --secondary: #4C2E24;
+    --background: #FFF9F5;
+    --accent: #DA834D;
+    --light-accent: #FFDEC9;
+    --foreground: #4C2E24;
+    --error: #DA300A;
+    --success: #7ED300;
   }
 }
 
@@ -39,12 +39,7 @@ body {
   font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
 }
 
-/* Hide scrollbars for horizontal scroll */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
-}
-
+/* Hide scrollbars for horizontal scroll */ 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
 }

@@ -20,7 +20,6 @@ import {
 
 interface UserData {
 	name: string;
-	username?: string;
 	email: string;
 	roleAssignments: RoleAssignment[];
 	isAdmin: boolean;
@@ -90,7 +89,6 @@ export const authService = {
 				const data = userDocSnap.data();
 				return {
 					name: data.name || "",
-					username: data.username || "",
 					email: data.email || "",
 					roleAssignments: data.roleAssignments || [],
 					isAdmin: data.isAdmin || false,
@@ -240,7 +238,6 @@ export const authService = {
 		userId: string,
 		userData: {
 			name: string;
-			username?: string;
 			email: string;
 			isAdmin?: boolean;
 			roleAssignments?: RoleAssignment[];
@@ -271,7 +268,6 @@ export const authService = {
 			// Create complete user document
 			const userDoc: any = {
 				name: userData.name,
-				username: userData.username || "",
 				email: userData.email,
 				phoneNumber: userData.phoneNumber || "",
 				employeeId: userData.employeeId || "",
@@ -504,18 +500,6 @@ export const authService = {
 			return !querySnapshot.empty;
 		} catch (error) {
 			console.error("Error checking email existence:", error);
-			return false; // Return false on error to allow signup attempt
-		}
-	},
-
-	checkUsernameExists: async (username: string): Promise<boolean> => {
-		try {
-			const usersRef = collection(db, "users");
-			const q = query(usersRef, where("username", "==", username));
-			const querySnapshot = await getDocs(q);
-			return !querySnapshot.empty;
-		} catch (error) {
-			console.error("Error checking username existence:", error);
 			return false; // Return false on error to allow signup attempt
 		}
 	},

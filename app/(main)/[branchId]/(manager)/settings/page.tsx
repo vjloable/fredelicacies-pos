@@ -383,7 +383,7 @@ export default function SettingsScreen() {
 											</div>
 
 											{/* Instructions */}
-											<div className='mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200'>
+											<div className='mt-6 p-4 bg-[var(--secondary)]/5 rounded-lg border border-[var(--secondary)]/20'>
 												<h4 className='font-medium text-[var(--secondary)] mb-2 text-sm'>
 													How to use:
 												</h4>

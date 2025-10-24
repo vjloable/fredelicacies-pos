@@ -82,7 +82,7 @@ export default function AuthGuard({
 		return (
 			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
 				<div className='text-center flex flex-col items-center justify-center'>
-					<LoadingSpinner />
+					<LoadingSpinner size="lg" />
 					<p className='text-[var(--secondary)] mt-4'>
 						Checking authentication...
 					</p>

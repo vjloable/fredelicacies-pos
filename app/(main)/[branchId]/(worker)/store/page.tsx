@@ -570,23 +570,17 @@ export default function StoreScreen() {
 										  } text-[var(--secondary)] shadow-none`
 										: "bg-white text-[var(--secondary)] hover:bg-gray-200 shadow-md"
 								}`}>
-								<div
-									className={`${!category.isSpecial ? "pl-2" : ""}`}
-									style={{
-										borderLeftWidth: `${!category.isSpecial ? "4px" : "0px"}`,
-										borderColor: getCategoryColor(category.id),
-									}}>
+								<div>
+									{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
 									{category.name}
 									{!category.isSpecial && (
-										<span className='ml-2 text-xs opacity-70'>
-											(
+										<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-[var(--secondary)]/10 text-[var(--secondary)]/50'>
 											{
 												inventoryItems.filter(
 													(item) =>
 														getCategoryName(item.categoryId) === category.name
 												).length
 											}
-											)
 										</span>
 									)}
 								</div>
@@ -610,7 +604,7 @@ export default function StoreScreen() {
 									<EmptyStoreIllustration />
 								</div>
 								<h3 className='text-xl font-semibold text-[var(--secondary)] mb-3'>
-									The Store Front is Empty
+									The store front is empty
 								</h3>
 								<p className='text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed'>
 									The inventory is empty. You need to add items to your
@@ -690,10 +684,10 @@ export default function StoreScreen() {
                                             bg-[var(--primary)] rounded-lg p-3 cursor-pointer shadow-md
                                             hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
                                             ${
-																							isOutOfStock
-																								? "opacity-50 cursor-not-allowed"
-																								: "border-gray-200 hover:border-[var(--accent)]"
-																						}
+												isOutOfStock
+													? "opacity-50 cursor-not-allowed"
+													: "border-gray-200 hover:border-[var(--accent)]"
+											}
                                         `}>
 											{/* Item Image Placeholder */}
 											<div className='w-full h-32 sm:h-40 md:h-44 lg:h-48 bg-[#F7F7F7] rounded-lg mb-2 relative overflow-hidden'>

@@ -4,6 +4,8 @@ import {
 	WorkerFilters as WorkerFiltersType,
 	UserRole,
 } from "@/types/WorkerTypes";
+import SearchIcon from "@/app/(main)/[branchId]/(worker)/store/icons/SearchIcon";
+import DropdownField from "@/components/DropdownField";
 
 interface WorkerFiltersProps {
 	filters: WorkerFiltersType;
@@ -65,24 +67,21 @@ export default function WorkerFilters({
 				<div className='relative'>
 					<input
 						type='text'
-						placeholder='Search workers by name, email, or ID...'
 						value={localFilters.searchQuery || ""}
 						onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
-						className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+						placeholder='Search workers by name, email, or ID...'
+						className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
+							localFilters.searchQuery ? "animate-pulse transition-all" : ""
+						}`}
 					/>
-					<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-						<svg
-							className='h-4 w-4 text-gray-400'
-							fill='none'
-							stroke='currentColor'
-							viewBox='0 0 24 24'>
-							<path
-								strokeLinecap='round'
-								strokeLinejoin='round'
-								strokeWidth={2}
-								d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-							/>
-						</svg>
+					<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+						{localFilters.searchQuery ? (
+							<div className='size-[30px] border-[var(--accent)] border-y-2 rounded-full flex items-center justify-center animate-spin'></div>
+						) : (
+							<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
+								<SearchIcon className='mr-[2px] mb-[2px]' />
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
@@ -90,59 +89,71 @@ export default function WorkerFilters({
 			{/* Branch Filter */}
 			{!hideBranchFilter && availableBranches.length > 0 && (
 				<div className='min-w-48'>
-					<select
-						value={localFilters.branchId || ""}
+					<DropdownField
+						options={availableBranches.map((branch) => branch.id)}
+						defaultValue='TAKE OUT'
+						dropdownPosition='bottom-right'
+						dropdownOffset={{ top: 2, right: 0 }}
 						onChange={(e) =>
-							handleFilterChange("branchId", e.target.value || undefined)
+							handleFilterChange("branchId", e || undefined)
 						}
-						className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
-						<option value=''>All Branches</option>
-						{availableBranches.map((branch) => (
-							<option key={branch.id} value={branch.id}>
-								{branch.name}
-							</option>
-						))}
-					</select>
+						roundness={"12px"}
+						height={42}
+						valueAlignment={"left"}
+						padding=''
+						shadow={true}
+					/>
 				</div>
 			)}
 
 			{/* Role Filter */}
 			<div className='min-w-36'>
-				<select
-					value={localFilters.role || ""}
+				<DropdownField
+					options={!hideAdminRole ? ["Admin", "Manager", "Worker"] : ["Manager", "Worker"]}
+					defaultValue="ALL ROLES"
+					allSuffix="ROLES"
+					hasAllOptionsVisible={true}
+					dropdownPosition='bottom-right'
+					dropdownOffset={{ top: 2, right: 0 }}
 					onChange={(e) =>
 						handleFilterChange(
 							"role",
-							(e.target.value as UserRole) || undefined
+							(e as UserRole) || undefined
 						)
 					}
-					className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
-					<option value=''>All Roles</option>
-					{!hideAdminRole && <option value='admin'>Admin</option>}
-					<option value='manager'>Manager</option>
-					<option value='worker'>Worker</option>
-				</select>
+					roundness={"[12px]"}
+					height={42}
+					valueAlignment={"left"}
+					padding=''
+					shadow={true}
+				/>
 			</div>
 
 			{/* Status Filter */}
 			<div className='min-w-36'>
-				<select
-					value={localFilters.status || ""}
+				<DropdownField
+					options={["Clocked In", "Clocked Out"]}
+					defaultValue="ALL STATUS"
+					allSuffix="STATUS"
+					hasAllOptionsVisible={true}
+					dropdownPosition='bottom-right'
+					dropdownOffset={{ top: 2, right: 0 }}
 					onChange={(e) =>
-						handleFilterChange("status", e.target.value || undefined)
+						handleFilterChange("status", e || undefined)
 					}
-					className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'>
-					<option value=''>All Status</option>
-					<option value='clocked_in'>Clocked In</option>
-					<option value='clocked_out'>Clocked Out</option>
-				</select>
+					roundness={"[12px]"}
+					height={42}
+					valueAlignment={"left"}
+					padding=''
+					shadow={true}
+				/>
 			</div>
 
 			{/* Clear Filters */}
 			{hasActiveFilters && (
 				<button
 					onClick={clearFilters}
-					className='px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors'>
+					className='px-3 py-2 text-sm text-[var(--secondary)] hover:text-[var(--secondary)]/80 bg-[var(--light-accent)] hover:bg-[var(--accent)]/40 rounded-lg transition-colors'>
 					Clear
 				</button>
 			)}

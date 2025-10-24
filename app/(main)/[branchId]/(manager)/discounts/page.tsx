@@ -105,6 +105,12 @@ export default function DiscountsScreen() {
 		return category ? category.name : "Unknown Category";
 	};
 
+	const getScopeDisplay = (discount: Discount) => {
+		// Fallback for existing discounts that might not have scope field
+		if (!discount.scope) return "This Branch";
+		return discount.scope === "all_branches" ? "All Branches" : "This Branch";
+	};
+
 	const formatDate = (timestamp: Timestamp) => {
 		if (!timestamp) return "N/A";
 
@@ -260,10 +266,10 @@ export default function DiscountsScreen() {
 									</div>
 
 									{/* Discounts Table */}
-									<div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
+									<div className='bg-white rounded-lg shadow-sm border border-[var(--secondary)]/20 overflow-hidden'>
 										<div className='overflow-x-auto'>
 											<table className='min-w-full divide-y divide-gray-200'>
-												<thead className='bg-gray-50'>
+												<thead className='bg-[var(--secondary)]/5'>
 													<tr>
 														<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 															Discount Code
@@ -273,6 +279,9 @@ export default function DiscountsScreen() {
 														</th>
 														<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 															Type
+														</th>
+														<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
+															Scope
 														</th>
 														<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 															Applies To
@@ -288,9 +297,9 @@ export default function DiscountsScreen() {
 														</th>
 													</tr>
 												</thead>
-												<tbody className='bg-white divide-y divide-gray-200'>
+												<tbody className='bg-white divide-y divide-[var(--secondary)]/20'>
 													{discounts.map((discount) => (
-														<tr key={discount.id} className='hover:bg-gray-50'>
+														<tr key={discount.id} className='hover:bg-[var(--secondary)]/5'>
 															<td className='px-6 py-4 whitespace-nowrap'>
 																<div className='flex items-center'>
 																	<div className='text-sm font-medium text-[var(--secondary)]'>
@@ -306,14 +315,22 @@ export default function DiscountsScreen() {
 															<td className='px-6 py-4 whitespace-nowrap'>
 																<div className='flex items-center'>
 																	<span
-																		className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium ${
-																			discount.type === "percentage"
-																				? "bg-green-100 text-green-800"
-																				: "bg-blue-100 text-blue-800"
-																		}`}>
+																		className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium bg-[var(--secondary)]/10`}>
 																		{discount.type === "percentage"
 																			? "Percentage"
 																			: "Flat Amount"}
+																	</span>
+																</div>
+															</td>
+															<td className='px-6 py-4 whitespace-nowrap'>
+																<div className='flex items-center'>
+																	<span
+																		className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+																			(discount.scope || 'specific_branch') === "all_branches"
+																				? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]"
+																				: "bg-[var(--accent)] text-white"
+																		}`}>
+																		{getScopeDisplay(discount)}
 																	</span>
 																</div>
 															</td>
