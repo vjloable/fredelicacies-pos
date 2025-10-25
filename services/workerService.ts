@@ -2,11 +2,10 @@ import {
 	CreateWorkerRequest,
 	WorkerFilters,
 	UserRole,
-	WorkSession,
 	WorkerStats,
 } from "@/types/WorkerTypes";
 import { authService } from "./authService";
-import { workSessionService } from "./workSessionService";
+import { Attendance, attendanceService } from "@/services/attendanceService";
 import {
 	collection,
 	doc,
@@ -36,10 +35,10 @@ export interface Worker {
 		assignedBy: string;
 		isActive: boolean;
 	}>;
-	isAdmin: boolean;
-	adminAssignedBy?: string;
-	adminAssignedAt?: Date;
-	currentStatus?: "clocked_in" | "clocked_out"; // Optional - admins don't have status tracking
+	isOwner: boolean;
+	ownerAssignedBy?: string;
+	ownerAssignedAt?: Date;
+	currentStatus?: "clocked_in" | "clocked_out"; // Optional - owners don't have status tracking
 	currentBranchId?: string;
 	lastTimeIn?: Date;
 	lastTimeOut?: Date;
@@ -78,10 +77,10 @@ export interface WorkerService {
 		branchId: string,
 		newRole: UserRole
 	) => Promise<void>;
-	promoteToAdmin: (userId: string) => Promise<void>;
-	demoteFromAdmin: (userId: string) => Promise<void>;
+	promoteToOwner: (userId: string) => Promise<void>;
+	demoteFromOwner: (userId: string) => Promise<void>;
 
-	// Worker Statistics (work session data will come from workSessionService)
+	// Worker Statistics (work attendance data will come from attendanceService)
 	getWorkerStats: (userId: string) => Promise<WorkerStats>;
 }
 
@@ -90,7 +89,7 @@ export const workerService: WorkerService = {
 		try {
 			console.log("🔄 Creating worker:", userData.email);
 
-			// Call API route to create worker (handles Firebase Admin SDK operations)
+			// Call API route to create worker (handles Firebase Owner SDK operations)
 			const response = await fetch("/api/admin/workers", {
 				method: "POST",
 				headers: {
@@ -103,7 +102,7 @@ export const workerService: WorkerService = {
 			await authService.createUserProfile(result.userId, {
 				name: userData.name,
 				email: userData.email,
-				isAdmin: userData.isAdmin || false,
+				isOwner: userData.isOwner || false,
 				roleAssignments: userData.branchAssignments || [],
 				phoneNumber: userData.phoneNumber,
 				employeeId: userData.employeeId,
@@ -134,10 +133,10 @@ export const workerService: WorkerService = {
 					phoneNumber: data.phoneNumber,
 					employeeId: data.employeeId,
 					roleAssignments: data.roleAssignments || [],
-					isAdmin: data.isAdmin || false,
-					adminAssignedBy: data.adminAssignedBy,
-					adminAssignedAt: data.adminAssignedAt?.toDate(),
-					currentStatus: data.isAdmin
+					isOwner: data.isOwner || false,
+					ownerAssignedBy: data.ownerAssignedBy,
+					ownerAssignedAt: data.ownerAssignedAt?.toDate(),
+					currentStatus: data.isOwner
 						? undefined
 						: data.currentStatus || "clocked_out",
 					currentBranchId: data.currentBranchId,
@@ -171,9 +170,9 @@ export const workerService: WorkerService = {
 			// Convert dates to Timestamps for Firestore
 			const firestoreUpdates: any = { ...updates };
 
-			if (updates.adminAssignedAt) {
-				firestoreUpdates.adminAssignedAt = Timestamp.fromDate(
-					updates.adminAssignedAt
+			if (updates.ownerAssignedAt) {
+				firestoreUpdates.ownerAssignedAt = Timestamp.fromDate(
+					updates.ownerAssignedAt
 				);
 			}
 			if (updates.lastTimeIn) {
@@ -233,15 +232,15 @@ export const workerService: WorkerService = {
 			const userDocRef = doc(db, "users", userId);
 			batch.delete(userDocRef);
 
-			// Delete all work sessions for this user
-			const workSessionsRef = collection(db, "workSessions");
-			const sessionQuery = query(
-				workSessionsRef,
+			// Delete all work attendances for this user
+			const attendanceRef = collection(db, "attendance");
+			const attendanceQuery = query(
+				attendanceRef,
 				where("userId", "==", userId)
 			);
-			const sessionSnapshot = await getDocs(sessionQuery);
+			const attendanceSnapshot = await getDocs(attendanceQuery);
 
-			sessionSnapshot.forEach((doc) => {
+			attendanceSnapshot.forEach((doc) => {
 				batch.delete(doc.ref);
 			});
 
@@ -267,7 +266,7 @@ export const workerService: WorkerService = {
 				// Only filter by status for non-admin users (admins don't have currentStatus)
 				q = query(
 					q,
-					where("isAdmin", "==", false),
+					where("isOwner", "==", false),
 					where("currentStatus", "==", filters.status)
 				);
 			} // Apply pagination
@@ -294,7 +293,7 @@ export const workerService: WorkerService = {
 				}
 
 				// Apply branch filter locally (skip for admins as they have global access)
-				if (filters?.branchId && !data.isAdmin) {
+				if (filters?.branchId && !data.isOwner) {
 					const hasBranchAccess = data.roleAssignments?.some(
 						(assignment: any) =>
 							assignment.branchId === filters.branchId &&
@@ -303,20 +302,20 @@ export const workerService: WorkerService = {
 					if (!hasBranchAccess) return;
 				}
 
-				// Apply excludeAdmins filter locally (for managers who shouldn't see admins)
-				if (filters?.excludeAdmins && data.isAdmin) {
+				// Apply excludeOwners filter locally (for managers who shouldn't see admins)
+				if (filters?.excludeOwners && data.isOwner) {
 					return;
 				}
 
-				// Admins should not have branch assignments, so skip branch filter for them
-				if (filters?.branchId && data.isAdmin) {
+				// Owners should not have branch assignments, so skip branch filter for them
+				if (filters?.branchId && data.isOwner) {
 					// For admins, we continue processing since they have global access
 				}
 
 				// Apply role filter locally
 				if (filters?.role) {
-					if (filters.role === "admin" && !data.isAdmin) return;
-					if (filters.role !== "admin") {
+					if (filters.role === "owner" && !data.isOwner) return;
+					if (filters.role !== "owner") {
 						const hasRole = data.roleAssignments?.some(
 							(assignment: any) =>
 								assignment.role === filters.role && assignment.isActive === true
@@ -332,10 +331,10 @@ export const workerService: WorkerService = {
 					phoneNumber: data.phoneNumber,
 					employeeId: data.employeeId,
 					roleAssignments: data.roleAssignments || [],
-					isAdmin: data.isAdmin || false,
-					adminAssignedBy: data.adminAssignedBy,
-					adminAssignedAt: data.adminAssignedAt?.toDate(),
-					currentStatus: data.isAdmin
+					isOwner: data.isOwner || false,
+					ownerAssignedBy: data.ownerAssignedBy,
+					ownerAssignedAt: data.ownerAssignedAt?.toDate(),
+					currentStatus: data.isOwner
 						? undefined
 						: data.currentStatus || "clocked_out",
 					currentBranchId: data.currentBranchId,
@@ -438,18 +437,18 @@ export const workerService: WorkerService = {
 		}
 	},
 
-	promoteToAdmin: async (userId: string): Promise<void> => {
+	promoteToOwner: async (userId: string): Promise<void> => {
 		try {
-			await authService.promoteToAdmin(userId);
+			await authService.promoteToOwner(userId);
 		} catch (error) {
 			console.error("Error promoting worker to admin:", error);
 			throw error;
 		}
 	},
 
-	demoteFromAdmin: async (userId: string): Promise<void> => {
+	demoteFromOwner: async (userId: string): Promise<void> => {
 		try {
-			await authService.demoteFromAdmin(userId);
+			await authService.demoteFromOwner(userId);
 		} catch (error) {
 			console.error("Error demoting worker from admin:", error);
 			throw error;
@@ -458,8 +457,8 @@ export const workerService: WorkerService = {
 
 	getWorkerStats: async (userId: string): Promise<WorkerStats> => {
 		try {
-			// Get all work sessions for this worker using workSessionService
-			const allSessions = await workSessionService.listWorkSessions(userId);
+			// Get all work attendances for this worker using attendanceService
+			const allAttendances = await attendanceService.listAttendances(userId);
 
 			// Calculate date ranges
 			const now = new Date();
@@ -471,11 +470,11 @@ export const workerService: WorkerService = {
 			const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
 			let totalHoursWorked = 0;
-			const totalSessions = allSessions.length;
+			const totalAttendances = allAttendances.length;
 			let weekHours = 0;
 			let monthHours = 0;
-			let weekSessions = 0;
-			let monthSessions = 0;
+			let weekAttendances = 0;
+			let monthAttendances = 0;
 			const weekDays = new Set<string>();
 			const monthDays = new Set<string>();
 
@@ -483,69 +482,69 @@ export const workerService: WorkerService = {
 				string,
 				{
 					hoursWorked: number;
-					sessionsCount: number;
+					attendancesCount: number;
 					lastWorked?: Timestamp;
 				}
 			>();
 
-			let lastSession: WorkerStats["lastSession"] | undefined;
+			let lastAttendance: WorkerStats["lastAttendance"] | undefined;
 
-			// Process each session
-			allSessions.forEach((session: WorkSession) => {
-				const sessionDate = session.timeInAt.toDate();
-				const duration = session.duration || 0;
+			// Process each attendance
+			allAttendances.forEach((attendance: Attendance) => {
+				const attendanceDate = attendance.timeInAt.toDate();
+				const duration = attendance.duration || 0;
 				const hours = duration / 60;
 
 				// Total stats
 				totalHoursWorked += hours;
 
 				// Week stats
-				if (sessionDate >= startOfWeek) {
+				if (attendanceDate >= startOfWeek) {
 					weekHours += hours;
-					weekSessions++;
-					weekDays.add(sessionDate.toDateString());
+					weekAttendances++;
+					weekDays.add(attendanceDate.toDateString());
 				}
 
 				// Month stats
-				if (sessionDate >= startOfMonth) {
+				if (attendanceDate >= startOfMonth) {
 					monthHours += hours;
-					monthSessions++;
-					monthDays.add(sessionDate.toDateString());
+					monthAttendances++;
+					monthDays.add(attendanceDate.toDateString());
 				}
 
 				// Branch stats
-				const branchId = session.branchId;
+				const branchId = attendance.branchId;
 				const branchStats = branchStatsMap.get(branchId) || {
 					hoursWorked: 0,
-					sessionsCount: 0,
+					attendancesCount: 0,
 				};
 
 				branchStats.hoursWorked += hours;
-				branchStats.sessionsCount++;
+				branchStats.attendancesCount++;
 
 				if (
 					!branchStats.lastWorked ||
-					sessionDate > branchStats.lastWorked.toDate()
+					attendanceDate > branchStats.lastWorked.toDate()
 				) {
-					branchStats.lastWorked = session.timeInAt;
+					branchStats.lastWorked = attendance.timeInAt;
 				}
 
 				branchStatsMap.set(branchId, branchStats);
 
-				// Last session (most recent)
-				if (!lastSession || sessionDate > lastSession.timeInAt.toDate()) {
-					lastSession = {
-						timeInAt: session.timeInAt,
-						timeOutAt: session.timeOutAt,
-						branchId: session.branchId,
-						duration: session.duration,
+				// Last attendance (most recent)
+				if (!lastAttendance || attendanceDate > lastAttendance.timeInAt.toDate()) {
+					lastAttendance = {
+						timeInAt: attendance.timeInAt,
+						timeOutAt: attendance.timeOutAt,
+						branchId: attendance.branchId,
+						duration: attendance.duration,
 					};
 				}
 			});
 
 			// Calculate averages and streaks
-			const averageSessionDuration =
-				totalSessions > 0 ? (totalHoursWorked * 60) / totalSessions : 0;
+			const averageAttendanceDuration =
+				totalAttendances > 0 ? (totalHoursWorked * 60) / totalAttendances : 0;
 
 			// Note: Streak calculation would require more complex logic to check consecutive days
 			// For now, using placeholder values
@@ -557,7 +556,7 @@ export const workerService: WorkerService = {
 				([branchId, stats]) => ({
 					branchId,
 					hoursWorked: stats.hoursWorked,
-					sessionsCount: stats.sessionsCount,
+					attendancesCount: stats.attendancesCount,
 					lastWorked: stats.lastWorked,
 				})
 			);
@@ -565,21 +564,21 @@ export const workerService: WorkerService = {
 			return {
 				userId,
 				totalHoursWorked,
-				totalSessions,
-				averageSessionDuration,
+				totalAttendances,
+				averageAttendanceDuration,
 				currentStreak,
 				longestStreak,
 				thisWeek: {
 					hoursWorked: weekHours,
-					sessionsCount: weekSessions,
+					attendancesCount: weekAttendances,
 					daysWorked: weekDays.size,
 				},
 				thisMonth: {
 					hoursWorked: monthHours,
-					sessionsCount: monthSessions,
+					attendancesCount: monthAttendances,
 					daysWorked: monthDays.size,
 				},
-				lastSession,
+				lastAttendance,
 				branchStats,
 				overtime: {
 					thisWeek: 0, // Would need business logic to determine overtime

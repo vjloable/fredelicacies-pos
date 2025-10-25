@@ -1,59 +1,59 @@
 import React, { useState, useEffect } from "react";
-import { workSessionService, WorkSession } from "@/services/workSessionService";
+import { attendanceService, Attendance } from "@/services/attendanceService";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
 
-interface WorkSessionTrackerProps {
+interface AttendanceTrackerProps {
 	branchId?: string;
 	refreshTrigger?: number;
 }
 
-export default function WorkSessionTracker({
+export default function AttendanceTracker({
 	branchId,
 	refreshTrigger = 0,
-}: WorkSessionTrackerProps) {
-	const [activeSessions, setActiveSessions] = useState<
-		Array<WorkSession & { worker: Worker; branch: Branch }>
+}: AttendanceTrackerProps) {
+	const [activeAttendances, setActiveAttendances] = useState<
+		Array<Attendance & { worker: Worker; branch: Branch }>
 	>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		loadActiveSessions();
+		loadActiveAttendances();
 	}, [branchId, refreshTrigger]);
 
-	const loadActiveSessions = async () => {
+	const loadActiveAttendances = async () => {
 		try {
 			setLoading(true);
 			setError(null);
 
-			// Get active sessions
-			const sessions = branchId
-				? await workSessionService.getBranchWorkSessions(branchId)
+			// Get active attendances
+			const attendances = branchId
+				? await attendanceService.getBranchAttendances(branchId)
 				: [];
 
-			// Filter only active sessions (no timeOutAt)
-			const activeOnly = sessions.filter((session) => !session.timeOutAt);
+			// Filter only active attendances (no timeOutAt)
+			const activeOnly = attendances.filter((attendance) => !attendance.timeOutAt);
 
-			// Get worker and branch details for each session
-			const enrichedSessions = await Promise.all(
-				activeOnly.map(async (session) => {
+			// Get worker and branch details for each attendance
+			const enrichedAttendances = await Promise.all(
+				activeOnly.map(async (attendance) => {
 					const [worker, branch] = await Promise.all([
-						workerService.getWorker(session.userId),
-						branchService.getBranchById(session.branchId),
+						workerService.getWorker(attendance.userId),
+						branchService.getBranchById(attendance.branchId),
 					]);
 					return {
-						...session,
+						...attendance,
 						worker: worker!,
 						branch: branch!,
 					};
 				})
 			);
 
-			setActiveSessions(enrichedSessions);
+			setActiveAttendances(enrichedAttendances);
 		} catch (err: any) {
-			console.error("Error loading active sessions:", err);
-			setError(err.message || "Failed to load active sessions");
+			console.error("Error loading active attendances:", err);
+			setError(err.message || "Failed to load active attendances");
 		} finally {
 			setLoading(false);
 		}
@@ -128,7 +128,7 @@ export default function WorkSessionTracker({
 						Active Work Sessions
 					</h3>
 					<button
-						onClick={loadActiveSessions}
+						onClick={loadActiveAttendances}
 						className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
 						Retry
 					</button>
@@ -159,15 +159,15 @@ export default function WorkSessionTracker({
 			<div className='flex items-center justify-between p-6 border-b border-gray-200'>
 				<div>
 					<h3 className='text-lg font-semibold text-gray-900'>
-						Active Work Sessions
+						Active Attendances
 					</h3>
 					<p className='text-sm text-gray-600 mt-1'>
-						{activeSessions.length} worker
-						{activeSessions.length !== 1 ? "s" : ""} currently clocked in
+						{activeAttendances.length} worker
+						{activeAttendances.length !== 1 ? "s" : ""} currently clocked in
 					</p>
 				</div>
 				<button
-					onClick={loadActiveSessions}
+					onClick={loadActiveAttendances}
 					className='p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50'
 					title='Refresh'>
 					<svg
@@ -186,7 +186,7 @@ export default function WorkSessionTracker({
 			</div>
 
 			<div className='p-6'>
-				{activeSessions.length === 0 ? (
+				{activeAttendances.length === 0 ? (
 					<div className='text-center py-8'>
 						<div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 							<svg
@@ -212,22 +212,22 @@ export default function WorkSessionTracker({
 					</div>
 				) : (
 					<div className='space-y-3'>
-						{activeSessions.map((session) => (
+						{activeAttendances.map((attendance) => (
 							<div
-								key={`${session.userId}-${session.timeInAt}`}
+								key={`${attendance.userId}-${attendance.timeInAt}`}
 								className='flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg'>
 								<div className='flex items-center space-x-4'>
 									{/* Worker Avatar */}
-									{session.worker.profilePicture ? (
+									{attendance.worker.profilePicture ? (
 										<img
-											src={session.worker.profilePicture}
+											src={attendance.worker.profilePicture}
 											alt=''
 											className='w-10 h-10 rounded-full'
 										/>
 									) : (
 										<div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center'>
 											<span className='text-sm font-medium text-gray-700'>
-												{session.worker.name.charAt(0).toUpperCase()}
+												{attendance.worker.name.charAt(0).toUpperCase()}
 											</span>
 										</div>
 									)}
@@ -235,14 +235,14 @@ export default function WorkSessionTracker({
 									{/* Worker Info */}
 									<div>
 										<div className='font-medium text-gray-900'>
-											{session.worker.name}
+											{attendance.worker.name}
 										</div>
 										<div className='flex items-center space-x-2 text-sm text-gray-600'>
-											<span>Clocked in at {formatTime(session.timeInAt)}</span>
+											<span>Clocked in at {formatTime(attendance.timeInAt)}</span>
 											{!branchId && (
 												<>
 													<span>•</span>
-													<span>{session.branch.name}</span>
+													<span>{attendance.branch.name}</span>
 												</>
 											)}
 										</div>
@@ -253,15 +253,15 @@ export default function WorkSessionTracker({
 									{/* Session Type */}
 									<span
 										className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSessionTypeColor(
-											session.sessionType
+											attendance.attendanceType
 										)}`}>
-										{session.sessionType}
+										{attendance.attendanceType}
 									</span>
 
 									{/* Duration */}
 									<div className='text-right'>
 										<div className='font-semibold text-gray-900'>
-											{calculateCurrentDuration(session.timeInAt)}
+											{calculateCurrentDuration(attendance.timeInAt)}
 										</div>
 										<div className='text-xs text-gray-500'>Duration</div>
 									</div>
@@ -276,26 +276,26 @@ export default function WorkSessionTracker({
 			</div>
 
 			{/* Summary Footer */}
-			{activeSessions.length > 0 && (
+			{activeAttendances.length > 0 && (
 				<div className='px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg'>
 					<div className='flex items-center justify-between text-sm'>
 						<div className='flex items-center space-x-4'>
 							<span className='text-gray-600'>
-								Total active workers: <strong>{activeSessions.length}</strong>
+								Total active workers: <strong>{activeAttendances.length}</strong>
 							</span>
 							<span className='text-gray-600'>
 								Avg. session:{" "}
 								<strong>
-									{activeSessions.length > 0
+									{activeAttendances.length > 0
 										? Math.round(
-												activeSessions.reduce((acc, session) => {
+												activeAttendances.reduce((acc, attendance) => {
 													const now = new Date();
-													const timeInDate = (session.timeInAt as any).toDate
-														? (session.timeInAt as any).toDate()
-														: session.timeInAt;
+													const timeInDate = (attendance.timeInAt as any).toDate
+														? (attendance.timeInAt as any).toDate()
+														: attendance.timeInAt;
 													const diffMs = now.getTime() - timeInDate.getTime();
 													return acc + diffMs / (1000 * 60);
-												}, 0) / activeSessions.length
+												}, 0) / activeAttendances.length
 										  )
 										: 0}
 									m

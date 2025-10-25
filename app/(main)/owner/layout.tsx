@@ -4,13 +4,13 @@ import { BluetoothProvider } from "@/contexts/BluetoothContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import DrawerProvider from "@/components/DrawerProvider";
 
-interface AdminLayoutProps {
+interface OwnerLayoutProps {
 	children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function OwnerLayout({ children }: OwnerLayoutProps) {
 	return (
-		<AuthGuard adminOnly>
+		<AuthGuard ownerOnly>
 			<DrawerProvider>
 				<BluetoothProvider>
 					<BranchProvider>

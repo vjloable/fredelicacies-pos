@@ -13,7 +13,7 @@ import SidebarNav from "./SidebarNav";
 interface DrawerContextType {
 	isOpen: boolean;
 	toggle: () => void;
-	isAdminPage?: boolean;
+	isOwnerPage?: boolean;
 }
 
 const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
@@ -29,14 +29,14 @@ export const useDrawer = () => {
 interface DrawerProps {
 	isOpen?: boolean;
 	onToggle?: (isOpen: boolean) => void;
-	isAdminPage?: boolean;
+	isOwnerPage?: boolean;
 	children?: React.ReactNode;
 }
 
 export default function Drawer({
 	isOpen: externalIsOpen,
 	onToggle,
-	isAdminPage,
+	isOwnerPage,
 	children,
 }: DrawerProps) {
 	const [internalIsOpen, setInternalIsOpen] = useState(true);
@@ -70,15 +70,16 @@ export default function Drawer({
 		() => ({
 			isOpen: isDrawerOpen,
 			toggle: toggleDrawer,
+			isOwnerPage,
 		}),
-		[isDrawerOpen, toggleDrawer]
+		[isDrawerOpen, toggleDrawer, isOwnerPage]
 	);
 
 	return (
 		<DrawerContext.Provider value={contextValue}>
 			<div className='relative flex h-full w-full'>
 				{/* Overlay backdrop for mobile/tablet - only visible when drawer is open on small screens */}
-				{!isAdminPage && isDrawerOpen && (
+				{!isOwnerPage && isDrawerOpen && (
 					<div
 						className='fixed inset-0 z-40 xl:hidden'
 						onClick={toggleDrawer}
@@ -89,7 +90,7 @@ export default function Drawer({
 				{/* Left Sidebar/Drawer */}
 				<div
 					className={`
-						${isAdminPage ? "hidden" : ""} 
+						${isOwnerPage ? "hidden" : ""} 
 						${
 							isDrawerOpen
 								? "translate-x-0 w-[271px] xl:w-[271px]"
@@ -99,7 +100,7 @@ export default function Drawer({
 						transition-all duration-300 ease-in-out
 						overflow-hidden
 					`}>
-					{!isAdminPage && <SidebarNav />}
+					{!isOwnerPage && <SidebarNav />}
 				</div>
 
 				{/* Main Content - Full width on mobile/tablet, adjusts on desktop */}

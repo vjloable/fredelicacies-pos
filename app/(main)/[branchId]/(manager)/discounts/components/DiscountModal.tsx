@@ -186,10 +186,13 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             <DropdownField
               options={["FLAT AMOUNT", "PERCENTAGE"]}
               hasAllOptionsVisible={false}
-              defaultValue="FLAT AMOUNT"
+              defaultValue={formData.type === 'percentage' ? "PERCENTAGE" : "FLAT AMOUNT"}
               dropdownPosition='bottom-right'
               dropdownOffset={{ top: 2, right: 0 }}
-              onChange={(e) => handleInputChange('type', e)}
+              onChange={(e) => {
+                const type = e === "PERCENTAGE" ? 'percentage' : 'flat';
+                handleInputChange('type', type);
+              }}
               roundness={"[6px]"}
               height={42}
               valueAlignment={"left"}
@@ -275,7 +278,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 required
               />
               <span className="absolute right-3 top-2 text-[var(--secondary)]/50">
-                {formData.type === 'percentage' ? '%' : '$'}
+                {formData.type === 'percentage' ? '%' : '₱'}
               </span>
             </div>
           </div>
@@ -288,11 +291,23 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             <DropdownField
               options={categories.map((category) => category.name)}
               hasAllOptionsVisible={true}
-              defaultValue="ALL CATEGORIES"
+              defaultValue={
+                formData.applies_to 
+                  ? categories.find(cat => cat.id === formData.applies_to)?.name || "ALL CATEGORIES"
+                  : "ALL CATEGORIES"
+              }
               allSuffix="CATEGORIES"
               dropdownPosition='bottom-right'
               dropdownOffset={{ top: 2, right: 0 }}
-              onChange={(e) => handleInputChange('applies_to', e || null)}
+              onChange={(e) => {
+                if (e === "ALL CATEGORIES") {
+                  handleInputChange('applies_to', null);
+                } else {
+                  // Find the category ID by name
+                  const category = categories.find(cat => cat.name === e);
+                  handleInputChange('applies_to', category?.id || null);
+                }
+              }}
               roundness={"[6px]"}
               height={42}
               valueAlignment={"left"}

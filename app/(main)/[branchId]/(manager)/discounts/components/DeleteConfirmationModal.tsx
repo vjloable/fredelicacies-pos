@@ -38,13 +38,13 @@ export default function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg font-semibold text-[var(--secondary)] mb-2">
           {title}
         </h2>
         
-        <p className="text-gray-600 mb-6">
+        <p className="text-[var(--secondary)]/60 mb-6">
           {message}
         </p>
 
@@ -52,7 +52,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-[var(--secondary)]/30 text-[var(--secondary)]/70 rounded-md hover:bg-[var(--secondary)]/5 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             disabled={loading}
           >
             {cancelText}
@@ -60,7 +60,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-[var(--error)] text-white rounded-md hover:bg-[var(--error)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--error)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Deleting...' : confirmText}

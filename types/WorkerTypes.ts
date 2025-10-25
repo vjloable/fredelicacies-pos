@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-export type UserRole = "admin" | "manager" | "worker";
+export type UserRole = "owner" | "manager" | "worker";
 export interface CreateWorkerRequest {
 	name: string;
 	email: string;
@@ -11,7 +11,7 @@ export interface CreateWorkerRequest {
 		branchId: string;
 		role: "manager" | "worker";
 	}>;
-	isAdmin?: boolean; // Only available to admin users
+	isOwner?: boolean; // Only available to owner users
 	profilePicture?: File;
 }
 
@@ -22,7 +22,7 @@ export interface WorkerFilters {
 	searchQuery?: string;
 	page?: number;
 	limit?: number;
-	excludeAdmins?: boolean; // For managers who shouldn't see admins
+	excludeOwners?: boolean; // For managers who shouldn't see owners
 }
 
 export interface WorkSession {
@@ -45,21 +45,21 @@ export interface DateRange {
 export interface WorkerStats {
 	userId: string;
 	totalHoursWorked: number;
-	totalSessions: number;
-	averageSessionDuration: number; // in minutes
+	totalAttendances: number;
+	averageAttendanceDuration: number; // in minutes
 	currentStreak: number; // consecutive days worked
 	longestStreak: number; // longest consecutive days worked
 	thisWeek: {
 		hoursWorked: number;
-		sessionsCount: number;
+		attendancesCount: number;
 		daysWorked: number;
 	};
 	thisMonth: {
 		hoursWorked: number;
-		sessionsCount: number;
+		attendancesCount: number;
 		daysWorked: number;
 	};
-	lastSession?: {
+	lastAttendance?: {
 		timeInAt: Timestamp;
 		timeOutAt?: Timestamp;
 		branchId: string;
@@ -68,7 +68,7 @@ export interface WorkerStats {
 	branchStats: Array<{
 		branchId: string;
 		hoursWorked: number;
-		sessionsCount: number;
+		attendancesCount: number;
 		lastWorked?: Timestamp;
 	}>;
 	overtime: {

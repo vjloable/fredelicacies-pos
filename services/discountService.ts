@@ -114,40 +114,36 @@ export const getDiscounts = async (branchId?: string): Promise<Discount[]> => {
   }
 };
 
-// Real-time listener for discounts for a specific branch (includes both branch-specific and all-branches discounts)
-export const subscribeToDiscounts = (branchId: string, callback: (discounts: Discount[]) => void) => {
+// Get discounts for a specific branch with real-time data (includes both branch-specific and all-branches discounts)
+export const subscribeToDiscounts = async (branchId: string): Promise<Discount[]> => {
   try {
-    // Query all discounts and filter in the callback
+    // Query all discounts and filter for the branch
     const q = query(
       collection(db, COLLECTION_NAME),
       orderBy('created_at', 'desc')
     );
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const discounts: Discount[] = [];
-      querySnapshot.forEach((doc) => {
-        const discountData = doc.data() as Discount;
-        
-        // Include discounts that either apply to all branches OR are specific to this branch
-        if (discountData.scope === 'all_branches' || 
-           (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
-          discounts.push({
-            ...discountData,
-            id: doc.id
-          });
-        }
-      });
+    const querySnapshot = await getDocs(q);
+    const discounts: Discount[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const discountData = doc.data() as Discount;
       
-      console.log('Real-time update: Retrieved', discounts.length, 'discounts for branch:', branchId);
-      callback(discounts);
-    }, (error) => {
-      console.error('Error in discounts subscription:', error);
+      // Include discounts that either apply to all branches OR are specific to this branch
+      if (discountData.scope === 'all_branches' || 
+         (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
+        discounts.push({
+          ...discountData,
+          id: doc.id
+        });
+      }
     });
     
-    return unsubscribe;
+    console.log('Retrieved', discounts.length, 'discounts for branch:', branchId);
+    return discounts;
   } catch (error) {
-    console.error('Error setting up discounts subscription:', error);
-    throw new Error('Failed to set up real-time discount updates');
+    console.error('Error fetching discounts:', error);
+    throw new Error('Failed to fetch discounts');
   }
 };
 

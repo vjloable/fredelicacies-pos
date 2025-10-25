@@ -20,12 +20,12 @@ interface NavItem {
 	href: string;
 	label: string;
 	icon: React.ComponentType<{ className?: string }>;
-	adminOnly?: boolean;
+	ownerOnly?: boolean;
 	managerOnly?: boolean;
 }
 
 export default function SidebarNav() {
-	const { logout, isUserAdmin, getUserRoleForBranch } = useAuth();
+	const { logout, isUserOwner, getUserRoleForBranch } = useAuth();
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const router = useRouter();
@@ -37,13 +37,13 @@ export default function SidebarNav() {
 		? getUserRoleForBranch(currentBranch.id) === "manager"
 		: false;
 
-	// For admins, only show admin section if no branch is selected
-	const shouldShowWorkerSection = !isUserAdmin() || currentBranch;
+	// For owners, only show owner section if no branch is selected
+	const shouldShowWorkerSection = !isUserOwner() || currentBranch;
 	const shouldShowManagerSection =
-		(!isUserAdmin() && (isManagerForCurrentBranch || isUserAdmin())) ||
-		(isUserAdmin() && currentBranch);
+		(!isUserOwner() && (isManagerForCurrentBranch || isUserOwner())) ||
+		(isUserOwner() && currentBranch);
 
-	// Worker Section - Available to all users (workers, managers, admins)
+	// Worker Section - Available to all users (workers, managers, owners)
 	const workerNavItems: NavItem[] = [
 		{
 			href: "store",
@@ -57,7 +57,7 @@ export default function SidebarNav() {
 		},
 	];
 
-	// Manager Section - Available to managers and admins
+	// Manager Section - Available to managers and owners
 	const managerNavItems: NavItem[] = [
 		{
 			href: "management",
@@ -85,34 +85,34 @@ export default function SidebarNav() {
 		},
 	];
 
-	// Admin Section - Available to admins only
-	const adminNavItems: NavItem[] = [
+	// Owner Section - Available to owners only
+	const ownerNavItems: NavItem[] = [
 		{
-			href: "/admin/branches",
+			href: "/owner/branches",
 			label: "Branches",
 			icon: BranchesIcon,
-			adminOnly: true,
+			ownerOnly: true,
 		},
 		{
-			href: "/admin/users",
+			href: "/owner/users",
 			label: "Users",
-			icon: UsersIcon, // You may want to create a specific worker management icon
-			adminOnly: true,
+			icon: UsersIcon,
+			ownerOnly: true,
 		},
 		{
-			href: "/admin/logs",
+			href: "/owner/logs",
 			label: "Logs",
 			icon: LogsIcon,
-			adminOnly: true,
+			ownerOnly: true,
 		},
 	];
 
-	const renderNavItem = (item: NavItem, isAdminItem = false) => {
+	const renderNavItem = (item: NavItem, isOwnerItem = false) => {
 		const IconComponent = item.icon;
-		const isActive = isAdminItem
-			? isAdminRouteActive(item.href)
+		const isActive = isOwnerItem
+			? isOwnerRouteActive(item.href)
 			: isRouteActive(item.href);
-		const href = isAdminItem ? item.href : getBranchAwareHref(item.href);
+		const href = isOwnerItem ? item.href : getBranchAwareHref(item.href);
 
 		return (
 			<li key={item.href}>
@@ -166,8 +166,8 @@ export default function SidebarNav() {
 		return pathname === `/${currentBranch.id}/${page}`;
 	};
 
-	// Helper function to check if admin route is active
-	const isAdminRouteActive = (page: string) => {
+	// Helper function to check if owner route is active
+	const isOwnerRouteActive = (page: string) => {
 		return pathname === page;
 	};
 
@@ -194,13 +194,13 @@ export default function SidebarNav() {
 					</div>
 				)}
 
-				{/* Back to Admin Button - Show for admins when they're in a branch */}
-				{isUserAdmin() && currentBranch && (
+				{/* Back to Owner Button - Show for owners when they're in a branch */}
+				{isUserOwner() && currentBranch && (
 					<div className='px-3 py-2 border-b border-gray-200'>
 						<button
 							onClick={() => {
 								clearCurrentBranch();
-								router.push("/admin/branches");
+								router.push("/owner/branches");
 							}}
 							className='w-full flex items-center justify-start text-sm text-[var(--secondary)]/70 hover:text-[var(--secondary)] transition-colors'>
 							<svg
@@ -216,7 +216,7 @@ export default function SidebarNav() {
 								/>
 							</svg>
 							<span className='w-auto opacity-100 transition-all duration-300'>
-								Back to Admin
+								Back to Owner
 							</span>
 						</button>
 					</div>
@@ -225,7 +225,7 @@ export default function SidebarNav() {
 				{/* Navigation */}
 				<nav className='flex-1 py-[8px]'>
 					<ul className='space-y-[2px]'>
-						{/* Worker Section - Show for non-admins or admins with selected branch */}
+						{/* Worker Section - Show for non-owners or owners with selected branch */}
 						{shouldShowWorkerSection && (
 							<>
 								<li>
@@ -239,7 +239,7 @@ export default function SidebarNav() {
 							</>
 						)}
 
-						{/* Manager Section - Visible to managers and admins with selected branch */}
+						{/* Manager Section - Visible to managers and owners with selected branch */}
 						{shouldShowManagerSection && (
 							<>
 								<li className='pt-4'>
@@ -253,17 +253,17 @@ export default function SidebarNav() {
 							</>
 						)}
 
-						{/* Admin Section - Visible to admins only */}
-						{isUserAdmin() && (
+						{/* Owner Section - Visible to owners only */}
+						{isUserOwner() && (
 							<>
 								<li className='pt-4'>
 									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
-											Admin
+											Owner
 										</span>
 									</div>
 								</li>
-								{adminNavItems.map((item) => renderNavItem(item, true))}
+								{ownerNavItems.map((item) => renderNavItem(item, true))}
 							</>
 						)}
 

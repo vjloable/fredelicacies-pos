@@ -40,7 +40,7 @@ export interface UpdateBranchData {
 }
 
 export const branchService = {
-	// Get all branches (admin only)
+	// Get all branches (owner only)
 	getAllBranches: async (): Promise<Branch[]> => {
 		try {
 			const branchesRef = collection(db, "branches");
@@ -115,7 +115,7 @@ export const branchService = {
 		}
 	},
 
-	// Create new branch (admin only)
+	// Create new branch (owner only)
 	createBranch: async (branchData: CreateBranchData): Promise<string> => {
 		try {
 			const branchesRef = collection(db, "branches");
@@ -135,7 +135,7 @@ export const branchService = {
 		}
 	},
 
-	// Update branch (admin/manager only)
+	// Update branch (owner/manager only)
 	updateBranch: async (
 		branchId: string,
 		updates: UpdateBranchData

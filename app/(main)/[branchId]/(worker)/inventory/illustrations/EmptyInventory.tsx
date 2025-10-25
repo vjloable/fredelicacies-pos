@@ -17,8 +17,8 @@ export default function EmptyInventoryIllustration({ className }: { className?: 
       <path fillRule="evenodd" clipRule="evenodd" d="M86.0532 38.0726L67.8698 27.5744L111.789 2.21786V40.8752L101.348 46.9031L94.68 43.0533V42.7733L86.3844 37.9838L86.0532 38.0726Z" fill="#EFEBEB"/>
       <path d="M101.348 46.9031L111.789 52.9309V40.8752L101.348 46.9031Z" fill="#AAA9A9"/>
       <path fillRule="evenodd" clipRule="evenodd" d="M111.789 55.1488L159.549 27.5744V43.7334V80.7001L111.789 108.275V55.1488Z" fill="#EFEBEB"/>
-      <path d="M111.789 108.275L64.0283 80.7001L23.6316 91.9675L71.3919 119.542L111.789 108.275Z" fill="#434343" fill-opacity="0.05"/>
-      <path d="M23.6316 91.9675L64.0283 80.7001V68.6444L43.1472 80.7001L23.6316 91.9675Z" fill="#434343" fill-opacity="0.05"/>
+      <path d="M111.789 108.275L64.0283 80.7001L23.6316 91.9675L71.3919 119.542L111.789 108.275Z" fill="#434343" fillOpacity="0.05"/>
+      <path d="M23.6316 91.9675L64.0283 80.7001V68.6444L43.1472 80.7001L23.6316 91.9675Z" fill="#434343" fillOpacity="0.05"/>
     </svg>
   );
 }

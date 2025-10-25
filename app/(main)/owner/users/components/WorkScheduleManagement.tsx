@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService } from "@/services/workSessionService";
+import { attendanceService } from "@/services/attendanceService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
 
 interface WorkScheduleTarget {
@@ -151,33 +151,33 @@ export default function WorkScheduleManagement({
 			const startDate = new Date(endDate);
 			startDate.setDate(startDate.getDate() - 7);
 
-			const sessions =
-				(await workSessionService.listWorkSessions(target.workerId, {
+			const attendances =
+				(await attendanceService.listAttendances(target.workerId, {
 					startDate: startDate as any,
 					endDate: endDate as any,
 				})) || [];
 
-			// Filter sessions for this branch
-			const branchSessions = sessions.filter(
-				(s) => s.branchId === target.branchId
+			// Filter attendances for this branch
+			const branchAttendances = attendances.filter(
+				(a) => a.branchId === target.branchId
 			);
 
 			// Calculate total hours worked
-			const totalHours = branchSessions.reduce((sum, session) => {
-				if (session.duration) {
-					return sum + session.duration / 60;
+			const totalHours = branchAttendances.reduce((sum, attendance) => {
+				if (attendance.duration) {
+					return sum + attendance.duration / 60;
 				}
-				if (session.timeInAt && session.timeOutAt) {
-					const startTime = session.timeInAt.toDate
-						? session.timeInAt.toDate()
-						: (session.timeInAt as any).toDate
-						? (session.timeInAt as any).toDate()
-						: session.timeInAt;
-					const endTime = session.timeOutAt.toDate
-						? session.timeOutAt.toDate()
-						: (session.timeOutAt as any).toDate
-						? (session.timeOutAt as any).toDate()
-						: session.timeOutAt;
+				if (attendance.timeInAt && attendance.timeOutAt) {
+					const startTime = attendance.timeInAt.toDate
+						? attendance.timeInAt.toDate()
+						: (attendance.timeInAt as any).toDate
+						? (attendance.timeInAt as any).toDate()
+						: attendance.timeInAt;
+					const endTime = attendance.timeOutAt.toDate
+						? attendance.timeOutAt.toDate()
+						: (attendance.timeOutAt as any).toDate
+						? (attendance.timeOutAt as any).toDate()
+						: attendance.timeOutAt;
 					return (
 						sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 					);
@@ -195,7 +195,7 @@ export default function WorkScheduleManagement({
 				actualHours: totalHours,
 				targetHours: target.targetHoursPerWeek,
 				compliance: Math.min(compliance, 100), // Cap at 100%
-				sessionsCount: branchSessions.length,
+				attendancesCount: branchAttendances.length,
 			};
 		} catch (err) {
 			console.warn("Error calculating compliance for target:", err);
@@ -203,7 +203,7 @@ export default function WorkScheduleManagement({
 				actualHours: 0,
 				targetHours: target.targetHoursPerWeek,
 				compliance: 0,
-				sessionsCount: 0,
+				attendancesCount: 0,
 			};
 		}
 	};
@@ -302,7 +302,7 @@ export default function WorkScheduleManagement({
 								compliance: number;
 								actualHours: number;
 								targetHours: number;
-								sessionsCount: number;
+								attendancesCount: number;
 							} | null>(null);
 
 							React.useEffect(() => {
@@ -397,7 +397,7 @@ export default function WorkScheduleManagement({
 													<div className='text-xs text-gray-600'>
 														{formatHours(compliance.actualHours)} of{" "}
 														{formatHours(compliance.targetHours)} •{" "}
-														{compliance.sessionsCount} sessions
+														{compliance.attendancesCount} sessions
 													</div>
 												</div>
 											)}

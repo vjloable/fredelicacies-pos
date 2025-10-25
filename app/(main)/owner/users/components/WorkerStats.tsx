@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { WorkerStats } from "@/types/WorkerTypes";
-import { workSessionService, WorkSession } from "@/services/workSessionService";
+import { attendanceService, Attendance } from "@/services/attendanceService";
 import { Worker } from "@/services/workerService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
-import { Timestamp } from "firebase/firestore";
 
 interface WorkerStatsProps {
 	worker: Worker;
@@ -31,22 +30,22 @@ export default function WorkerStatsComponent({
 			setLoading(true);
 			setError(null);
 
-			// Get all work sessions for the worker
-			const allSessions = await workSessionService.listWorkSessions(worker.id);
+			// Get all attendances for the worker
+			const allAttendances = await attendanceService.listAttendances(worker.id);
 
-			// Filter sessions by date range if provided
-			const filteredSessions = dateRange
-				? allSessions.filter((session) => {
-						const sessionDate = session.timeInAt.toDate();
+			// Filter attendances by date range if provided
+			const filteredAttendances = dateRange
+				? allAttendances.filter((attendance) => {
+						const attendanceDate = attendance.timeInAt.toDate();
 						return (
-							sessionDate >= dateRange.startDate &&
-							sessionDate <= dateRange.endDate
+							attendanceDate >= dateRange.startDate &&
+							attendanceDate <= dateRange.endDate
 						);
 				  })
-				: allSessions;
+				: allAttendances;
 
-			// Calculate stats from sessions
-			const calculatedStats = calculateWorkerStats(worker.id, filteredSessions);
+			// Calculate stats from attendances
+			const calculatedStats = calculateWorkerStats(worker.id, filteredAttendances);
 			setStats(calculatedStats);
 		} catch (err: unknown) {
 			console.error("Error loading worker stats:", err);
@@ -58,24 +57,24 @@ export default function WorkerStatsComponent({
 
 	const calculateWorkerStats = (
 		userId: string,
-		sessions: WorkSession[]
+		attendances: Attendance[]
 	): WorkerStats => {
 		// Initialize stats
 		const stats: WorkerStats = {
 			userId,
 			totalHoursWorked: 0,
-			totalSessions: sessions.length,
-			averageSessionDuration: 0,
+			totalAttendances: attendances.length,
+			averageAttendanceDuration: 0,
 			currentStreak: 0,
 			longestStreak: 0,
 			thisWeek: {
 				hoursWorked: 0,
-				sessionsCount: 0,
+				attendancesCount: 0,
 				daysWorked: 0,
 			},
 			thisMonth: {
 				hoursWorked: 0,
-				sessionsCount: 0,
+				attendancesCount: 0,
 				daysWorked: 0,
 			},
 			branchStats: [],
@@ -91,7 +90,7 @@ export default function WorkerStatsComponent({
 			},
 		};
 
-		if (sessions.length === 0) {
+		if (attendances.length === 0) {
 			return stats;
 		}
 
@@ -114,18 +113,18 @@ export default function WorkerStatsComponent({
 		const thisWeekDates = new Set();
 		const thisMonthDates = new Set();
 
-		sessions.forEach((session) => {
-			const sessionDate = session.timeInAt.toDate();
-			const dayKey = sessionDate.toDateString();
+		attendances.forEach((attendance) => {
+			const attendanceDate = attendance.timeInAt.toDate();
+			const dayKey = attendanceDate.toDateString();
 			workedDates.add(dayKey);
 
-			// Calculate session duration
+			// Calculate attendance duration
 			let duration = 0;
-			if (session.duration) {
-				duration = session.duration;
-			} else if (session.timeInAt && session.timeOutAt) {
-				const startTime = session.timeInAt.toDate();
-				const endTime = session.timeOutAt.toDate();
+			if (attendance.duration) {
+				duration = attendance.duration;
+			} else if (attendance.timeInAt && attendance.timeOutAt) {
+				const startTime = attendance.timeInAt.toDate();
+				const endTime = attendance.timeOutAt.toDate();
 				duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60); // minutes
 			}
 
@@ -133,39 +132,39 @@ export default function WorkerStatsComponent({
 			stats.totalHoursWorked += duration / 60;
 
 			// Track branch stats
-			if (!branchMap.has(session.branchId)) {
-				branchMap.set(session.branchId, {
-					branchId: session.branchId,
+			if (!branchMap.has(attendance.branchId)) {
+				branchMap.set(attendance.branchId, {
+					branchId: attendance.branchId,
 					hoursWorked: 0,
-					sessionsCount: 0,
-					lastWorked: session.timeInAt,
+					attendancesCount: 0,
+					lastWorked: attendance.timeInAt,
 				});
 			}
 
-			const branchStat = branchMap.get(session.branchId);
+			const branchStat = branchMap.get(attendance.branchId);
 			branchStat.hoursWorked += duration / 60;
-			branchStat.sessionsCount++;
+			branchStat.attendancesCount++;
 
-			if (session.timeInAt.toDate() > branchStat.lastWorked.toDate()) {
-				branchStat.lastWorked = session.timeInAt;
+			if (attendance.timeInAt.toDate() > branchStat.lastWorked.toDate()) {
+				branchStat.lastWorked = attendance.timeInAt;
 			}
 
 			// This week stats
-			if (sessionDate >= weekStart) {
+			if (attendanceDate >= weekStart) {
 				stats.thisWeek.hoursWorked += duration / 60;
-				stats.thisWeek.sessionsCount++;
+				stats.thisWeek.attendancesCount++;
 				thisWeekDates.add(dayKey);
 			}
 
 			// This month stats
-			if (sessionDate >= monthStart) {
+			if (attendanceDate >= monthStart) {
 				stats.thisMonth.hoursWorked += duration / 60;
-				stats.thisMonth.sessionsCount++;
+				stats.thisMonth.attendancesCount++;
 				thisMonthDates.add(dayKey);
 			}
 
 			// Punctuality calculation (on-time if within 15 minutes of hour)
-			const minutes = sessionDate.getMinutes();
+			const minutes = attendanceDate.getMinutes();
 			if (minutes <= 15 || minutes >= 45) {
 				onTimeCount++;
 			} else {
@@ -180,21 +179,21 @@ export default function WorkerStatsComponent({
 		stats.thisMonth.daysWorked = thisMonthDates.size;
 		stats.branchStats = Array.from(branchMap.values());
 
-		// Average session duration
-		stats.averageSessionDuration =
-			sessions.length > 0 ? totalMinutes / sessions.length : 0;
+		// Average attendance duration
+		stats.averageAttendanceDuration =
+			attendances.length > 0 ? totalMinutes / attendances.length : 0;
 
 		// Punctuality score
 		stats.attendance.punctualityScore =
-			sessions.length > 0
-				? Math.round((onTimeCount / sessions.length) * 100)
+			attendances.length > 0
+				? Math.round((onTimeCount / attendances.length) * 100)
 				: 0;
 
 		// Average delay
-		const lateSessionsCount = sessions.length - onTimeCount;
+		const lateAttendancesCount = attendances.length - onTimeCount;
 		stats.attendance.averageClockInDelay =
-			lateSessionsCount > 0
-				? Math.round(totalDelayMinutes / lateSessionsCount)
+			lateAttendancesCount > 0
+				? Math.round(totalDelayMinutes / lateAttendancesCount)
 				: 0;
 
 		// Calculate streaks
@@ -204,22 +203,22 @@ export default function WorkerStatsComponent({
 		stats.currentStreak = currentStreak;
 		stats.longestStreak = longestStreak;
 
-		// Set last session
-		if (sessions.length > 0) {
-			const lastSession = sessions[0]; // Sessions are ordered by timeInAt desc
-			stats.lastSession = {
-				timeInAt: lastSession.timeInAt,
-				timeOutAt: lastSession.timeOutAt,
-				branchId: lastSession.branchId,
-				duration: lastSession.duration,
+		// Set last attendance
+		if (attendances.length > 0) {
+			const lastAttendance = attendances[0]; // Attendances are ordered by timeInAt desc
+			stats.lastAttendance = {
+				timeInAt: lastAttendance.timeInAt,
+				timeOutAt: lastAttendance.timeOutAt,
+				branchId: lastAttendance.branchId,
+				duration: lastAttendance.duration,
 			};
 		}
 
 		// Simple overtime calculation (anything over 8 hours per day)
 		const dailyHours = new Map();
-		sessions.forEach((session) => {
-			const dayKey = session.timeInAt.toDate().toDateString();
-			const duration = session.duration || 0;
+		attendances.forEach((attendance) => {
+			const dayKey = attendance.timeInAt.toDate().toDateString();
+			const duration = attendance.duration || 0;
 			dailyHours.set(dayKey, (dailyHours.get(dayKey) || 0) + duration);
 		});
 
@@ -454,15 +453,15 @@ export default function WorkerStatsComponent({
 						</div>
 					</div>
 
-					{/* Total Sessions */}
+					{/* Total Attendances */}
 					<div className='bg-green-50 border border-green-200 rounded-lg p-4'>
 						<div className='flex items-center justify-between'>
 							<div>
 								<p className='text-sm font-medium text-green-800'>
-									Total Sessions
+									Total Attendances
 								</p>
 								<p className='text-2xl font-bold text-green-900'>
-									{stats.totalSessions}
+									{stats.totalAttendances}
 								</p>
 							</div>
 							<div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
@@ -482,15 +481,15 @@ export default function WorkerStatsComponent({
 						</div>
 					</div>
 
-					{/* Average Session */}
+					{/* Average Attendance */}
 					<div className='bg-purple-50 border border-purple-200 rounded-lg p-4'>
 						<div className='flex items-center justify-between'>
 							<div>
 								<p className='text-sm font-medium text-purple-800'>
-									Avg. Session
+									Avg. Attendance
 								</p>
 								<p className='text-2xl font-bold text-purple-900'>
-									{Math.round(stats.averageSessionDuration)}m
+									{Math.round(stats.averageAttendanceDuration)}m
 								</p>
 							</div>
 							<div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center'>
@@ -566,9 +565,9 @@ export default function WorkerStatsComponent({
 								</span>
 							</div>
 							<div className='flex justify-between'>
-								<span className='text-gray-600'>Sessions:</span>
+								<span className='text-gray-600'>Attendances:</span>
 								<span className='font-semibold'>
-									{stats.thisWeek.sessionsCount}
+									{stats.thisWeek.attendancesCount}
 								</span>
 							</div>
 							<div className='flex justify-between'>
@@ -599,9 +598,9 @@ export default function WorkerStatsComponent({
 								</span>
 							</div>
 							<div className='flex justify-between'>
-								<span className='text-gray-600'>Sessions:</span>
+								<span className='text-gray-600'>Attendances:</span>
 								<span className='font-semibold'>
-									{stats.thisMonth.sessionsCount}
+									{stats.thisMonth.attendancesCount}
 								</span>
 							</div>
 							<div className='flex justify-between'>
@@ -649,7 +648,7 @@ export default function WorkerStatsComponent({
 											{formatHours(branchStat.hoursWorked)}
 										</div>
 										<div className='text-sm text-gray-600'>
-											{branchStat.sessionsCount} sessions
+											{branchStat.attendancesCount} attendances
 										</div>
 									</div>
 								</div>
@@ -658,37 +657,37 @@ export default function WorkerStatsComponent({
 					</div>
 				)}
 
-				{/* Last Session */}
-				{stats.lastSession && (
+				{/* Last Attendance */}
+				{stats.lastAttendance && (
 					<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
-						<h4 className='font-semibold text-gray-900 mb-3'>Last Session</h4>
+						<h4 className='font-semibold text-gray-900 mb-3'>Last Attendance</h4>
 						<div className='grid grid-cols-2 gap-4 text-sm'>
 							<div>
 								<span className='text-gray-600'>Time In:</span>
 								<div className='font-semibold'>
-									{stats.lastSession.timeInAt.toDate().toLocaleString()}
+									{stats.lastAttendance.timeInAt.toDate().toLocaleString()}
 								</div>
 							</div>
-							{stats.lastSession.timeOutAt && (
+							{stats.lastAttendance.timeOutAt && (
 								<div>
 									<span className='text-gray-600'>Time Out:</span>
 									<div className='font-semibold'>
-										{stats.lastSession.timeOutAt.toDate().toLocaleString()}
+										{stats.lastAttendance.timeOutAt.toDate().toLocaleString()}
 									</div>
 								</div>
 							)}
 							<div>
 								<span className='text-gray-600'>Branch:</span>
 								<div className='font-semibold'>
-									{getBranchName(stats.lastSession.branchId)}
+									{getBranchName(stats.lastAttendance.branchId)}
 								</div>
 							</div>
-							{stats.lastSession.duration && (
+							{stats.lastAttendance.duration && (
 								<div>
 									<span className='text-gray-600'>Duration:</span>
 									<div className='font-semibold'>
-										{Math.round(stats.lastSession.duration / 60)}h{" "}
-										{stats.lastSession.duration % 60}m
+										{Math.round(stats.lastAttendance.duration / 60)}h{" "}
+										{stats.lastAttendance.duration % 60}m
 									</div>
 								</div>
 							)}

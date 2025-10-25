@@ -60,7 +60,7 @@ export function BranchProvider({
 	children,
 	initialBranchId,
 }: BranchProviderProps) {
-	const { user, isUserAdmin, getAssignedBranches, canAccessBranch } = useAuth();
+	const { user, isUserOwner, getAssignedBranches, canAccessBranch } = useAuth();
 	const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
 	const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
 	const [allBranches, setAllBranches] = useState<Branch[]>([]);
@@ -86,8 +86,8 @@ export function BranchProvider({
 	}, [user, currentWorker, canAccessBranch]);
 
 	const managerBranches = useMemo(() => {
-		if (!currentWorker || currentWorker.isAdmin) {
-			return accessibleBranches; // Admins are managers everywhere
+		if (!currentWorker || currentWorker.isOwner) {
+			return accessibleBranches; // Owners are managers everywhere
 		}
 
 		const managerBranchIds =
@@ -101,8 +101,8 @@ export function BranchProvider({
 	}, [currentWorker, allBranches, accessibleBranches]);
 
 	const workerBranches = useMemo(() => {
-		if (!currentWorker || currentWorker.isAdmin) {
-			return []; // Admins don't have worker roles
+		if (!currentWorker || currentWorker.isOwner) {
+			return []; // Owners don't have worker roles
 		}
 
 		const workerBranchIds =
@@ -154,16 +154,16 @@ export function BranchProvider({
 
 			console.log("🔍 BranchContext Debug:", {
 				userId: user.uid,
-				isAdmin: isUserAdmin(),
+				isOwner: isUserOwner(),
 				roleAssignments: user.roleAssignments,
 				roleAssignmentsLength: user.roleAssignments?.length || 0,
 			});
 
 			// Filter branches for available branches (backwards compatibility)
 			let availableBranches: Branch[];
-			if (isUserAdmin()) {
-				// Admin can see all branches
-				console.log("👑 Loading all branches for admin");
+			if (isUserOwner()) {
+				// Owner can see all branches
+				console.log("👑 Loading all branches for owner");
 				availableBranches = branches;
 			} else {
 				// Regular users can only see their assigned branches
@@ -194,7 +194,7 @@ export function BranchProvider({
 				// Use the branch from URL if valid
 				const branch = availableBranches.find((b) => b.id === initialBranchId);
 				setCurrentBranch(branch || null);
-			} else if (availableBranches.length > 0 && !isUserAdmin()) {
+			} else if (availableBranches.length > 0 && !isUserOwner()) {
 				// For non-admins: Default to first available branch
 				// For admins: Don't auto-select a branch, let them choose from branch management
 				setCurrentBranch(availableBranches[0]);
@@ -226,7 +226,7 @@ export function BranchProvider({
 		}
 	};
 
-	// Function to clear current branch (for admins to return to admin-only view)
+	// Function to clear current branch (for admins to return to owner-only view)
 	const clearCurrentBranch = () => {
 		setCurrentBranch(null);
 	};

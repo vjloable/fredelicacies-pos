@@ -14,13 +14,15 @@ import EditWorkerModal from "./components/EditWorkerModal";
 import DeleteWorkerModal from "./components/DeleteWorkerModal";
 import TimeInOutModal from "./components/TimeInOutModal";
 import AssignBranchModal from "./components/AssignBranchModal";
-import WorkerDetailModal from "@/components/WorkerDetailModal";
+import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import AdvancedReporting from "./components/AdvancedReporting";
 import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import DropdownField from "@/components/DropdownField";
+import UsersIcon from "@/components/icons/SidebarNav/UsersIcon";
 
 export default function WorkersPage() {
 	const {
@@ -111,10 +113,10 @@ export default function WorkersPage() {
 							phoneNumber: data.phoneNumber,
 							employeeId: data.employeeId,
 							roleAssignments: data.roleAssignments || [],
-							isAdmin: data.isAdmin || false,
-							adminAssignedBy: data.adminAssignedBy,
-							adminAssignedAt: data.adminAssignedAt?.toDate(),
-							currentStatus: data.isAdmin
+							isOwner: data.isOwner || false,
+							ownerAssignedBy: data.ownerAssignedBy,
+							ownerAssignedAt: data.ownerAssignedAt?.toDate(),
+							currentStatus: data.isOwner
 								? undefined
 								: data.currentStatus || "clocked_out",
 							currentBranchId: data.currentBranchId,
@@ -140,30 +142,38 @@ export default function WorkersPage() {
 							if (!matchesSearch) return;
 						}
 
-						// Apply selectedBranchId filter for admins
+						// Apply selectedBranchId filter for owners
 						const currentBranchFilter = selectedBranchId || filters?.branchId;
 						if (currentBranchFilter) {
+							// For owners, they can see all users regardless of branch
+							// For managers, only show users with access to the selected branch
+							// Always show users with no role assignments (pending approval)
 							const hasBranchAccess = data.roleAssignments?.some(
 								(assignment: RoleAssignment) =>
 									assignment.branchId === currentBranchFilter &&
 									assignment.isActive === true
 							);
-							if (!hasBranchAccess) return;
+							const hasNoRoleAssignments = !data.roleAssignments || data.roleAssignments.length === 0;
+							const isOwner = data.isOwner;
+							
+							// Show user if they: have branch access OR have no role assignments OR are an owner
+							if (!hasBranchAccess && !hasNoRoleAssignments && !isOwner) return;
 						}
 
 						if (filters?.role) {
-							if (filters.role === "admin" && !data.isAdmin) return;
-							if (filters.role !== "admin") {
+							if (filters.role === "owner" && !data.isOwner) return;
+							if (filters.role !== "owner") {
 								const hasRole = data.roleAssignments?.some(
 									(assignment: RoleAssignment) =>
 										assignment.role === filters.role &&
 										assignment.isActive === true
 								);
+								// Don't filter out users with no role assignments when no specific role is selected
 								if (!hasRole) return;
 							}
 						}
 
-						if (filters?.status && !data.isAdmin) {
+						if (filters?.status && !data.isOwner) {
 							if (data.currentStatus !== filters.status) return;
 						}
 
@@ -210,15 +220,15 @@ export default function WorkersPage() {
 		try {
 			setLoading(true);
 
-			// Apply branch filtering based on selected branch for admins
+			// Apply branch filtering based on selected branch for owners
 			const workerFilters = { ...filters };
-			if (user?.isAdmin) {
-				// For admins, use the selected branch filter
+			if (user?.isOwner) {
+				// For owners, use the selected branch filter
 				if (selectedBranchId) {
 					workerFilters.branchId = selectedBranchId;
 				}
 			} else {
-				// Non-admin users can only see workers from their accessible branches
+				// Non-owner users can only see workers from their accessible branches
 				const accessibleBranches = getAccessibleBranches();
 				if (accessibleBranches.length > 0) {
 					workerFilters.branchId = accessibleBranches[0]; // For now, filter by first branch
@@ -378,24 +388,31 @@ export default function WorkersPage() {
 
 	return (
 		<div className='flex flex-col h-full'>
-			<TopBar />
+			{/* Desktop TopBar */}
+			<div className='hidden sm:block'>
+				<TopBar
+					title="Users Management"
+					icon={<UsersIcon className="mr-2" />}
+					showTimeTracking={false}
+				/>
+			</div>
 
-			{/* Header */}
-			<div className='px-6 py-4 border-b border-[var(--secondary)]/20'>
-				<div className='flex items-center justify-between'>
-					<div>
-						<h2 className='text-2xl font-bold text-[var(--secondary)] mb-1'>
-							Users Management
-						</h2>
-						<p className='text-sm text-[var(--secondary)]/70'>
-							Manage users, track time, and assign roles across branches
-						</p>
-					</div>
+			{/* Mobile TopBar */}
+			<div className='block sm:hidden'>
+				<MobileTopBar
+					title="Users Management"
+					icon={<UsersIcon className="mr-2" />}
+					showTimeTracking={false}
+				/>
+			</div>
 
-					<div className='flex items-center gap-4'>
-						{/* Branch Selector - Only show for admins */}
-						{user?.isAdmin && (
-							<div className='min-w-48'>
+			{/* Mobile Header with Controls */}
+			<div className='px-6 py-4 border-b border-[var(--secondary)]/20 sm:hidden'>
+				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
+						{/* Branch Selector - Only show for owners */}
+						{user?.isOwner && (
+							<div className='w-full sm:min-w-40 sm:w-auto'>
 								<DropdownField
 									options={branches.map((branch) => branch.name)}
 									hasAllOptionsVisible={true}
@@ -422,8 +439,60 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+								className='w-full sm:min-w-40 sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+									<div className='size-4'>
+										<PlusIcon className='drop-shadow-lg' />
+									</div>
+									<span className='mt-[2px]'>ADD WORKER</span>
+								</div>
+							</button>
+						)}
+					</div>
+				</div>
+			</div>
+
+			{/* Desktop Header with Controls */}
+			<div className='hidden sm:block px-6 py-4 border-b border-[var(--secondary)]/20'>
+				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+					<div>
+						<p className='text-sm text-[var(--secondary)]/70'>
+							Manage users, track time, and assign roles across branches
+						</p>
+					</div>
+
+					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
+						{/* Branch Selector - Only show for owners */}
+						{user?.isOwner && (
+							<div className='w-full sm:min-w-40 sm:w-auto'>
+								<DropdownField
+									options={branches.map((branch) => branch.name)}
+									hasAllOptionsVisible={true}
+									defaultValue="ALL BRANCHES"
+									allSuffix="BRANCHES"
+									dropdownPosition='bottom-right'
+									dropdownOffset={{ top: 2, right: 0 }}
+									onChange={(selectedName: string) => {
+										const selectedBranch = branches.find(
+											(branch) => branch.name === selectedName
+										);
+										handleBranchChange(selectedBranch?.id || "");
+									}}
+									roundness={"[12px]"}
+									height={42}
+									valueAlignment={"left"}
+									padding=''
+									shadow={true}
+								/>
+							</div>
+						)}
+
+						{/* Add Worker Button - only show in workers view */}
+						{viewMode === "workers" && (
+							<button
+								onClick={handleCreateWorker}
+								className='w-full sm:min-w-40 sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
 									</div>
@@ -443,8 +512,8 @@ export default function WorkersPage() {
 						branches={branches}
 						onFiltersChange={handleFiltersChange}
 						userAccessibleBranches={getAccessibleBranches()}
-						isAdmin={user?.isAdmin || false}
-						hideBranchFilter={user?.isAdmin || false}
+						isOwner={user?.isOwner || false}
+						hideBranchFilter={user?.isOwner || false}
 					/>
 				</div>
 			)}
@@ -505,20 +574,21 @@ export default function WorkersPage() {
 			{/* Modals */}
 			<CreateWorkerModal
 				isOpen={isCreateModalOpen}
-				onClose={handleModalClose}
-				onSuccess={handleWorkerCreated}
+				onClose={() => setIsCreateModalOpen(false)}
+				onSuccess={() => {
+					setIsCreateModalOpen(false);
+				}}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isAdmin
+					user?.isOwner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isAdmin={user?.isAdmin || false}
+				isOwner={user?.isOwner || false}
 				defaultBranchId={selectedBranchId}
-			/>
-
+			/>			
 			<EditWorkerModal
 				isOpen={isEditModalOpen}
 				worker={selectedWorker}
@@ -526,13 +596,13 @@ export default function WorkersPage() {
 				onSuccess={handleWorkerUpdated}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isAdmin
+					user?.isOwner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isAdmin={user?.isAdmin || false}
+				isOwner={user?.isOwner || false}
 				currentUserId={user?.uid}
 			/>
 
@@ -557,13 +627,13 @@ export default function WorkersPage() {
 				worker={selectedWorker}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isAdmin
+					user?.isOwner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isAdmin={user?.isAdmin || false}
+				isOwner={user?.isOwner || false}
 				onClose={handleModalClose}
 				onSuccess={handleWorkerUpdated}
 			/>

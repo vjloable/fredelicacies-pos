@@ -10,7 +10,7 @@ interface CreateWorkerModalProps {
 	onSuccess: () => void;
 	branches: Branch[];
 	userAccessibleBranches: string[];
-	isAdmin: boolean;
+	isOwner: boolean;
 	defaultBranchId?: string;
 }
 
@@ -20,7 +20,7 @@ export default function CreateWorkerModal({
 	onSuccess,
 	branches,
 	userAccessibleBranches,
-	isAdmin,
+	isOwner,
 	defaultBranchId,
 }: CreateWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
@@ -33,7 +33,7 @@ export default function CreateWorkerModal({
 		phoneNumber: "",
 		employeeId: "",
 		branchAssignments: [],
-		isAdmin: false,
+		isOwner: false,
 	});
 
 	// Single branch assignment state
@@ -45,7 +45,7 @@ export default function CreateWorkerModal({
 	);
 
 	// Get available branches based on user permissions
-	const availableBranches = isAdmin
+	const availableBranches = isOwner
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
@@ -59,11 +59,11 @@ export default function CreateWorkerModal({
 				phoneNumber: "",
 				employeeId: "",
 				branchAssignments: [],
-				isAdmin: false,
+				isOwner: false,
 			});
 
 			// Set default branch: use defaultBranchId or auto-select if only one branch available
-			const currentAvailableBranches = isAdmin
+			const currentAvailableBranches = isOwner
 				? branches
 				: branches.filter((branch) =>
 						userAccessibleBranches.includes(branch.id)
@@ -86,22 +86,22 @@ export default function CreateWorkerModal({
 				}));
 			}
 		}
-	}, [isOpen, defaultBranchId, isAdmin, branches, userAccessibleBranches]);
+	}, [isOpen, defaultBranchId, isOwner, branches, userAccessibleBranches]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 	) => {
 		const { name, value, type } = e.target;
 
-		// If admin is being checked, clear branch assignment
-		if (name === "isAdmin" && type === "checkbox") {
+		// If owner is being checked, clear branch assignment
+		if (name === "isOwner" && type === "checkbox") {
 			const checked = (e.target as HTMLInputElement).checked;
 			if (checked) {
 				setSelectedBranchId("");
 				setFormData((prev) => ({
 					...prev,
 					[name]: checked,
-					branchAssignments: [], // Clear branch assignments for admins
+					branchAssignments: [], // Clear branch assignments for owners
 				}));
 				return;
 			}
@@ -144,15 +144,15 @@ export default function CreateWorkerModal({
 			return;
 		}
 
-		// Admins should not be assigned to branches
-		if (formData.isAdmin && selectedBranchId) {
+		// Owners should not be assigned to branches
+		if (formData.isOwner && selectedBranchId) {
 			setError(
-				"Admins cannot be assigned to specific branches. Please uncheck admin or clear branch assignment."
+				"Owners cannot be assigned to specific branches. Please uncheck owner or clear branch assignment."
 			);
 			return;
 		}
 
-		if (!selectedBranchId && !formData.isAdmin) {
+		if (!selectedBranchId && !formData.isOwner) {
 			setError("Please select a branch assignment or make them an admin");
 			return;
 		}
@@ -180,7 +180,7 @@ export default function CreateWorkerModal({
 			phoneNumber: "",
 			employeeId: "",
 			branchAssignments: [],
-			isAdmin: false,
+			isOwner: false,
 		});
 		setSelectedBranchId("");
 		setSelectedRole("worker");
@@ -225,7 +225,7 @@ export default function CreateWorkerModal({
 							</div>
 							<button
 								onClick={handleClose}
-								className='text-gray-400 hover:text-gray-600 p-2'>
+								className='text-[var(--secondary)]/40 hover:text-[var(--secondary)]/60 p-2'>
 								<svg
 									className='w-6 h-6'
 									fill='none'
@@ -243,10 +243,10 @@ export default function CreateWorkerModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-lg'>
+							<div className='mb-6 p-4 bg-[var(--error)] border border-[var(--error)]/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-red-400 mr-2'
+										className='w-5 h-5 text-[var(--error)]/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -255,7 +255,7 @@ export default function CreateWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-[var(--secondary)]/70 text-sm'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -265,29 +265,29 @@ export default function CreateWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Full Name *
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+										Full Name <span className="text-[var(--error)]">*</span>
 									</label>
 									<input
 										type='text'
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Email Address *
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+										Email Address <span className="text-[var(--error)]">*</span>
 									</label>
 									<input
 										type='email'
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -296,22 +296,22 @@ export default function CreateWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Password *
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+										Password <span className="text-[var(--error)]">*</span>
 									</label>
 									<input
 										type='password'
 										name='password'
 										value={formData.password}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 										placeholder='Enter password'
 										required
 										minLength={6}
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -319,14 +319,14 @@ export default function CreateWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
 							</div>
 
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-2'>
+								<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
 									Employee ID
 								</label>
 								<input
@@ -334,37 +334,37 @@ export default function CreateWorkerModal({
 									name='employeeId'
 									value={formData.employeeId}
 									onChange={handleInputChange}
-									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+									className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
 									placeholder='Enter employee ID (optional)'
 								/>
 							</div>
 
-							{/* Admin Toggle */}
-							{isAdmin && (
+							{/* Owner Toggle */}
+							{isOwner && (
 								<div className='flex items-center'>
 									<input
 										type='checkbox'
-										name='isAdmin'
-										checked={formData.isAdmin}
+										name='isOwner'
+										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-gray-300 rounded'
+										className='h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-[var(--secondary)]/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-gray-700'>
-										Grant admin privileges
+									<label className='ml-2 block text-sm text-[var(--secondary)]/70'>
+										Grant owner privileges
 									</label>
 								</div>
 							)}
 
 							{/* Branch Assignment */}
-							{!formData.isAdmin && (
+							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Assign to Branch *
+										<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+											Assign to Branch <span className="text-[var(--error)]">*</span>
 										</label>
 										{availableBranches.length === 1 ? (
 											// For managers - show readonly branch name
-											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700'>
+											<div className='w-full px-3 py-2 bg-[var(--secondary)]/10 border border-[var(--secondary)]/30 rounded-lg text-[var(--secondary)]/70'>
 												{availableBranches[0].name}
 											</div>
 										) : (
@@ -404,8 +404,8 @@ export default function CreateWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Role *
+										<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
+											Role <span className="text-[var(--error)]">*</span>
 										</label>
 										<DropdownField
 											options={["Worker", "Manager"]}
@@ -429,11 +429,11 @@ export default function CreateWorkerModal({
 							)}
 
 							{/* Form Actions */}
-							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200'>
+							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--secondary)]/20'>
 								<button
 									type='button'
 									onClick={handleClose}
-									className='flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors'>
+									className='flex-1 py-3 px-4 border border-[var(--secondary)]/30 rounded-lg text-[var(--secondary)]/70 font-medium hover:bg-[var(--secondary)]/10 transition-colors'>
 									Cancel
 								</button>
 								<button

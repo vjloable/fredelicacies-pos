@@ -137,7 +137,7 @@ export default function TimeTrackingPage() {
 	};
 
 	// Don't show for admin users
-	if (!user || !timeTracking.worker || timeTracking.worker.isAdmin) {
+	if (!user || !timeTracking.worker || timeTracking.worker.isOwner) {
 		return (
 			<div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
 				<div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center'>
@@ -150,7 +150,7 @@ export default function TimeTrackingPage() {
 					<p className='text-gray-600 text-sm'>
 						{!user
 							? "Please log in to access time tracking"
-							: "Admin users are not subject to time tracking"}
+							: "Owner users are not subject to time tracking"}
 					</p>
 				</div>
 			</div>
@@ -240,7 +240,7 @@ export default function TimeTrackingPage() {
 										</div>
 									</div>
 
-									{timeTracking.isWorking && timeTracking.currentSession && (
+									{timeTracking.isWorking && timeTracking.currentAttendance && (
 										<>
 											<div>
 												<span className='text-sm text-gray-600'>
@@ -248,9 +248,9 @@ export default function TimeTrackingPage() {
 												</span>
 												<div className='text-lg font-semibold text-gray-900'>
 													{new Date(
-														timeTracking.currentSession.timeInAt.toDate
-															? timeTracking.currentSession.timeInAt.toDate()
-															: timeTracking.currentSession.timeInAt
+														timeTracking.currentAttendance.timeInAt.toDate
+															? timeTracking.currentAttendance.timeInAt.toDate()
+															: timeTracking.currentAttendance.timeInAt
 													).toLocaleTimeString()}
 												</div>
 											</div>
@@ -265,7 +265,7 @@ export default function TimeTrackingPage() {
 											<div>
 												<span className='text-sm text-gray-600'>Location:</span>
 												<div className='text-sm text-gray-900'>
-													{getBranchName(timeTracking.currentSession.branchId)}
+													{getBranchName(timeTracking.currentAttendance.branchId)}
 												</div>
 											</div>
 										</>

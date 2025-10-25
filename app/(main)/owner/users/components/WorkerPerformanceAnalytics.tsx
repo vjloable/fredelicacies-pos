@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService, WorkSession } from "@/services/workSessionService";
+import { attendanceService, Attendance } from "@/services/attendanceService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
 import { Timestamp } from "firebase/firestore";
 
@@ -21,18 +21,18 @@ interface PerformanceMetrics {
 		branchId: string;
 		branchName: string;
 		hours: number;
-		sessions: number;
+		attendances: number;
 		lastWorked: Date | null;
 	}>;
 	weeklyBreakdown: Array<{
 		week: string;
 		hours: number;
-		sessions: number;
+		attendances: number;
 	}>;
 	dailyPattern: Array<{
 		day: string;
 		averageHours: number;
-		sessionsCount: number;
+		attendancesCount: number;
 	}>;
 }
 
@@ -56,7 +56,7 @@ export default function WorkerPerformanceAnalytics({
 
 			// Get work sessions for the worker
 			const sessions =
-				(await workSessionService.listWorkSessions(
+				(await attendanceService.listAttendances(
 					worker.id,
 					dateRange
 						? {
@@ -77,19 +77,19 @@ export default function WorkerPerformanceAnalytics({
 		}
 	};
 
-	const calculatePerformanceMetrics = (sessions: WorkSession[]): PerformanceMetrics => {
+	const calculatePerformanceMetrics = (attendances: Attendance[]): PerformanceMetrics => {
 		// Basic calculations
-		const totalHours = sessions.reduce((sum, session) => {
-			if (session.duration) {
-				return sum + session.duration / 60; // Convert minutes to hours
+		const totalHours = attendances.reduce((sum, attendance) => {
+			if (attendance.duration) {
+				return sum + attendance.duration / 60; // Convert minutes to hours
 			}
-			if (session.timeInAt && session.timeOutAt) {
-				const startTime = session.timeInAt instanceof Timestamp
-					? session.timeInAt.toDate()
-					: session.timeInAt;
-				const endTime = session.timeOutAt instanceof Timestamp
-					? session.timeOutAt.toDate()
-					: session.timeOutAt;
+			if (attendance.timeInAt && attendance.timeOutAt) {
+				const startTime = attendance.timeInAt instanceof Timestamp
+					? attendance.timeInAt.toDate()
+					: attendance.timeInAt;
+				const endTime = attendance.timeOutAt instanceof Timestamp
+					? attendance.timeOutAt.toDate()
+					: attendance.timeOutAt;
 				return (
 					sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 				);
@@ -98,22 +98,22 @@ export default function WorkerPerformanceAnalytics({
 		}, 0);
 
 		const averageSessionLength =
-			sessions.length > 0 ? totalHours / sessions.length : 0;
+			attendances.length > 0 ? totalHours / attendances.length : 0;
 
 		// Punctuality calculation (simplified - based on start times)
-		const punctualityScore = calculatePunctualityScore(sessions);
+		const punctualityScore = calculatePunctualityScore(attendances);
 
 		// Productivity trend (simplified)
-		const productivityTrend = calculateProductivityTrend(sessions);
+		const productivityTrend = calculateProductivityTrend(attendances);
 
 		// Branch performance
-		const branchPerformance = calculateBranchPerformance(sessions);
+		const branchPerformance = calculateBranchPerformance(attendances);
 
 		// Weekly breakdown
-		const weeklyBreakdown = calculateWeeklyBreakdown(sessions);
+		const weeklyBreakdown = calculateWeeklyBreakdown(attendances);
 
 		// Daily pattern
-		const dailyPattern = calculateDailyPattern(sessions);
+		const dailyPattern = calculateDailyPattern(attendances);
 
 		return {
 			totalHours,
@@ -126,43 +126,43 @@ export default function WorkerPerformanceAnalytics({
 		};
 	};
 
-	const calculatePunctualityScore = (sessions: WorkSession[]): number => {
+	const calculatePunctualityScore = (attendances: Attendance[]): number => {
 		// Simplified punctuality: assume on-time if clocked in within 15 minutes of hour
-		const punctualSessions = sessions.filter((session) => {
-			if (!session.timeInAt) return false;
+		const punctualAttendances = attendances.filter((attendance) => {
+			if (!attendance.timeInAt) return false;
 
-			const startTime = session.timeInAt instanceof Timestamp
-				? session.timeInAt.toDate()
-				: session.timeInAt;
+			const startTime = attendance.timeInAt instanceof Timestamp
+				? attendance.timeInAt.toDate()
+				: attendance.timeInAt;
 			const minutes = startTime.getMinutes();
 
 			// Consider on-time if within 15 minutes of the hour
 			return minutes <= 15 || minutes >= 45;
 		});
 
-		return sessions.length > 0
-			? Math.round((punctualSessions.length / sessions.length) * 100)
+		return attendances.length > 0
+			? Math.round((punctualAttendances.length / attendances.length) * 100)
 			: 0;
 	};
 
 	const calculateProductivityTrend = (
-		sessions: any[]
+		attendances: Attendance[]
 	): "up" | "down" | "stable" => {
-		if (sessions.length < 4) return "stable";
+		if (attendances.length < 4) return "stable";
 
-		// Compare first half vs second half of sessions
-		const midpoint = Math.floor(sessions.length / 2);
-		const firstHalf = sessions.slice(0, midpoint);
-		const secondHalf = sessions.slice(midpoint);
+		// Compare first half vs second half of attendances
+		const midpoint = Math.floor(attendances.length / 2);
+		const firstHalf = attendances.slice(0, midpoint);
+		const secondHalf = attendances.slice(midpoint);
 
 		const firstHalfAvg =
-			firstHalf.reduce((sum, session) => {
-				return sum + (session.duration || 0);
+			firstHalf.reduce((sum, attendance) => {
+				return sum + (attendance.duration || 0);
 			}, 0) / firstHalf.length;
 
 		const secondHalfAvg =
-			secondHalf.reduce((sum, session) => {
-				return sum + (session.duration || 0);
+			secondHalf.reduce((sum, attendance) => {
+				return sum + (attendance.duration || 0);
 			}, 0) / secondHalf.length;
 
 		const difference = secondHalfAvg - firstHalfAvg;
@@ -173,30 +173,30 @@ export default function WorkerPerformanceAnalytics({
 		return "stable";
 	};
 
-	const calculateBranchPerformance = (sessions: WorkSession[]) => {
+	const calculateBranchPerformance = (attendances: Attendance[]) => {
 		const branchMap = new Map();
 
-		sessions.forEach((session) => {
-			if (!branchMap.has(session.branchId)) {
-				branchMap.set(session.branchId, {
-					branchId: session.branchId,
-					branchName: getBranchName(session.branchId),
+		attendances.forEach((attendance) => {
+			if (!branchMap.has(attendance.branchId)) {
+				branchMap.set(attendance.branchId, {
+					branchId: attendance.branchId,
+					branchName: getBranchName(attendance.branchId),
 					hours: 0,
-					sessions: 0,
+					attendances: 0,
 					lastWorked: null,
 				});
 			}
 
-			const branch = branchMap.get(session.branchId);
+			const branch = branchMap.get(attendance.branchId);
 			branch.sessions++;
 
-			if (session.duration) {
-				branch.hours += session.duration / 60;
+			if (attendance.duration) {
+				branch.hours += attendance.duration / 60;
 			}
 
-			const sessionDate = session.timeInAt.toDate
-				? session.timeInAt.toDate()
-				: session.timeInAt;
+			const sessionDate = attendance.timeInAt.toDate
+				? attendance.timeInAt.toDate()
+				: attendance.timeInAt;
 			if (!branch.lastWorked || sessionDate > branch.lastWorked) {
 				branch.lastWorked = sessionDate;
 			}
@@ -205,29 +205,29 @@ export default function WorkerPerformanceAnalytics({
 		return Array.from(branchMap.values());
 	};
 
-	const calculateWeeklyBreakdown = (sessions: WorkSession[]) => {
+	const calculateWeeklyBreakdown = (attendances: Attendance[]) => {
 		const weekMap = new Map();
 
-		sessions.forEach((session) => {
-			const sessionDate = session.timeInAt instanceof Timestamp
-				? session.timeInAt.toDate()
-				: session.timeInAt;
-			const weekStart = getWeekStart(sessionDate);
+		attendances.forEach((attendance) => {
+			const attendanceDate = attendance.timeInAt instanceof Timestamp
+				? attendance.timeInAt.toDate()
+				: attendance.timeInAt;
+			const weekStart = getWeekStart(attendanceDate);
 			const weekKey = weekStart.toISOString().split("T")[0];
 
 			if (!weekMap.has(weekKey)) {
 				weekMap.set(weekKey, {
 					week: formatWeek(weekStart),
 					hours: 0,
-					sessions: 0,
+					attendances: 0,
 				});
 			}
 
 			const week = weekMap.get(weekKey);
-			week.sessions++;
+			week.attendances++;
 
-			if (session.duration) {
-				week.hours += session.duration / 60;
+			if (attendance.duration) {
+				week.hours += attendance.duration / 60;
 			}
 		});
 
@@ -236,7 +236,7 @@ export default function WorkerPerformanceAnalytics({
 		);
 	};
 
-	const calculateDailyPattern = (sessions: WorkSession[]) => {
+	const calculateDailyPattern = (attendances: Attendance[]) => {
 		const dayMap = new Map();
 		const dayNames = [
 			"Sunday",
@@ -256,24 +256,24 @@ export default function WorkerPerformanceAnalytics({
 			});
 		});
 
-		sessions.forEach((session) => {
-			const sessionDate = session.timeInAt instanceof Timestamp
-				? session.timeInAt.toDate()
-				: session.timeInAt;
-			const dayName = dayNames[sessionDate.getDay()];
+		attendances.forEach((attendance) => {
+			const attendanceDate = attendance.timeInAt instanceof Timestamp
+				? attendance.timeInAt.toDate()
+				: attendance.timeInAt;
+			const dayName = dayNames[attendanceDate.getDay()];
 
 			const dayData = dayMap.get(dayName);
-			dayData.sessionsCount++;
+			dayData.attendances++;
 
-			if (session.duration) {
-				dayData.averageHours += session.duration / 60;
+			if (attendance.duration) {
+				dayData.averageHours += attendance.duration / 60;
 			}
 		});
 
 		// Calculate averages
 		dayMap.forEach((dayData) => {
-			if (dayData.sessionsCount > 0) {
-				dayData.averageHours = dayData.averageHours / dayData.sessionsCount;
+			if (dayData.attendancesCount > 0) {
+				dayData.averageHours = dayData.averageHours / dayData.attendancesCount;
 			}
 		});
 
@@ -427,7 +427,7 @@ export default function WorkerPerformanceAnalytics({
 											{branch.branchName}
 										</div>
 										<div className='text-sm text-gray-600'>
-											{branch.sessions} sessions • Last worked:{" "}
+											{branch.attendances} sessions • Last worked:{" "}
 											{branch.lastWorked?.toLocaleDateString() || "Never"}
 										</div>
 									</div>
@@ -456,7 +456,7 @@ export default function WorkerPerformanceAnalytics({
 									<div>
 										<div className='font-medium text-gray-900'>{week.week}</div>
 										<div className='text-sm text-gray-600'>
-											{week.sessions} sessions
+											{week.attendances} sessions
 										</div>
 									</div>
 									<div className='text-right'>
@@ -484,10 +484,10 @@ export default function WorkerPerformanceAnalytics({
 									{day.day.slice(0, 3)}
 								</div>
 								<div className='text-sm font-semibold text-gray-900'>
-									{day.sessionsCount > 0 ? formatHours(day.averageHours) : "-"}
+									{day.attendancesCount > 0 ? formatHours(day.averageHours) : "-"}
 								</div>
 								<div className='text-xs text-gray-500'>
-									{day.sessionsCount} sessions
+									{day.attendancesCount} attendances
 								</div>
 							</div>
 						))}

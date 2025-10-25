@@ -30,7 +30,7 @@ export default function MobileTopBar({
 }: MobileTopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
-	const { user, isUserAdmin } = useAuth();
+	const { user, isUserOwner } = useAuth();
 	const { currentBranch } = useBranch();
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
@@ -52,9 +52,9 @@ export default function MobileTopBar({
 	const userDisplayName = user?.email?.split("@")[0] || "Worker";
 
 	const handleTimeTrackingClick = async () => {
-		const isExemptAdmin = timeTracking.worker?.isAdmin;
+		const isExemptOwner = timeTracking.worker?.isOwner;
 
-		if (!timeTracking.worker || isExemptAdmin || isTimeTracking) return;
+		if (!timeTracking.worker || isExemptOwner || isTimeTracking) return;
 
 		setIsTimeTracking(true);
 		try {
@@ -87,8 +87,8 @@ export default function MobileTopBar({
 					<MenuBurger className="text-[var(--primary)]"/>
 				</button>
 				<div className='flex-1 flex justify-center'>
-					<div className='items-center justify-center rounded-[100px] bg-[var(--accent)] pt-3 pb-2 '>
-						<TextLogo className='h-5 items-center' />
+					<div className='flex items-center justify-center rounded-[100px] bg-[var(--accent)] h-12 px-4'>
+						<TextLogo className='h-5' />
 					</div>
 				</div>{" "}
 				{onOrderClick ? (
@@ -109,18 +109,18 @@ export default function MobileTopBar({
 					<span>{userDisplayName}</span>
 				</div>
 
-				{isUserAdmin() && (
+				{isUserOwner() && (
 					<div className='flex-1 h-12 px-3 py-2 flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-xs'>
 						<span className='w-7 h-7 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-xs font-bold'>
-							A
+							O
 						</span>
-						<span>Admin</span>
+						<span>Owner</span>
 					</div>
 				)}
 
 				{showTimeTracking &&
 					timeTracking.worker &&
-					!timeTracking.worker.isAdmin && (
+					!timeTracking.worker.isOwner && (
 						<button
 							onClick={handleTimeTrackingClick}
 							disabled={isTimeTracking}

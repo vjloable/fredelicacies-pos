@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
-import { workSessionService } from "@/services/workSessionService";
+import { attendanceService } from "@/services/attendanceService";
 
 interface TimeInOutModalProps {
 	isOpen: boolean;
@@ -51,9 +51,9 @@ export default function TimeInOutModal({
 
 		if (!worker) return;
 
-		// Admins don't have time tracking
-		if (worker.isAdmin) {
-			setError("Admins are exempt from time tracking");
+		// Owners don't have time tracking
+		if (worker.isOwner) {
+			setError("Owners are exempt from time tracking");
 			return;
 		}
 
@@ -67,23 +67,23 @@ export default function TimeInOutModal({
 
 		try {
 			if (action === "time_in") {
-				await workSessionService.timeInWorker(
+				await attendanceService.timeInWorker(
 					worker.id,
 					selectedBranchId,
 					notes
 				);
 			} else {
-				const activeSession = await workSessionService.getActiveWorkSession(
+				const activeAttendance = await attendanceService.getActiveAttendance(
 					worker.id
 				);
-				if (activeSession) {
-					await workSessionService.timeOutWorker(
+				if (activeAttendance) {
+					await attendanceService.timeOutWorker(
 						worker.id,
-						activeSession.id,
+						activeAttendance.id,
 						notes
 					);
 				} else {
-					throw new Error("No active session found");
+					throw new Error("No active attendance found");
 				}
 			}
 

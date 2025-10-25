@@ -12,8 +12,10 @@ import { useRouter } from "next/navigation";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { subscribeToBranches } from "@/stores/dataStore";
 import TopBar from "@/components/TopBar";
+import MobileTopBar from "@/components/MobileTopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { title } from "motion/react-m";
 
 function formatDate(date: Date) {
 	return (
@@ -24,7 +26,7 @@ function formatDate(date: Date) {
 }
 
 export default function BranchesPage() {
-	const { user, isUserAdmin } = useAuth();
+	const { user, isUserOwner } = useAuth();
 	const router = useRouter();
 	const [branches, setBranches] = useState<Branch[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -36,9 +38,9 @@ export default function BranchesPage() {
 	const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 	const [modalError, setModalError] = useState<string | null>(null);
 
-	// Redirect non-admin users
+	// Redirect non-owner users
 	useEffect(() => {
-		if (user && !isUserAdmin()) {
+		if (user && !isUserOwner()) {
 			// Redirect to user's first assigned branch
 			const assignedBranches = user.roleAssignments;
 			if (assignedBranches.length > 0) {
@@ -47,12 +49,12 @@ export default function BranchesPage() {
 				router.push("/login");
 			}
 		}
-	}, [user, isUserAdmin, router]);
+	}, [user, isUserOwner, router]);
 
 	// Load branches data
 	useEffect(() => {
 		const loadBranches = async () => {
-			if (!user || !isUserAdmin()) return;
+			if (!user || !isUserOwner()) return;
 
 			try {
 				setLoading(true);
@@ -68,7 +70,7 @@ export default function BranchesPage() {
 		};
 
 		loadBranches();
-	}, [user, isUserAdmin]);
+	}, [user, isUserOwner]);
 
 	useEffect(() => {
 		const unsubscribe = subscribeToBranches((branches) => {
@@ -78,11 +80,12 @@ export default function BranchesPage() {
 		return unsubscribe; // Cleanup on unmount
 	}, []);
 
-	// Don't render for non-admin users (will redirect)
-	if (!user || !isUserAdmin()) {
+	// Don't render for non-owner users (will redirect)
+	if (!user || !isUserOwner()) {
 		return (
 			<div className='flex items-center justify-center h-full'>
-				<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]'></div>
+				
+				<LoadingSpinner size="md"></LoadingSpinner>
 				<span className='ml-3 text-[var(--secondary)]'>Redirecting...</span>
 			</div>
 		);
@@ -164,32 +167,51 @@ export default function BranchesPage() {
 
 	return (
 		<div className='flex flex-col h-full'>
-			<TopBar />
+			{/* Desktop TopBar */}
+			<div className='hidden sm:block'>
+				<TopBar
+					title="Branch Management"
+					icon={<BranchesIcon className="mr-2" />}
+					showTimeTracking={false}
+				/>
+			</div>
 
-			{/* <div className="flex items-center justify-start ml-6 mt-[8px] py-[4px]">
-        {icon} 
-        <h1 className="text-[var(--secondary)] text-2xl font-bold">Branches</h1>
-      </div> */}
+			{/* Mobile TopBar */}
+			<div className='block sm:hidden'>
+				<MobileTopBar
+					title="Branch Management"
+					icon={<BranchesIcon className="mr-2" />}
+					showTimeTracking={false}
+				/>
+			</div>
 
-			<div className='px-6 py-4 border-b border-gray-200'>
-				<div className='flex items-center justify-between'>
-					<div>
-						<h2 className='text-2xl font-bold text-[var(--secondary)] mb-1'>
-							Branch Management
-						</h2>
-						<p className='text-sm text-[var(--secondary)]/70'>
-							Manage all branches and navigate to branch-specific views
-						</p>
-					</div>
-					{/* <BranchSelector
-            showLabel={true}
-            redirectOnChange={true}
-            className="ml-4"
-          /> */}
+			<div className='px-6 py-4 border-b border-gray-200 sm:hidden'>
+				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<button
 						onClick={handleAddBranch}
-						className='bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-						<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+						className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+							<div className='size-4'>
+								<PlusIcon className='drop-shadow-lg' />
+							</div>
+							<span className='mt-[2px]'>ADD BRANCH</span>
+						</div>
+					</button>
+				</div>
+			</div>
+
+			{/* Desktop Header with Add Button */}
+			<div className='hidden sm:block px-6 py-4 border-b border-gray-200'>
+				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+					<div className="flex-col">
+						<p className='text-sm text-[var(--secondary)]/70'>
+							Manage your business locations and settings
+						</p>
+					</div>
+					<button
+						onClick={handleAddBranch}
+						className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
 							</div>

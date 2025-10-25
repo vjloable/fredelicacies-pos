@@ -13,19 +13,18 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase-config";
 import { WorkerFilters as WorkerFiltersType } from "@/types/WorkerTypes";
-import WorkersTable from "@/app/(main)/admin/users/components/WorkersTable";
-import WorkerFiltersComponent from "@/app/(main)/admin/users/components/WorkerFilters";
-import CreateWorkerModal from "@/app/(main)/admin/users/components/CreateWorkerModal";
-import EditWorkerModal from "@/app/(main)/admin/users/components/EditWorkerModal";
-import DeleteWorkerModal from "@/app/(main)/admin/users/components/DeleteWorkerModal";
-import TimeInOutModal from "@/app/(main)/admin/users/components/TimeInOutModal";
-import AssignBranchModal from "@/app/(main)/admin/users/components/AssignBranchModal";
-import WorkerDetailModal from "@/components/WorkerDetailModal";
+import WorkersTable from "@/app/(main)/owner/users/components/WorkersTable";
+import WorkerFiltersComponent from "@/app/(main)/owner/users/components/WorkerFilters";
+import CreateWorkerModal from "@/app/(main)/owner/users/components/CreateWorkerModal";
+import EditWorkerModal from "@/app/(main)/owner/users/components/EditWorkerModal";
+import DeleteWorkerModal from "@/app/(main)/owner/users/components/DeleteWorkerModal";
+import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
+import AssignBranchModal from "@/app/(main)/owner/users/components/AssignBranchModal";
+import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
-import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ManagementIcon from "@/components/icons/SidebarNav/ManagementIcon";
 
@@ -63,7 +62,7 @@ export default function ManagementPage() {
 	// Filters and sorting
 	const [filters, setFilters] = useState<WorkerFiltersType>({
 		branchId: branchId as string,
-		excludeAdmins: true, // Managers should not see admin workers
+		excludeOwners: true, // Managers should not see owner workers
 	});
 	const [sortConfig, setSortConfig] = useState({
 		column: "name",
@@ -111,7 +110,7 @@ export default function ManagementPage() {
 			const workersRef = collection(db, "users");
 			const workersQuery = query(
 				workersRef,
-				where("isAdmin", "==", false), // Exclude admins for managers
+				where("isOwner", "==", false), // Exclude admins for managers
 				orderBy("name", "asc")
 			);
 
@@ -124,7 +123,7 @@ export default function ManagementPage() {
 						const data = doc.data();
 						console.log(`🔍 Checking worker ${data.name} (${doc.id}):`, {
 							roleAssignments: data.roleAssignments,
-							isAdmin: data.isAdmin,
+							isOwner: data.isOwner,
 							targetBranch: branchId,
 						});
 
@@ -152,10 +151,10 @@ export default function ManagementPage() {
 							phoneNumber: data.phoneNumber,
 							employeeId: data.employeeId,
 							roleAssignments: data.roleAssignments || [],
-							isAdmin: data.isAdmin || false,
-							adminAssignedBy: data.adminAssignedBy,
-							adminAssignedAt: data.adminAssignedAt?.toDate(),
-							currentStatus: data.isAdmin
+							isOwner: data.isOwner || false,
+							ownerAssignedBy: data.adminAssignedBy,
+							ownerAssignedAt: data.adminAssignedAt?.toDate(),
+							currentStatus: data.isOwner
 								? undefined
 								: data.currentStatus || "clocked_out",
 							currentBranchId: data.currentBranchId,
@@ -221,10 +220,10 @@ export default function ManagementPage() {
 			setLoading(true);
 			console.log(`📋 Starting to load workers for branch ${branchId}...`);
 
-			// Filter workers for current branch only, excluding admins
+			// Filter workers for current branch only, excluding owners
 			const workerFilters: WorkerFiltersType = {
 				branchId: branchId as string,
-				excludeAdmins: true, // New filter to exclude admins for managers
+				excludeOwners: true, // New filter to exclude owners for managers
 			};
 
 			console.log(`📋 Using filters:`, workerFilters);
@@ -298,7 +297,7 @@ export default function ManagementPage() {
 		setFilters({
 			...newFilters,
 			branchId: branchId as string, // Always maintain branch filter
-			excludeAdmins: true, // Always exclude admins for managers
+			excludeOwners: true, // Always exclude owners for managers
 		});
 	};
 
@@ -344,8 +343,8 @@ export default function ManagementPage() {
 
 		if (filters.role) {
 			filtered = filtered.filter((worker) => {
-				if (filters.role === "admin") return worker.isAdmin;
-				if (filters.role === "worker") return !worker.isAdmin;
+				if (filters.role === "owner") return worker.isOwner;
+				if (filters.role === "worker") return !worker.isOwner;
 				if (filters.role === "manager") {
 					// Check if worker has manager role for any branch
 					return worker.roleAssignments?.some(
@@ -535,7 +534,7 @@ export default function ManagementPage() {
 					<div className='flex-1 px-6 overflow-y-auto pb-6'>
 						{/* Control Bar */}
 						<div className='mb-6'>
-							<div className='flex items-center justify-between mb-4'>
+							<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4'>
 								<div className='flex items-center gap-4 text-sm text-[var(--secondary)]/70'>
 									<span className='flex items-center gap-2'>
 										<span className='w-2 h-2 bg-[var(--accent)] rounded-full'></span>
@@ -544,12 +543,12 @@ export default function ManagementPage() {
 									</span>
 								</div>
 
-								<div className='flex items-center gap-4'>
+								<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
 									{/* View Toggle */}
-									<div className='flex bg-[var(--accent)]/20 rounded-lg p-1 border-[var(--accent)]/30 border'>
+									<div className='flex bg-[var(--accent)]/20 rounded-lg p-1 border-[var(--accent)]/30 border w-full sm:w-auto'>
 										<button
 											onClick={() => setViewMode("workers")}
-											className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "workers"
 													? "bg-white text-[var(--secondary)] shadow-sm"
 													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
@@ -558,7 +557,7 @@ export default function ManagementPage() {
 										</button>
 										<button
 											onClick={() => setViewMode("attendance")}
-											className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "attendance"
 													? "bg-white text-[var(--secondary)] shadow-sm"
 													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
@@ -571,8 +570,8 @@ export default function ManagementPage() {
 									{viewMode === "workers" && (
 										<button
 											onClick={handleCreateWorker}
-											className='bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-											<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-sm font-black text-[14px]'>
+											className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+											<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-sm font-black text-[14px]'>
 												<div className='w-4 h-4'>
 													<PlusIcon className='drop-shadow-sm' />
 												</div>
@@ -591,9 +590,9 @@ export default function ManagementPage() {
 										branches={[]} // No branches shown for managers - they only see their branch
 										onFiltersChange={handleFiltersChange}
 										userAccessibleBranches={[branchId as string]}
-										isAdmin={false} // Managers see only their branch
+										isOwner={false} // Managers see only their branch
 										hideBranchFilter={true} // Hide branch filter for managers
-										hideAdminRole={true} // Hide admin role option for managers
+										hideOwnerRole={true} // Hide owner role option for managers
 									/>
 								</div>
 							)}
@@ -652,7 +651,7 @@ export default function ManagementPage() {
 					onSuccess={handleWorkerCreated}
 					branches={branches.filter((branch) => branch.id === branchId)}
 					userAccessibleBranches={[branchId as string]}
-					isAdmin={false} // Managers can only add workers to their branch
+					isOwner={false} // Managers can only add workers to their branch
 					defaultBranchId={branchId as string}
 				/>
 
@@ -663,7 +662,7 @@ export default function ManagementPage() {
 					onSuccess={handleWorkerUpdated}
 					branches={branches.filter((branch) => branch.id === branchId)}
 					userAccessibleBranches={[branchId as string]}
-					isAdmin={false}
+					isOwner={false}
 					currentUserId={user?.uid}
 				/>
 
@@ -688,7 +687,7 @@ export default function ManagementPage() {
 					worker={selectedWorker}
 					branches={branches.filter((branch) => branch.id === branchId)}
 					userAccessibleBranches={[branchId as string]}
-					isAdmin={false}
+					isOwner={false}
 					onClose={handleModalClose}
 					onSuccess={handleWorkerUpdated}
 				/>

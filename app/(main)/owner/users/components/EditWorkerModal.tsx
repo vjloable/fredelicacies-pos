@@ -10,7 +10,7 @@ interface EditWorkerModalProps {
 	onSuccess: () => void;
 	branches?: Branch[];
 	userAccessibleBranches?: string[];
-	isAdmin?: boolean;
+	isOwner?: boolean;
 	currentUserId?: string;
 }
 
@@ -21,7 +21,7 @@ export default function EditWorkerModal({
 	onSuccess,
 	branches = [],
 	userAccessibleBranches = [],
-	isAdmin = false,
+	isOwner = false,
 	currentUserId,
 }: EditWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function EditWorkerModal({
 		email: "",
 		phoneNumber: "",
 		employeeId: "",
-		isAdmin: false,
+		isOwner: false,
 		branchAssignments: [] as Array<{
 			branchId: string;
 			role: "manager" | "worker";
@@ -47,16 +47,16 @@ export default function EditWorkerModal({
 	const [originalRole, setOriginalRole] = useState<"manager" | "worker" | null>(null);
 
 	// Get available branches based on user permissions
-	const availableBranches = isAdmin
+	const availableBranches = isOwner
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
 	// Check if the current user can change roles for this worker
 	const canDemoteWorker = (worker: Worker | null): boolean => {
 		if (!worker || !currentUserId) return false;
-		
-		// Admins can change any role
-		if (isAdmin) return true;
+
+		// Owners can change any role
+		if (isOwner) return true;
 		
 		// Managers cannot demote themselves
 		if (worker.id === currentUserId) return false;
@@ -102,7 +102,7 @@ export default function EditWorkerModal({
 				workerName: worker.name,
 				roleAssignments: worker.roleAssignments,
 				activeBranchAssignments: branchAssignments,
-				isAdmin,
+				isOwner,
 				availableBranches: availableBranches.length,
 				userAccessibleBranches
 			});
@@ -112,12 +112,12 @@ export default function EditWorkerModal({
 				email: worker.email,
 				phoneNumber: worker.phoneNumber || "",
 				employeeId: worker.employeeId || "",
-				isAdmin: worker.isAdmin,
+				isOwner: worker.isOwner,
 				branchAssignments,
 			});
 
 			// Get current available branches
-			const currentAvailableBranches = isAdmin
+			const currentAvailableBranches = isOwner
 				? branches
 				: branches.filter((branch) =>
 						userAccessibleBranches.includes(branch.id)
@@ -148,20 +148,20 @@ export default function EditWorkerModal({
 
 			setError(null);
 		}
-	}, [worker, isOpen, isAdmin, branches, userAccessibleBranches]);
+	}, [worker, isOpen, isOwner, branches, userAccessibleBranches]);
 
 	// Debug logging for render conditions
 	useEffect(() => {
 		if (isOpen && worker) {
 			console.log("🎯 Modal render state:", {
-				workerIsAdmin: formData.isAdmin,
+				workerisOwner: formData.isOwner,
 				availableBranches: availableBranches.length,
 				selectedRole,
 				selectedBranchId,
-				shouldShowRoleDropdown: !formData.isAdmin
+				shouldShowRoleDropdown: !formData.isOwner
 			});
 		}
-	}, [isOpen, formData.isAdmin, availableBranches.length, selectedRole, selectedBranchId]);
+	}, [isOpen, formData.isOwner, availableBranches.length, selectedRole, selectedBranchId]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -184,7 +184,7 @@ export default function EditWorkerModal({
 	};
 
 	const handleRoleChange = (role: "manager" | "worker") => {
-		console.log("🔄 Role change attempted:", { role, selectedBranchId, isAdmin });
+		console.log("🔄 Role change attempted:", { role, selectedBranchId, isOwner });
 		setSelectedRole(role);
 		if (selectedBranchId) {
 			const updatedAssignments = [{ branchId: selectedBranchId, role }];
@@ -212,7 +212,7 @@ export default function EditWorkerModal({
 			currentRole: worker.roleAssignments,
 			newRole: selectedRole,
 			selectedBranchId,
-			isAdmin: formData.isAdmin,
+			isOwner: formData.isOwner,
 			availableBranches: availableBranches.length
 		});
 
@@ -221,18 +221,18 @@ export default function EditWorkerModal({
 			return;
 		}
 
-		if (!selectedBranchId && !formData.isAdmin) {
+		if (!selectedBranchId && !formData.isOwner) {
 			setError("Please select a branch assignment or make them an admin");
 			return;
 		}
 
-		if (!formData.isAdmin && !selectedRole) {
+		if (!formData.isOwner && !selectedRole) {
 			setError("Please select a role for the worker");
 			return;
 		}
 
 		// Additional validation for manager permissions
-		if (!isAdmin && !canDemoteWorker(worker)) {
+		if (!isOwner && !canDemoteWorker(worker)) {
 			setError("You do not have permission to change this user's role");
 			return;
 		}
@@ -247,20 +247,20 @@ export default function EditWorkerModal({
 				email: formData.email,
 				phoneNumber: formData.phoneNumber,
 				employeeId: formData.employeeId,
-				isAdmin: formData.isAdmin,
+				isOwner: formData.isOwner,
 			});
 
 			// Handle admin role changes
-			if (formData.isAdmin !== worker.isAdmin) {
-				if (formData.isAdmin) {
-					await workerService.promoteToAdmin(worker.id);
+			if (formData.isOwner !== worker.isOwner) {
+				if (formData.isOwner) {
+					await workerService.promoteToOwner(worker.id);
 				} else {
-					await workerService.demoteFromAdmin(worker.id);
+					await workerService.demoteFromOwner(worker.id);
 				}
 			}
 
 		// Update branch assignments if not admin
-		if (!formData.isAdmin) {
+		if (!formData.isOwner) {
 			const currentAssignments = worker.roleAssignments.filter(
 				(a) => a.isActive !== false
 			);
@@ -463,13 +463,13 @@ export default function EditWorkerModal({
 								</div>
 							</div>
 
-							{/* Admin Toggle */}
-							{isAdmin && (
+							{/* Owner Toggle */}
+							{isOwner && (
 								<div className='flex items-center'>
 									<input
 										type='checkbox'
-										name='isAdmin'
-										checked={formData.isAdmin}
+										name='isOwner'
+										checked={formData.isOwner}
 										onChange={handleInputChange}
 										className='h-5 w-5 text-[var(--primary)] focus:ring-[var(--accent)] border-[var(--secondary)]/30 rounded'
 									/>
@@ -480,7 +480,7 @@ export default function EditWorkerModal({
 							)}
 
 							{/* Branch Assignment */}
-							{!formData.isAdmin && (
+							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
 										<label className='block text-sm font-medium text-gray-700 mb-2'>

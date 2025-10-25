@@ -56,7 +56,7 @@ export default function POSTimeTracking({
 	};
 
 	const handleTimeOut = async () => {
-		if (!user || !timeTracking.worker || !timeTracking.currentSession) return;
+		if (!user || !timeTracking.worker || !timeTracking.currentAttendance) return;
 
 		setLoading(true);
 
@@ -75,14 +75,14 @@ export default function POSTimeTracking({
 
 
 	// Don't show for users without time tracking access
-	// (admins without manager role assignments are exempt)
-	const isExemptAdmin =
-		timeTracking.worker?.isAdmin &&
+	// (owners without manager role assignments are exempt)
+	const isExemptOwner =
+		timeTracking.worker?.isOwner &&
 		!timeTracking.worker.roleAssignments.some(
 			(assignment) => assignment.role === "manager"
 		);
 
-	if (!user || !timeTracking.worker || isExemptAdmin) {
+	if (!user || !timeTracking.worker || isExemptOwner) {
 		return null;
 	}
 
@@ -165,7 +165,7 @@ export default function POSTimeTracking({
 						</div>
 
 						{/* Duration if working */}
-						{isWorking && timeTracking.currentSession && (
+						{isWorking && timeTracking.currentAttendance && (
 							<div className='text-right'>
 								<span className='text-sm text-gray-600'>Working for:</span>
 								<div className='text-lg font-semibold text-gray-900'>
@@ -178,22 +178,22 @@ export default function POSTimeTracking({
 				</div>
 
 				{/* Session Details */}
-				{isWorking && timeTracking.currentSession && (
+				{isWorking && timeTracking.currentAttendance && (
 					<div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
 						<div className='text-sm'>
 							<div className='flex justify-between items-center mb-1'>
 								<span className='text-blue-700 font-medium'>Started at:</span>
 								<span className='text-blue-900'>
 									{new Date(
-										timeTracking.currentSession.timeInAt.toDate
-											? timeTracking.currentSession.timeInAt.toDate()
-											: timeTracking.currentSession.timeInAt
+										timeTracking.currentAttendance.timeInAt.toDate
+											? timeTracking.currentAttendance.timeInAt.toDate()
+											: timeTracking.currentAttendance.timeInAt
 									).toLocaleTimeString()}
 								</span>
 							</div>
-							{timeTracking.currentSession.notes && (
+							{timeTracking.currentAttendance.notes && (
 								<div className='text-blue-700 text-xs mt-2'>
-									Note: {timeTracking.currentSession.notes}
+									Note: {timeTracking.currentAttendance.notes}
 								</div>
 							)}
 						</div>

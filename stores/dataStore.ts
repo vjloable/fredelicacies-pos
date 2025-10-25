@@ -403,6 +403,8 @@ class DataStore {
 										created_at: data.created_at || Timestamp.now(),
 										modified_at: data.modified_at || Timestamp.now(),
 										created_by: data.created_by || "",
+										branchId: data.branchId || "",
+										scope: data.scope,
 									};
 									discounts.push(discount);
 								}
@@ -470,12 +472,12 @@ class DataStore {
 									phoneNumber: data.phoneNumber,
 									employeeId: data.employeeId,
 									roleAssignments: data.roleAssignments || [],
-									isAdmin: data.isAdmin || false,
-									adminAssignedBy: data.adminAssignedBy,
-									adminAssignedAt: data.adminAssignedAt
-										? data.adminAssignedAt.toDate()
+									isOwner: data.isOwner || false,
+									ownerAssignedBy: data.ownerAssignedBy,
+									ownerAssignedAt: data.ownerAssignedAt
+										? data.ownerAssignedAt.toDate()
 										: undefined,
-									currentStatus: data.isAdmin
+									currentStatus: data.isOwner
 										? undefined
 										: data.currentStatus || "clocked_out",
 									currentBranchId: data.currentBranchId,

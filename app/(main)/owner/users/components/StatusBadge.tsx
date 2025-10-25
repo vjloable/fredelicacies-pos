@@ -2,19 +2,19 @@ import React from "react";
 
 interface StatusBadgeProps {
 	status?: "clocked_in" | "clocked_out";
-	isAdmin?: boolean;
+	isOwner?: boolean;
 }
 
 export default function StatusBadge({
 	status,
-	isAdmin = false,
+	isOwner = false,
 }: StatusBadgeProps) {
-	// Admins don't have status tracking
-	if (isAdmin) {
+	// Owners don't have status tracking
+	if (isOwner) {
 		return (
 			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]'>
 				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-[var(--accent)]' />
-				Admin
+				Owner
 			</span>
 		);
 	}

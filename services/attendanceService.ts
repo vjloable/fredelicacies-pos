@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase-config";
 
-export interface WorkSession {
+export interface Attendance {
 	userId: string;
 	branchId: string;
 	timeInAt: Timestamp;
@@ -24,93 +24,93 @@ export interface WorkSession {
 	clockedOutBy?: string;
 	duration?: number;
 	notes?: string;
-	sessionType: "scheduled" | "emergency" | "overtime";
+	attendanceType: "scheduled" | "emergency" | "overtime";
 }
 
-export interface WorkSessionService {
+export interface AttendanceService {
 	// Core CRUD operations
-	createWorkSession: (sessionData: WorkSession) => Promise<string>; // Returns sessionId
-	getWorkSession: (sessionId: string) => Promise<WorkSession | null>;
-	updateWorkSession: (
-		sessionId: string,
-		updates: Partial<WorkSession>
+	createAttendance: (attendanceData: Attendance) => Promise<string>; // Returns attendanceId
+	getAttendance: (attendanceId: string) => Promise<Attendance | null>;
+	updateAttendance: (
+		attendanceId: string,
+		updates: Partial<Attendance>
 	) => Promise<void>;
-	deleteWorkSession: (sessionId: string) => Promise<void>;
-	listWorkSessions: (
+	deleteAttendance: (attendanceId: string) => Promise<void>;
+	listAttendances: (
 		userId: string,
 		dateRange?: DateRange
-	) => Promise<WorkSession[]>;
+	) => Promise<Attendance[]>;
 
 	// Time In/Out Operations
 	timeInWorker: (
 		userId: string,
 		branchId: string,
 		notes?: string
-	) => Promise<string>; // Returns sessionId
+	) => Promise<string>; // Returns attendanceId
 	timeOutWorker: (
 		userId: string,
-		sessionId: string,
+		attendanceId: string,
 		notes?: string
 	) => Promise<void>;
 
 	// Utility methods
-	getActiveWorkSession: (
+	getActiveAttendance: (
 		userId: string
-	) => Promise<(WorkSession & { id: string }) | null>;
-	getRecentWorkSessions: (
+	) => Promise<(Attendance & { id: string }) | null>;
+	getRecentAttendances: (
 		userId: string,
 		days?: number
-	) => Promise<(WorkSession & { id: string })[]>;
-	getBranchWorkSessions: (
+	) => Promise<(Attendance & { id: string })[]>;
+	getBranchAttendances: (
 		branchId: string,
 		dateRange?: DateRange
-	) => Promise<WorkSession[]>;
-	calculateSessionDuration: (
+	) => Promise<Attendance[]>;
+	calculateAttendanceDuration: (
 		timeInAt: Timestamp,
 		timeOutAt?: Timestamp
 	) => number;
-	getSessionsByDateRange: (
+	getAttendancesByDateRange: (
 		userId: string,
 		startDate: Date,
 		endDate: Date
-	) => Promise<WorkSession[]>;
+	) => Promise<Attendance[]>;
 }
 
-export const workSessionService: WorkSessionService = {
-	createWorkSession: async (sessionData: WorkSession): Promise<string> => {
+export const attendanceService: AttendanceService = {
+	createAttendance: async (attendanceData: Attendance): Promise<string> => {
 		try {
-			const workSessionsRef = collection(db, "workSessions");
+			const attendanceRef = collection(db, "attendance");
 
 			// Ensure timeInAt is a Timestamp
-			const sessionWithTimestamp = {
-				...sessionData,
+			const attendanceWithTimestamp = {
+				...attendanceData,
 				timeInAt:
-					sessionData.timeInAt instanceof Timestamp
-						? sessionData.timeInAt
+					attendanceData.timeInAt instanceof Timestamp
+						? attendanceData.timeInAt
 						: Timestamp.fromDate(new Date()),
-				timeOutAt: sessionData.timeOutAt || null,
+				timeOutAt: attendanceData.timeOutAt || null,
 				createdAt: Timestamp.now(),
 				updatedAt: Timestamp.now(),
 			};
 
-			const docRef = await addDoc(workSessionsRef, sessionWithTimestamp);
+			const docRef = await addDoc(attendanceRef, attendanceWithTimestamp);
 			return docRef.id;
 		} catch (error) {
-			console.error("Error creating work session:", error);
+			console.error("Error creating attendance:", error);
 			throw error;
 		}
 	},
 
-	getWorkSession: async (sessionId: string): Promise<WorkSession | null> => {
+	getAttendance: async (attendanceId: string): Promise<Attendance | null> => {
 		try {
-			const sessionDocRef = doc(db, "workSessions", sessionId);
-			const sessionSnap = await getDoc(sessionDocRef);
+			const attendanceDocRef = doc(db, "attendance", attendanceId);
+			const attendanceSnap = await getDoc(attendanceDocRef);
 
-			if (!sessionSnap.exists()) {
+			if (!attendanceSnap.exists()) {
 				return null;
 			}
 
-			const data = sessionSnap.data();
+			const data = attendanceSnap.data();
 			return {
 				userId: data.userId,
 				branchId: data.branchId,
@@ -120,20 +120,20 @@ export const workSessionService: WorkSessionService = {
 				clockedOutBy: data.clockedOutBy || undefined,
 				duration: data.duration || undefined,
 				notes: data.notes || undefined,
-				sessionType: data.sessionType,
-			} as WorkSession;
+				attendanceType: data.attendanceType,
+			} as Attendance;
 		} catch (error) {
-			console.error("Error getting work session:", error);
+			console.error("Error getting work attendance:", error);
 			throw error;
 		}
 	},
 
-	updateWorkSession: async (
-		sessionId: string,
-		updates: Partial<WorkSession>
+	updateAttendance: async (
+		attendanceId: string,
+		updates: Partial<Attendance>
 	): Promise<void> => {
 		try {
-			const sessionDocRef = doc(db, "workSessions", sessionId);
+			const attendanceDocRef = doc(db, "attendance", attendanceId);
 
 			// Convert any Date objects to Timestamps
 			const firestoreUpdates: any = { ...updates };
@@ -151,33 +151,33 @@ export const workSessionService: WorkSessionService = {
 			// Always update the updatedAt timestamp
 			firestoreUpdates.updatedAt = Timestamp.now();
 
-			await updateDoc(sessionDocRef, firestoreUpdates);
+			await updateDoc(attendanceDocRef, firestoreUpdates);
 		} catch (error) {
-			console.error("Error updating work session:", error);
+			console.error("Error updating work attendance:", error);
 			throw error;
 		}
 	},
 
-	deleteWorkSession: async (sessionId: string): Promise<void> => {
+	deleteAttendance: async (attendanceId: string): Promise<void> => {
 		try {
-			const sessionDocRef = doc(db, "workSessions", sessionId);
-			await deleteDoc(sessionDocRef);
+			const attendanceDocRef = doc(db, "attendance", attendanceId);
+			await deleteDoc(attendanceDocRef);
 		} catch (error) {
-			console.error("Error deleting work session:", error);
+			console.error("Error deleting work attendance:", error);
 			throw error;
 		}
 	},
 
-	listWorkSessions: async (
+	listAttendances: async (
 		userId: string,
 		dateRange?: DateRange
-	): Promise<WorkSession[]> => {
+	): Promise<Attendance[]> => {
 		try {
-			const workSessionsRef = collection(db, "workSessions");
+			const attendanceRef = collection(db, "attendance");
 
 			// Base query: filter by userId and order by timeInAt descending (most recent first)
 			let q = query(
-				workSessionsRef,
+				attendanceRef,
 				where("userId", "==", userId),
 				orderBy("timeInAt", "desc")
 			);
@@ -185,7 +185,7 @@ export const workSessionService: WorkSessionService = {
 			// Apply date range filter if provided
 			if (dateRange) {
 				q = query(
-					workSessionsRef,
+					attendanceRef,
 					where("userId", "==", userId),
 					where("timeInAt", ">=", dateRange.startDate),
 					where("timeInAt", "<=", dateRange.endDate),
@@ -194,11 +194,11 @@ export const workSessionService: WorkSessionService = {
 			}
 
 			const querySnapshot = await getDocs(q);
-			const sessions: WorkSession[] = [];
+			const attendances: Attendance[] = [];
 
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				sessions.push({
+				attendances.push({
 					userId: data.userId,
 					branchId: data.branchId,
 					timeInAt: data.timeInAt,
@@ -207,25 +207,25 @@ export const workSessionService: WorkSessionService = {
 					clockedOutBy: data.clockedOutBy || undefined,
 					duration: data.duration || undefined,
 					notes: data.notes || undefined,
-					sessionType: data.sessionType,
+					attendanceType: data.attendanceType,
 				});
 			});
 
-			return sessions;
+			return attendances;
 		} catch (error) {
-			console.error("Error listing work sessions:", error);
+			console.error("Error listing work attendances:", error);
 			throw error;
 		}
 	},
 
 	// Additional utility methods for common operations
-	getActiveWorkSession: async (
+	getActiveAttendance: async (
 		userId: string
-	): Promise<(WorkSession & { id: string }) | null> => {
+	): Promise<(Attendance & { id: string }) | null> => {
 		try {
-			const workSessionsRef = collection(db, "workSessions");
+			const attendanceRef = collection(db, "attendance");
 			const q = query(
-				workSessionsRef,
+				attendanceRef,
 				where("userId", "==", userId),
 				where("timeOutAt", "==", null),
 				orderBy("timeInAt", "desc"),
@@ -251,41 +251,41 @@ export const workSessionService: WorkSessionService = {
 				clockedOutBy: undefined,
 				duration: undefined,
 				notes: data.notes || undefined,
-				sessionType: data.sessionType,
-			} as WorkSession & { id: string };
+				attendanceType: data.attendanceType,
+			} as Attendance & { id: string };
 		} catch (error) {
-			console.error("Error getting active work session:", error);
+			console.error("Error getting active work attendance:", error);
 			throw error;
 		}
 	},
 
-	getRecentWorkSessions: async (
+	getRecentAttendances: async (
 		userId: string,
 		days: number = 7
-	): Promise<(WorkSession & { id: string })[]> => {
+	): Promise<(Attendance & { id: string })[]> => {
 		try {
-			const workSessionsRef = collection(db, "workSessions");
+			const attendanceRef = collection(db, "attendance");
 
-			// Calculate date range for recent sessions
+			// Calculate date range for recent attendances
 			const endDate = new Date();
 			const startDate = new Date();
 			startDate.setDate(endDate.getDate() - days);
 
 			const q = query(
-				workSessionsRef,
+				attendanceRef,
 				where("userId", "==", userId),
 				where("timeInAt", ">=", Timestamp.fromDate(startDate)),
 				where("timeInAt", "<=", Timestamp.fromDate(endDate)),
 				orderBy("timeInAt", "desc"),
-				limit(20) // Limit to 20 most recent sessions
+				limit(20) // Limit to 20 most recent attendances
 			);
 
 			const querySnapshot = await getDocs(q);
-			const sessions: (WorkSession & { id: string })[] = [];
+			const attendances: (Attendance & { id: string })[] = [];
 
 			querySnapshot.forEach((docSnapshot) => {
 				const data = docSnapshot.data();
-				sessions.push({
+				attendances.push({
 					id: docSnapshot.id,
 					userId: data.userId,
 					branchId: data.branchId,
@@ -295,27 +295,27 @@ export const workSessionService: WorkSessionService = {
 					clockedOutBy: data.clockedOutBy || undefined,
 					duration: data.duration || undefined,
 					notes: data.notes || undefined,
-					sessionType: data.sessionType,
+					attendanceType: data.attendanceType,
 				});
 			});
 
-			return sessions;
+			return attendances;
 		} catch (error) {
-			console.error("Error getting recent work sessions:", error);
+			console.error("Error getting recent work attendances:", error);
 			throw error;
 		}
 	},
 
-	getBranchWorkSessions: async (
+	getBranchAttendances: async (
 		branchId: string,
 		dateRange?: DateRange
-	): Promise<WorkSession[]> => {
+	): Promise<Attendance[]> => {
 		try {
-			const workSessionsRef = collection(db, "workSessions");
+			const attendanceRef = collection(db, "attendance");
 
 			// Base query: filter by branchId and order by timeInAt descending
 			let q = query(
-				workSessionsRef,
+				attendanceRef,
 				where("branchId", "==", branchId),
 				orderBy("timeInAt", "desc")
 			);
@@ -323,7 +323,7 @@ export const workSessionService: WorkSessionService = {
 			// Apply date range filter if provided
 			if (dateRange) {
 				q = query(
-					workSessionsRef,
+					attendanceRef,
 					where("branchId", "==", branchId),
 					where("timeInAt", ">=", dateRange.startDate),
 					where("timeInAt", "<=", dateRange.endDate),
@@ -332,11 +332,11 @@ export const workSessionService: WorkSessionService = {
 			}
 
 			const querySnapshot = await getDocs(q);
-			const sessions: WorkSession[] = [];
+			const attendances: Attendance[] = [];
 
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				sessions.push({
+				attendances.push({
 					userId: data.userId,
 					branchId: data.branchId,
 					timeInAt: data.timeInAt,
@@ -345,18 +345,18 @@ export const workSessionService: WorkSessionService = {
 					clockedOutBy: data.clockedOutBy || undefined,
 					duration: data.duration || undefined,
 					notes: data.notes || undefined,
-					sessionType: data.sessionType,
+					attendanceType: data.attendanceType,
 				});
 			});
 
-			return sessions;
+			return attendances;
 		} catch (error) {
-			console.error("Error getting branch work sessions:", error);
+			console.error("Error getting branch work attendances:", error);
 			throw error;
 		}
 	},
 
-	calculateSessionDuration: (
+	calculateAttendanceDuration: (
 		timeInAt: Timestamp,
 		timeOutAt?: Timestamp
 	): number => {
@@ -369,17 +369,17 @@ export const workSessionService: WorkSessionService = {
 		return Math.floor((timeOutAt.seconds - timeInAt.seconds) / 60); // Duration in minutes
 	},
 
-	getSessionsByDateRange: async (
+	getAttendancesByDateRange: async (
 		userId: string,
 		startDate: Date,
 		endDate: Date
-	): Promise<WorkSession[]> => {
+	): Promise<Attendance[]> => {
 		const dateRange: DateRange = {
 			startDate: Timestamp.fromDate(startDate),
 			endDate: Timestamp.fromDate(endDate),
 		};
 
-		return await workSessionService.listWorkSessions(userId, dateRange);
+		return await attendanceService.listAttendances(userId, dateRange);
 	},
 
 	// Time In/Out Operations
@@ -389,17 +389,17 @@ export const workSessionService: WorkSessionService = {
 		notes?: string
 	): Promise<string> => {
 		try {
-			// Create new work session
-			const sessionData: WorkSession = {
+			// Create new work attendance
+			const attendanceData: Attendance = {
 				userId,
 				branchId,
 				timeInAt: Timestamp.now(),
 				clockedInBy: userId, // In a real scenario, this would be the manager's ID
 				notes: notes || "",
-				sessionType: "scheduled",
+				attendanceType: "scheduled",
 			};
 
-			const sessionId = await workSessionService.createWorkSession(sessionData);
+			const attendanceId = await attendanceService.createAttendance(attendanceData);
 
 			// Update user's current status in users collection
 			const userDocRef = doc(db, "users", userId);
@@ -410,7 +410,7 @@ export const workSessionService: WorkSessionService = {
 				updatedAt: Timestamp.now(),
 			});
 
-			return sessionId;
+			return attendanceId;
 		} catch (error) {
 			console.error("Error timing in worker:", error);
 			throw error;
@@ -419,29 +419,29 @@ export const workSessionService: WorkSessionService = {
 
 	timeOutWorker: async (
 		userId: string,
-		sessionId: string,
+		attendanceId: string,
 		notes?: string
 	): Promise<void> => {
 		try {
 			const timeOutAt = Timestamp.now();
 
-			// Get the existing session to calculate duration
-			const session = await workSessionService.getWorkSession(sessionId);
-			if (!session) {
-				throw new Error("Work session not found");
+			// Get the existing attendance to calculate duration
+			const attendance = await attendanceService.getAttendance(attendanceId);
+			if (!attendance) {
+				throw new Error("Work attendance not found");
 			}
 
-			const duration = workSessionService.calculateSessionDuration(
-				session.timeInAt,
+			const duration = attendanceService.calculateAttendanceDuration(
+				attendance.timeInAt,
 				timeOutAt
 			);
 
-			// Update work session with time out data
-			await workSessionService.updateWorkSession(sessionId, {
+			// Update work attendance with time out data
+			await attendanceService.updateAttendance(attendanceId, {
 				timeOutAt,
 				clockedOutBy: userId, // In a real scenario, this would be the manager's ID
 				duration,
-				notes: notes || session.notes || "",
+				notes: notes || attendance.notes || "",
 			});
 
 			// Update user's current status in users collection

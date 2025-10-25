@@ -22,7 +22,7 @@ interface UserData {
 	name: string;
 	email: string;
 	roleAssignments: RoleAssignment[];
-	isAdmin: boolean;
+	isOwner: boolean;
 	createdAt?: Timestamp;
 	updatedAt?: Timestamp;
 }
@@ -31,7 +31,7 @@ interface CreateUserRequest {
 	name: string;
 	email: string;
 	password: string;
-	isAdmin?: boolean;
+	isOwner?: boolean;
 	roleAssignments?: RoleAssignment[];
 }
 
@@ -45,7 +45,7 @@ interface UserImportData {
 	name: string;
 	email: string;
 	password: string;
-	isAdmin?: boolean;
+	isOwner?: boolean;
 	roleAssignments?: RoleAssignment[];
 }
 
@@ -91,7 +91,7 @@ export const authService = {
 					name: data.name || "",
 					email: data.email || "",
 					roleAssignments: data.roleAssignments || [],
-					isAdmin: data.isAdmin || false,
+					isOwner: data.isOwner || false,
 					createdAt: data.createdAt,
 					updatedAt: data.updatedAt,
 				} as UserData;
@@ -206,29 +206,29 @@ export const authService = {
 		}
 	},
 
-	// Admin operations
-	promoteToAdmin: async (userId: string): Promise<void> => {
+	// Owner operations
+	promoteToOwner: async (userId: string): Promise<void> => {
 		try {
 			const userDocRef = doc(db, "users", userId);
 			await updateDoc(userDocRef, {
-				isAdmin: true,
+				isOwner: true,
 				updatedAt: Timestamp.now(),
 			});
 		} catch (error) {
-			console.error("Error promoting user to admin:", error);
+			console.error("Error promoting user to owner:", error);
 			throw error;
 		}
 	},
 
-	demoteFromAdmin: async (userId: string): Promise<void> => {
+	demoteFromOwner: async (userId: string): Promise<void> => {
 		try {
 			const userDocRef = doc(db, "users", userId);
 			await updateDoc(userDocRef, {
-				isAdmin: false,
+				isOwner: false,
 				updatedAt: Timestamp.now(),
 			});
 		} catch (error) {
-			console.error("Error demoting user from admin:", error);
+			console.error("Error demoting user from owner:", error);
 			throw error;
 		}
 	},
@@ -239,7 +239,7 @@ export const authService = {
 		userData: {
 			name: string;
 			email: string;
-			isAdmin?: boolean;
+			isOwner?: boolean;
 			roleAssignments?: RoleAssignment[];
 			phoneNumber?: string;
 			employeeId?: string;
@@ -271,7 +271,7 @@ export const authService = {
 				email: userData.email,
 				phoneNumber: userData.phoneNumber || "",
 				employeeId: userData.employeeId || "",
-				isAdmin: userData.isAdmin || false,
+				isOwner: userData.isOwner || false,
 				roleAssignments: processedRoleAssignments,
 				isActive: true,
 				createdAt: Timestamp.now(),
@@ -281,8 +281,8 @@ export const authService = {
 				twoFactorEnabled: false,
 			};
 
-			// Only add currentStatus for non-admin users (avoid undefined)
-			if (!userData.isAdmin) {
+			// Only add currentStatus for non-owner users (avoid undefined)
+			if (!userData.isOwner) {
 				userDoc.currentStatus = "clocked_out";
 			}
 
@@ -451,7 +451,7 @@ export const authService = {
 				await authService.createUserProfile(userCredential.user.uid, {
 					name: userData.name,
 					email: userData.email,
-					isAdmin: userData.isAdmin || false,
+					isOwner: userData.isOwner || false,
 					roleAssignments: userData.roleAssignments || [],
 				});
 

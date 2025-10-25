@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService, WorkSession } from "@/services/workSessionService";
+import { attendanceService, Attendance } from "@/services/attendanceService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
 import { Timestamp } from "firebase/firestore";
@@ -31,7 +31,7 @@ interface SummaryMetrics {
 		workerId: string;
 		workerName: string;
 		totalHours: number;
-		sessionsCount: number;
+		attendancesCount: number;
 		punctualityScore: number;
 	}>;
 	timeDistribution: Array<{
@@ -87,18 +87,18 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			});
 
 			// Collect all work sessions for filtered workers
-			const allSessions = [];
+			const allAttendances = [];
 			for (const worker of filteredWorkers) {
 				try {
 					const sessions =
-						(await workSessionService.listWorkSessions(worker.id, {
+						(await attendanceService.listAttendances(worker.id, {
 							startDate: Timestamp.fromDate(filters.dateRange.startDate),
 							endDate: Timestamp.fromDate(filters.dateRange.endDate),
 						})) || [];
 
-					allSessions.push(
-						...sessions.map((session) => ({
-							...session,
+					allAttendances.push(
+						...sessions.map((attendance) => ({
+							...attendance,
 							workerId: worker.id,
 							workerName: worker.name,
 						}))
@@ -109,7 +109,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			}
 
 			// Calculate summary metrics
-			const metrics = calculateSummaryMetrics(filteredWorkers, allSessions);
+			const metrics = calculateSummaryMetrics(filteredWorkers, allAttendances);
 			setSummaryMetrics(metrics);
 		} catch (err: unknown) {
 			console.error("Error generating summary report:", err);
@@ -127,22 +127,22 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 	const calculateSummaryMetrics = useCallback((
 		workers: Worker[],
-		sessions: (WorkSession & { workerId: string; workerName: string })[]
+		attendances: (Attendance & { workerId: string; workerName: string })[]
 	): SummaryMetrics => {
 		const totalWorkers = workers.length;
 
 		// Calculate total hours
-		const totalHours = sessions.reduce((sum, session) => {
-			if (session.duration) {
-				return sum + session.duration / 60; // Convert minutes to hours
+		const totalHours = attendances.reduce((sum, attendance) => {
+			if (attendance.duration) {
+				return sum + attendance.duration / 60; // Convert minutes to hours
 			}
-			if (session.timeInAt && session.timeOutAt) {
-				const startTime = session.timeInAt instanceof Timestamp 
-					? session.timeInAt.toDate()
-					: session.timeInAt;
-				const endTime = session.timeOutAt instanceof Timestamp
-					? session.timeOutAt.toDate()
-					: session.timeOutAt;
+			if (attendance.timeInAt && attendance.timeOutAt) {
+				const startTime = attendance.timeInAt instanceof Timestamp
+					? attendance.timeInAt.toDate()
+					: attendance.timeInAt;
+				const endTime = attendance.timeOutAt instanceof Timestamp
+					? attendance.timeOutAt.toDate()
+					: attendance.timeOutAt;
 				return (
 					sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 				);
@@ -150,8 +150,8 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			return sum;
 		}, 0);
 
-		// Active workers (workers with sessions in date range)
-		const activeWorkerIds = new Set(sessions.map((s) => s.workerId));
+		// Active workers (workers with attendances in date range)
+		const activeWorkerIds = new Set(attendances.map((s) => s.workerId));
 		const activeWorkers = activeWorkerIds.size;
 
 		// Average hours per worker
@@ -159,13 +159,13 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			totalWorkers > 0 ? totalHours / totalWorkers : 0;
 
 		// Branch coverage
-		const branchCoverage = calculateBranchCoverage(sessions);
+		const branchCoverage = calculateBranchCoverage(attendances);
 
 		// Top performers
-		const topPerformers = calculateTopPerformers(workers, sessions);
+		const topPerformers = calculateTopPerformers(workers, attendances);
 
 		// Time distribution (hourly clock-ins/outs)
-		const timeDistribution = calculateTimeDistribution(sessions);
+		const timeDistribution = calculateTimeDistribution(attendances);
 
 		return {
 			totalWorkers,
@@ -178,26 +178,26 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		};
 	}, [allBranches]);
 
-	const calculateBranchCoverage = (sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
+	const calculateBranchCoverage = (attendances: (Attendance & { workerId: string; workerName: string })[]) => {
 		const branchMap = new Map();
 
-		sessions.forEach((session) => {
-			if (!branchMap.has(session.branchId)) {
-				branchMap.set(session.branchId, {
-					branchId: session.branchId,
-					branchName: getBranchName(session.branchId),
+		attendances.forEach((attendance) => {
+			if (!branchMap.has(attendance.branchId)) {
+				branchMap.set(attendance.branchId, {
+					branchId: attendance.branchId,
+					branchName: getBranchName(attendance.branchId),
 					workerIds: new Set(),
 					totalHours: 0,
 					sessionsCount: 0,
 				});
 			}
 
-			const branch = branchMap.get(session.branchId);
-			branch.workerIds.add(session.workerId);
+			const branch = branchMap.get(attendance.branchId);
+			branch.workerIds.add(attendance.workerId);
 			branch.sessionsCount++;
 
-			if (session.duration) {
-				branch.totalHours += session.duration / 60;
+			if (attendance.duration) {
+				branch.totalHours += attendance.duration / 60;
 			}
 		});
 
@@ -213,7 +213,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		}));
 	};
 
-	const calculateTopPerformers = (workers: Worker[], sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
+	const calculateTopPerformers = (workers: Worker[], attendances: (Attendance & { workerId: string; workerName: string })[]) => {
 		const workerMap = new Map();
 
 		// Initialize worker data
@@ -227,21 +227,21 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			});
 		});
 
-		// Aggregate session data
-		sessions.forEach((session) => {
-			const workerData = workerMap.get(session.workerId);
+		// Aggregate attendance data
+		attendances.forEach((attendance) => {
+			const workerData = workerMap.get(attendance.workerId);
 			if (workerData) {
 				workerData.sessionsCount++;
 
-				if (session.duration) {
-					workerData.totalHours += session.duration / 60;
+				if (attendance.duration) {
+					workerData.totalHours += attendance.duration / 60;
 				}
 
 				// Simple punctuality check (on-time if clocked in within 15 minutes of hour)
-				if (session.timeInAt) {
-					const startTime = session.timeInAt instanceof Timestamp
-						? session.timeInAt.toDate()
-						: session.timeInAt;
+				if (attendance.timeInAt) {
+					const startTime = attendance.timeInAt instanceof Timestamp
+						? attendance.timeInAt.toDate()
+						: attendance.timeInAt;
 					const minutes = startTime.getMinutes();
 					if (minutes <= 15 || minutes >= 45) {
 						workerData.onTimeSessions++;
@@ -263,25 +263,25 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			.slice(0, 5);
 	};
 
-	const calculateTimeDistribution = (sessions: (WorkSession & { workerId: string; workerName: string })[]) => {
+	const calculateTimeDistribution = (attendances: (Attendance & { workerId: string; workerName: string })[]) => {
 		const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
 			hour,
 			clockInsCount: 0,
 			clockOutsCount: 0,
 		}));
 
-		sessions.forEach((session) => {
-			if (session.timeInAt) {
-				const startTime = session.timeInAt instanceof Timestamp
-					? session.timeInAt.toDate()
-					: session.timeInAt;
+		attendances.forEach((attendance) => {
+			if (attendance.timeInAt) {
+				const startTime = attendance.timeInAt instanceof Timestamp
+					? attendance.timeInAt.toDate()
+					: attendance.timeInAt;
 				hourlyData[startTime.getHours()].clockInsCount++;
 			}
 
-			if (session.timeOutAt) {
-				const endTime = session.timeOutAt instanceof Timestamp
-					? session.timeOutAt.toDate()
-					: session.timeOutAt;
+			if (attendance.timeOutAt) {
+				const endTime = attendance.timeOutAt instanceof Timestamp
+					? attendance.timeOutAt.toDate()
+					: attendance.timeOutAt;
 				hourlyData[endTime.getHours()].clockOutsCount++;
 			}
 		});
@@ -350,11 +350,11 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			],
 			[""],
 			["Top Performers"],
-			["Name", "Hours", "Sessions", "Punctuality"],
+			["Name", "Hours", "Attendance", "Punctuality"],
 			...summaryMetrics.topPerformers.map((p) => [
 				p.workerName,
 				formatHours(p.totalHours),
-				p.sessionsCount,
+				p.attendancesCount,
 				`${p.punctualityScore}%`,
 			]),
 		];
@@ -573,7 +573,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 																		{performer.workerName}
 																	</div>
 																	<div className='text-sm text-gray-600'>
-																		{performer.sessionsCount} sessions •{" "}
+																		{performer.attendancesCount} attendances •{" "}
 																		{performer.punctualityScore}% punctuality
 																	</div>
 																</div>

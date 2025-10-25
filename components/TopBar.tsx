@@ -27,7 +27,7 @@ export default function TopBar({
 }: TopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
-	const { user, isUserAdmin } = useAuth();
+	const { user, isUserOwner } = useAuth();
 	const { currentBranch } = useBranch();
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
@@ -51,10 +51,10 @@ export default function TopBar({
 
 	// Handle time tracking actions
 	const handleTimeTrackingClick = async () => {
-		// Admins are exempt from time tracking since they're not assigned to branches
-		const isExemptAdmin = timeTracking.worker?.isAdmin;
+		// Owners are exempt from time tracking since they're not assigned to branches
+		const isExemptOwner = timeTracking.worker?.isOwner;
 
-		if (!timeTracking.worker || isExemptAdmin || isTimeTracking) return;
+		if (!timeTracking.worker || isExemptOwner || isTimeTracking) return;
 
 		setIsTimeTracking(true);
 		try {
@@ -96,15 +96,15 @@ export default function TopBar({
 						</div>
 					</div>
 
-					{/* Admin Badge */}
-					{isUserAdmin() && (
+					{/* Owner Badge */}
+					{isUserOwner() && (
 						<div className='flex-shrink-0'>
 							<div className='h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-[12px] lg:text-[14px] '>
 								<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-lg font-bold'>
-									A
+									O
 								</span>
 								<span className='text-[var(--secondary)] font-medium'>
-									Administrator
+									Owner
 								</span>
 							</div>
 						</div>
@@ -113,7 +113,7 @@ export default function TopBar({
 					{/* Work Status Badge - Only for workers and managers, not admins */}
 					{showTimeTracking &&
 						timeTracking.worker &&
-						!timeTracking.worker.isAdmin && (
+						!timeTracking.worker.isOwner && (
 							<div className='flex-shrink-0'>
 								<button
 									onClick={handleTimeTrackingClick}

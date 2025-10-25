@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { Worker } from "@/services/workerService";
-import { workSessionService, WorkSession } from "@/services/workSessionService";
+import { attendanceService, Attendance } from "@/services/attendanceService";
+import { branchService } from "@/services/branchService";
 
-import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "../../../../../../components/LoadingSpinner";
 
-interface WorkSessionWithMetadata extends WorkSession {
+interface AttendanceWithMetadata extends Attendance {
 	id?: string;
 	branchName?: string;
 	totalMinutes?: number;
@@ -24,50 +25,79 @@ export default function WorkerDetailModal({
 	isOpen,
 	onClose,
 }: WorkerDetailModalProps) {
-	const [workSessions, setWorkSessions] = useState<WorkSessionWithMetadata[]>(
+	const [attendance, setAttendances] = useState<AttendanceWithMetadata[]>(
 		[]
 	);
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState<"details" | "sessions">("details");
+	const [branchMap, setBranchMap] = useState<Map<string, string>>(new Map());
 
 	useEffect(() => {
 		if (isOpen && worker) {
-			loadWorkerSessions();
+			loadAttendances();
+			loadBranchNames();
 		}
 	}, [isOpen, worker]);
 
-	const loadWorkerSessions = async () => {
+	const loadBranchNames = async () => {
+		if (!worker) return;
+
+		try {
+			// Get unique branch IDs from role assignments
+			const branchIds = Array.from(
+				new Set(worker.roleAssignments.map(assignment => assignment.branchId))
+			);
+
+			// Fetch branch names
+			const branchNameMap = new Map<string, string>();
+			
+			for (const branchId of branchIds) {
+				const branch = await branchService.getBranchById(branchId);
+				if (branch) {
+					branchNameMap.set(branchId, branch.name);
+				} else {
+					branchNameMap.set(branchId, `Branch ${branchId}`);
+				}
+			}
+
+			setBranchMap(branchNameMap);
+		} catch (error) {
+			console.error("Error loading branch names:", error);
+		}
+	};
+
+	const loadAttendances = async () => {
 		if (!worker) return;
 
 		try {
 			setLoading(true);
-			const sessions = await workSessionService.getSessionsByDateRange(
+			const attendances: Attendance[] = await attendanceService.getAttendancesByDateRange(
 				worker.id,
 				new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
 				new Date()
 			);
 
-			// Process sessions to add metadata
-			const processedSessions = sessions.map((session, index) => ({
-				...session,
+			// Process attendances to add metadata
+			const processedAttendances = attendances.map((attendance, index) => ({
+				...attendance,
 				id: `session-${index}`,
-				status: session.timeOutAt
+				status: attendance.timeOutAt
 					? "completed"
 					: ("active" as "active" | "completed"),
 				totalMinutes:
-					session.duration ||
-					(session.timeOutAt
-						? workSessionService.calculateSessionDuration(
-								session.timeInAt,
-								session.timeOutAt
+					attendance.duration ||
+					(attendance.timeOutAt
+						? attendanceService.calculateAttendanceDuration(
+								attendance.timeInAt,
+								attendance.timeOutAt
 						  )
 						: undefined),
-				branchName: `Branch ${session.branchId}`,
+				branchName: branchMap.get(attendance.branchId) || `Branch ${attendance.branchId}`,
 			}));
 
-			setWorkSessions(processedSessions);
+			setAttendances(processedAttendances);
 		} catch (error) {
-			console.error("Error loading worker sessions:", error);
+			console.error("Error loading attendances:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -103,18 +133,6 @@ export default function WorkerDetailModal({
 		}
 	};
 
-	const getRoleBadge = (role: string) => {
-		const baseClasses = "px-2 py-1 text-xs rounded-full font-medium";
-		switch (role) {
-			case "manager":
-				return `${baseClasses} bg-blue-100 text-blue-800`;
-			case "worker":
-				return `${baseClasses} bg-gray-100 text-gray-800`;
-			default:
-				return `${baseClasses} bg-gray-100 text-gray-600`;
-		}
-	};
-
 	if (!isOpen || !worker) return null;
 
 	return (
@@ -134,9 +152,9 @@ export default function WorkerDetailModal({
 							</h2>
 							<p className='text-[var(--secondary)] text-sm'>{worker.email}</p>
 						</div>
-						{worker.isAdmin && (
+						{worker.isOwner && (
 							<span className='bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 text-xs rounded-full font-medium'>
-								Administrator
+								Owner
 							</span>
 						)}
 					</div>
@@ -176,7 +194,7 @@ export default function WorkerDetailModal({
 								? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
 								: "text-[var(--secondary)] hover:text-[var(--secondary)]/60"
 						}`}>
-						Work Sessions (Last 30 Days)
+						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-[var(--secondary)]/10 text-[var(--secondary)]/50 text-xs">Last 30 Days</span>
 					</button>
 				</div>
 
@@ -248,13 +266,13 @@ export default function WorkerDetailModal({
 										{worker.roleAssignments.map((assignment, index) => (
 											<div
 												key={index}
-												className='flex items-center justify-between p-4 bg-[var(--secondary)]/50 rounded-lg'>
+												className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
-														{`Branch ${assignment.branchId}`}
+														{branchMap.get(assignment.branchId) || `Branch ${assignment.branchId}`}
 													</span>
-													<span className={getRoleBadge(assignment.role)}>
-														{assignment.role}
+													<span className='rounded-full bg-[var(--accent)] text-[var(--primary)] text-xs px-3 py-1 font-bold '>
+														{assignment.role.toUpperCase()}
 													</span>
 												</div>
 												<div className='flex items-center gap-2'>
@@ -283,14 +301,14 @@ export default function WorkerDetailModal({
 								<div className='flex items-center justify-center py-8'>
 									<LoadingSpinner size='lg' />
 								</div>
-							) : workSessions.length > 0 ? (
+							) : attendance.length > 0 ? (
 								<div className='space-y-3'>
-									{workSessions.map((session) => (
+									{attendance.map((session) => (
 										<div
 											key={
 												session.id || `${session.userId}-${session.timeInAt}`
 											}
-											className='flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'>
+											className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
 											<div className='space-y-1'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
@@ -299,8 +317,8 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															session.status === "active"
-																? "bg-green-100 text-green-800"
-																: "bg-gray-100 text-gray-800"
+																? "bg-[var(--success)]/80 text-[var(--primary)]"
+																: "bg-[var(--secondary)]/10 text-[var(--secondary)]/80"
 														}`}>
 														{session.status === "active"
 															? "In Progress"
@@ -328,13 +346,16 @@ export default function WorkerDetailModal({
 											</div>
 											<div className='text-right'>
 												{session.totalMinutes !== undefined ? (
-													<span className='font-medium text-blue-600'>
+													<span className='font-medium text-[var(--accent)]'>
 														{formatDuration(session.totalMinutes)}
 													</span>
 												) : (
-													<span className='text-gray-500 text-sm'>
-														In Progress
-													</span>
+													<div className='flex flex-row items-center gap-2'>
+														<div className='bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin' />
+														<span className='text-gray-500 text-sm'>
+															Working
+														</span>
+													</div>
 												)}
 											</div>
 										</div>

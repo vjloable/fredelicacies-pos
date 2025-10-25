@@ -45,7 +45,7 @@ export default function WorkerSettingsPage() {
 	};
 
 	// Don't show for admin users
-	if (!user || !timeTracking.worker || timeTracking.worker.isAdmin) {
+	if (!user || !timeTracking.worker || timeTracking.worker.isOwner) {
 		return (
 			<div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
 				<div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center'>
@@ -58,7 +58,7 @@ export default function WorkerSettingsPage() {
 					<p className='text-gray-600 text-sm'>
 						{!user
 							? "Please log in to access settings"
-							: "Admin users use the main settings page"}
+							: "Owner users use the main settings page"}
 					</p>
 				</div>
 			</div>
@@ -186,7 +186,7 @@ export default function WorkerSettingsPage() {
 									</div>
 								</div>
 
-								{timeTracking.isWorking && timeTracking.currentSession && (
+								{timeTracking.isWorking && timeTracking.currentAttendance && (
 									<>
 										<div>
 											<label className='text-sm font-medium text-gray-700'>
@@ -194,9 +194,9 @@ export default function WorkerSettingsPage() {
 											</label>
 											<div className='mt-1 text-gray-900'>
 												{new Date(
-													timeTracking.currentSession.timeInAt.toDate
-														? timeTracking.currentSession.timeInAt.toDate()
-														: timeTracking.currentSession.timeInAt
+													timeTracking.currentAttendance.timeInAt.toDate
+														? timeTracking.currentAttendance.timeInAt.toDate()
+														: timeTracking.currentAttendance.timeInAt
 												).toLocaleString()}
 											</div>
 										</div>

@@ -53,7 +53,7 @@ export default function QuickTimeWidget({
 	};
 
 	const formatWorkingTime = (): string => {
-		if (!timeTracking.currentSession || timeTracking.workingDuration === 0)
+		if (!timeTracking.currentAttendance || timeTracking.workingDuration === 0)
 			return "0m";
 
 		const hours = Math.floor(timeTracking.workingDuration / 60);
@@ -66,14 +66,14 @@ export default function QuickTimeWidget({
 	};
 
 	// Don't show for users without time tracking access
-	// (admins without manager role assignments are exempt)
-	const isExemptAdmin =
-		timeTracking.worker?.isAdmin &&
+	// (owners without manager role assignments are exempt)
+	const isExemptOwner =
+		timeTracking.worker?.isOwner &&
 		!timeTracking.worker.roleAssignments.some(
 			(assignment) => assignment.role === "manager"
 		);
 
-	if (!user || !timeTracking.worker || isExemptAdmin) {
+	if (!user || !timeTracking.worker || isExemptOwner) {
 		return null;
 	}
 

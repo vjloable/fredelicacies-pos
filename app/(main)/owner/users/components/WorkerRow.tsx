@@ -114,7 +114,7 @@ export default function WorkerRow({
 }: WorkerRowProps) {
 	// Permission checks
 	const canEdit =
-		currentUser.isAdmin ||
+		currentUser.isOwner ||
 		(currentUser.roleAssignments.some(
 			(assignment) => assignment.role === "manager"
 		) &&
@@ -125,9 +125,9 @@ export default function WorkerRow({
 				)
 			));
 
-	const canDelete = currentUser.isAdmin;
+	const canDelete = currentUser.isOwner;
 
-	const canTimeInOut = canEdit && !worker.isAdmin;
+	const canTimeInOut = canEdit && !worker.isOwner;
 
 	const formatDate = (date?: Date) => {
 		if (!date) return "Never";
@@ -143,7 +143,7 @@ export default function WorkerRow({
 		<tr
 			onClick={() => onRowClick?.(worker)}
 			className={`hover:bg-[var(--accent)]/10 cursor-pointer ${
-				!worker.isAdmin && worker.currentStatus === "clocked_in"
+				!worker.isOwner && worker.currentStatus === "clocked_in"
 					? "bg-green-50"
 					: ""
 			}`}>
@@ -184,9 +184,9 @@ export default function WorkerRow({
 			{/* Roles */}
 			<td className='px-6 py-4'>
 				<div className='flex gap-1'>
-					{worker.isAdmin && (
+					{worker.isOwner && (
 						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-[var(--accent)] text-[var(--primary)] min-w-[100px] text-shadow-md'>
-							Admin
+							Owner
 						</span>
 					)}
 					{worker.roleAssignments
@@ -202,6 +202,11 @@ export default function WorkerRow({
 								{String(assignment.role).charAt(0).toUpperCase() + String(assignment.role).slice(1)}
 							</span>
 						))}
+					{!worker.isOwner && (!worker.roleAssignments || worker.roleAssignments.length === 0) && (
+						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-orange-100 text-orange-800 min-w-[100px] text-center'>
+							Pending Approval
+						</span>
+					)}
 				</div>
 			</td>
 
@@ -222,7 +227,7 @@ export default function WorkerRow({
 
 			{/* Status */}
 			<td className='px-6 py-4 whitespace-nowrap'>
-				<StatusBadge status={worker.currentStatus} isAdmin={worker.isAdmin} />
+				<StatusBadge status={worker.currentStatus} isOwner={worker.isOwner} />
 			</td>
 
 			{/* Last Active */}

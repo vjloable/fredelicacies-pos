@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SetStateAction } from "react";
 import { subscribeToDiscounts, Discount, calculateDiscountAmount } from "@/services/discountService";
 import { Category } from "@/services/categoryService";
 import { formatCurrency } from "@/lib/currency_formatter";
@@ -32,15 +32,18 @@ export default function DiscountDropdown({
 
   // Subscribe to discounts from Firebase
   useEffect(() => {
-    const unsubscribe = subscribeToDiscounts((discountsData) => {
-      setDiscounts(discountsData);
-    });
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+    const loadDiscounts = async () => {
+      try {
+        // For now, we'll use a default branchId - you may want to get this from context or props
+        const branchId = "default"; // Replace with actual branchId
+        const discountsData = await subscribeToDiscounts(branchId);
+        setDiscounts(discountsData);
+      } catch (error) {
+        console.error("Error loading discounts:", error);
       }
     };
+
+    loadDiscounts();
   }, []);
 
   // Filter discounts based on input

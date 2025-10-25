@@ -19,8 +19,8 @@ export default function WaitingRoomPage() {
     }
 
     // If user already has access, redirect them
-    if (user.isAdmin || user.roleAssignments.length > 0) {
-      if (user.isAdmin) {
+    if (user.isOwner || user.roleAssignments.length > 0) {
+      if (user.isOwner) {
         router.push('/branches');
       } else {
         const branchId = user.roleAssignments[0]?.branchId;
@@ -118,7 +118,7 @@ export default function WaitingRoomPage() {
                       Waiting for Access Approval
                     </p>
                     <p className="text-xs text-yellow-700">
-                      Please contact your administrator or manager to assign you to a branch. 
+                      Please contact the owner or administrator to assign you to a branch. 
                       You will be able to access the system once your role has been configured.
                     </p>
                   </div>

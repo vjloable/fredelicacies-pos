@@ -15,7 +15,7 @@ import { authService } from "@/services/authService";
 export interface User extends FirebaseUser {
 	name?: string;
 	roleAssignments: RoleAssignment[];
-	isAdmin: boolean;
+	isOwner: boolean;
 }
 
 export interface RoleAssignment {
@@ -36,7 +36,8 @@ interface AuthContextType {
 	// Existing methods
 	getUserRoleForBranch: (branchId: string) => "manager" | "worker" | null;
 	getAssignedBranches: () => string[];
-	isUserAdmin: () => boolean;
+	isUserOwner: () => boolean;
+	isUserAdmin: () => boolean; // Backward compatibility
 	canAccessBranch: (branchId: string) => boolean;
 	refreshUserData: () => Promise<void>;
 
@@ -51,12 +52,12 @@ interface AuthContextType {
 	) => boolean;
 	canCreateWorker: () => boolean;
 	canDeleteWorker: () => boolean;
-	canAssignToAdmin: () => boolean;
+	canAssignToOwner: () => boolean;
 	hasWorkerManagementAccess: () => boolean;
 
 	// Role hierarchy helpers
-	getUserHierarchyLevel: () => "admin" | "manager" | "worker" | null;
-	canManageRole: (targetRole: "admin" | "manager" | "worker") => boolean;
+	getUserHierarchyLevel: () => "owner" | "manager" | "worker" | null;
+	canManageRole: (targetRole: "owner" | "manager" | "worker") => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						const extendedUser: User = {
 							...firebaseUser,
 							roleAssignments: userData.roleAssignments,
-							isAdmin: userData.isAdmin,
+							isOwner: userData.isOwner,
 							name: userData.name,
 						};
 						setUser(extendedUser);
@@ -160,13 +161,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			.map((assignment) => assignment.branchId);
 	};
 
+	const isUserOwner = () => {
+		return user?.isOwner || false;
+	};
+
+	// Backward compatibility
 	const isUserAdmin = () => {
-		return user?.isAdmin || false;
+		return user?.isOwner || false;
 	};
 
 	const canAccessBranch = (branchId: string) => {
 		if (!user) return false;
-		if (user.isAdmin) return true;
+		if (user.isOwner) return true;
 		return user.roleAssignments.some(
 			(assignment) =>
 				assignment.branchId === branchId && assignment.isActive !== false
@@ -180,7 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				const extendedUser: User = {
 					...user,
 					roleAssignments: userData.roleAssignments,
-					isAdmin: userData.isAdmin,
+					isOwner: userData.isOwner,
 				};
 				setUser(extendedUser);
 			}
@@ -190,8 +196,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	// Worker Management helper methods
 	const isManager = () => {
 		if (!user) return false;
-		// Admins are above managers in hierarchy, so they're not "managers"
-		if (user.isAdmin) return false;
+		// Owners are above managers in hierarchy, so they're not "managers"
+		if (user.isOwner) return false;
 		return user.roleAssignments.some(
 			(assignment) =>
 				assignment.role === "manager" && assignment.isActive !== false
@@ -200,8 +206,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const isWorker = () => {
 		if (!user) return false;
-		// Admins are never considered "workers" - they are above the hierarchy
-		if (user.isAdmin) return false;
+		// Owners are never considered "workers" - they are above the hierarchy
+		if (user.isOwner) return false;
 		// Check if user has any worker role assignments (but no manager roles)
 		const hasWorkerRole = user.roleAssignments.some(
 			(assignment) =>
@@ -217,16 +223,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const canManageWorkers = () => {
 		if (!user) return false;
-		return user.isAdmin || isManager();
+		return user.isOwner || isManager();
 	};
 
 	const getAccessibleBranches = () => {
 		if (!user) return [];
-		if (user.isAdmin) {
-			// Admins have access to all branches but are not assigned to specific branches
-			// They get access through their admin status, not through roleAssignments
+		if (user.isOwner) {
+			// Owners have access to all branches but are not assigned to specific branches
+			// They get access through their owner status, not through roleAssignments
 			// For now, return empty array since admins should not be assigned to specific branches
-			// In practice, admin access would be handled globally through branch service
+			// In practice, owner access would be handled globally through branch service
 			return [];
 		}
 		// Managers can only access branches they manage
@@ -244,8 +250,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	) => {
 		if (!user || !canManageWorkers()) return false;
 
-		// Admins can manage anyone
-		if (user.isAdmin) return true;
+		// Owners can manage anyone
+		if (user.isOwner) return true;
 
 		// Managers can only manage workers in their branches
 		const accessibleBranches = getAccessibleBranches();
@@ -260,28 +266,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const canDeleteWorker = () => {
 		if (!user) return false;
-		// Only admins can delete workers
-		return user.isAdmin;
+		// Only owners can delete workers
+		return user.isOwner;
 	};
 
-	const canAssignToAdmin = () => {
+	const canAssignToOwner = () => {
 		if (!user) return false;
-		// Only admins can assign admin roles
-		return user.isAdmin;
+		// Only owners can assign owner roles
+		return user.isOwner;
 	};
 
 	const hasWorkerManagementAccess = () => {
 		if (!user) return false;
 		// Workers cannot access worker management at all
-		return user.isAdmin || isManager();
+		return user.isOwner || isManager();
 	};
 
 	// Role hierarchy helpers
-	const getUserHierarchyLevel = (): "admin" | "manager" | "worker" | null => {
+	const getUserHierarchyLevel = (): "owner" | "manager" | "worker" | null => {
 		if (!user) return null;
 
-		// Admin is the highest level
-		if (user.isAdmin) return "admin";
+		// Owner is the highest level
+		if (user.isOwner) return "owner";
 
 		// Check for manager role
 		const hasManagerRole = user.roleAssignments.some(
@@ -301,14 +307,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	};
 
 	const canManageRole = (
-		targetRole: "admin" | "manager" | "worker"
+		targetRole: "owner" | "manager" | "worker"
 	): boolean => {
 		const currentLevel = getUserHierarchyLevel();
 		if (!currentLevel) return false;
 
-		// Hierarchy: admin > manager > worker
+		// Hierarchy: owner > manager > worker
 		// Each level can manage those below them
-		if (currentLevel === "admin") {
+		if (currentLevel === "owner") {
 			return targetRole === "manager" || targetRole === "worker";
 		}
 		if (currentLevel === "manager") {
@@ -327,7 +333,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		// Existing methods
 		getUserRoleForBranch,
 		getAssignedBranches,
-		isUserAdmin,
+		isUserOwner,
+		isUserAdmin, // Backward compatibility
 		canAccessBranch,
 		refreshUserData,
 		// Worker Management methods
@@ -338,7 +345,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		canManageWorker,
 		canCreateWorker,
 		canDeleteWorker,
-		canAssignToAdmin,
+		canAssignToOwner,
 		hasWorkerManagementAccess,
 		// Role hierarchy helpers
 		getUserHierarchyLevel,

@@ -10,6 +10,7 @@ interface AuthGuardProps {
 	requiredRole?: "manager" | "worker";
 	requiredBranch?: string;
 	adminOnly?: boolean;
+	ownerOnly?: boolean;
 }
 
 export default function AuthGuard({
@@ -17,12 +18,13 @@ export default function AuthGuard({
 	requiredRole,
 	requiredBranch,
 	adminOnly,
+	ownerOnly,
 }: AuthGuardProps) {
 	const {
 		loading,
 		isAuthenticated,
 		user,
-		isUserAdmin,
+		isUserOwner,
 		getUserRoleForBranch,
 		canAccessBranch,
 	} = useAuth();
@@ -35,14 +37,20 @@ export default function AuthGuard({
 		}
 
 		if (!loading && isAuthenticated && user) {
-			// Check if user has no role assignments and is not admin (needs approval)
-			if (!isUserAdmin() && user.roleAssignments.length === 0) {
+			// Check if user has no role assignments and is not owner (needs approval)
+			if (!isUserOwner() && user.roleAssignments.length === 0) {
 				router.push("/waiting-room");
 				return;
 			}
 
-			// Check admin-only access
-			if (adminOnly && !isUserAdmin()) {
+			// Check owner-only access
+			if (adminOnly && !isUserOwner()) {
+				router.push("/login");
+				return;
+			}
+
+			// Check owner-only access  
+			if (ownerOnly && !isUserOwner()) {
 				router.push("/login");
 				return;
 			}
@@ -70,10 +78,11 @@ export default function AuthGuard({
 		isAuthenticated,
 		user,
 		adminOnly,
+		ownerOnly,
 		requiredBranch,
 		requiredRole,
 		router,
-		isUserAdmin,
+		isUserOwner,
 		canAccessBranch,
 		getUserRoleForBranch,
 	]);
@@ -97,25 +106,38 @@ export default function AuthGuard({
 	}
 
 	// Check if user has no role assignments (should be handled by redirect, but just in case)
-	if (!isUserAdmin() && user.roleAssignments.length === 0) {
+	if (!isUserOwner() && user.roleAssignments.length === 0) {
 		return (
 			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
 				<div className='text-center'>
 					<p className='text-[var(--secondary)]'>
-						Your account is pending approval. Please wait for an administrator to assign you to a branch.
+						Your account is pending approval. Please wait for an administrator or owner to assign you to a branch.
 					</p>
 				</div>
 			</div>
 		);
 	}
 
-	// Check admin-only access after authentication
-	if (adminOnly && !isUserAdmin()) {
+	// Check owner-only access after authentication
+	if (adminOnly && !isUserOwner()) {
 		return (
 			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
 				<div className='text-center'>
 					<p className='text-[var(--secondary)]'>
-						Access denied. Admin privileges required.
+						Access denied. Owner privileges required.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Check owner-only access after authentication
+	if (ownerOnly && !isUserOwner()) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='text-center'>
+					<p className='text-[var(--secondary)]'>
+						Access denied. Owner privileges required.
 					</p>
 				</div>
 			</div>

@@ -16,15 +16,15 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const router = useRouter();
-	const { user, login, isUserAdmin } = useAuth();
+	const { user, login, isUserOwner } = useAuth();
 
 	useEffect(() => {
 		// If user is already logged in, redirect based on their role
 		if (user) {
-			if (isUserAdmin()) {
-				// Admin redirects to branch management
+			if (isUserOwner()) {
+				// Owner redirects to branch management
 				setIsLoading(false);
-				router.push("/admin/branches");
+				router.push("/owner/branches");
 			} else if (user.roleAssignments.length > 0) {
 				// Check if user has valid branch assignments
 				const branchId = user?.roleAssignments?.[0]?.branchId;
@@ -50,7 +50,7 @@ export default function LoginPage() {
 				router.push('/waiting-room');
 			}
 		}
-	}, [user, router, isUserAdmin]);
+	}, [user, router, isUserOwner]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();

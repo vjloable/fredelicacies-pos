@@ -56,7 +56,7 @@ export default function POSAccessGuard({
 					</div>
 
 					{/* Current Status */}
-					{timeTracking.worker && !timeTracking.worker.isAdmin && (
+					{timeTracking.worker && !timeTracking.worker.isOwner && (
 						<div className='mb-4 p-3 bg-gray-50 rounded-lg'>
 							<div className='flex items-center justify-between text-sm'>
 								<span className='text-gray-600'>Current Status:</span>
@@ -83,7 +83,7 @@ export default function POSAccessGuard({
 				{/* Time Widget */}
 				{showTimeWidget &&
 					timeTracking.worker &&
-					!timeTracking.worker.isAdmin && (
+					!timeTracking.worker.isOwner && (
 						<QuickTimeWidget currentBranchId={branchId} className='w-full' />
 					)}
 

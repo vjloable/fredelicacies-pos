@@ -44,6 +44,9 @@ export default function SalesScreen() {
 		profitMargin: 0,
 	});
 
+	// View mode toggle (recent orders vs analytics/graphs)
+	const [viewMode, setViewMode] = useState<"orders" | "analytics">("orders");
+
 	// Pagination state for orders table
 	const [currentPage, setCurrentPage] = useState(1);
 	const [ordersPerPage] = useState(10);
@@ -313,43 +316,82 @@ export default function SalesScreen() {
 						<TopBar title='Sales' icon={<SalesIcon />} />
 					</div>
 
+					{/* Control Bar */}
+					<div className='px-6 py-4'>
+						<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+							<div className='flex items-center gap-4 text-sm text-[var(--secondary)]/70'>
+								<span className='flex items-center gap-2'>
+									<span className='w-2 h-2 bg-[var(--accent)] rounded-full'></span>
+									{currentBranch?.name || "Loading..."}
+								</span>
+							</div>
+
+							<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
+								{/* View Toggle */}
+								<div className='flex bg-[var(--accent)]/20 rounded-lg p-1 border-[var(--accent)]/30 border w-full sm:w-auto'>
+									<button
+										onClick={() => setViewMode("orders")}
+										className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											viewMode === "orders"
+												? "bg-white text-[var(--secondary)] shadow-sm"
+												: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
+										}`}>
+										Recent Orders
+									</button>
+									<button
+										onClick={() => setViewMode("analytics")}
+										className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											viewMode === "analytics"
+												? "bg-white text-[var(--secondary)] shadow-sm"
+												: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
+										}`}>
+										Analytics
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					{/* Main Content */}
-					<div className='flex-1 overflow-y-auto pt-4'>
+					<div className='flex-1 overflow-y-auto'>
 						<div className='space-y-6'>
-							{/* Orders Table */}
-							<div className='bg-[var(--primary)] rounded-xl shadow-md mx-6'>
-								<div className='p-6 border-b border-gray-200'>
-									<div className='flex-1 flex-col items-center gap-4'>
-										<h3 className='text-lg font-semibold text-[var(--secondary)]'>
-											Recent Orders
-										</h3>
-										<div className='flex-1 items-center space-x-4 mt-4'>
-											<div className='relative'>
-												<input
-													type='text'
-													value={searchTerm}
-													onChange={(e) => {
-														setSearchTerm(e.target.value);
-														setCurrentPage(1); // Reset to first page when searching
-													}}
-													placeholder='Search orders...'
-													className={`w-full text-[12px] px-4 py-3 pr-12 border-2 border-[var(--secondary)]/20 bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
-														searchTerm ? "animate-pulse transition-all" : ""
-													}`}
-												/>
-												<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
-													{searchTerm ? (
-														<div className='size-[30px] border-[var(--accent)] border-y-2 rounded-full flex items-center justify-center animate-spin'></div>
-													) : (
-														<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
-															<SearchIcon className='mr-[2px] mb-[2px]' />
+							{viewMode === "orders" ? (
+								/* Recent Orders View */
+								<>
+									{/* Orders Table */}
+									<div className='bg-[var(--primary)] rounded-xl shadow-md mx-6'>
+										<div className='p-6 border-b border-gray-200'>
+											<div className='flex-1 flex-col items-center gap-4'>
+												<h3 className='text-lg font-semibold text-[var(--secondary)]'>
+													Recent Orders
+												</h3>
+												<div className='flex-1 items-center space-x-4 mt-4'>
+													<div className='relative'>
+														<input
+															type='text'
+															value={searchTerm}
+															onChange={(e) => {
+																setSearchTerm(e.target.value);
+																setCurrentPage(1); // Reset to first page when searching
+															}}
+															placeholder='Search orders...'
+															className={`w-full text-[12px] px-4 py-3 pr-12 border-2 border-[var(--secondary)]/20 bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
+																searchTerm ? "animate-pulse transition-all" : ""
+															}`}
+														/>
+														<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+															{searchTerm ? (
+																<div className='size-[30px] border-[var(--accent)] border-y-2 rounded-full flex items-center justify-center animate-spin'></div>
+															) : (
+																<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
+																	<SearchIcon className='mr-[2px] mb-[2px]' />
+																</div>
+															)}
 														</div>
-													)}
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
-								</div>
 
 								<div className='overflow-x-auto rounded-lg'>
 									<table className='w-full'>
@@ -567,11 +609,14 @@ export default function SalesScreen() {
 									</div>
 								)}
 							</div>
-
+						</>
+					) : (
+						/* Analytics View */
+						<>
 							{/* Controls Section */}
-							<div className='px-12 py-4 bg-[var(--primary)] shadow-md'>
-								<div className='flex items-center justify-between'>
-									<div className='flex items-center gap-2'>
+							<div className='px-4 lg:px-12 py-4 bg-[var(--primary)] shadow-md mx-6 rounded-xl'>
+								<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+									<div className='flex flex-col sm:flex-row sm:items-center gap-2'>
 										<span className='text-sm font-medium text-[var(--secondary)]/50'>
 											Time Period:
 										</span>
@@ -581,24 +626,24 @@ export default function SalesScreen() {
 													<button
 														key={period}
 														onClick={() => setViewPeriod(period)}
-														className={`px-4 py-2 text-sm rounded-md transition-colors border-1 border-transparent ${
+														className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-md transition-colors border-1 border-transparent ${
 															viewPeriod === period
 																? "bg-[var(--accent)] text-[var(--primary)] text-shadow-md font-bold"
 																: "font-medium hover:border-1 hover:border-[var(--accent)] text-[var(--secondary)]/50 hover:text-[var(--secondary)] hover:bg-text-[var(--secondary)]/80"
 														}`}>
 														{period === "day"
-															? "Last 24 Hours"
+															? "24 Hours"
 															: period === "week"
-															? "Last 7 Days"
-															: "Last 30 Days"}
+															? "7 Days"
+															: "30 Days"}
 													</button>
 												)
 											)}
 										</div>
 									</div>
-									<div className='text-right'>
+									<div className='text-left lg:text-right'>
 										<p className='text-xs text-gray-400'>Live Data</p>
-										<span className='flex items-center justify-end'>
+										<span className='flex items-center lg:justify-end'>
 											<div className='bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin' />
 											<p className='ml-2 text-sm text-[var(--success)] drop-shadow-md'>
 												Real-time ({allOrders.length} orders)
@@ -621,8 +666,9 @@ export default function SalesScreen() {
 													: "30 Days"}{" "}
 												Revenue
 											</p>
-											<p className='text-2xl font-bold text-[var(--secondary)]'>
-												{formatCurrency(currentPeriodStats.totalRevenue)}
+											<p className='text-2xl text-[var(--secondary)]'>
+												<span className='font-regular text-xl mr-1'>₱</span>
+												<span className='font-semibold'>{formatCurrency(currentPeriodStats.totalRevenue).slice(1)}</span>
 											</p>
 										</div>
 										<div className='w-12 h-12 bg-[var(--light-accent)] rounded-lg flex items-center justify-center'>
@@ -719,7 +765,7 @@ export default function SalesScreen() {
 
 							{/* Main Chart */}
 							<div className='bg-[var(--primary)] p-6 rounded-xl shadow-md mx-6'>
-								<div className='flex items-center justify-between mb-6'>
+								<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
 									<div>
 										<h3 className='text-lg font-semibold text-[var(--secondary)]'>
 											{viewPeriod === "day"
@@ -734,7 +780,7 @@ export default function SalesScreen() {
 												: "Daily performance trends"}
 										</p>
 									</div>
-									<div className='flex items-center space-x-4'>
+									<div className='flex items-center space-x-4 flex-wrap gap-2'>
 										<div className='flex items-center space-x-2'>
 											<div className='w-3 h-3 bg-[var(--secondary)] rounded-full'></div>
 											<span className='text-xs text-gray-400'>Orders</span>
@@ -810,12 +856,14 @@ export default function SalesScreen() {
 									</ResponsiveContainer>
 								</div>
 							</div>
+						</>
+					)}
 
-							<div className='h-[100px]' />
-						</div>
+					<div className='h-[100px]' />
 					</div>
 				</div>
 			</div>
+		</div>
 		</ViewOnlyWrapper>
 	);
 }

@@ -70,8 +70,8 @@ export default function ViewBranchModal({
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                 branch.isActive 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-[var(--success)]/80 text-[var(--primary)]' 
+                  : 'bg-[var(--error)]/80 text-[var(--primary)]'
               }`}>
                 {branch.isActive ? 'Active' : 'Inactive'}
               </div>
@@ -93,14 +93,14 @@ export default function ViewBranchModal({
             {/* Branch ID */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                   </svg>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-[var(--secondary)]">Branch ID</p>
-                  <p className="text-xs text-[var(--secondary)] opacity-70 font-mono bg-gray-100 px-2 py-1 rounded mt-1">
+                  <p className="text-xs text-[var(--secondary)] opacity-70">
                     {branch.id}
                   </p>
                 </div>
@@ -110,8 +110,8 @@ export default function ViewBranchModal({
             {/* Creation Date */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
@@ -127,8 +127,8 @@ export default function ViewBranchModal({
             {/* Last Updated */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </div>
@@ -136,7 +136,7 @@ export default function ViewBranchModal({
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-[var(--secondary)]">Last Updated</p>
                     {isRecent && (
-                      <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Recent</span>
+                      <span className="bg-[var(--secondary)]/10 text-[var(--secondary)]/80 text-[10px] px-2 py-0.2 rounded-full">Recent</span>
                     )}
                   </div>
                   <p className="text-xs text-[var(--secondary)] opacity-70">
@@ -145,17 +145,16 @@ export default function ViewBranchModal({
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="bg-gradient-to-r from-[var(--light-accent)] to-yellow-50 rounded-xl p-4 border border-yellow-200">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-[var(--primary)]" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
+            {/* Quick Stats */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
                 <p className="text-sm font-medium text-[var(--secondary)]">Branch Operations</p>
                 <p className="text-xs text-[var(--secondary)] opacity-70">
                   {branch.isActive 
@@ -163,6 +162,7 @@ export default function ViewBranchModal({
                     : 'Operations suspended - branch requires activation to resume business activities'
                   }
                 </p>
+              </div>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function ViewBranchModal({
           </button>
           <button
             onClick={onEdit}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -187,7 +187,7 @@ export default function ViewBranchModal({
           </button>
           <button
             onClick={onDelete}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-[var(--error)] hover:bg-[var(--error)] text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

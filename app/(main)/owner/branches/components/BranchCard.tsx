@@ -100,9 +100,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onDelete(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--error)]/20 text-white font-semibold hover:bg-[var(--error)] transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--error)]/10 text-white font-semibold hover:bg-[var(--error)] transition-colors text-xs sm:text-sm flex items-center justify-center'
 								title='Delete Branch'>
-								<DeleteBranchIcon className='w-7 h-7 text-[var(--error)] group-hover:text-[var(--primary)]' />
+								<DeleteBranchIcon className='w-7 h-7 text-[var(--error)]/80 group-hover:text-[var(--primary)]' />
 							</button>
 						)}
 						{onView && (
@@ -110,7 +110,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onView(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--secondary)]/20 text-white font-semibold hover:bg-[var(--secondary)] transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--secondary)]/10 text-white font-semibold hover:bg-[var(--secondary)] transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
 								title='View Branch Details'>
 								<ViewBranchIcon className='w-7 h-7 text-[var(--secondary)] group-hover:text-[var(--primary)]' />
 							</button>

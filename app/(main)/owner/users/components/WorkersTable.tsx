@@ -76,8 +76,8 @@ export default function WorkersTable({
 				<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
 					No Workers Found
 				</h3>
-				<p className='text-[var(--secondary)]/50'>
-					No workers match your current filters. Try adjusting your search featcriteria.
+				<p className='text-[var(--secondary)]/50 text-sm'>
+					No workers match your current filters. Try adjusting your search feature criteria.
 				</p>
 			</div>
 		);

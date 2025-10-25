@@ -8,7 +8,7 @@ interface AssignBranchModalProps {
 	worker: Worker | null;
 	branches: Branch[];
 	userAccessibleBranches: string[];
-	isAdmin: boolean;
+	isOwner: boolean;
 	onClose: () => void;
 	onSuccess: () => void;
 }
@@ -18,7 +18,7 @@ export default function AssignBranchModal({
 	worker,
 	branches,
 	userAccessibleBranches,
-	isAdmin,
+	isOwner,
 	onClose,
 	onSuccess,
 }: AssignBranchModalProps) {
@@ -32,7 +32,7 @@ export default function AssignBranchModal({
 	);
 
 	// Get available branches based on user permissions
-	const availableBranches = isAdmin
+	const availableBranches = isOwner
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
@@ -67,8 +67,8 @@ export default function AssignBranchModal({
 
 		if (!worker) return;
 
-		if (!selectedBranchId && !worker.isAdmin) {
-			setError("Worker must be assigned to a branch or be an admin");
+		if (!selectedBranchId && !worker.isOwner) {
+			setError("Worker must be assigned to a branch or be an owner");
 			return;
 		}
 
@@ -117,7 +117,7 @@ export default function AssignBranchModal({
 	if (!isOpen || !worker) return null;
 
 	// Prevent assigning branches to admins
-	if (worker.isAdmin) {
+	if (worker.isOwner) {
 		return (
 			<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl'>
@@ -235,7 +235,7 @@ export default function AssignBranchModal({
 								<div>
 									<div className='font-medium text-[var(--secondary)]'>{worker.name}</div>
 									<div className='text-sm text-[var(--secondary)]/50'>{worker.email}</div>
-									{worker.isAdmin && (
+									{worker.isOwner && (
 										<div className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]/80 mt-1'>
 											Admin
 										</div>
@@ -269,7 +269,7 @@ export default function AssignBranchModal({
 								<div>
 									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
 										Assign to Branch
-										{!worker.isAdmin && (
+										{!worker.isOwner && (
 											<span className='text-[var(--error)]/50 ml-1'>*</span>
 										)}
 									</label>
@@ -315,7 +315,7 @@ export default function AssignBranchModal({
 								<div>
 									<label className='block text-sm font-medium text-gray-700 mb-2'>
 										Role
-										{!worker.isAdmin && (
+										{!worker.isOwner && (
 											<span className='text-[var(--error)]/50 ml-1'>*</span>
 										)}
 									</label>

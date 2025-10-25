@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
-import { workSessionService } from "@/services/workSessionService";
+import { Attendance, attendanceService } from "@/services/attendanceService";
 import { subscribeToWorker } from "@/stores/dataStore";
 
 interface TimeTrackingOptions {
@@ -20,7 +20,7 @@ interface TimeTrackingOptions {
 interface TimeTrackingState {
 	worker: Worker | null;
 	isWorking: boolean;
-	currentSession: any | null;
+	currentAttendance: any | null;
 	workingDuration: number; // in minutes
 	loading: boolean;
 	error: string | null;
@@ -68,19 +68,17 @@ export function TimeTrackingProvider({
 	const [state, setState] = useState<TimeTrackingState>({
 		worker: null,
 		isWorking: false,
-		currentSession: null,
+		currentAttendance: null,
 		workingDuration: 0,
 		loading: true,
 		error: null,
 	});
 
 	// Calculate working duration
-	const calculateDuration = useCallback((session: any): number => {
-		if (!session || !session.timeInAt) return 0;
+	const calculateDuration = useCallback((attendance: Attendance): number => {
+		if (!attendance || !attendance.timeInAt) return 0;
 
-		const startTime = session.timeInAt.toDate
-			? session.timeInAt.toDate()
-			: session.timeInAt;
+		const startTime = attendance.timeInAt.toDate();
 		const now = new Date();
 		return Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
 	}, []);
@@ -92,7 +90,7 @@ export function TimeTrackingProvider({
 				...prev,
 				worker: null,
 				isWorking: false,
-				currentSession: null,
+				currentAttendance: null,
 				workingDuration: 0,
 				loading: false,
 			}));
@@ -108,7 +106,7 @@ export function TimeTrackingProvider({
 						...prev,
 						worker: null,
 						isWorking: false,
-						currentSession: null,
+						currentAttendance: null,
 						workingDuration: 0,
 						loading: false,
 					}));
@@ -116,35 +114,35 @@ export function TimeTrackingProvider({
 				}
 
 				const isWorking = workerData.currentStatus === "clocked_in";
-				let currentSession = null;
+				let currentAttendance = null;
 				let workingDuration = 0;
 
-				// Admins don't need time tracking since they're not assigned to branches
-				const needsTimeTracking = !workerData.isAdmin;
+				// Owners don't need time tracking since they're not assigned to branches
+				const needsTimeTracking = !workerData.isOwner;
 
 				if (isWorking && needsTimeTracking) {
 					try {
-						currentSession = await workSessionService.getActiveWorkSession(
+						currentAttendance = await attendanceService.getActiveAttendance(
 							user.uid
 						);
-						if (currentSession) {
-							workingDuration = calculateDuration(currentSession);
+						if (currentAttendance) {
+							workingDuration = calculateDuration(currentAttendance);
 						}
-					} catch (sessionError) {
-						console.warn("Could not fetch active session:", sessionError);
+					} catch (attendanceError) {
+						console.warn("Could not fetch active attendance:", attendanceError);
 					}
 				}
 
 				console.log("TimeTracking Update:", {
 					workerData,
 					isWorking,
-					currentSession,
+					currentAttendance,
 					workingDuration,
 				});
 				setState({
 					worker: workerData,
 					isWorking,
-					currentSession,
+					currentAttendance,
 					workingDuration,
 					loading: false,
 					error: null,
@@ -169,19 +167,19 @@ export function TimeTrackingProvider({
 		if (!user || !state.worker || !state.isWorking) return;
 
 		try {
-			const currentSession = await workSessionService.getActiveWorkSession(
+			const currentAttendance = await attendanceService.getActiveAttendance(
 				user.uid
 			);
-			if (currentSession) {
-				const workingDuration = calculateDuration(currentSession);
+			if (currentAttendance) {
+				const workingDuration = calculateDuration(currentAttendance);
 				setState((prev) => ({
 					...prev,
-					currentSession,
+					currentAttendance,
 					workingDuration,
 				}));
 			}
 		} catch (err: any) {
-			console.warn("Could not refresh current session:", err);
+			console.warn("Could not refresh current attendance:", err);
 		}
 	}, [user, state.worker, state.isWorking, calculateDuration]);
 
@@ -192,17 +190,17 @@ export function TimeTrackingProvider({
 				throw new Error("Unable to clock in");
 			}
 
-			// Admins don't use time tracking
-			if (state.worker.isAdmin) {
+			// Owners don't use time tracking
+			if (state.worker.isOwner) {
 				throw new Error(
-					"Admins don't need to clock in - you have global access"
+					"Owners don't need to clock in - you have global access"
 				);
 			}
 
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await workSessionService.timeInWorker(
+				await attendanceService.timeInWorker(
 					user.uid,
 					branchId,
 					notes || `Clock-in via POS at ${new Date().toLocaleString()}`
@@ -227,15 +225,15 @@ export function TimeTrackingProvider({
 			if (!state.worker) {
 				throw new Error("Unable to clock out - no worker data");
 			}
-			if (!state.currentSession) {
-				throw new Error("Unable to clock out - no active session");
+			if (!state.currentAttendance) {
+				throw new Error("Unable to clock out - no active attendance");
 			}
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await workSessionService.timeOutWorker(
+				await attendanceService.timeOutWorker(
 					user.uid,
-					state.currentSession.id || user.uid,
+					state.currentAttendance.id || user.uid,
 					notes || `Clock-out via POS at ${new Date().toLocaleString()}`
 				);
 
@@ -246,7 +244,7 @@ export function TimeTrackingProvider({
 				throw new Error(errorMessage);
 			}
 		},
-		[user, state.worker, state.currentSession]
+		[user, state.worker, state.currentAttendance]
 	);
 
 	// Clear error
@@ -260,14 +258,14 @@ export function TimeTrackingProvider({
 
 		const interval = setInterval(() => {
 			// Update working duration without full refresh when working
-			if (state.currentSession) {
+			if (state.currentAttendance) {
 				setState((prev) => ({
 					...prev,
-					workingDuration: calculateDuration(state.currentSession),
+					workingDuration: calculateDuration(state.currentAttendance),
 				}));
 			}
 
-			// Occasionally refresh session data for accuracy
+			// Occasionally refresh attendance data for accuracy
 			if (Math.random() < 0.1) {
 				// 10% chance for session refresh
 				refreshStatus();
@@ -279,7 +277,7 @@ export function TimeTrackingProvider({
 		autoRefresh,
 		refreshInterval,
 		state.isWorking,
-		state.currentSession,
+		state.currentAttendance,
 		calculateDuration,
 		refreshStatus,
 	]);
@@ -307,8 +305,8 @@ export function usePOSAccessControl(branchId?: string) {
 	const canAccessPOS = useCallback(() => {
 		if (!user || !timeTracking.worker) return false;
 
-		// Admins always have full access to POS (no time tracking required)
-		if (timeTracking.worker.isAdmin) return true;
+		// Owners always have full access to POS (no time tracking required)
+		if (timeTracking.worker.isOwner) return true;
 
 		// Non-admin users must be clocked in to access POS
 		if (!timeTracking.isWorking) return false;
@@ -329,8 +327,8 @@ export function usePOSAccessControl(branchId?: string) {
 			return "Please log in to access the POS system";
 		}
 
-		// Admins have no access restrictions
-		if (timeTracking.worker.isAdmin) {
+		// Owners have no access restrictions
+		if (timeTracking.worker.isOwner) {
 			return null;
 		}
 

@@ -7,14 +7,14 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function RootPage() {
 	const router = useRouter();
-	const { user, loading, isAuthenticated, isUserAdmin } = useAuth();
+	const { user, loading, isAuthenticated, isUserOwner } = useAuth();
 
 	useEffect(() => {
 		if (!loading) {
 			if (isAuthenticated && user) {
-				// Check if user is admin
-				if (isUserAdmin()) {
-					router.push("/admin/branches");
+				// Check if user is owner
+				if (isUserOwner()) {
+					router.push("/owner/branches");
 					return;
 				}
 
@@ -32,7 +32,7 @@ export default function RootPage() {
 				router.push("/login");
 			}
 		}
-	}, [loading, isAuthenticated, user, isUserAdmin, router]);
+	}, [loading, isAuthenticated, user, isUserOwner, router]);
 
 	return (
 		<div className='flex flex-col items-center justify-center h-screen bg-[var(--background)]'>

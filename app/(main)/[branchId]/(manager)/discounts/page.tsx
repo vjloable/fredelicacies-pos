@@ -99,7 +99,7 @@ export default function DiscountsScreen() {
 	};
 
 	const getAppliesTo = (discount: Discount) => {
-		if (!discount.applies_to) return "All Items";
+		if (!discount.applies_to || discount.applies_to === "ALL CATEGORIES") return "ALL CATEGORIES";
 
 		const category = categories.find((cat) => cat.id === discount.applies_to);
 		return category ? category.name : "Unknown Category";
@@ -347,7 +347,7 @@ export default function DiscountsScreen() {
 																<div className='flex items-center justify-end gap-2'>
 																	<button
 																		onClick={() => handleEditDiscount(discount)}
-																		className='text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50'
+																		className='text-[var(--secondary)] p-1 rounded hover:bg-[var(--secondary)]/10'
 																		title='Edit discount'>
 																		<EditIcon />
 																	</button>
@@ -355,7 +355,7 @@ export default function DiscountsScreen() {
 																		onClick={() =>
 																			handleDeleteDiscount(discount)
 																		}
-																		className='text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50'
+																		className='text-[var(--error)] p-1 rounded hover:bg-[var(--error)]/10'
 																		title='Delete discount'>
 																		<DeleteIcon />
 																	</button>

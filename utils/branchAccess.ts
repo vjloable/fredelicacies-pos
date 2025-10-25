@@ -15,12 +15,12 @@ export function getAccessibleBranches(
 	worker: Worker | null,
 	allBranches: Branch[]
 ): Branch[] {
-	// Admin users have access to all branches
-	if (worker?.isAdmin) {
+	// Owner users have access to all branches
+	if (worker?.isOwner) {
 		return allBranches;
 	}
 
-	// Non-admin users only have access to their assigned branches
+	// Non-owner users only have access to their assigned branches
 	if (!worker || !worker.roleAssignments) {
 		return [];
 	}
@@ -42,12 +42,12 @@ export function canAccessBranch(
 	worker: Worker | null,
 	branchId: string
 ): boolean {
-	// Admin users can access any branch
-	if (worker?.isAdmin) {
+	// Owner users can access any branch
+	if (worker?.isOwner) {
 		return true;
 	}
 
-	// Non-admin users can only access assigned branches
+	// Non-owner users can only access assigned branches
 	if (!worker || !worker.roleAssignments) {
 		return false;
 	}
@@ -64,8 +64,8 @@ export function getUserRoleInBranch(
 	worker: Worker | null,
 	branchId: string
 ): "admin" | "manager" | "worker" | null {
-	// Admin users are always admin regardless of branch
-	if (worker?.isAdmin) {
+	// Owner users are always admin regardless of branch
+	if (worker?.isOwner) {
 		return "admin";
 	}
 
@@ -99,18 +99,18 @@ export function canManageWorker(
 	currentUser: Worker | null,
 	targetWorker: Worker
 ): boolean {
-	// Admin users can manage anyone except other admins
-	if (currentUser?.isAdmin) {
-		return !targetWorker.isAdmin;
+	// Owner users can manage anyone except other owners
+	if (currentUser?.isOwner) {
+		return !targetWorker.isOwner;
 	}
 
-	// Managers can only manage workers in their branches (not other managers or admins)
+	// Managers can only manage workers in their branches (not other managers or owners)
 	if (!currentUser || !currentUser.roleAssignments) {
 		return false;
 	}
 
-	// Target must not be admin or manager in any branch where current user is not admin
-	if (targetWorker.isAdmin) {
+	// Target must not be owner or manager in any branch where current user is not owner
+	if (targetWorker.isOwner) {
 		return false;
 	}
 
@@ -145,8 +145,8 @@ export function filterAccessibleWorkers(
 	currentUser: Worker | null,
 	allWorkers: Worker[]
 ): Worker[] {
-	// Admin users can see all workers
-	if (currentUser?.isAdmin) {
+	// Owner users can see all workers
+	if (currentUser?.isOwner) {
 		return allWorkers;
 	}
 
@@ -182,8 +182,8 @@ export function requiresClockInForPOS(
 	worker: Worker | null,
 	branchId?: string
 ): boolean {
-	// Admin users are exempt from time tracking
-	if (!worker || worker.isAdmin) {
+	// Owner users are exempt from time tracking
+	if (!worker || worker.isOwner) {
 		return false;
 	}
 
@@ -222,7 +222,7 @@ export interface BranchAccessSummary {
 	accessibleBranches: number;
 	managerBranches: number;
 	workerBranches: number;
-	isAdmin: boolean;
+	isOwner: boolean;
 }
 
 /**
@@ -238,17 +238,17 @@ export function getBranchAccessSummary(
 			accessibleBranches: 0,
 			managerBranches: 0,
 			workerBranches: 0,
-			isAdmin: false,
+			isOwner: false,
 		};
 	}
 
-	if (worker.isAdmin) {
+	if (worker.isOwner) {
 		return {
 			totalBranches: allBranches.length,
 			accessibleBranches: allBranches.length,
 			managerBranches: allBranches.length,
 			workerBranches: 0,
-			isAdmin: true,
+			isOwner: true,
 		};
 	}
 
@@ -266,6 +266,6 @@ export function getBranchAccessSummary(
 		accessibleBranches: activeAssignments.length,
 		managerBranches,
 		workerBranches,
-		isAdmin: false,
+		isOwner: false,
 	};
 }

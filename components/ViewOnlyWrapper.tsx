@@ -54,8 +54,8 @@ export default function ViewOnlyWrapper({
 									{accessMessage}
 								</p>
 
-								{/* Current Status - Only show for non-admins */}
-								{timeTracking.worker && !timeTracking.worker.isAdmin && (
+								{/* Current Status - Only show for non-owners */}
+								{timeTracking.worker && !timeTracking.worker.isOwner && (
 									<div className='mt-3 p-2 bg-gray-50 rounded-md'>
 										<div className='flex items-center justify-between text-xs'>
 											<span className='text-gray-500'>Status:</span>
@@ -71,13 +71,13 @@ export default function ViewOnlyWrapper({
 									</div>
 								)}
 
-								{/* Admin Status */}
-								{timeTracking.worker && timeTracking.worker.isAdmin && (
+								{/* Owner Status */}
+								{timeTracking.worker && timeTracking.worker.isOwner && (
 									<div className='mt-3 p-2 bg-blue-50 rounded-md'>
 										<div className='flex items-center justify-between text-xs'>
 											<span className='text-gray-500'>Role:</span>
 											<span className='font-medium text-blue-600'>
-												Admin (Global Access)
+												Owner (Global Access)
 											</span>
 										</div>
 									</div>
@@ -87,7 +87,7 @@ export default function ViewOnlyWrapper({
 							{/* Time Widget */}
 							{showTimeWidget &&
 								timeTracking.worker &&
-								!timeTracking.worker.isAdmin && (
+								!timeTracking.worker.isOwner && (
 									<div className='flex-shrink-0'>
 										<QuickTimeWidget currentBranchId={branchId} compact />
 									</div>
