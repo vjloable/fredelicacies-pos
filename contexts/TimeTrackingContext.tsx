@@ -130,15 +130,19 @@ export function TimeTrackingProvider({
 						}
 					} catch (attendanceError) {
 						console.warn("Could not fetch active attendance:", attendanceError);
+						// Don't set error state for attendance fetch failures
+						// as this might be normal (no active attendance)
 					}
 				}
 
 				console.log("TimeTracking Update:", {
-					workerData,
+					userId: user.uid,
+					workerName: workerData.name,
 					isWorking,
-					currentAttendance,
+					hasAttendance: !!currentAttendance,
 					workingDuration,
 				});
+				
 				setState({
 					worker: workerData,
 					isWorking,
@@ -265,12 +269,11 @@ export function TimeTrackingProvider({
 				}));
 			}
 
-			// Occasionally refresh attendance data for accuracy
-			if (Math.random() < 0.1) {
-				// 10% chance for session refresh
+			// Occasionally refresh attendance data for accuracy (every 5 minutes)
+			if (Math.random() < 0.03) { // Reduced from 0.1 to 0.03 (3% chance instead of 10%)
 				refreshStatus();
 			}
-		}, Math.min(refreshInterval, 60000)); // Max 1 minute intervals
+		}, Math.max(refreshInterval, 60000)); // Ensure minimum 1 minute intervals
 
 		return () => clearInterval(interval);
 	}, [

@@ -21,6 +21,8 @@ import DeleteWorkerModal from "@/app/(main)/owner/users/components/DeleteWorkerM
 import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
 import AssignBranchModal from "@/app/(main)/owner/users/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
+import AttendanceView from "@/app/(main)/[branchId]/(manager)/management/components/AttendanceView";
+import EditFaceEmbeddingModal from "@/app/(main)/[branchId]/(manager)/management/components/EditFaceEmbeddingModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -51,6 +53,7 @@ export default function ManagementPage() {
 	const [isTimeInOutModalOpen, setIsTimeInOutModalOpen] = useState(false);
 	const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
 	const [isWorkerDetailModalOpen, setIsWorkerDetailModalOpen] = useState(false);
+	const [isFaceEmbeddingModalOpen, setIsFaceEmbeddingModalOpen] = useState(false);
 	const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 	const [timeInOutAction, setTimeInOutAction] = useState<
 		"time_in" | "time_out"
@@ -129,7 +132,7 @@ export default function ManagementPage() {
 
 						// Check if worker has access to this branch through roleAssignments
 						const hasBranchAccess = data.roleAssignments?.some(
-							(assignment: any) => {
+							(assignment: { branchId: string; isActive: boolean }) => {
 								console.log(
 									`  - Assignment: ${assignment.branchId} === ${branchId} && ${assignment.isActive}`
 								);
@@ -285,6 +288,11 @@ export default function ManagementPage() {
 		setIsWorkerDetailModalOpen(true);
 	};
 
+	const handleEditFaceEmbedding = (worker: Worker) => {
+		setSelectedWorker(worker);
+		setIsFaceEmbeddingModalOpen(true);
+	};
+
 	const handleSort = (column: string) => {
 		setSortConfig((prev) => ({
 			column,
@@ -308,6 +316,7 @@ export default function ManagementPage() {
 		setIsTimeInOutModalOpen(false);
 		setIsAssignBranchModalOpen(false);
 		setIsWorkerDetailModalOpen(false);
+		setIsFaceEmbeddingModalOpen(false);
 		setSelectedWorker(null);
 	};
 
@@ -363,11 +372,44 @@ export default function ManagementPage() {
 
 		// Sort the filtered results
 		return filtered.sort((a, b) => {
-			const aValue = a[sortConfig.column as keyof Worker] as any;
-			const bValue = b[sortConfig.column as keyof Worker] as any;
+			const aValue = a[sortConfig.column as keyof Worker];
+			const bValue = b[sortConfig.column as keyof Worker];
 
-			if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-			if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+			// Handle different types properly
+			if (typeof aValue === 'string' && typeof bValue === 'string') {
+				const aStr = aValue.toLowerCase();
+				const bStr = bValue.toLowerCase();
+				if (aStr < bStr) return sortConfig.direction === "asc" ? -1 : 1;
+				if (aStr > bStr) return sortConfig.direction === "asc" ? 1 : -1;
+				return 0;
+			}
+
+			// Handle Date objects
+			if (aValue instanceof Date && bValue instanceof Date) {
+				const aTime = aValue.getTime();
+				const bTime = bValue.getTime();
+				if (aTime < bTime) return sortConfig.direction === "asc" ? -1 : 1;
+				if (aTime > bTime) return sortConfig.direction === "asc" ? 1 : -1;
+				return 0;
+			}
+
+			// Handle boolean values
+			if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+				if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+				if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+				return 0;
+			}
+
+			// Handle undefined/null values
+			if (aValue == null && bValue == null) return 0;
+			if (aValue == null) return sortConfig.direction === "asc" ? -1 : 1;
+			if (bValue == null) return sortConfig.direction === "asc" ? 1 : -1;
+
+			// Default string comparison for other types
+			const aStr = String(aValue).toLowerCase();
+			const bStr = String(bValue).toLowerCase();
+			if (aStr < bStr) return sortConfig.direction === "asc" ? -1 : 1;
+			if (aStr > bStr) return sortConfig.direction === "asc" ? 1 : -1;
 			return 0;
 		});
 	}, [workers, sortConfig, filters]);
@@ -615,6 +657,7 @@ export default function ManagementPage() {
 										onTimeOut={(worker) => handleTimeInOut(worker, "time_out")}
 										onAssignBranch={handleAssignBranch}
 										onRowClick={handleWorkerDetails}
+										onEditFaceEmbedding={handleEditFaceEmbedding}
 									/>
 
 									{/* Stats */}
@@ -629,16 +672,11 @@ export default function ManagementPage() {
 									</div>
 								</>
 							) : (
-								/* Attendance View - Placeholder for now */
-								<div className='text-center py-12'>
-									<div className='text-2xl text-gray-400 mb-4'>📊</div>
-									<h3 className='text-lg font-semibold text-gray-700 mb-2'>
-										Attendance Management
-									</h3>
-									<p className='text-gray-500'>
-										Attendance tracking features will be implemented here.
-									</p>
-								</div>
+								/* Attendance View */
+								<AttendanceView 
+									branchId={branchId as string}
+									workers={sortedWorkers}
+								/>
 							)}
 						</div>
 					</div>
@@ -696,6 +734,13 @@ export default function ManagementPage() {
 					isOpen={isWorkerDetailModalOpen}
 					worker={selectedWorker}
 					onClose={handleModalClose}
+				/>
+
+				<EditFaceEmbeddingModal
+					isOpen={isFaceEmbeddingModalOpen}
+					worker={selectedWorker}
+					onClose={handleModalClose}
+					onSuccess={handleWorkerUpdated}
 				/>
 			</div>
 		</div>

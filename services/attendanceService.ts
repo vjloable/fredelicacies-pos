@@ -374,12 +374,17 @@ export const attendanceService: AttendanceService = {
 		startDate: Date,
 		endDate: Date
 	): Promise<Attendance[]> => {
-		const dateRange: DateRange = {
-			startDate: Timestamp.fromDate(startDate),
-			endDate: Timestamp.fromDate(endDate),
-		};
+		try {
+			const dateRange: DateRange = {
+				startDate: Timestamp.fromDate(startDate),
+				endDate: Timestamp.fromDate(endDate),
+			};
 
-		return await attendanceService.listAttendances(userId, dateRange);
+			return await attendanceService.listAttendances(userId, dateRange);
+		} catch (error) {
+			console.error("Error getting attendances by date range:", error);
+			throw error;
+		}
 	},
 
 	// Time In/Out Operations

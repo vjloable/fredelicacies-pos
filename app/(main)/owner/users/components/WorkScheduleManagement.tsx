@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService } from "@/services/attendanceService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
+import { Timestamp } from "firebase/firestore";
 
 interface WorkScheduleTarget {
 	workerId: string;
@@ -55,9 +56,9 @@ export default function WorkScheduleManagement({
 			if (stored) {
 				setScheduleTargets(JSON.parse(stored));
 			}
-		} catch (err: any) {
-			console.error("Error loading schedule targets:", err);
-			setError(err.message || "Failed to load schedule targets");
+		} catch (error: unknown) {
+			console.error("Error loading schedule targets:", error);
+			setError(error instanceof Error ? error.message : "Failed to load schedule targets");
 		} finally {
 			setLoading(false);
 		}
@@ -111,9 +112,9 @@ export default function WorkScheduleManagement({
 				preferredShiftEnd: "17:00",
 				isActive: true,
 			});
-		} catch (err: any) {
-			console.error("Error saving schedule target:", err);
-			setError(err.message || "Failed to save schedule target");
+		} catch (error: unknown) {
+			console.error("Error saving schedule target:", error);
+			setError(error instanceof Error ? error.message : "Failed to save schedule target");
 		} finally {
 			setLoading(false);
 		}
@@ -129,9 +130,9 @@ export default function WorkScheduleManagement({
 				"workScheduleTargets",
 				JSON.stringify(updatedTargets)
 			);
-		} catch (err: any) {
-			console.error("Error deleting schedule target:", err);
-			setError(err.message || "Failed to delete schedule target");
+		} catch (error: unknown) {
+			console.error("Error deleting schedule target:", error);
+			setError(error instanceof Error ? error.message : "Failed to delete schedule target");
 		}
 	};
 
@@ -153,8 +154,8 @@ export default function WorkScheduleManagement({
 
 			const attendances =
 				(await attendanceService.listAttendances(target.workerId, {
-					startDate: startDate as any,
-					endDate: endDate as any,
+					startDate: Timestamp.fromDate(startDate),
+					endDate: Timestamp.fromDate(endDate),
 				})) || [];
 
 			// Filter attendances for this branch
@@ -168,16 +169,8 @@ export default function WorkScheduleManagement({
 					return sum + attendance.duration / 60;
 				}
 				if (attendance.timeInAt && attendance.timeOutAt) {
-					const startTime = attendance.timeInAt.toDate
-						? attendance.timeInAt.toDate()
-						: (attendance.timeInAt as any).toDate
-						? (attendance.timeInAt as any).toDate()
-						: attendance.timeInAt;
-					const endTime = attendance.timeOutAt.toDate
-						? attendance.timeOutAt.toDate()
-						: (attendance.timeOutAt as any).toDate
-						? (attendance.timeOutAt as any).toDate()
-						: attendance.timeOutAt;
+					const startTime = attendance.timeInAt.toDate();
+					const endTime = attendance.timeOutAt.toDate();
 					return (
 						sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 					);
@@ -206,11 +199,6 @@ export default function WorkScheduleManagement({
 				attendancesCount: 0,
 			};
 		}
-	};
-
-	const getDayName = (dayNumber: number): string => {
-		const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-		return days[dayNumber] || "";
 	};
 
 	const getWorkerName = (workerId: string): string => {
@@ -296,155 +284,18 @@ export default function WorkScheduleManagement({
 					</div>
 				) : (
 					<div className='divide-y divide-gray-200'>
-						{scheduleTargets.map((target, index) => {
-							// TODO: Extract to separate component to fix React hooks rule
-							const [compliance, setCompliance] = useState<{
-								compliance: number;
-								actualHours: number;
-								targetHours: number;
-								attendancesCount: number;
-							} | null>(null);
-
-							React.useEffect(() => {
-								calculateScheduleCompliance(target).then(setCompliance);
-							}, [target]);
-
-							return (
-								<div key={index} className='p-6'>
-									<div className='flex items-start justify-between'>
-										<div className='flex-1'>
-											<div className='flex items-center gap-3 mb-2'>
-												<h5 className='font-semibold text-gray-900'>
-													{getWorkerName(target.workerId)}
-												</h5>
-												<span className='text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded'>
-													{getBranchName(target.branchId)}
-												</span>
-												{!target.isActive && (
-													<span className='text-sm bg-red-100 text-red-700 px-2 py-1 rounded'>
-														Inactive
-													</span>
-												)}
-											</div>
-
-											<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-3'>
-												<div>
-													<div className='text-sm text-gray-600'>
-														Target Hours/Week
-													</div>
-													<div className='font-medium'>
-														{target.targetHoursPerWeek}h
-													</div>
-												</div>
-
-												{target.preferredShiftStart &&
-													target.preferredShiftEnd && (
-														<div>
-															<div className='text-sm text-gray-600'>
-																Preferred Hours
-															</div>
-															<div className='font-medium'>
-																{target.preferredShiftStart} -{" "}
-																{target.preferredShiftEnd}
-															</div>
-														</div>
-													)}
-
-												<div>
-													<div className='text-sm text-gray-600'>Work Days</div>
-													<div className='font-medium'>
-														{target.workDays
-															.map((day) => getDayName(day))
-															.join(", ")}
-													</div>
-												</div>
-											</div>
-
-											{/* Compliance Status */}
-											{compliance && (
-												<div className='bg-gray-50 rounded-lg p-3'>
-													<div className='flex items-center justify-between mb-2'>
-														<span className='text-sm font-medium text-gray-700'>
-															Weekly Compliance
-														</span>
-														<span
-															className={`text-sm font-semibold ${
-																compliance.compliance >= 90
-																	? "text-green-600"
-																	: compliance.compliance >= 70
-																	? "text-yellow-600"
-																	: "text-red-600"
-															}`}>
-															{compliance.compliance}%
-														</span>
-													</div>
-													<div className='w-full bg-gray-200 rounded-full h-2 mb-2'>
-														<div
-															className={`h-2 rounded-full ${
-																compliance.compliance >= 90
-																	? "bg-green-500"
-																	: compliance.compliance >= 70
-																	? "bg-yellow-500"
-																	: "bg-red-500"
-															}`}
-															style={{
-																width: `${Math.min(
-																	compliance.compliance,
-																	100
-																)}%`,
-															}}></div>
-													</div>
-													<div className='text-xs text-gray-600'>
-														{formatHours(compliance.actualHours)} of{" "}
-														{formatHours(compliance.targetHours)} •{" "}
-														{compliance.attendancesCount} sessions
-													</div>
-												</div>
-											)}
-										</div>
-
-										<div className='flex items-center gap-2 ml-4'>
-											<button
-												onClick={() => editScheduleTarget(target)}
-												className='text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50'
-												title='Edit Schedule'>
-												<svg
-													className='w-4 h-4'
-													fill='none'
-													stroke='currentColor'
-													viewBox='0 0 24 24'>
-													<path
-														strokeLinecap='round'
-														strokeLinejoin='round'
-														strokeWidth={2}
-														d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-													/>
-												</svg>
-											</button>
-											<button
-												onClick={() =>
-													deleteScheduleTarget(target.workerId, target.branchId)
-												}
-												className='text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50'
-												title='Delete Schedule'>
-												<svg
-													className='w-4 h-4'
-													fill='none'
-													stroke='currentColor'
-													viewBox='0 0 24 24'>
-													<path
-														strokeLinecap='round'
-														strokeLinejoin='round'
-														strokeWidth={2}
-														d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-													/>
-												</svg>
-											</button>
-										</div>
-									</div>
-								</div>
-							);
-						})}
+						{scheduleTargets.map((target) => (
+							<ScheduleTargetItem
+								key={`${target.workerId}-${target.branchId}`}
+								target={target}
+								getWorkerName={getWorkerName}
+								getBranchName={getBranchName}
+								formatHours={formatHours}
+								onEdit={() => editScheduleTarget(target)}
+								onDelete={() => deleteScheduleTarget(target.workerId, target.branchId)}
+								calculateCompliance={calculateScheduleCompliance}
+							/>
+						))}
 					</div>
 				)}
 			</div>
@@ -693,6 +544,181 @@ export default function WorkScheduleManagement({
 					</div>
 				</div>
 			)}
+		</div>
+	);
+}
+
+interface ScheduleTargetItemProps {
+	target: WorkScheduleTarget;
+	getWorkerName: (workerId: string) => string;
+	getBranchName: (branchId: string) => string;
+	formatHours: (hours: number) => string;
+	onEdit: () => void;
+	onDelete: () => void;
+	calculateCompliance: (target: WorkScheduleTarget) => Promise<{
+		compliance: number;
+		actualHours: number;
+		targetHours: number;
+		attendancesCount: number;
+	}>;
+}
+
+function ScheduleTargetItem({
+	target,
+	getWorkerName,
+	getBranchName,
+	formatHours,
+	onEdit,
+	onDelete,
+	calculateCompliance,
+}: ScheduleTargetItemProps) {
+	const [compliance, setCompliance] = useState<{
+		compliance: number;
+		actualHours: number;
+		targetHours: number;
+		attendancesCount: number;
+	} | null>(null);
+
+	useEffect(() => {
+		calculateCompliance(target).then(setCompliance);
+	}, [target, calculateCompliance]);
+
+	const getDayName = (dayNumber: number): string => {
+		const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+		return days[dayNumber] || "";
+	};
+
+	return (
+		<div className='p-6'>
+			<div className='flex items-start justify-between'>
+				<div className='flex-1'>
+					<div className='flex items-center gap-3 mb-2'>
+						<h5 className='font-semibold text-gray-900'>
+							{getWorkerName(target.workerId)}
+						</h5>
+						<span className='text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded'>
+							{getBranchName(target.branchId)}
+						</span>
+						{!target.isActive && (
+							<span className='text-sm bg-red-100 text-red-700 px-2 py-1 rounded'>
+								Inactive
+							</span>
+						)}
+					</div>
+
+					<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-3'>
+						<div>
+							<div className='text-sm text-gray-600'>
+								Target Hours/Week
+							</div>
+							<div className='font-medium'>
+								{target.targetHoursPerWeek}h
+							</div>
+						</div>
+
+						{target.preferredShiftStart &&
+							target.preferredShiftEnd && (
+								<div>
+									<div className='text-sm text-gray-600'>
+										Preferred Hours
+									</div>
+									<div className='font-medium'>
+										{target.preferredShiftStart} -{" "}
+										{target.preferredShiftEnd}
+									</div>
+								</div>
+							)}
+
+						<div>
+							<div className='text-sm text-gray-600'>Work Days</div>
+							<div className='font-medium'>
+								{target.workDays
+									.map((day) => getDayName(day))
+									.join(", ")}
+							</div>
+						</div>
+					</div>
+
+					{/* Compliance Status */}
+					{compliance && (
+						<div className='bg-gray-50 rounded-lg p-3'>
+							<div className='flex items-center justify-between mb-2'>
+								<span className='text-sm font-medium text-gray-700'>
+									Weekly Compliance
+								</span>
+								<span
+									className={`text-sm font-semibold ${
+										compliance.compliance >= 90
+											? "text-green-600"
+											: compliance.compliance >= 70
+											? "text-yellow-600"
+											: "text-red-600"
+									}`}>
+									{compliance.compliance}%
+								</span>
+							</div>
+							<div className='w-full bg-gray-200 rounded-full h-2 mb-2'>
+								<div
+									className={`h-2 rounded-full ${
+										compliance.compliance >= 90
+											? "bg-green-500"
+											: compliance.compliance >= 70
+											? "bg-yellow-500"
+											: "bg-red-500"
+									}`}
+									style={{
+										width: `${Math.min(
+											compliance.compliance,
+											100
+										)}%`,
+									}}></div>
+							</div>
+							<div className='text-xs text-gray-600'>
+								{formatHours(compliance.actualHours)} of{" "}
+								{formatHours(compliance.targetHours)} •{" "}
+								{compliance.attendancesCount} sessions
+							</div>
+						</div>
+					)}
+				</div>
+
+				<div className='flex items-center gap-2 ml-4'>
+					<button
+						onClick={onEdit}
+						className='text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50'
+						title='Edit Schedule'>
+						<svg
+							className='w-4 h-4'
+							fill='none'
+							stroke='currentColor'
+							viewBox='0 0 24 24'>
+							<path
+								strokeLinecap='round'
+								strokeLinejoin='round'
+								strokeWidth={2}
+								d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+							/>
+						</svg>
+					</button>
+					<button
+						onClick={onDelete}
+						className='text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50'
+						title='Delete Schedule'>
+						<svg
+							className='w-4 h-4'
+							fill='none'
+							stroke='currentColor'
+							viewBox='0 0 24 24'>
+							<path
+								strokeLinecap='round'
+								strokeLinejoin='round'
+								strokeWidth={2}
+								d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+							/>
+						</svg>
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { useAccessibleBranches } from "@/contexts/BranchContext";
@@ -44,38 +44,6 @@ export default function WorkerPerformanceAnalytics({
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { allBranches } = useAccessibleBranches();
-
-	useEffect(() => {
-		loadPerformanceMetrics();
-	}, [worker.id, dateRange]);
-
-	const loadPerformanceMetrics = async () => {
-		try {
-			setLoading(true);
-			setError(null);
-
-			// Get work sessions for the worker
-			const sessions =
-				(await attendanceService.listAttendances(
-					worker.id,
-					dateRange
-						? {
-								startDate: Timestamp.fromDate(dateRange.startDate),
-								endDate: Timestamp.fromDate(dateRange.endDate),
-						  }
-						: undefined
-				)) || [];
-
-			// Calculate performance metrics
-			const calculatedMetrics = calculatePerformanceMetrics(sessions);
-			setMetrics(calculatedMetrics);
-		} catch (err: unknown) {
-			console.error("Error loading performance metrics:", err);
-			setError(err instanceof Error ? err.message : "Failed to load performance data");
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const calculatePerformanceMetrics = (attendances: Attendance[]): PerformanceMetrics => {
 		// Basic calculations
@@ -125,6 +93,38 @@ export default function WorkerPerformanceAnalytics({
 			dailyPattern,
 		};
 	};
+
+	const loadPerformanceMetrics = useCallback(async () => {
+		try {
+			setLoading(true);
+			setError(null);
+
+			// Get work sessions for the worker
+			const sessions =
+				(await attendanceService.listAttendances(
+					worker.id,
+					dateRange
+						? {
+								startDate: Timestamp.fromDate(dateRange.startDate),
+								endDate: Timestamp.fromDate(dateRange.endDate),
+						  }
+						: undefined
+				)) || [];
+
+			// Calculate performance metrics
+			const calculatedMetrics = calculatePerformanceMetrics(sessions);
+			setMetrics(calculatedMetrics);
+		} catch (err: unknown) {
+			console.error("Error loading performance metrics:", err);
+			setError(err instanceof Error ? err.message : "Failed to load performance data");
+		} finally {
+			setLoading(false);
+		}
+	}, [worker.id, dateRange, calculatePerformanceMetrics]);
+
+	useEffect(() => {
+		loadPerformanceMetrics();
+	}, [loadPerformanceMetrics]);
 
 	const calculatePunctualityScore = (attendances: Attendance[]): number => {
 		// Simplified punctuality: assume on-time if clocked in within 15 minutes of hour

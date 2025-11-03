@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",
+    "face-api.js": "^0.22.2",
     "firebase": "^12.1.0",
     "firebase-admin": "^13.5.0",
     "motion": "^12.23.12",

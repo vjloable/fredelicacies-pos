@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { branchService } from "@/services/branchService";
@@ -25,21 +25,15 @@ export default function WorkerDetailModal({
 	isOpen,
 	onClose,
 }: WorkerDetailModalProps) {
-	const [attendance, setAttendances] = useState<AttendanceWithMetadata[]>(
+	const [attendances, setAttendances] = useState<AttendanceWithMetadata[]>(
 		[]
 	);
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState<"details" | "sessions">("details");
 	const [branchMap, setBranchMap] = useState<Map<string, string>>(new Map());
+	const [dataLoaded, setDataLoaded] = useState(false);
 
-	useEffect(() => {
-		if (isOpen && worker) {
-			loadAttendances();
-			loadBranchNames();
-		}
-	}, [isOpen, worker]);
-
-	const loadBranchNames = async () => {
+	const loadBranchNames = useCallback(async () => {
 		if (!worker) return;
 
 		try {
@@ -64,9 +58,9 @@ export default function WorkerDetailModal({
 		} catch (error) {
 			console.error("Error loading branch names:", error);
 		}
-	};
+	}, [worker]);
 
-	const loadAttendances = async () => {
+	const loadAttendances = useCallback(async (branchNames: Map<string, string>) => {
 		if (!worker) return;
 
 		try {
@@ -92,7 +86,7 @@ export default function WorkerDetailModal({
 								attendance.timeOutAt
 						  )
 						: undefined),
-				branchName: branchMap.get(attendance.branchId) || `Branch ${attendance.branchId}`,
+				branchName: branchNames.get(attendance.branchId) || `Branch ${attendance.branchId}`,
 			}));
 
 			setAttendances(processedAttendances);
@@ -101,18 +95,63 @@ export default function WorkerDetailModal({
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [worker]);
 
-	const formatDate = (date: any) => {
+	// Reset state when modal closes
+	useEffect(() => {
+		if (!isOpen) {
+			setAttendances([]);
+			setBranchMap(new Map());
+			setDataLoaded(false);
+			setActiveTab("details");
+			setLoading(false);
+		}
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (isOpen && worker && !dataLoaded) {
+			const initializeData = async () => {
+				try {
+					// First load branch names
+					await loadBranchNames();
+					
+					// Get the updated branch map after loading
+					const branchIds = Array.from(
+						new Set(worker.roleAssignments.map(assignment => assignment.branchId))
+					);
+					
+					const branchNameMap = new Map<string, string>();
+					for (const branchId of branchIds) {
+						const branch = await branchService.getBranchById(branchId);
+						if (branch) {
+							branchNameMap.set(branchId, branch.name);
+						} else {
+							branchNameMap.set(branchId, `Branch ${branchId}`);
+						}
+					}
+					
+					// Then load attendances with the branch names
+					await loadAttendances(branchNameMap);
+					setDataLoaded(true);
+				} catch (error) {
+					console.error("Error initializing data:", error);
+					setLoading(false);
+				}
+			};
+			
+			initializeData();
+		}
+	}, [isOpen, worker, dataLoaded, loadBranchNames, loadAttendances]);
+
+	const formatDate = (date: Date) => {
 		if (!date) return "N/A";
-		const dateObj = date.toDate ? date.toDate() : date;
 		return new Intl.DateTimeFormat("en-US", {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
 			hour: "2-digit",
 			minute: "2-digit",
-		}).format(dateObj);
+		}).format(date);
 	};
 
 	const formatDuration = (minutes: number) => {
@@ -301,53 +340,53 @@ export default function WorkerDetailModal({
 								<div className='flex items-center justify-center py-8'>
 									<LoadingSpinner size='lg' />
 								</div>
-							) : attendance.length > 0 ? (
+							) : attendances.length > 0 ? (
 								<div className='space-y-3'>
-									{attendance.map((session) => (
+									{attendances.map((attendance) => (
 										<div
 											key={
-												session.id || `${session.userId}-${session.timeInAt}`
+												attendance.id || `${attendance.userId}-${attendance.timeInAt}`
 											}
 											className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
 											<div className='space-y-1'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
-														{session.branchName || `Branch ${session.branchId}`}
+														{attendance.branchName || `Branch ${attendance.branchId}`}
 													</span>
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
-															session.status === "active"
+															attendance.status === "active"
 																? "bg-[var(--success)]/80 text-[var(--primary)]"
 																: "bg-[var(--secondary)]/10 text-[var(--secondary)]/80"
 														}`}>
-														{session.status === "active"
+														{attendance.status === "active"
 															? "In Progress"
 															: "Completed"}
 													</span>
 												</div>
 												<div className='text-sm text-gray-600'>
 													<span className='font-medium'>Clock In:</span>{" "}
-													{formatDate(session.timeInAt)}
-													{session.timeOutAt && (
+													{formatDate(attendance.timeInAt.toDate())}
+													{attendance.timeOutAt && (
 														<>
 															{" • "}
 															<span className='font-medium'>
 																Clock Out:
 															</span>{" "}
-															{formatDate(session.timeOutAt)}
+															{formatDate(attendance.timeOutAt.toDate())}
 														</>
 													)}
 												</div>
-												{session.notes && (
+												{attendance.notes && (
 													<div className='text-xs text-gray-500'>
-														{session.notes}
+														{attendance.notes}
 													</div>
 												)}
 											</div>
 											<div className='text-right'>
-												{session.totalMinutes !== undefined ? (
+												{attendance.totalMinutes !== undefined ? (
 													<span className='font-medium text-[var(--accent)]'>
-														{formatDuration(session.totalMinutes)}
+														{formatDuration(attendance.totalMinutes)}
 													</span>
 												) : (
 													<div className='flex flex-row items-center gap-2'>

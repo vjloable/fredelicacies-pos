@@ -119,7 +119,7 @@ export default function SignUpPage() {
       await authService.createUserProfile(userCredential.user.uid, {
         name: fullName,
         email: formData.email,
-        isAdmin: false, // New users are not admin by default
+        isOwner: false, // New users are not admin by default
         roleAssignments: [], // No branch assignments by default
       });
 

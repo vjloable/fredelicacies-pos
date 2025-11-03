@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { WorkerStats } from "@/types/WorkerTypes";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { Worker } from "@/services/workerService";
@@ -21,41 +21,7 @@ export default function WorkerStatsComponent({
 	const [error, setError] = useState<string | null>(null);
 	const { allBranches } = useAccessibleBranches();
 
-	useEffect(() => {
-		loadWorkerStats();
-	}, [worker.id, dateRange]);
-
-	const loadWorkerStats = async () => {
-		try {
-			setLoading(true);
-			setError(null);
-
-			// Get all attendances for the worker
-			const allAttendances = await attendanceService.listAttendances(worker.id);
-
-			// Filter attendances by date range if provided
-			const filteredAttendances = dateRange
-				? allAttendances.filter((attendance) => {
-						const attendanceDate = attendance.timeInAt.toDate();
-						return (
-							attendanceDate >= dateRange.startDate &&
-							attendanceDate <= dateRange.endDate
-						);
-				  })
-				: allAttendances;
-
-			// Calculate stats from attendances
-			const calculatedStats = calculateWorkerStats(worker.id, filteredAttendances);
-			setStats(calculatedStats);
-		} catch (err: unknown) {
-			console.error("Error loading worker stats:", err);
-			setError(err instanceof Error ? err.message : "Failed to load worker statistics");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const calculateWorkerStats = (
+	const calculateWorkerStats = useCallback((
 		userId: string,
 		attendances: Attendance[]
 	): WorkerStats => {
@@ -248,7 +214,41 @@ export default function WorkerStatsComponent({
 		};
 
 		return stats;
-	};
+	}, []);
+
+	const loadWorkerStats = useCallback(async () => {
+		try {
+			setLoading(true);
+			setError(null);
+
+			// Get all attendances for the worker
+			const allAttendances = await attendanceService.listAttendances(worker.id);
+
+			// Filter attendances by date range if provided
+			const filteredAttendances = dateRange
+				? allAttendances.filter((attendance) => {
+						const attendanceDate = attendance.timeInAt.toDate();
+						return (
+							attendanceDate >= dateRange.startDate &&
+							attendanceDate <= dateRange.endDate
+						);
+				  })
+				: allAttendances;
+
+			// Calculate stats from attendances
+			const calculatedStats = calculateWorkerStats(worker.id, filteredAttendances);
+			setStats(calculatedStats);
+		} catch (err: unknown) {
+			console.error("Error loading worker stats:", err);
+			setError(err instanceof Error ? err.message : "Failed to load worker statistics");
+		} finally {
+			setLoading(false);
+		}
+	}, [worker.id, dateRange, calculateWorkerStats]);
+
+	useEffect(() => {
+		loadWorkerStats();
+	}, [loadWorkerStats]);
 
 	const calculateStreaks = (
 		sortedDateStrings: string[]

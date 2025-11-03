@@ -2,6 +2,7 @@ import React from "react";
 import { Worker } from "@/services/workerService";
 import { User } from "@/contexts/AuthContext";
 import StatusBadge from "./StatusBadge";
+import Image from "next/image";
 
 interface WorkerRowProps {
 	worker: Worker;
@@ -13,6 +14,7 @@ interface WorkerRowProps {
 	onTimeOut?: (worker: Worker) => void;
 	onAssignBranch?: (worker: Worker) => void;
 	onRowClick?: (worker: Worker) => void;
+	onEditFaceEmbedding?: (worker: Worker) => void;
 }
 
 // Action icons
@@ -101,6 +103,23 @@ function BranchIcon({ className }: { className?: string }) {
 	);
 }
 
+function FaceIcon() {
+	return (
+		<svg
+			className='w-4 h-4'
+			fill='none'
+			stroke='currentColor'
+			viewBox='0 0 24 24'>
+			<path
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={2}
+				d='M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'
+			/>
+		</svg>
+	);
+}
+
 export default function WorkerRow({
 	worker,
 	currentUser,
@@ -111,6 +130,7 @@ export default function WorkerRow({
 	onTimeOut,
 	onAssignBranch,
 	onRowClick,
+	onEditFaceEmbedding,
 }: WorkerRowProps) {
 	// Permission checks
 	const canEdit =
@@ -129,16 +149,6 @@ export default function WorkerRow({
 
 	const canTimeInOut = canEdit && !worker.isOwner;
 
-	const formatDate = (date?: Date) => {
-		if (!date) return "Never";
-		return new Intl.DateTimeFormat("en-US", {
-			month: "short",
-			day: "numeric",
-			hour: "2-digit",
-			minute: "2-digit",
-		}).format(date);
-	};
-
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}
@@ -151,7 +161,7 @@ export default function WorkerRow({
 			<td className='px-6 py-4 whitespace-nowrap'>
 				<div className='flex items-center'>
 					{worker.profilePicture ? (
-						<img
+						<Image
 							src={worker.profilePicture}
 							alt={`${worker.name} profile`}
 							className='w-10 h-10 rounded-full mr-4'
@@ -289,6 +299,19 @@ export default function WorkerRow({
 							className='text-[var(--secondary)] hover:text-[var(--secondary)] p-1 rounded hover:bg-[var(--secondary)]/10'
 							title='Manage Branches'>
 							<BranchIcon />
+						</button>
+					)}
+
+					{/* Face enrollment button */}
+					{canEdit && onEditFaceEmbedding && (
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								onEditFaceEmbedding(worker);
+							}}
+							className='text-[var(--accent)] hover:text-[var(--accent)]/60 p-1 rounded hover:bg-[var(--accent)]/10'
+							title='Edit Face Enrollment'>
+							<FaceIcon />
 						</button>
 					)}
 

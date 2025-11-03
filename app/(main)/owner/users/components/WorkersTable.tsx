@@ -17,6 +17,7 @@ interface WorkersTableProps {
 	onTimeOut?: (worker: Worker) => void;
 	onAssignBranch?: (worker: Worker) => void;
 	onRowClick?: (worker: Worker) => void;
+	onEditFaceEmbedding?: (worker: Worker) => void;
 	sortConfig?: SortConfig;
 	onSort?: (column: string) => void;
 }

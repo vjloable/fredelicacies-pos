@@ -29,9 +29,8 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import { formatReceiptWithLogo } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
-import ViewOnlyWrapper from "@/components/ViewOnlyWrapper";
 
-import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingContext";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -109,6 +108,7 @@ export default function StoreScreen() {
 	const { currentBranch } = useBranch(); // Get current branch context
 	const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
 	const timeTracking = useTimeTracking({ autoRefresh: true }); // Get time tracking state
+	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id); // Get POS access control
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
 	const [searchQuery, setSearchQuery] = useState("");
@@ -489,259 +489,244 @@ export default function StoreScreen() {
 	};
 
 	return (
-		<ViewOnlyWrapper branchId={currentBranch?.id} pageName='store'>
-			<div className='flex h-full overflow-hidden'>
-				{/* Menu Area - This should expand to fill available space */}
-				<div className='flex flex-col flex-1 h-full overflow-hidden'>
+		<div className='flex h-full overflow-hidden'>
+			{/* Menu Area - This should expand to fill available space */}
+			<div className='flex flex-col flex-1 h-full overflow-hidden'>
 
-					{/* Header Section - Fixed */}
-					<div className='flex items-center justify-between'>
-						{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
-						<div className='xl:hidden w-full'>
-							<MobileTopBar
-								title='Store'
-								icon={<StoreIcon />}
-								showTimeTracking={true}
-								onOrderClick={() => {
-									setShowOrderMenu(!showOrderMenu);
-								}}
-							/>
-						</div>
-						{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
-						<div className='hidden xl:block w-full'>
-							<TopBar
-								title='Store'
-								icon={<StoreIcon />}
-								showTimeTracking={true}
-							/>
-						</div>
-					</div>{" "}
-
-					{/* Search Section - Fixed */}
-					<div className='px-6 py-4'>
-						<div className='relative'>
-							<input
-								type='text'
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								placeholder='Search items, categories, or descriptions...'
-								className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
-									searchQuery ? "animate-pulse transition-all" : ""
-								}`}
-							/>
-							<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
-								{searchQuery ? (
-									<div className='size-[30px] border-[var(--accent)] border-y-2 rounded-full flex items-center justify-center animate-spin'></div>
-								) : (
-									<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
-										<SearchIcon className='mr-[2px] mb-[2px]' />
-									</div>
-								)}
-							</div>
-						</div>
+				{/* Header Section - Fixed */}
+				<div className='flex items-center justify-between'>
+					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
+					<div className='xl:hidden w-full'>
+						<MobileTopBar
+							title='Store'
+							icon={<StoreIcon />}
+							showTimeTracking={true}
+							onOrderClick={() => {
+								setShowOrderMenu(!showOrderMenu);
+							}}
+						/>
 					</div>
+					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
+					<div className='hidden xl:block w-full'>
+						<TopBar
+							title='Store'
+							icon={<StoreIcon />}
+							showTimeTracking={true}
+						/>
+					</div>
+				</div>{" "}
 
-					{/* Results Header - Fixed */}
-					<div className='flex items-center justify-between px-6 py-2'>
-						<div className='flex flex-col'>
-							<h2 className='text-[var(--secondary)] font-bold'>
-								{isSearching ? "Search Results" : ""}
-							</h2>
-							{isSearching && (
-								<p className='text-xs text-[var(--secondary)] opacity-60'>
-									Searching for `{searchQuery}`
-								</p>
+				{/* Search Section - Fixed */}
+				<div className={`px-6 py-4 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+					<div className='relative'>
+						<input
+							type='text'
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder='Search items, categories, or descriptions...'
+							className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
+								searchQuery ? "animate-pulse transition-all" : ""
+							}`}
+						/>
+						<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+							{searchQuery ? (
+								<div className='size-[30px] border-[var(--accent)] border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
+							) : (
+								<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
+									<SearchIcon className='mr-[2px] mb-[2px] text-[var(--accent)]' />
+								</div>
 							)}
 						</div>
 					</div>
+				</div>
 
-					{/* Category Selector - Fixed */}
-					<div className='px-6 py-2 flex gap-2 overflow-x-auto flex-wrap'>
-						{displayCategories.map((category) => (
-							<button
-								key={category.id}
-								onClick={() => toggleCategory(category.name)}
-								className={`px-4 py-2 rounded-lg font-medium text-[12px] whitespace-nowrap transition-all ${
-									isCategorySelected(category.name)
-										? `${
-												!category.isSpecial
-													? "bg-[var(--secondary)]/20"
-													: "bg-[var(--accent)]"
-										  } text-[var(--secondary)] shadow-none`
-										: "bg-white text-[var(--secondary)] hover:bg-gray-200 shadow-md"
-								}`}>
-								<div>
-									{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
-									{category.name}
-									{!category.isSpecial && (
-										<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-[var(--secondary)]/10 text-[var(--secondary)]/50'>
-											{
-												inventoryItems.filter(
-													(item) =>
-														getCategoryName(item.categoryId) === category.name
-												).length
-											}
-										</span>
-									)}
-								</div>
-							</button>
-						))}
+				{/* Results Header - Fixed */}
+				<div className={`flex items-center justify-between px-6 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+					<div className='flex flex-col'>
+						<h2 className='text-[var(--secondary)] font-bold'>
+							{isSearching ? "Search Results" : ""}
+						</h2>
+						{isSearching && (
+							<p className='text-xs text-[var(--secondary)] opacity-60'>
+								Searching for `{searchQuery}`
+							</p>
+						)}
 					</div>
+				</div>
 
-					{/* Menu Items - Scrollable */}
-					<div className='flex-1 overflow-y-auto px-6 pb-6'>
-						{loading ? (
-							<div className='flex flex-col items-center justify-center py-8 gap-4'>
-								<LoadingSpinner size="lg"/>
-								<span className='ml-3 text-[var(--secondary)]'>
-									Loading menu...
-								</span>
-							</div>
-						) : inventoryItems.length === 0 ? (
-							// Empty Inventory Collection State
-							<div className='flex flex-col items-center justify-center py-12'>
-								<div className='w-[360px] mb-6 pr-[50px] mx-auto opacity-50 flex items-center justify-center'>
-									<EmptyStoreIllustration />
-								</div>
-								<h3 className='text-xl font-semibold text-[var(--secondary)] mb-3'>
-									The store front is empty
-								</h3>
-								<p className='text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed'>
-									The inventory is empty. You need to add items to your
-									inventory before they can appear in the store.
-								</p>
-								<div className='flex flex-col sm:flex-row gap-3'>
-									<button
-										onClick={() => (window.location.href = "/inventory")}
-										className='px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium shadow-md'>
-										Go to Inventory
-									</button>
-								</div>
-							</div>
-						) : filteredItems.length === 0 ? (
-							// Filtered Results Empty State
-							<div className='flex flex-col items-center justify-center py-12'>
-								<div className='w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4'>
-									{isSearching ? (
-										<svg
-											className='w-8 h-8 text-gray-400'
-											fill='none'
-											stroke='currentColor'
-											viewBox='0 0 24 24'>
-											<path
-												strokeLinecap='round'
-												strokeLinejoin='round'
-												strokeWidth={2}
-												d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-											/>
-										</svg>
-									) : (
-										<svg
-											className='w-8 h-8 text-gray-400'
-											fill='currentColor'
-											viewBox='0 0 20 20'>
-											<path
-												fillRule='evenodd'
-												d='M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z'
-												clipRule='evenodd'
-											/>
-										</svg>
-									)}
-								</div>
-								<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
-									{isSearching ? "No Results Found" : "No Items Available"}
-								</h3>
-								<p className='text-[var(--secondary)] opacity-70 text-center max-w-md'>
-									{isSearching
-										? `No items match "${searchQuery}". Try searching with different keywords or check the spelling.`
-										: selectedCategory === "All"
-										? "No items available with current filters."
-										: `No items found in the "${selectedCategory}" category.`}
-								</p>
-								{isSearching && (
-									<button
-										onClick={() => setSearchQuery("")}
-										className='mt-4 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all'>
-										Clear Search
-									</button>
+				{/* Category Selector - Fixed */}
+				<div className={`px-6 py-2 flex gap-2 overflow-x-auto flex-wrap ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+					{displayCategories.map((category) => (
+						<button
+							key={category.id}
+							onClick={() => toggleCategory(category.name)}
+							className={`px-4 py-2 rounded-lg font-medium text-[12px] whitespace-nowrap transition-all ${
+								isCategorySelected(category.name)
+									? `${
+											!category.isSpecial
+												? "bg-[var(--secondary)]/20"
+												: "bg-[var(--accent)]"
+										} text-[var(--secondary)] shadow-none`
+									: "bg-white text-[var(--secondary)] hover:bg-gray-200 shadow-md"
+							}`}>
+							<div>
+								{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
+								{category.name}
+								{!category.isSpecial && (
+									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-[var(--secondary)]/10 text-[var(--secondary)]/50'>
+										{
+											inventoryItems.filter(
+												(item) =>
+													getCategoryName(item.categoryId) === category.name
+											).length
+										}
+									</span>
 								)}
 							</div>
-						) : (
-							<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 justify-center gap-6'>
-								{filteredItems.map((item, index) => {
-									const availableStock = getAvailableStock(item.id || "0");
-									const isOutOfStock = availableStock <= 0;
-									const cartItem = cart.find(
-										(cartItem) => cartItem.id === item.id
-									);
-									const inCartQuantity = cartItem ? cartItem.quantity : 0;
+						</button>
+					))}
+				</div>
 
-									return (
-										<div
-											key={item.id || index}
-											onClick={() => !isOutOfStock && addToCart(item)}
-											className={`
-                                            bg-[var(--primary)] rounded-lg p-3 cursor-pointer shadow-md
-                                            hover:shadow-lg hover:border-[var(--accent)] hover:scale-105 transition-all
-                                            ${
-												isOutOfStock
-													? "opacity-50 cursor-not-allowed"
-													: "border-gray-200 hover:border-[var(--accent)]"
-											}
-                                        `}>
-											{/* Item Image Placeholder */}
-											<div className='w-full h-32 sm:h-40 md:h-44 lg:h-48 bg-[#F7F7F7] rounded-lg mb-2 relative overflow-hidden'>
-												{item.imgUrl ? (
-													<SafeImage
-														src={item.imgUrl}
-														alt={item.name}
-														className=''
-													/>
-												) : (
-													<div className='w-full h-full flex items-center justify-center'>
-														<LogoIcon className='w-12 h-12 md:w-16 md:h-16' />
-													</div>
-												)}
+				{/* Menu Items - Scrollable */}
+				<div className={`flex-1 overflow-y-auto px-6 pb-6 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+					{loading ? (
+						<div className='flex flex-col items-center justify-center py-8 gap-4'>
+							<LoadingSpinner size="lg"/>
+							<span className='ml-3 text-[var(--secondary)]'>
+								Loading menu...
+							</span>
+						</div>
+					) : inventoryItems.length === 0 ? (
+						// Empty Inventory Collection State
+						<div className='flex flex-col items-center justify-center py-12'>
+							<div className='w-[360px] mb-6 pr-[50px] mx-auto opacity-50 flex items-center justify-center'>
+								<EmptyStoreIllustration />
+							</div>
+							<h3 className='text-xl font-semibold text-[var(--secondary)] mb-3'>
+								The store front is empty
+							</h3>
+							<p className='text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed'>
+								The inventory is empty. You need to add items to your
+								inventory before they can appear in the store.
+							</p>
+							<div className='flex flex-col sm:flex-row gap-3 mb-[100px]'>
+								<button
+									onClick={() => (window.location.href = "/inventory")}
+									className='px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium shadow-md'>
+									Go to Inventory
+								</button>
+							</div>
+						</div>
+					) : filteredItems.length === 0 ? (
+						// Filtered Results Empty State
+						<div className='flex flex-col items-center justify-center py-12'>
+							<div className='w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center mb-4'>
+								{isSearching ? (
+									<svg
+										className='w-8 h-8 text-[var(--accent)]'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth={2}
+											d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+										/>
+									</svg>
+								) : (
+									<svg
+										className='w-8 h-8 text-[var(--accent)]'
+										fill='currentColor'
+										viewBox='0 0 20 20'>
+										<path
+											fillRule='evenodd'
+											d='M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z'
+											clipRule='evenodd'
+										/>
+									</svg>
+								)}
+							</div>
+							<h3 className='text-md font-medium text-[var(--secondary)] mb-2'>
+								{isSearching ? "No Results Found" : "No Items Available"}
+							</h3>
+							<p className='text-[var(--secondary)] text-xs opacity-70 text-center max-w-sm'>
+								{isSearching
+									? `No items match "${searchQuery}". Try searching with different keywords or check the spelling.`
+									: selectedCategory === "All"
+									? "No items available with current filters."
+									: `No items found in the "${selectedCategory}" category.`}
+							</p>
+							{isSearching && (
+								<button
+									onClick={() => setSearchQuery("")}
+									className='mt-4 px-4 py-2 bg-[var(--accent)] font-bold text-sm text-[var(--primary)] rounded-lg hover:bg-[var(--accent)]/90 transition-all'>
+									Clear Search
+								</button>
+							)}
+						</div>
+					) : (
+						<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 justify-center gap-6'>
+							{filteredItems.map((item, index) => {
+								const availableStock = getAvailableStock(item.id || "0");
+								const isOutOfStock = availableStock <= 0;
+								const cartItem = cart.find(
+									(cartItem) => cartItem.id === item.id
+								);
+								const inCartQuantity = cartItem ? cartItem.quantity : 0;
 
-												{/* Stock indicator badges */}
-												{isOutOfStock && (
-													<div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
-														<span className='text-white text-xs sm:text-sm font-semibold select-none'>
-															OUT OF STOCK
-														</span>
-													</div>
-												)}
-												{!isOutOfStock && availableStock <= 5 && (
-													<div className='absolute top-2 right-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded select-none'>
-														Low Stock
-													</div>
-												)}
-												{inCartQuantity > 0 && (
-													<div className='absolute top-2 left-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
-														<svg
-															className='w-3 h-3'
-															fill='currentColor'
-															viewBox='0 0 20 20'>
-															<path d='M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' />
-														</svg>
-														{inCartQuantity}
-													</div>
-												)}
-											</div>
+								return (
+									<div
+										key={item.id || index}
+										onClick={() => !isOutOfStock && addToCart(item)}
+										className={`
+										group bg-[var(--primary)] rounded-lg cursor-pointer shadow-md min-w-[200px]
+										hover:shadow-none hover:bg-[var(--accent)]/10 border-[var(--primary)] border-2 hover:border-[var(--accent)] transition-all duration-300
+										${
+											isOutOfStock
+												? "opacity-50 cursor-not-allowed"
+												: "border-gray-200 hover:border-[var(--accent)]"
+										}
+									`}>
+										{/* Item Image Placeholder */}
+										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-[var(--accent)]/40 transition-all duration-300'>
+											{item.imgUrl ? (
+												<SafeImage
+													src={item.imgUrl}
+													alt={item.name}
+													className=''
+												/>
+											) : (
+												<div className='w-full h-full flex items-center justify-center'>
+													<LogoIcon className='w-12 h-16 opacity-25' />
+												</div>
+											)}
 
-											{/* Item Details */}
-											<div className='flex items-center justify-between mb-1 gap-2'>
-												<h3 className='font-semibold text-[var(--secondary)] truncate text-xs sm:text-sm'>
-													{isSearching
-														? highlightSearchTerm(item.name, searchQuery)
-														: item.name}
-												</h3>
-
-												<span className='font-regular text-[var(--secondary)] text-xs sm:text-sm whitespace-nowrap'>
-													{formatCurrency(item.price)}
-												</span>
-											</div>
-											<div className='flex items-center justify-between gap-2'>
+											{/* Stock indicator badges */}
+											{isOutOfStock && (
+												<div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+													<span className='text-white text-xs sm:text-sm font-semibold select-none'>
+														OUT OF STOCK
+													</span>
+												</div>
+											)}
+											{!isOutOfStock && availableStock <= 5 && (
+												<div className='absolute top-2 right-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded select-none'>
+													Low Stock
+												</div>
+											)}
+											{inCartQuantity > 0 && (
+												<div className='absolute top-2 left-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
+													<svg
+														className='w-3 h-3'
+														fill='currentColor'
+														viewBox='0 0 20 20'>
+														<path d='M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' />
+													</svg>
+													{inCartQuantity}
+												</div>
+											)}
+											<div className='absolute bottom-2 left-2 rounded select-none'>
 												<span
 													className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
 													style={{
@@ -751,447 +736,126 @@ export default function StoreScreen() {
 														? highlightSearchTerm(
 																getCategoryName(item.categoryId),
 																searchQuery
-														  )
+														)
 														: getCategoryName(item.categoryId)}
 												</span>
-												<span className='text-xs sm:text-sm font-light whitespace-nowrap'>
-													Stock: {availableStock}
-												</span>
 											</div>
 										</div>
-									);
-								})}
-							</div>
-						)}
-					</div>
-				</div>
 
-				{/* Mobile Order Menu Overlay - visible below xl: breakpoint (< 1280px) */}
-				<AnimatePresence>
-					{showOrderMenu && (
-						<div className='fixed inset-0 z-50 xl:hidden'>
-							{/* Backdrop */}
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.3 }}
-								className='absolute inset-0 bg-black/50'
-								onClick={() => setShowOrderMenu(false)}
-							/>
-
-							{/* Order Panel */}
-							<motion.div
-								initial={{ x: "100%" }}
-								animate={{ x: 0 }}
-								exit={{ x: "100%" }}
-								transition={{ type: "spring", damping: 50, stiffness: 300 }}
-								className='absolute top-0 right-0 bottom-0 w-full bg-[var(--primary)] flex flex-col shadow-2xl'>
-								{/* Header with Close Button */}
-								<div className='flex-shrink-0 flex items-center justify-between p-4 border-b-2 border-[var(--accent)]'>
-									<h2 className='text-xl font-bold text-[var(--secondary)]'>
-										Current Order
-									</h2>
-									<button
-										onClick={() => setShowOrderMenu(false)}
-										className='w-10 h-10 flex items-center justify-center bg-[var(--light-accent)] rounded-full hover:bg-[var(--accent)] transition-all'>
-										<svg
-											className='w-6 h-6 text-[var(--secondary)]'
-											fill='none'
-											stroke='currentColor'
-											viewBox='0 0 24 24'>
-											<path
-												strokeLinecap='round'
-												strokeLinejoin='round'
-												strokeWidth={2}
-												d='M6 18L18 6M6 6l12 12'
-											/>
-										</svg>
-									</button>
-								</div>
-
-								{/* Order Type Dropdown */}
-								<div className='flex-shrink-0 h-16 p-3 border-b-2 border-[var(--accent)]'>
-									<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
-										<DropdownField
-											options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
-											defaultValue='TAKE OUT'
-											dropdownPosition='bottom-right'
-											dropdownOffset={{ top: 2, right: 0 }}
-											onChange={(value) =>
-												setOrderType(
-													value as "DINE-IN" | "TAKE OUT" | "DELIVERY"
-												)
-											}
-											roundness={"full"}
-											height={42}
-											valueAlignment={"left"}
-											padding=''
-											shadow={false}
-										/>
-									</div>
-								</div>
-
-								{/* Cart Items - Scrollable */}
-								<div className='flex-1 overflow-y-auto px-3 p-6'>
-									{cart.length === 0 ? (
-										<div className='flex flex-col items-center justify-center h-full py-12'>
-											<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
-												<EmptyOrderIllustration />
-											</div>
-											<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
-												Order List is Empty
+										{/* Item Details */}
+										<div className='flex items-center justify-between mb-1 gap-2 pb-2 px-2'>
+											<h3 className='font-semibold text-[var(--secondary)] truncate text-xs sm:text-sm'>
+												{isSearching
+													? highlightSearchTerm(item.name, searchQuery)
+													: item.name}
 											</h3>
-											<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
-												Add items from the menu to start building your order.
-												Click on any menu item to add it to your cart.
-											</p>
-										</div>
-									) : (
-										<div className='space-y-0'>
-											<AnimatePresence mode='popLayout'>
-												{cart.map((item, index) => (
-													<motion.div
-														key={item.id}
-														initial={{ opacity: 0, x: 100, scale: 0.9 }}
-														animate={{ opacity: 1, x: 0, scale: 1 }}
-														exit={{
-															opacity: 0,
-															x: -100,
-															scale: 0.8,
-															height: 0,
-														}}
-														transition={{
-															duration: 0.3,
-															type: "spring",
-															stiffness: 300,
-															damping: 25,
-															delay: index * 0.05,
-														}}
-														layout
-														layoutId={`mobile-cart-item-${item.id}`}
-														className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
-														<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
-															<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
-																{item.imgUrl ? (
-																	<SafeImage
-																		src={item.imgUrl}
-																		alt={item.name}
-																	/>
-																) : null}
-																{!item.imgUrl && (
-																	<div className='w-full h-full flex items-center justify-center'>
-																		<LogoIcon className='w-10 h-10' />
-																	</div>
-																)}
-															</div>
 
-															<div className='flex flex-col items-start gap-3 w-full h-[100px] flex-grow'>
-																<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
-																	<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
-																		<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
-																			{item.name}
-																		</span>
-																	</div>
-																	<div className='flex flex-row items-center justify-between w-full h-[21px]'>
-																		<span className='space-x-2 flex items-center'>
-																			<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																				{formatCurrency(item.price)}
-																			</span>
-																			<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
-																				×{item.quantity}
-																			</span>
-																		</span>
-																		<span className='space-x-2 flex items-center'>
-																			<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																				=
-																			</span>
-																			<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																				{formatCurrency(
-																					item.price * item.quantity
-																				)}
-																			</span>
-																		</span>
-																	</div>
-																</div>
-
-																<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
-																	<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
-																		<button
-																			onClick={() =>
-																				updateQuantity(item.id, -1)
-																			}
-																			className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
-																			<MinusIcon />
-																		</button>
-
-																		<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																			{item.quantity}
-																		</span>
-
-																		<button
-																			onClick={() => updateQuantity(item.id, 1)}
-																			className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
-																			<PlusIcon />
-																		</button>
-																	</div>
-																</div>
-															</div>
-														</div>
-														<AnimatePresence>
-															<motion.div
-																key={`mobile-divider-${index}`}
-																initial={{ opacity: 0 }}
-																animate={{
-																	opacity: index === cart.length - 1 ? 0 : 1,
-																}}
-																transition={{
-																	duration: 0.3,
-																	type: "spring",
-																	stiffness: 300,
-																	damping: 25,
-																	delay: index * 0.05,
-																}}
-																className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
-															/>
-														</AnimatePresence>
-													</motion.div>
-												))}
-											</AnimatePresence>
-										</div>
-									)}
-								</div>
-
-								{/* Order Summary */}
-								<div className='flex-shrink-0 border-t-2 border-[var(--accent)] pb-4'>
-									<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
-										<span>Subtotal</span>
-										<span>{formatCurrency(subtotal)}</span>
-									</div>
-									<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
-										<span>Discount</span>
-										<span>-{formatCurrency(discountAmount)}</span>
-									</div>
-
-									<div className='gap-2 p-3'>
-										<DiscountDropdown
-											value={discountCode}
-											onChange={setDiscountCode}
-											onDiscountApplied={handleDiscountApplied}
-											subtotal={subtotal}
-											cartCategoryIds={getCartCategoryIds()}
-											categories={categories}
-										/>
-									</div>
-
-									<div className='border-t-1 border-dashed border-[var(--accent)]'>
-										<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
-											<span>Total</span>
-											<span>{formatCurrency(total)}</span>
-										</div>
-
-										<div className='px-3 pb-3 flex gap-2'>
-											{cart.length > 0 && (
-												<button
-													onClick={clearCart}
-													className='flex-1 py-4 font-black text-[14px] text-[var(--error)] bg-white border-2 border-[var(--error)] rounded-lg hover:bg-[var(--error)] hover:text-white transition-all'>
-													CLEAR CART
-												</button>
-											)}
-											<button
-												onClick={handlePlaceOrder}
-												disabled={cart.length === 0 || isPlacingOrder || !user}
-												className={`flex-1 py-4 font-black text-[14px] rounded-lg transition-all ${
-													cart.length === 0 || isPlacingOrder || !user
-														? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
-														: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:shadow-lg cursor-pointer text-shadow-lg"
-												}`}>
-												<span>
-													{!user
-														? "LOGIN TO ORDER"
-														: isPlacingOrder
-														? "PLACING..."
-														: cart.length === 0
-														? "ADD ITEMS"
-														: "PLACE ORDER"}
-												</span>
-											</button>
+											<span className='font-regular text-[var(--secondary)] text-xs sm:text-sm whitespace-nowrap'>
+												{formatCurrency(item.price)}
+											</span>
 										</div>
 									</div>
-								</div>
-							</motion.div>
+								);
+							})}
 						</div>
 					)}
-				</AnimatePresence>
+				</div>
+			</div>
 
-				{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
-				<div className='hidden xl:flex flex-col h-full shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0'>
-					{/* Header Section - Fixed at top (154px total) */}
-					<div className='flex-shrink-0'>
-						<div className='w-full h-[90px] bg-[var(--primary)] border-b border-[var(--secondary)]/20 border-dashed'>
-							{/* Order Header */}
-							<div className='flex items-center gap-3 p-3'>
-								<div className='bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative'>
-									<OrderCartIcon className="w-6 h-6"/>
-									{cart.length > 0 && (
-										<div className='absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1'>
-											{cart.reduce((sum, item) => sum + item.quantity, 0)}
+			{/* Mobile Order Menu Overlay - visible below xl: breakpoint (< 1280px) */}
+			<AnimatePresence>
+				{showOrderMenu && (
+					<div className='fixed inset-0 z-50 xl:hidden'>
+						{/* Backdrop */}
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							transition={{ duration: 0.3 }}
+							className='absolute inset-0 bg-black/50'
+							onClick={() => setShowOrderMenu(false)}
+						/>
+
+						{/* Order Panel */}
+						<motion.div
+							initial={{ x: "100%" }}
+							animate={{ x: 0 }}
+							exit={{ x: "100%" }}
+							transition={{ type: "spring", damping: 50, stiffness: 300 }}
+							className='absolute top-0 right-0 bottom-0 w-full bg-[var(--primary)] flex flex-col shadow-2xl'>
+							{/* Header with Close Button */}
+							<div className='flex-shrink-0 flex items-center justify-between p-4 border-b-2 border-[var(--accent)]'>
+								<h2 className='text-xl font-bold text-[var(--secondary)]'>
+									Current Order
+								</h2>
+								<button
+									onClick={() => setShowOrderMenu(false)}
+									className='w-10 h-10 flex items-center justify-center bg-[var(--light-accent)] rounded-full hover:bg-[var(--accent)] transition-all'>
+									<svg
+										className='w-6 h-6 text-[var(--secondary)]'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth={2}
+											d='M6 18L18 6M6 6l12 12'
+										/>
+									</svg>
+								</button>
+							</div>
+
+							{/* Order Type Dropdown */}
+							<div className='flex-shrink-0 h-16 p-3 border-b-2 border-[var(--accent)]'>
+								<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
+									<DropdownField
+										options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
+										defaultValue='TAKE OUT'
+										dropdownPosition='bottom-right'
+										dropdownOffset={{ top: 2, right: 0 }}
+										onChange={(value) =>
+											setOrderType(
+												value as "DINE-IN" | "TAKE OUT" | "DELIVERY"
+											)
+										}
+										roundness={"full"}
+										height={42}
+										valueAlignment={"left"}
+										padding=''
+										shadow={false}
+									/>
+								</div>
+							</div>
+
+							{/* Cart Items - Scrollable */}
+							<div className='flex-1 overflow-y-auto px-3 p-6'>
+								{cart.length === 0 ? (
+									<div className='flex flex-col items-center justify-center h-full py-12'>
+										<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
+											<EmptyOrderIllustration />
 										</div>
-									)}
-								</div>
-								<div className='flex flex-1 flex-col items-center'>
-									<span className='text-[var(--secondary)] font-medium text-[16px] self-start'>
-										{cart.length === 0 ? "New Order" : "Current Order"}
-									</span>
-									<span className='text-[var(--secondary)] font-light text-[12px] self-start'>
-										{cart.length === 0
-											? "No items added"
-											: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
-									</span>
-								</div>
-								{cart.length > 0 && (
-									<button
-										onClick={clearCart}
-										className='text-[var(--error)] border-1 border-[var(--error)] hover:text-white text-xs font-medium hover:bg-[var(--error)]/50 px-2 py-1 rounded transition-all'
-										title='Clear all items'>
-										Clear
-									</button>
-								)}
-								<div className='hidden bg-[var(--light-accent)] w-16 h-16 rounded-full'></div>
-							</div>
-						</div>
-
-						<div className='h-16 p-3 border-b-2 border-[var(--accent)]'>
-							<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
-								<DropdownField
-									options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
-									defaultValue='TAKE OUT'
-									dropdownPosition='bottom-right'
-									dropdownOffset={{ top: 2, right: 0 }}
-									onChange={(value) =>
-										setOrderType(value as "DINE-IN" | "TAKE OUT" | "DELIVERY")
-									}
-									roundness={"full"}
-									height={42}
-									valueAlignment={"left"}
-									padding=''
-									shadow={false}
-								/>
-							</div>
-						</div>
-					</div>
-
-					{/* Cart Items - Scrollable middle section */}
-					<div className='flex-1 overflow-y-auto px-3 p-6'>
-						{cart.length === 0 ? (
-							<div className='flex flex-col items-center justify-center h-full py-12'>
-								<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
-									<EmptyOrderIllustration />
-								</div>
-								<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
-									Order List is Empty
-								</h3>
-								<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
-									Add items from the menu to start building your order. Click on
-									any menu item to add it to your cart.
-								</p>
-							</div>
-						) : (
-							/* Cart Items */
-							<div className='space-y-0'>
-								<AnimatePresence mode='popLayout'>
-									{cart.map((item, index) => (
-										<motion.div
-											key={item.id}
-											initial={{ opacity: 0, x: 100, scale: 0.9 }}
-											animate={{ opacity: 1, x: 0, scale: 1 }}
-											exit={{
-												opacity: 0,
-												x: -100,
-												scale: 0.8,
-												height: 0,
-											}}
-											transition={{
-												duration: 0.3,
-												type: "spring",
-												stiffness: 300,
-												damping: 25,
-												delay: index * 0.05,
-											}}
-											layout
-											layoutId={`cart-item-${item.id}`}
-											className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
-											<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
-												<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
-													{item.imgUrl ? (
-														<SafeImage src={item.imgUrl} alt={item.name} />
-													) : null}
-													{!item.imgUrl && (
-														<div className='w-full h-full flex items-center justify-center'>
-															<LogoIcon className='w-10 h-10' />
-														</div>
-													)}
-												</div>
-
-												<div className='flex flex-col items-start gap-3 w-[278px] h-[100px] flex-grow'>
-													{/* Item Info Section */}
-													<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
-														{/* Title and Quantity Row */}
-														<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
-															<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
-																{item.name}
-															</span>
-														</div>
-														{/* Price and Subtotal Row */}
-														<div className='flex flex-row items-center justify-between w-full h-[21px]'>
-															<span className='space-x-2 flex items-center'>
-																<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																	{formatCurrency(item.price)}
-																</span>
-																<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
-																	×{item.quantity}
-																</span>
-															</span>
-															<span className='space-x-2 flex items-center'>
-																<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																	=
-																</span>
-																<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																	{formatCurrency(item.price * item.quantity)}
-																</span>
-															</span>
-														</div>
-													</div>
-
-													{/* Controls Section */}
-													<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
-														{/* Quantity Controls */}
-														<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
-															<button
-																onClick={() => updateQuantity(item.id, -1)}
-																className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
-																<MinusIcon />
-															</button>
-
-															<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
-																{item.quantity}
-															</span>
-
-															<button
-																onClick={() => updateQuantity(item.id, 1)}
-																className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
-																<PlusIcon />
-															</button>
-														</div>
-													</div>
-												</div>
-											</div>
-											<AnimatePresence>
+										<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
+											Order List is Empty
+										</h3>
+										<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+											Add items from the menu to start building your order.
+											Click on any menu item to add it to your cart.
+										</p>
+									</div>
+								) : (
+									<div className='space-y-0'>
+										<AnimatePresence mode='popLayout'>
+											{cart.map((item, index) => (
 												<motion.div
-													key={`divider-${index}`}
-													initial={{ opacity: 0 }}
-													animate={{
-														opacity: index === cart.length - 1 ? 0 : 1,
+													key={item.id}
+													initial={{ opacity: 0, x: 100, scale: 0.9 }}
+													animate={{ opacity: 1, x: 0, scale: 1 }}
+													exit={{
+														opacity: 0,
+														x: -100,
+														scale: 0.8,
+														height: 0,
 													}}
 													transition={{
 														duration: 0.3,
@@ -1200,246 +864,577 @@ export default function StoreScreen() {
 														damping: 25,
 														delay: index * 0.05,
 													}}
-													className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
-												/>
-											</AnimatePresence>
-										</motion.div>
-									))}
-								</AnimatePresence>
+													layout
+													layoutId={`mobile-cart-item-${item.id}`}
+													className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
+													<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
+														<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+															{item.imgUrl ? (
+																<SafeImage
+																	src={item.imgUrl}
+																	alt={item.name}
+																/>
+															) : null}
+															{!item.imgUrl && (
+																<div className='w-full h-full flex items-center justify-center'>
+																	<LogoIcon className='w-10 h-10' />
+																</div>
+															)}
+														</div>
+
+														<div className='flex flex-col items-start gap-3 w-full h-[100px] flex-grow'>
+															<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
+																<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
+																	<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+																		{item.name}
+																	</span>
+																</div>
+																<div className='flex flex-row items-center justify-between w-full h-[21px]'>
+																	<span className='space-x-2 flex items-center'>
+																		<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																			{formatCurrency(item.price)}
+																		</span>
+																		<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+																			×{item.quantity}
+																		</span>
+																	</span>
+																	<span className='space-x-2 flex items-center'>
+																		<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																			=
+																		</span>
+																		<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																			{formatCurrency(
+																				item.price * item.quantity
+																			)}
+																		</span>
+																	</span>
+																</div>
+															</div>
+
+															<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
+																<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
+																	<button
+																		onClick={() =>
+																			updateQuantity(item.id, -1)
+																		}
+																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																		<MinusIcon />
+																	</button>
+
+																	<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																		{item.quantity}
+																	</span>
+
+																	<button
+																		onClick={() => updateQuantity(item.id, 1)}
+																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																		<PlusIcon />
+																	</button>
+																</div>
+															</div>
+														</div>
+													</div>
+													<AnimatePresence>
+														<motion.div
+															key={`mobile-divider-${index}`}
+															initial={{ opacity: 0 }}
+															animate={{
+																opacity: index === cart.length - 1 ? 0 : 1,
+															}}
+															transition={{
+																duration: 0.3,
+																type: "spring",
+																stiffness: 300,
+																damping: 25,
+																delay: index * 0.05,
+															}}
+															className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
+														/>
+													</AnimatePresence>
+												</motion.div>
+											))}
+										</AnimatePresence>
+									</div>
+								)}
 							</div>
-						)}
+
+							{/* Order Summary */}
+							<div className='flex-shrink-0 border-t-2 border-[var(--accent)] pb-4'>
+								<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
+									<span>Subtotal</span>
+									<span>{formatCurrency(subtotal)}</span>
+								</div>
+								<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
+									<span>Discount</span>
+									<span>-{formatCurrency(discountAmount)}</span>
+								</div>
+
+								<div className='gap-2 p-3'>
+									<DiscountDropdown
+										value={discountCode}
+										onChange={setDiscountCode}
+										onDiscountApplied={handleDiscountApplied}
+										subtotal={subtotal}
+										cartCategoryIds={getCartCategoryIds()}
+										categories={categories}
+									/>
+								</div>
+
+								<div className='border-t-1 border-dashed border-[var(--accent)]'>
+									<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
+										<span>Total</span>
+										<span>{formatCurrency(total)}</span>
+									</div>
+
+									<div className='px-3 pb-3 flex gap-2'>
+										{cart.length > 0 && (
+											<button
+												onClick={clearCart}
+												className='flex-1 py-4 font-black text-[14px] text-[var(--error)] bg-white border-2 border-[var(--error)] rounded-lg hover:bg-[var(--error)] hover:text-white transition-all'>
+												CLEAR CART
+											</button>
+										)}
+										<button
+											onClick={handlePlaceOrder}
+											disabled={cart.length === 0 || isPlacingOrder || !user}
+											className={`flex-1 py-4 font-black text-[14px] rounded-lg transition-all ${
+												cart.length === 0 || isPlacingOrder || !user
+													? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
+													: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+											}`}>
+											<span>
+												{!user
+													? "LOGIN TO ORDER"
+													: isPlacingOrder
+													? "PLACING..."
+													: cart.length === 0
+													? "ADD ITEMS"
+													: "PLACE ORDER"}
+											</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</motion.div>
+					</div>
+				)}
+			</AnimatePresence>
+
+			{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
+			<div className='hidden xl:flex flex-col h-screen shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0'>
+				{/* Header Section - Fixed at top (154px total) */}
+				<div className='flex-shrink-0'>
+					<div className='w-full h-[90px] bg-[var(--primary)] border-b border-[var(--secondary)]/20 border-dashed'>
+						{/* Order Header */}
+						<div className='flex items-center gap-3 p-3'>
+							<div className='bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative'>
+								<OrderCartIcon className="w-6 h-6"/>
+								{cart.length > 0 && (
+									<div className='absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1'>
+										{cart.reduce((sum, item) => sum + item.quantity, 0)}
+									</div>
+								)}
+							</div>
+							<div className='flex flex-1 flex-col items-center'>
+								<span className='text-[var(--secondary)] font-medium text-[16px] self-start'>
+									{cart.length === 0 ? "New Order" : "Current Order"}
+								</span>
+								<span className='text-[var(--secondary)] font-light text-[12px] self-start'>
+									{cart.length === 0
+										? "No items added"
+										: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
+								</span>
+							</div>
+							{cart.length > 0 && (
+								<button
+									onClick={clearCart}
+									className='text-[var(--error)] border-1 border-[var(--error)] hover:text-white text-xs font-medium hover:bg-[var(--error)]/50 px-2 py-1 rounded transition-all'
+									title='Clear all items'>
+									Clear
+								</button>
+							)}
+							<div className='hidden bg-[var(--light-accent)] w-16 h-16 rounded-full'></div>
+						</div>
 					</div>
 
-					{/* Order Summary */}
-					<div className='flex-shrink mb-[40px] border-t-2 border-[var(--accent)]'>
-						<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
-							<span>Subtotal</span>
-							<span>{formatCurrency(subtotal)}</span>
-						</div>
-						<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
-							<span>Discount</span>
-							<span>-{formatCurrency(discountAmount)}</span>
-						</div>
-
-						<div className='gap-2 p-3'>
-							<DiscountDropdown
-								value={discountCode}
-								onChange={setDiscountCode}
-								onDiscountApplied={handleDiscountApplied}
-								subtotal={subtotal}
-								cartCategoryIds={getCartCategoryIds()}
-								categories={categories}
+					<div className='h-16 p-3 border-b-2 border-[var(--accent)]'>
+						<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
+							<DropdownField
+								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
+								defaultValue='TAKE OUT'
+								dropdownPosition='bottom-right'
+								dropdownOffset={{ top: 2, right: 0 }}
+								onChange={(value) =>
+									setOrderType(value as "DINE-IN" | "TAKE OUT" | "DELIVERY")
+								}
+								roundness={"full"}
+								height={42}
+								valueAlignment={"left"}
+								padding=''
+								shadow={false}
 							/>
-						</div>
-
-						<div className='border-t-1 border-dashed border-[var(--accent)] h-[124px]'>
-							<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
-								<span>Total</span>
-								<span>{formatCurrency(total)}</span>
-							</div>
-
-							{/* Place Order Button */}
-							<button
-								onClick={handlePlaceOrder}
-								disabled={cart.length === 0 || isPlacingOrder || !user}
-								className={`w-full py-4 font-black text-[18px] transition-all ${
-									cart.length === 0 || isPlacingOrder || !user
-										? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
-										: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
-								}`}>
-								<span>
-									{!user
-										? "PLEASE LOGIN TO ORDER"
-										: isPlacingOrder
-										? "PLACING ORDER..."
-										: cart.length === 0
-										? "ADD ITEMS TO ORDER"
-										: "PLACE ORDER"}
-								</span>
-							</button>
 						</div>
 					</div>
 				</div>
 
-				{/* Order Confirmation Modal */}
-				{showOrderConfirmation && (
-					<div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4'>
-						<div className='bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col'>
-							{/* Modal Header */}
-							<div className='p-6 border-b border-gray-200'>
-								<div className='flex items-center justify-between'>
-									<h2 className='text-xl font-semibold text-[var(--secondary)]'>
-										Confirm Order
-									</h2>
-									<button
-										onClick={() => setShowOrderConfirmation(false)}
-										className='text-gray-400 hover:text-[var(--secondary)] text-2xl'>
-										×
-									</button>
-								</div>
-								<p className='text-sm text-[var(--secondary)]/80 mt-1'>
-									Please review your order before confirming
-								</p>
+				{/* Cart Items - Scrollable middle section */}
+				<div className='flex-1 overflow-y-auto px-3 p-6'>
+					{cart.length === 0 ? (
+						<div className='flex flex-col items-center justify-center h-full py-12'>
+							<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
+								<EmptyOrderIllustration />
 							</div>
-
-							{/* Order Details */}
-							<div className='flex-1 overflow-y-auto p-6'>
-								{/* Order Type */}
-								<div className='mb-4 flex justify-between text-[12px]'>
-									<span className='text-[var(--secondary)] font-medium'>
-										Order Type:
-									</span>
-									<span className='font-medium'>{orderType}</span>
-								</div>
-
-								{/* Items List */}
-								<div className='mb-4'>
-									<h3 className='text-[12px] font-medium text-[var(--secondary)] mb-3'>
-										Items ({cart.length})
-									</h3>
-									<div className='space-y-3'>
-										{cart.map((item) => (
-											<div
-												key={item.id}
-												className='flex items-center gap-3 p-3 bg-gray-50 rounded-lg'>
-												{/* Item Image */}
-												<div className='w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative'>
-													{item.imgUrl ? (
-														<SafeImage
-															src={item.imgUrl}
-															alt={item.name}
-															className='w-full h-full object-cover'
-														/>
-													) : (
-														<div className='w-full h-full flex items-center justify-center'>
-															<svg
-																className='w-6 h-6 text-gray-400'
-																fill='currentColor'
-																viewBox='0 0 20 20'>
-																<path
-																	fillRule='evenodd'
-																	d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
-																	clipRule='evenodd'
-																/>
-															</svg>
-														</div>
-													)}
-												</div>
-
-												{/* Item Details */}
-												<div className='flex-1 min-w-0'>
-													<h4 className='font-medium text-[var(--secondary)] truncate'>
-														{item.name}
-													</h4>
-													<p className='text-sm text-[var(--secondary)]'>
-														{formatCurrency(item.price)}
-													</p>
-												</div>
-
-												{/* Quantity and Total */}
-												<div className='text-right'>
-													<div className='text-sm font-medium text-[var(--secondary)]/50'>
-														Qty: {item.quantity}
+							<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
+								Order List is Empty
+							</h3>
+							<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+								Add items from the menu to start building your order. Click on
+								any menu item to add it to your cart.
+							</p>
+						</div>
+					) : (
+						/* Cart Items */
+						<div className='space-y-0'>
+							<AnimatePresence mode='popLayout'>
+								{cart.map((item, index) => (
+									<motion.div
+										key={item.id}
+										initial={{ opacity: 0, x: 100, scale: 0.9 }}
+										animate={{ opacity: 1, x: 0, scale: 1 }}
+										exit={{
+											opacity: 0,
+											x: -100,
+											scale: 0.8,
+											height: 0,
+										}}
+										transition={{
+											duration: 0.3,
+											type: "spring",
+											stiffness: 300,
+											damping: 25,
+											delay: index * 0.05,
+										}}
+										layout
+										layoutId={`cart-item-${item.id}`}
+										className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
+										<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
+											<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+												{item.imgUrl ? (
+													<SafeImage src={item.imgUrl} alt={item.name} />
+												) : null}
+												{!item.imgUrl && (
+													<div className='w-full h-full flex items-center justify-center'>
+														<LogoIcon className='w-10 h-10 opacity-25' />
 													</div>
-													<div className='text-sm font-regular text-[var(--secondary)]'>
-														{formatCurrency(item.price * item.quantity)}
-													</div>
-												</div>
+												)}
 											</div>
-										))}
-									</div>
-								</div>
 
-								{/* Order Summary */}
-								<div className='border-t border-gray-200 pt-4'>
-									<div className='space-y-2'>
-										<div className='flex justify-between text-sm'>
-											<span className='text-[var(--secondary)]'>Subtotal:</span>
-											<span className='font-medium'>
-												{formatCurrency(subtotal)}
-											</span>
-										</div>
-										{discountAmount > 0 && (
-											<div className='flex justify-between text-sm'>
-												<span className='text-[var(--secondary)]'>
-													Discount
-													{appliedDiscount && (
-														<span className='font-medium ml-1'>
-															({appliedDiscount.discount_code} -{" "}
-															{appliedDiscount.type === "percentage"
-																? `${appliedDiscount.value}% off`
-																: `₱${appliedDiscount.value} off`}
-															)
+											<div className='flex flex-col items-start gap-3 w-[278px] h-[100px] flex-grow'>
+												{/* Item Info Section */}
+												<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
+													{/* Title and Quantity Row */}
+													<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
+														<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+															{item.name}
 														</span>
-													)}
-													:
-												</span>
-												<span className='font-medium text-green-600'>
-													-{formatCurrency(discountAmount)}
-												</span>
+													</div>
+													{/* Price and Subtotal Row */}
+													<div className='flex flex-row items-center justify-between w-full h-[21px]'>
+														<span className='space-x-2 flex items-center'>
+															<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																{formatCurrency(item.price)}
+															</span>
+															<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+																×{item.quantity}
+															</span>
+														</span>
+														<span className='space-x-2 flex items-center'>
+															<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																=
+															</span>
+															<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																{formatCurrency(item.price * item.quantity)}
+															</span>
+														</span>
+													</div>
+												</div>
+
+												{/* Controls Section */}
+												<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
+													{/* Quantity Controls */}
+													<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
+														<button
+															onClick={() => updateQuantity(item.id, -1)}
+															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+															<MinusIcon />
+														</button>
+
+														<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+															{item.quantity}
+														</span>
+
+														<button
+															onClick={() => updateQuantity(item.id, 1)}
+															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+															<PlusIcon />
+														</button>
+													</div>
+												</div>
 											</div>
-										)}
-										<div className='flex justify-between text-lg font-semibold border-t border-gray-200 pt-2'>
-											<span>Total:</span>
+										</div>
+										<AnimatePresence>
+											<motion.div
+												key={`divider-${index}`}
+												initial={{ opacity: 0 }}
+												animate={{
+													opacity: index === cart.length - 1 ? 0 : 1,
+												}}
+												transition={{
+													duration: 0.3,
+													type: "spring",
+													stiffness: 300,
+													damping: 25,
+													delay: index * 0.05,
+												}}
+												className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
+											/>
+										</AnimatePresence>
+									</motion.div>
+								))}
+							</AnimatePresence>
+						</div>
+					)}
+				</div>
+
+				{/* Order Summary */}
+				<div className='flex-shrink mb-[40px] border-t-2 border-[var(--accent)]'>
+					<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
+						<span>Subtotal</span>
+						<span>{formatCurrency(subtotal)}</span>
+					</div>
+					<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
+						<span>Discount</span>
+						<span>-{formatCurrency(discountAmount)}</span>
+					</div>
+
+					<div className='gap-2 p-3'>
+						<DiscountDropdown
+							value={discountCode}
+							onChange={setDiscountCode}
+							onDiscountApplied={handleDiscountApplied}
+							subtotal={subtotal}
+							cartCategoryIds={getCartCategoryIds()}
+							categories={categories}
+						/>
+					</div>
+
+					<div className='border-t-1 border-dashed border-[var(--accent)] h-[124px]'>
+						<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
+							<span>Total</span>
+							<span>{formatCurrency(total)}</span>
+						</div>
+
+						{/* Place Order Button */}
+						<button
+							onClick={handlePlaceOrder}
+							disabled={cart.length === 0 || isPlacingOrder || !user}
+							className={`w-full py-4 font-black text-[18px] transition-all ${
+								cart.length === 0 || isPlacingOrder || !user
+									? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
+									: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
+							}`}>
+							<span>
+								{!user
+									? "PLEASE LOGIN TO ORDER"
+									: isPlacingOrder
+									? "PLACING ORDER..."
+									: cart.length === 0
+									? "ADD ITEMS TO ORDER"
+									: "PLACE ORDER"}
+							</span>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			{/* Order Confirmation Modal */}
+			{showOrderConfirmation && (
+				<div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4'>
+					<div className='bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col'>
+						{/* Modal Header */}
+						<div className='p-6 border-b border-gray-200'>
+							<div className='flex items-center justify-between'>
+								<h2 className='text-xl font-semibold text-[var(--secondary)]'>
+									Confirm Order
+								</h2>
+								<button
+									onClick={() => setShowOrderConfirmation(false)}
+									className='text-gray-400 hover:text-[var(--secondary)] text-2xl'>
+									×
+								</button>
+							</div>
+							<p className='text-sm text-[var(--secondary)]/80 mt-1'>
+								Please review your order before confirming
+							</p>
+						</div>
+
+						{/* Order Details */}
+						<div className='flex-1 overflow-y-auto p-6'>
+							{/* Order Type */}
+							<div className='mb-4 flex justify-between text-[12px]'>
+								<span className='text-[var(--secondary)] font-medium'>
+									Order Type:
+								</span>
+								<span className='font-medium'>{orderType}</span>
+							</div>
+
+							{/* Items List */}
+							<div className='mb-4'>
+								<h3 className='text-[12px] font-medium text-[var(--secondary)] mb-3'>
+									Items ({cart.length})
+								</h3>
+								<div className='space-y-3'>
+									{cart.map((item) => (
+										<div
+											key={item.id}
+											className='flex items-center gap-3 p-3 bg-gray-50 rounded-lg'>
+											{/* Item Image */}
+											<div className='w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative'>
+												{item.imgUrl ? (
+													<SafeImage
+														src={item.imgUrl}
+														alt={item.name}
+														className='w-full h-full object-cover'
+													/>
+												) : (
+													<div className='w-full h-full flex items-center justify-center'>
+														<svg
+															className='w-6 h-6 text-gray-400'
+															fill='currentColor'
+															viewBox='0 0 20 20'>
+															<path
+																fillRule='evenodd'
+																d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
+																clipRule='evenodd'
+															/>
+														</svg>
+													</div>
+												)}
+											</div>
+
+											{/* Item Details */}
+											<div className='flex-1 min-w-0'>
+												<h4 className='font-medium text-[var(--secondary)] truncate'>
+													{item.name}
+												</h4>
+												<p className='text-sm text-[var(--secondary)]'>
+													{formatCurrency(item.price)}
+												</p>
+											</div>
+
+											{/* Quantity and Total */}
+											<div className='text-right'>
+												<div className='text-sm font-medium text-[var(--secondary)]/50'>
+													Qty: {item.quantity}
+												</div>
+												<div className='text-sm font-regular text-[var(--secondary)]'>
+													{formatCurrency(item.price * item.quantity)}
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Order Summary */}
+							<div className='border-t border-gray-200 pt-4'>
+								<div className='space-y-2'>
+									<div className='flex justify-between text-sm'>
+										<span className='text-[var(--secondary)]'>Subtotal:</span>
+										<span className='font-medium'>
+											{formatCurrency(subtotal)}
+										</span>
+									</div>
+									{discountAmount > 0 && (
+										<div className='flex justify-between text-sm'>
 											<span className='text-[var(--secondary)]'>
-												{formatCurrency(total)}
+												Discount
+												{appliedDiscount && (
+													<span className='font-medium ml-1'>
+														({appliedDiscount.discount_code} -{" "}
+														{appliedDiscount.type === "percentage"
+															? `${appliedDiscount.value}% off`
+															: `₱${appliedDiscount.value} off`}
+														)
+													</span>
+												)}
+												:
+											</span>
+											<span className='font-medium text-green-600'>
+												-{formatCurrency(discountAmount)}
 											</span>
 										</div>
+									)}
+									<div className='flex justify-between text-lg font-semibold border-t border-gray-200 pt-2'>
+										<span>Total:</span>
+										<span className='text-[var(--secondary)]'>
+											{formatCurrency(total)}
+										</span>
 									</div>
 								</div>
 							</div>
+						</div>
 
-							{/* Modal Footer */}
-							<div className='p-6 border-t border-gray-200 bg-gray-50'>
-								<div className='flex gap-3'>
-									<button
-										onClick={() => setShowOrderConfirmation(false)}
-										className='flex-1 px-4 py-3 text-sm text-[var(--secondary)]/80 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
-										CANCEL
-									</button>
-									<button
-										onClick={confirmPlaceOrder}
-										disabled={isPlacingOrder}
-										className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
-											isPlacingOrder
-												? "bg-[var(--secondary)]/50 text-[var(--primary)] cursor-not-allowed"
-												: "bg-[var(--accent)] text-shadow-md text-[var(--primary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md"
-										}`}>
-										{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
-									</button>
-								</div>
+						{/* Modal Footer */}
+						<div className='p-6 border-t border-gray-200 bg-gray-50'>
+							<div className='flex gap-3'>
+								<button
+									onClick={() => setShowOrderConfirmation(false)}
+									className='flex-1 px-4 py-3 text-sm text-[var(--secondary)]/80 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
+									CANCEL
+								</button>
+								<button
+									onClick={confirmPlaceOrder}
+									disabled={isPlacingOrder}
+									className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
+										isPlacingOrder
+											? "bg-[var(--secondary)]/50 text-[var(--primary)] cursor-not-allowed"
+											: "bg-[var(--accent)] text-shadow-md text-[var(--primary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md"
+									}`}>
+									{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
+								</button>
 							</div>
 						</div>
 					</div>
-				)}
+				</div>
+			)}
 
-				{/* Success Toast Notification */}
-				<SuccessToast
-					show={showSuccessToast}
-					onClose={handleCloseToast}
-					orderId={successOrderId}
-				/>
+			{/* Success Toast Notification */}
+			<SuccessToast
+				show={showSuccessToast}
+				onClose={handleCloseToast}
+				orderId={successOrderId}
+			/>
 
-				<button
-					onClick={() => setShowOrderMenu(!showOrderMenu)}
-					className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
-					<div className='flex-1 flex justify-between items-center text-[var(--secondary)]'>
-						<span className='text-sm'>
-							{cart.length === 0
-								? "No Items Selected"
-								: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
-						</span>
-						<span className='text-sm text-[var(--secondary)] font-semibold'>
-							{formatCurrency(subtotal)}
-						</span>
+			<button
+				onClick={() => setShowOrderMenu(!showOrderMenu)}
+				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
+				<div className='flex-1 flex justify-between items-center text-[var(--primary)]'>
+					<span className='text-sm'>
+						{cart.length === 0
+							? "No Items Selected"
+							: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
+					</span>
+					<span className='text-sm text-[var(--primary)] font-semibold'>
+						{formatCurrency(subtotal)}
+					</span>
+				</div>
+				<div className='rounded-full h-8 w-8 bg-[var(--primary)] p-2 flex items-center justify-center'>
+					<div className='scale-75'>
+						<OrderCartIcon className="text-[var(--secondary)]" />
 					</div>
-					<div className='rounded-full h-8 w-8 bg-[var(--primary)] p-2 flex items-center justify-center'>
-						<div className='scale-75'>
-							<OrderCartIcon className="text-[var(--secondary)]" />
-						</div>
-					</div>
-				</button>
-			</div>
-		</ViewOnlyWrapper>
+				</div>
+			</button>
+		</div>
 	);
 }

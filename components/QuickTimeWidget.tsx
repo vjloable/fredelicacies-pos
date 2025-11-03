@@ -19,10 +19,10 @@ export default function QuickTimeWidget({
 	const [currentTime, setCurrentTime] = useState(new Date());
 
 	useEffect(() => {
-		// Update current time every second
+		// Update current time every 30 seconds instead of every second to reduce renders
 		const timer = setInterval(() => {
 			setCurrentTime(new Date());
-		}, 1000);
+		}, 30000); // Changed from 1000 to 30000
 
 		return () => clearInterval(timer);
 	}, []);
@@ -45,8 +45,9 @@ export default function QuickTimeWidget({
 			} else {
 				await timeTracking.clockOut("Quick clock-out from POS");
 			}
-		} catch (err: any) {
-			console.error("Error toggling time status:", err);
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Error toggling time status';
+			alert(errorMessage);
 		} finally {
 			setLoading(false);
 		}

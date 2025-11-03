@@ -148,7 +148,7 @@ export default function EditWorkerModal({
 
 			setError(null);
 		}
-	}, [worker, isOpen, isOwner, branches, userAccessibleBranches]);
+	}, [worker, isOpen, isOwner, branches, userAccessibleBranches, availableBranches.length]);
 
 	// Debug logging for render conditions
 	useEffect(() => {
@@ -161,7 +161,7 @@ export default function EditWorkerModal({
 				shouldShowRoleDropdown: !formData.isOwner
 			});
 		}
-	}, [isOpen, formData.isOwner, availableBranches.length, selectedRole, selectedBranchId]);
+	}, [isOpen, worker, formData.isOwner, availableBranches.length, selectedRole, selectedBranchId]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

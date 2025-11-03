@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { workerService, Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import DropdownField from "@/components/DropdownField";
@@ -220,7 +221,7 @@ export default function AssignBranchModal({
 						<div className='bg-[var(--secondary)]/5 rounded-lg p-4 mb-6'>
 							<div className='flex items-center'>
 								{worker.profilePicture ? (
-									<img
+									<Image
 										src={worker.profilePicture}
 										alt={`${worker.name} profile`}
 										className='w-12 h-12 rounded-full mr-4'

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { branchService, Branch } from "@/services/branchService";
+import { faceRecognitionService, FaceRecognitionResult } from "@/services/faceRecognitionService";
+import FaceRecognitionCamera from "@/components/FaceRecognitionCamera";
 
 interface POSTimeTrackingProps {
 	currentBranchId: string;
@@ -12,14 +14,62 @@ export default function POSTimeTracking({
 	currentBranchId,
 	onStatusChange,
 }: POSTimeTrackingProps) {
+	console.log('🚀 POSTimeTracking component mounted/rendered');
+	
 	const { user } = useAuth();
 	const timeTracking = useTimeTracking({ autoRefresh: true });
 	const [loading, setLoading] = useState(false);
 	const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
+	const [showFaceRecognition, setShowFaceRecognition] = useState(false);
+	const [faceRecognitionMode, setFaceRecognitionMode] = useState<'enroll' | 'verify'>('verify');
+	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
+	const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null);
+
+	console.log('📊 Component State:', {
+		hasUser: !!user,
+		userId: user?.uid,
+		hasWorker: !!timeTracking.worker,
+		isWorking: timeTracking.isWorking,
+		hasEnrollment,
+		showFaceRecognition,
+		faceRecognitionMode,
+	});
+
+	const loadBranchData = useCallback(async () => {
+		try {
+			const branch = await branchService.getBranchById(currentBranchId);
+			setCurrentBranch(branch);
+		} catch (err: unknown) {
+			console.error("Error loading branch data:", err);
+		}
+	}, [currentBranchId]);
 
 	useEffect(() => {
 		loadBranchData();
-	}, [currentBranchId]);
+	}, [loadBranchData]);
+
+	// Check if user has face enrollment
+	useEffect(() => {
+		const checkEnrollment = async () => {
+			if (!user) {
+				console.log('⚠️ No user found, skipping enrollment check');
+				return;
+			}
+			
+			console.log('🔍 Checking face enrollment for user:', user.uid);
+			
+			try {
+				const enrolled = await faceRecognitionService.hasEnrollment(user.uid);
+				console.log('✅ Enrollment check result:', enrolled);
+				setHasEnrollment(enrolled);
+			} catch (error) {
+				console.error('❌ Error checking face enrollment:', error);
+				setHasEnrollment(false);
+			}
+		};
+
+		checkEnrollment();
+	}, [user]);
 
 	useEffect(() => {
 		// Notify parent component when status changes
@@ -28,16 +78,52 @@ export default function POSTimeTracking({
 		}
 	}, [timeTracking.isWorking, onStatusChange]);
 
-	const loadBranchData = async () => {
-		try {
-			const branch = await branchService.getBranchById(currentBranchId);
-			setCurrentBranch(branch);
-		} catch (err: any) {
-			console.error("Error loading branch data:", err);
-		}
-	};
+	const handleTimeIn = useCallback(async () => {
+		console.log('🔵 Clock In clicked', { 
+			hasUser: !!user, 
+			hasWorker: !!timeTracking.worker,
+			hasEnrollment,
+			userId: user?.uid 
+		});
 
-	const handleTimeIn = async () => {
+		if (!user || !timeTracking.worker) {
+			console.log('❌ No user or worker, returning');
+			return;
+		}
+
+		// Check if face enrollment exists
+		if (hasEnrollment === null) {
+			console.log('⏳ Enrollment status still loading...');
+			alert('Checking face enrollment status...');
+			return;
+		}
+
+		// If no enrollment, prompt to enroll first
+		if (!hasEnrollment) {
+			console.log('📸 No enrollment found, showing prompt');
+			const shouldEnroll = confirm(
+				'No face enrollment found. You need to enroll your face before clocking in. Would you like to enroll now?'
+			);
+			
+			if (shouldEnroll) {
+				console.log('✅ User agreed to enroll');
+				setFaceRecognitionMode('enroll');
+				setPendingAction('clockIn');
+				setShowFaceRecognition(true);
+			} else {
+				console.log('❌ User declined enrollment');
+			}
+			return;
+		}
+
+		// Proceed with face verification
+		console.log('🔐 Proceeding with face verification');
+		setFaceRecognitionMode('verify');
+		setPendingAction('clockIn');
+		setShowFaceRecognition(true);
+	}, [user, timeTracking.worker, hasEnrollment]);
+
+	const performClockIn = useCallback(async () => {
 		if (!user || !timeTracking.worker) return;
 
 		setLoading(true);
@@ -45,54 +131,123 @@ export default function POSTimeTracking({
 		try {
 			await timeTracking.clockIn(
 				currentBranchId,
-				`Self time-in at POS - ${currentBranch?.name || "Unknown Branch"}`
+				`Self time-in at POS - ${currentBranch?.name || "Unknown Branch"} (Face Verified)`
 			);
-		} catch (err: any) {
-			console.error("Error timing in:", err);
-			// Error is already handled by the timeTracking hook
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Error timing in';
+			alert(errorMessage);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [user, timeTracking.worker, timeTracking.clockIn, currentBranchId, currentBranch?.name]);
 
-	const handleTimeOut = async () => {
+	const handleTimeOut = useCallback(async () => {
+		if (!user || !timeTracking.worker || !timeTracking.currentAttendance) return;
+
+		// Check if face enrollment exists
+		if (hasEnrollment === null) {
+			alert('Checking face enrollment status...');
+			return;
+		}
+
+		// If no enrollment, prompt to enroll first
+		if (!hasEnrollment) {
+			alert('No face enrollment found. Please enroll your face to use face verification for clock out.');
+			return;
+		}
+
+		// Proceed with face verification
+		setFaceRecognitionMode('verify');
+		setPendingAction('clockOut');
+		setShowFaceRecognition(true);
+	}, [user, timeTracking.worker, timeTracking.currentAttendance, hasEnrollment]);
+
+	const performClockOut = useCallback(async () => {
 		if (!user || !timeTracking.worker || !timeTracking.currentAttendance) return;
 
 		setLoading(true);
 
 		try {
 			await timeTracking.clockOut(
-				`Self time-out at POS - ${currentBranch?.name || "Unknown Branch"}`
+				`Self time-out at POS - ${currentBranch?.name || "Unknown Branch"} (Face Verified)`
 			);
-		} catch (err: any) {
-			console.error("Error timing out:", err);
-			// Error is already handled by the timeTracking hook
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Error timing out';
+			alert(errorMessage);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [user, timeTracking.worker, timeTracking.currentAttendance, timeTracking.clockOut, currentBranch?.name]);
 
+	// Handle face recognition success
+	const handleFaceRecognitionSuccess = useCallback(async (result?: FaceRecognitionResult) => {
+		console.log('🎉 Face recognition success!', { mode: faceRecognitionMode, result });
+		setShowFaceRecognition(false);
 
+		if (faceRecognitionMode === 'enroll') {
+			// After enrollment, update state and perform pending action
+			console.log('✅ Enrollment successful, updating state');
+			setHasEnrollment(true);
+			alert('Face enrolled successfully! Now verifying your face...');
+			
+			// Wait a moment then show verification
+			setTimeout(() => {
+				console.log('🔐 Showing verification modal');
+				setFaceRecognitionMode('verify');
+				setShowFaceRecognition(true);
+			}, 1500);
+		} else {
+			// Verification successful, perform the pending action
+			console.log('✅ Verification successful, performing action:', pendingAction);
+			if (pendingAction === 'clockIn') {
+				await performClockIn();
+			} else if (pendingAction === 'clockOut') {
+				await performClockOut();
+			}
+			
+			setPendingAction(null);
+		}
+	}, [faceRecognitionMode, pendingAction, performClockIn, performClockOut]);
 
-	// Don't show for users without time tracking access
-	// (owners without manager role assignments are exempt)
-	const isExemptOwner =
-		timeTracking.worker?.isOwner &&
-		!timeTracking.worker.roleAssignments.some(
-			(assignment) => assignment.role === "manager"
+	// Handle face recognition cancel
+	const handleFaceRecognitionCancel = useCallback(() => {
+		setShowFaceRecognition(false);
+		setPendingAction(null);
+	}, []);
+
+	// Handle face recognition error
+	const handleFaceRecognitionError = useCallback((error: string) => {
+		alert(error);
+	}, []);
+
+	// Memoize the access check to prevent unnecessary re-calculations
+	const accessInfo = useMemo(() => {
+		// Don't show for users without time tracking access
+		// (owners without manager role assignments are exempt)
+		const isExemptOwner =
+			timeTracking.worker?.isOwner &&
+			!timeTracking.worker.roleAssignments.some(
+				(assignment) => assignment.role === "manager"
+			);
+
+		if (!user || !timeTracking.worker || isExemptOwner) {
+			return { shouldShow: false, hasAccess: false };
+		}
+
+		// Check if worker has access to this branch
+		const hasAccessToBranch = timeTracking.worker.roleAssignments.some(
+			(assignment: { branchId: string; isActive: boolean }) =>
+				assignment.branchId === currentBranchId && assignment.isActive
 		);
 
-	if (!user || !timeTracking.worker || isExemptOwner) {
+		return { shouldShow: true, hasAccess: hasAccessToBranch };
+	}, [user, timeTracking.worker, currentBranchId]);
+
+	if (!accessInfo.shouldShow) {
 		return null;
 	}
 
-	// Check if worker has access to this branch
-	const hasAccessToBranch = timeTracking.worker.roleAssignments.some(
-		(assignment: any) =>
-			assignment.branchId === currentBranchId && assignment.isActive
-	);
-
-	if (!hasAccessToBranch) {
+	if (!accessInfo.hasAccess) {
 		return (
 			<div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
 				<div className='flex items-center'>
@@ -117,7 +272,19 @@ export default function POSTimeTracking({
 	const isWorking = timeTracking.isWorking;
 
 	return (
-		<div className='bg-white border border-gray-200 rounded-lg shadow-sm'>
+		<>
+			{/* Face Recognition Modal */}
+			{showFaceRecognition && user && (
+				<FaceRecognitionCamera
+					userId={user.uid}
+					mode={faceRecognitionMode}
+					onSuccess={handleFaceRecognitionSuccess}
+					onCancel={handleFaceRecognitionCancel}
+					onError={handleFaceRecognitionError}
+				/>
+			)}
+
+			<div className='bg-white border border-gray-200 rounded-lg shadow-sm'>
 			{/* Header */}
 			<div className='px-4 py-3 border-b border-gray-200 bg-gray-50'>
 				<div className='flex items-center justify-between'>
@@ -200,17 +367,32 @@ export default function POSTimeTracking({
 					</div>
 				)}
 
+				{/* Face Recognition Status */}
+				{hasEnrollment === null && (
+					<div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+						<div className='flex items-center text-sm text-blue-700'>
+							<div className='animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent mr-2'></div>
+							Checking face recognition status...
+						</div>
+					</div>
+				)}
+
 				{/* Action Button */}
 				<div className='flex flex-col space-y-2'>
 					{!isWorking ? (
 						<button
 							onClick={handleTimeIn}
-							disabled={loading || timeTracking.loading}
+							disabled={loading || timeTracking.loading || hasEnrollment === null}
 							className='w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
 							{loading || timeTracking.loading ? (
 								<div className='flex items-center'>
 									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
 									Clocking In...
+								</div>
+							) : hasEnrollment === null ? (
+								<div className='flex items-center'>
+									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+									Loading...
 								</div>
 							) : (
 								<div className='flex items-center'>
@@ -281,6 +463,7 @@ export default function POSTimeTracking({
 					</span>
 				</div>
 			</div>
-		</div>
+			</div>
+		</>
 	);
 }

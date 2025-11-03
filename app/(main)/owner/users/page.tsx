@@ -200,23 +200,7 @@ export default function WorkersPage() {
 		}
 	}, [filters, selectedBranchId]);
 
-	// Load data only after auth loading is complete
-	useEffect(() => {
-		if (!authLoading && user && hasWorkerManagementAccess()) {
-			loadWorkers();
-			loadBranches();
-		}
-	}, [user, hasWorkerManagementAccess, filters, selectedBranchId, authLoading]);
-
-	// Cleanup subscriptions on unmount
-	useEffect(() => {
-		return () => {
-			workerSubscriptions.current.forEach((unsubscribe) => unsubscribe());
-			workerSubscriptions.current.clear();
-		};
-	}, []);
-
-	const loadWorkers = async () => {
+	const loadWorkers = useCallback(async () => {
 		try {
 			setLoading(true);
 
@@ -250,7 +234,24 @@ export default function WorkersPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [filters, selectedBranchId, user?.isOwner, getAccessibleBranches, setupWorkerSubscriptions]);
+
+	// Load data only after auth loading is complete
+	useEffect(() => {
+		if (!authLoading && user && hasWorkerManagementAccess()) {
+			loadWorkers();
+			loadBranches();
+		}
+	}, [user, hasWorkerManagementAccess, authLoading, loadWorkers]);
+
+	// Cleanup subscriptions on unmount
+	useEffect(() => {
+		const subscriptions = workerSubscriptions.current;
+		return () => {
+			subscriptions.forEach((unsubscribe) => unsubscribe());
+			subscriptions.clear();
+		};
+	}, []);
 
 	const loadBranches = async () => {
 		try {
@@ -320,11 +321,6 @@ export default function WorkersPage() {
 		setSelectedWorker(null);
 	};
 
-	const handleWorkerCreated = () => {
-		handleModalClose();
-		loadWorkers();
-	};
-
 	const handleWorkerUpdated = () => {
 		handleModalClose();
 		loadWorkers();
@@ -338,8 +334,8 @@ export default function WorkersPage() {
 	// Sort workers
 	const sortedWorkers = React.useMemo(() => {
 		return [...workers].sort((a, b) => {
-			const aValue = a[sortConfig.column as keyof Worker] as String;
-			const bValue = b[sortConfig.column as keyof Worker] as String;
+			const aValue = a[sortConfig.column as keyof Worker] as string;
+			const bValue = b[sortConfig.column as keyof Worker] as string;
 
 			if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
 			if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;

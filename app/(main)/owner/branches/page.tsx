@@ -15,7 +15,6 @@ import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { title } from "motion/react-m";
 
 function formatDate(date: Date) {
 	return (

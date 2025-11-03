@@ -7,8 +7,6 @@ import {
   deleteDoc, 
   query, 
   orderBy,
-  where,
-  onSnapshot,
   Timestamp,
   setDoc 
 } from 'firebase/firestore';

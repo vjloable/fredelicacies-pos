@@ -8,10 +8,12 @@ import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
 import MenuBurgerIcon from "@/components/icons/MenuBurger";
+import { faceRecognitionService, FaceRecognitionResult } from "@/services/faceRecognitionService";
+import FaceRecognitionCamera from "@/components/FaceRecognitionCamera";
 
 
 interface TopBarProps {
@@ -32,6 +34,12 @@ export default function TopBar({
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
 	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
+	
+	// Face recognition states
+	const [showFaceRecognition, setShowFaceRecognition] = useState(false);
+	const [faceRecognitionMode, setFaceRecognitionMode] = useState<'enroll' | 'verify'>('verify');
+	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
+	const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null);
 
 	const handleRefresh = async () => {
 		if (isRefreshing) return;
@@ -49,35 +57,171 @@ export default function TopBar({
 	// Extract user display name from email
 	const userDisplayName = user?.email?.split("@")[0] || "Worker";
 
-	// Handle time tracking actions
+	// Check if user has face enrollment
+	useEffect(() => {
+		const checkEnrollment = async () => {
+			if (!user || !showTimeTracking) {
+				console.log('⚠️ TopBar: No user or time tracking disabled, skipping enrollment check');
+				return;
+			}
+			
+			console.log('🔍 TopBar: Checking face enrollment for user:', user.uid);
+			
+			try {
+				const enrolled = await faceRecognitionService.hasEnrollment(user.uid);
+				console.log('✅ TopBar: Enrollment check result:', enrolled);
+				setHasEnrollment(enrolled);
+			} catch (error) {
+				console.error('❌ TopBar: Error checking face enrollment:', error);
+				setHasEnrollment(false);
+			}
+		};
+
+		checkEnrollment();
+	}, [user, showTimeTracking]);
+
+	// Handle time tracking actions with face recognition
 	const handleTimeTrackingClick = async () => {
+		console.log('🔵 TopBar: Clock In/Out clicked', { 
+			hasUser: !!user, 
+			hasWorker: !!timeTracking.worker,
+			isWorking: timeTracking.isWorking,
+			hasEnrollment,
+			userId: user?.uid 
+		});
+
 		// Owners are exempt from time tracking since they're not assigned to branches
 		const isExemptOwner = timeTracking.worker?.isOwner;
 
-		if (!timeTracking.worker || isExemptOwner || isTimeTracking) return;
+		if (!timeTracking.worker || isExemptOwner || isTimeTracking) {
+			console.log('❌ TopBar: Cannot proceed - no worker, exempt owner, or already tracking');
+			return;
+		}
+
+		// Check if face enrollment exists
+		if (hasEnrollment === null) {
+			console.log('⏳ TopBar: Enrollment status still loading...');
+			alert('Checking face enrollment status...');
+			return;
+		}
+
+		// If no enrollment, prompt to enroll first
+		if (!hasEnrollment) {
+			console.log('📸 TopBar: No enrollment found, showing prompt');
+			const shouldEnroll = confirm(
+				'No face enrollment found. You need to enroll your face before clocking in/out. Would you like to enroll now?'
+			);
+			
+			if (shouldEnroll) {
+				console.log('✅ TopBar: User agreed to enroll');
+				setFaceRecognitionMode('enroll');
+				setPendingAction(timeTracking.isWorking ? 'clockOut' : 'clockIn');
+				setShowFaceRecognition(true);
+			} else {
+				console.log('❌ TopBar: User declined enrollment');
+			}
+			return;
+		}
+
+		// Proceed with face verification
+		console.log('🔐 TopBar: Proceeding with face verification');
+		setFaceRecognitionMode('verify');
+		setPendingAction(timeTracking.isWorking ? 'clockOut' : 'clockIn');
+		setShowFaceRecognition(true);
+	};
+
+	// Perform actual clock in after face verification
+	const performClockIn = useCallback(async () => {
+		if (!timeTracking.worker || isTimeTracking) return;
 
 		setIsTimeTracking(true);
 		try {
-			if (timeTracking.isWorking) {
-				await timeTracking.clockOut("Clock-out from TopBar");
-			} else {
-				const branchId =
-					currentBranch?.id || timeTracking.worker.roleAssignments[0]?.branchId;
-				if (!branchId) {
-					alert("No branch selected for time tracking");
-					return;
-				}
-				await timeTracking.clockIn(branchId, "Clock-in from TopBar");
+			const branchId = currentBranch?.id || timeTracking.worker.roleAssignments[0]?.branchId;
+			if (!branchId) {
+				alert("No branch selected for time tracking");
+				return;
 			}
-		} catch (error: any) {
-			alert(error.message || "Time tracking failed");
+			await timeTracking.clockIn(branchId, "Clock-in from TopBar (Face Verified)");
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Clock in failed';
+			alert(errorMessage);
 		} finally {
 			setIsTimeTracking(false);
 		}
-	};
+	}, [timeTracking, currentBranch, isTimeTracking]);
+
+	// Perform actual clock out after face verification
+	const performClockOut = useCallback(async () => {
+		if (!timeTracking.worker || isTimeTracking) return;
+
+		setIsTimeTracking(true);
+		try {
+			await timeTracking.clockOut("Clock-out from TopBar (Face Verified)");
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Clock out failed';
+			alert(errorMessage);
+		} finally {
+			setIsTimeTracking(false);
+		}
+	}, [timeTracking, isTimeTracking]);
+
+	// Handle face recognition success
+	const handleFaceRecognitionSuccess = useCallback(async (result?: FaceRecognitionResult) => {
+		console.log('🎉 TopBar: Face recognition success!', { mode: faceRecognitionMode, result });
+		setShowFaceRecognition(false);
+
+		if (faceRecognitionMode === 'enroll') {
+			// After enrollment, update state and perform pending action
+			console.log('✅ TopBar: Enrollment successful, updating state');
+			setHasEnrollment(true);
+			alert('Face enrolled successfully! Now verifying your face...');
+			
+			// Wait a moment then show verification
+			setTimeout(() => {
+				console.log('🔐 TopBar: Showing verification modal');
+				setFaceRecognitionMode('verify');
+				setShowFaceRecognition(true);
+			}, 1500);
+		} else {
+			// Verification successful, perform the pending action
+			console.log('✅ TopBar: Verification successful, performing action:', pendingAction);
+			if (pendingAction === 'clockIn') {
+				await performClockIn();
+			} else if (pendingAction === 'clockOut') {
+				await performClockOut();
+			}
+			
+			setPendingAction(null);
+		}
+	}, [faceRecognitionMode, pendingAction, performClockIn, performClockOut]);
+
+	// Handle face recognition cancel
+	const handleFaceRecognitionCancel = useCallback(() => {
+		console.log('❌ TopBar: Face recognition cancelled');
+		setShowFaceRecognition(false);
+		setPendingAction(null);
+	}, []);
+
+	// Handle face recognition error
+	const handleFaceRecognitionError = useCallback((error: string) => {
+		console.error('❌ TopBar: Face recognition error:', error);
+		alert(error);
+	}, []);
 
 	return (
-		<div className='flex-shrink-0'>
+		<>
+			{/* Face Recognition Modal */}
+			{showFaceRecognition && user && (
+				<FaceRecognitionCamera
+					userId={user.uid}
+					mode={faceRecognitionMode}
+					onSuccess={handleFaceRecognitionSuccess}
+					onCancel={handleFaceRecognitionCancel}
+					onError={handleFaceRecognitionError}
+				/>
+			)}
+
+			<div className='flex-shrink-0'>
 			<div className='flex items-center justify-between h-[90px] w-full'>
 				<div className='flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto'>
 					<button
@@ -118,10 +262,10 @@ export default function TopBar({
 								<button
 									onClick={handleTimeTrackingClick}
 									disabled={isTimeTracking}
-									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-[12px] lg:text-[14px] transition-all duration-200 cursor-pointer group ${
+									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-[12px] lg:text-[14px] cursor-pointer group transition-all duration-200 ${
 										timeTracking.isWorking
-											? "bg-green-100 text-green-800 border-2 border-green-300 hover:bg-green-200 hover:border-green-400 hover:shadow-lg"
-											: "bg-blue-100 text-blue-800 border-2 border-blue-300 hover:bg-blue-200 hover:border-blue-400 hover:shadow-lg"
+											? "bg-[var(--success)]/10 text-[var(--success)] border-2 border-[var(--success)] hover:border-[var(--secondary)] hover:bg-[var(--secondary)]/20 hover:shadow-lg"
+											: "bg-[var(--secondary)]/10 text-[var(--secondary)] border-2 border-[var(--secondary)] hover:border-[var(--success)] hover:bg-[var(--success)]/20 hover:shadow-lg"
 									} ${
 										isTimeTracking
 											? "opacity-50 cursor-not-allowed"
@@ -129,60 +273,46 @@ export default function TopBar({
 									}`}
 									title={
 										timeTracking.isWorking
-											? "🕐 Click to clock out"
-											: "🕐 Click to clock in"
+											? "Click to clock out"
+											: "Click to clock in"
 									}>
 									{/* Click indicator overlay */}
 									{!isTimeTracking && (
 										<div
-											className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+											className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 ${
 												timeTracking.isWorking
-													? "bg-orange-200/30"
-													: "bg-green-200/30"
+													? "bg-[var(--secondary)]/10"
+													: "bg-[var(--success)]/10"
 											}`}
 										/>
 									)}
 
 									<span
-										className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+										className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
 											timeTracking.isWorking
-												? "bg-green-300 text-green-800 group-hover:bg-orange-300 group-hover:text-orange-800"
-												: "bg-blue-300 text-blue-800 group-hover:bg-green-300 group-hover:text-green-800"
+												? "bg-[var(--success)]/10 text-[var(--success)] group-hover:bg-[var(--secondary)]/10 group-hover:text-[var(--secondary)]"
+												: "bg-[var(--secondary)]/10 text-[var(--secondary)] group-hover:bg-[var(--success)]/10 group-hover:text-[var(--success)]"
 										}`}>
 										{isTimeTracking ? (
 											<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent' />
 										) : timeTracking.isWorking ? (
-											// Clock out icon
-											<svg
-												className='w-4 h-4'
-												fill='none'
-												stroke='currentColor'
-												viewBox='0 0 24 24'>
-												<path
-													strokeLinecap='round'
-													strokeLinejoin='round'
-													strokeWidth={2}
-													d='M6 18L18 6M6 6l12 12'
-												/>
-											</svg>
+											<div className="animate-spin border-2 border-[var(--success)] group-hover:border-[var(--secondary)] border-dashed rounded-full h-3 w-3"/>
 										) : (
-											// Clock in icon
-											<svg
-												className='w-4 h-4'
-												fill='none'
-												stroke='currentColor'
-												viewBox='0 0 24 24'>
-												<path
-													strokeLinecap='round'
-													strokeLinejoin='round'
-													strokeWidth={2}
-													d='M12 6v6l4 2'
-												/>
-											</svg>
+											<div className="border-2 border-[var(--secondary)] group-hover:border-[var(--success)] rounded-full h-3 w-3"/>
 										)}
 									</span>
-									<div className='relative z-10 flex flex-col items-start'>
-										<span className='font-semibold'>
+									<div className={`relative z-10 flex flex-col items-start]
+											${timeTracking.isWorking 
+												? "text-[var(--success)]" 
+												: "text-[var(--secondary)]"
+											}
+										`}>
+										<span className={`font-semibold 
+												${timeTracking.isWorking 
+													? "group-hover:text-[var(--secondary)]" 
+													: "group-hover:text-[var(--success)]"
+												}
+											`}>
 											{isTimeTracking
 												? timeTracking.isWorking
 													? "Clocking out..."
@@ -193,10 +323,10 @@ export default function TopBar({
 										</span>
 										{!isTimeTracking && (
 											<span
-												className={`text-xs transition-colors duration-200 ${
+												className={`text-xs ${
 													timeTracking.isWorking
-														? "opacity-70 group-hover:text-orange-700"
-														: "opacity-70 group-hover:text-green-700"
+														? "opacity-70 group-hover:text-[var(--secondary)]"
+														: "opacity-70 group-hover:text-[var(--success)]"
 												}`}>
 												{timeTracking.isWorking
 													? timeTracking.workingDuration > 0
@@ -275,6 +405,7 @@ export default function TopBar({
 					</h1>
 				</div>
 			)}
-		</div>
+			</div>
+		</>
 	);
 }

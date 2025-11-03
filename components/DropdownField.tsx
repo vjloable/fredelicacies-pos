@@ -73,7 +73,7 @@ export default function DropdownField({
 	useEffect(() => {
 		const newValue = defaultValue || (hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}`  : undefined);
 		setSelectedValue(newValue);
-	}, [defaultValue, hasAllOptionsVisible]);
+	}, [defaultValue, hasAllOptionsVisible, allSuffix]);
 
 	const handleSelect = (value: string) => {
 		setSelectedValue(value);
