@@ -13,7 +13,7 @@ import CreateWorkerModal from "./components/CreateWorkerModal";
 import EditWorkerModal from "./components/EditWorkerModal";
 import DeleteWorkerModal from "./components/DeleteWorkerModal";
 import TimeInOutModal from "./components/TimeInOutModal";
-import AssignBranchModal from "./components/AssignBranchModal";
+import AssignBranchModal from "../../[branchId]/(manager)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import AdvancedReporting from "./components/AdvancedReporting";

@@ -588,7 +588,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Menu Items - Scrollable */}
-				<div className={`flex-1 overflow-y-auto px-6 pb-6 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex-1 overflow-y-auto px-6 py-6 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					{loading ? (
 						<div className='flex flex-col items-center justify-center py-8 gap-4'>
 							<LoadingSpinner size="lg"/>

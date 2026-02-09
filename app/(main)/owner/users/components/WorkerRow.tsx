@@ -149,6 +149,15 @@ export default function WorkerRow({
 
 	const canTimeInOut = canEdit && !worker.isOwner;
 
+	// Debug logging to help identify the issue
+	console.log('🔍 WorkerRow permissions debug:', {
+		workerName: worker.name,
+		currentUserIsOwner: currentUser.isOwner,
+		canEdit,
+		hasOnAssignBranch: !!onAssignBranch,
+		shouldShowBranchButton: canEdit && onAssignBranch
+	});
+
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}

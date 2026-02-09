@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { faceRecognitionService, FaceRecognitionResult } from '@/services/faceRecognitionService';
+import LoadingSpinner from './LoadingSpinner';
 
 interface FaceRecognitionCameraProps {
 	userId: string;
@@ -155,10 +156,10 @@ export default function FaceRecognitionCamera({
 	if (!hasCamera) {
 		return (
 			<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-				<div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+				<div className="bg-[var(--primary)] rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
 					<div className="text-center">
-						<div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-							<svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<div className="w-16 h-16 bg-[var(--error)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg className="w-8 h-8 text-[var(--error)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</div>
@@ -194,7 +195,7 @@ export default function FaceRecognitionCamera({
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-			<div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+			<div className="bg-[var(--primary)] rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
 					<div>
@@ -242,13 +243,13 @@ export default function FaceRecognitionCamera({
 
 					{/* Face outline guide */}
 					<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-						<div className="w-64 h-80 border-4 border-white/60 rounded-full shadow-2xl" />
+						<div className="w-64 h-80 border-4 border-[var(--primary)]/60 rounded-full shadow-2xl" />
 					</div>
 
 					{/* Countdown overlay */}
 					{countdown !== null && (
 						<div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-							<div className="text-white text-9xl font-bold animate-pulse drop-shadow-2xl">
+							<div className="text-[var(--primary)] text-9xl font-bold animate-pulse drop-shadow-2xl">
 								{countdown}
 							</div>
 						</div>
@@ -256,10 +257,10 @@ export default function FaceRecognitionCamera({
 
 					{/* Loading overlay */}
 					{isLoading && (
-						<div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+						<div className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-sm flex items-center justify-center">
 							<div className="text-center">
-								<div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4" />
-								<p className="text-white text-lg font-medium">Loading...</p>
+								<div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--primary)] border-t-transparent mx-auto mb-4" />
+								<p className="text-[var(--primary)] text-lg font-medium">Loading...</p>
 							</div>
 						</div>
 					)}
@@ -269,24 +270,24 @@ export default function FaceRecognitionCamera({
 				<div className="mb-5 text-center py-2">
 					<div className={`flex items-center justify-center p-4 rounded-xl border ${
 						isProcessing 
-							? 'bg-blue-50 border-blue-200' 
+							? 'bg-[var(--accent)]/10 border-[var(--accent)]/20' 
 							: status.includes('success') || status.includes('Verified') 
-								? 'bg-green-50 border-green-200' 
+								? 'bg-[var(--success)]/10 border-[var(--success)]/20' 
 								: status.includes('failed') || status.includes('Error') 
-									? 'bg-red-50 border-red-200' 
-									: 'bg-gray-50 border-gray-200'
+									? 'bg-[var(--error)]/10 border-[var(--error)]/20' 
+									: 'bg-[var(--secondary)]/10 border-[var(--secondary)]/20'
 					}`}>
 						{isProcessing && (
-							<div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent mr-3" />
+							<LoadingSpinner size='md'/>
 						)}
 						<span className={`text-sm font-semibold ${
 							isProcessing 
-								? 'text-blue-700' 
+								? 'text-[var(--accent)]/60' 
 								: status.includes('success') || status.includes('Verified') 
-									? 'text-green-700' 
+									? 'text-[var(--success)]/60' 
 									: status.includes('failed') || status.includes('Error') 
-										? 'text-red-700' 
-										: 'text-[var(--secondary)]/80'
+										? 'text-[var(--error)]/60' 
+										: 'text-[var(--secondary)]/60'
 						}`}>
 							{status}
 						</span>

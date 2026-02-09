@@ -19,7 +19,7 @@ import CreateWorkerModal from "@/app/(main)/owner/users/components/CreateWorkerM
 import EditWorkerModal from "@/app/(main)/owner/users/components/EditWorkerModal";
 import DeleteWorkerModal from "@/app/(main)/owner/users/components/DeleteWorkerModal";
 import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
-import AssignBranchModal from "@/app/(main)/owner/users/components/AssignBranchModal";
+import AssignBranchModal from "@/app/(main)/[branchId]/(manager)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
 import AttendanceView from "@/app/(main)/[branchId]/(manager)/management/components/AttendanceView";
 import EditFaceEmbeddingModal from "@/app/(main)/[branchId]/(manager)/management/components/EditFaceEmbeddingModal";
@@ -655,7 +655,6 @@ export default function ManagementPage() {
 										onDelete={handleDeleteWorker}
 										onTimeIn={(worker) => handleTimeInOut(worker, "time_in")}
 										onTimeOut={(worker) => handleTimeInOut(worker, "time_out")}
-										onAssignBranch={handleAssignBranch}
 										onRowClick={handleWorkerDetails}
 										onEditFaceEmbedding={handleEditFaceEmbedding}
 									/>

@@ -237,6 +237,20 @@ export default function EditWorkerModal({
 			return;
 		}
 
+		// Prevent managers from changing branch assignments or roles
+		if (!isOwner) {
+			const currentBranchAssignment = worker.roleAssignments.find(
+				(a) => a.isActive !== false
+			);
+			const currentBranch = currentBranchAssignment?.branchId;
+			const currentRole = currentBranchAssignment?.role;
+
+			if (currentBranch !== selectedBranchId || currentRole !== selectedRole) {
+				setError("Only owners can change branch assignments and roles");
+				return;
+			}
+		}
+
 		setLoading(true);
 		setError(null);
 
@@ -250,8 +264,8 @@ export default function EditWorkerModal({
 				isOwner: formData.isOwner,
 			});
 
-			// Handle admin role changes
-			if (formData.isOwner !== worker.isOwner) {
+			// Handle admin role changes (only for owners)
+			if (isOwner && formData.isOwner !== worker.isOwner) {
 				if (formData.isOwner) {
 					await workerService.promoteToOwner(worker.id);
 				} else {
@@ -259,8 +273,8 @@ export default function EditWorkerModal({
 				}
 			}
 
-		// Update branch assignments if not admin
-		if (!formData.isOwner) {
+		// Update branch assignments if not admin (only for owners)
+		if (isOwner && !formData.isOwner) {
 			const currentAssignments = worker.roleAssignments.filter(
 				(a) => a.isActive !== false
 			);
@@ -486,10 +500,10 @@ export default function EditWorkerModal({
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
 											Assign to Branch <span className="text-[var(--error)]">*</span>
 										</label>
-										{availableBranches.length === 1 ? (
-											// For managers - show readonly branch name
+										{!isOwner || availableBranches.length === 1 ? (
+											// For managers - show readonly branch name (no changes allowed)
 											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700'>
-												{availableBranches[0].name}
+												{availableBranches[0]?.name || selectedBranchId}
 											</div>
 										) : (
 											// For admins - show dropdown
@@ -533,7 +547,7 @@ export default function EditWorkerModal({
 										<label className='block text-sm font-medium text-gray-700 mb-2'>
 											Role <span className="text-[var(--error)]">*</span>
 										</label>
-										{canDemoteWorker(worker) ? (
+										{isOwner && canDemoteWorker(worker) ? (
 											<DropdownField
 												options={getAvailableRoleOptions()}
 												defaultValue={
@@ -552,13 +566,16 @@ export default function EditWorkerModal({
 												padding='12px'
 											/>
 										) : (
-											// Show readonly role when cannot demote
+											// Show readonly role for managers or when cannot demote
 											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 flex items-center justify-between'>
 												<span>{selectedRole === "worker" ? "Worker" : "Manager"}</span>
-												{worker?.id === currentUserId && (
+												{!isOwner && (
+													<span className='text-xs text-gray-500'>(Only owners can change roles)</span>
+												)}
+												{isOwner && worker?.id === currentUserId && (
 													<span className='text-xs text-gray-500'>(Cannot change own role)</span>
 												)}
-												{worker?.roleAssignments.some(a => a.role === "manager" && a.isActive !== false) && worker?.id !== currentUserId && (
+												{isOwner && worker?.roleAssignments.some(a => a.role === "manager" && a.isActive !== false) && worker?.id !== currentUserId && (
 													<span className='text-xs text-gray-500'>(Cannot demote managers)</span>
 												)}
 											</div>

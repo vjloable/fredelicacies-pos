@@ -339,26 +339,7 @@ export default function AssignBranchModal({
 									/>
 								</div>
 							</div>
-
-							{/* Summary */}
-							{selectedBranchId && (
-								<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
-									<h4 className='text-sm font-medium text-blue-800 mb-2'>
-										Assignment Summary:
-									</h4>
-									<div className='text-sm text-blue-700'>
-										<span className='font-medium'>
-											{
-												availableBranches.find((b) => b.id === selectedBranchId)
-													?.name
-											}
-										</span>
-										{" - "}
-										<span className='capitalize'>{selectedRole}</span>
-									</div>
-								</div>
-							)}
-
+							
 							{/* Form Actions */}
 							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200'>
 								<button

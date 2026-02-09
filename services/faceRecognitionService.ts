@@ -31,7 +31,7 @@ export interface FaceRecognitionResult {
 
 class FaceRecognitionService {
 	private modelsLoaded = false;
-	private readonly SIMILARITY_THRESHOLD = 0.75; // 75% similarity threshold
+	private readonly SIMILARITY_THRESHOLD = 0.6; // 75% similarity threshold
 	private readonly MODEL_URL = '/models'; // We'll store models in public/models
 
 	async loadModels(): Promise<void> {
