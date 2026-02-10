@@ -8,12 +8,12 @@ import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
 import MenuBurgerIcon from "@/components/icons/MenuBurger";
-import { faceRecognitionService, FaceRecognitionResult } from "@/services/faceRecognitionService";
-import FaceRecognitionCamera from "@/components/FaceRecognitionCamera";
+import { workerService } from "@/services/workerService";
+import PinEntryModal from "@/components/PinEntryModal";
 
 
 interface TopBarProps {
@@ -35,11 +35,10 @@ export default function TopBar({
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
 	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
 	
-	// Face recognition states
-	const [showFaceRecognition, setShowFaceRecognition] = useState(false);
-	const [faceRecognitionMode, setFaceRecognitionMode] = useState<'enroll' | 'verify'>('verify');
+	// PIN verification states
+	const [showPinModal, setShowPinModal] = useState(false);
+	const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
 	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
-	const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null);
 
 	const handleRefresh = async () => {
 		if (isRefreshing) return;
@@ -57,77 +56,24 @@ export default function TopBar({
 	// Extract user display name from email
 	const userDisplayName = user?.email?.split("@")[0] || "Worker";
 
-	// Check if user has face enrollment
-	useEffect(() => {
-		const checkEnrollment = async () => {
-			if (!user || !showTimeTracking) {
-				console.log('⚠️ TopBar: No user or time tracking disabled, skipping enrollment check');
-				return;
-			}
-			
-			console.log('🔍 TopBar: Checking face enrollment for user:', user.uid);
-			
-			try {
-				const enrolled = await faceRecognitionService.hasEnrollment(user.uid);
-				console.log('✅ TopBar: Enrollment check result:', enrolled);
-				setHasEnrollment(enrolled);
-			} catch (error) {
-				console.error('❌ TopBar: Error checking face enrollment:', error);
-				setHasEnrollment(false);
-			}
-		};
-
-		checkEnrollment();
-	}, [user, showTimeTracking]);
-
-	// Handle time tracking actions with face recognition
+	// Handle time tracking actions with PIN verification
 	const handleTimeTrackingClick = async () => {
-		console.log('🔵 TopBar: Clock In/Out clicked', { 
-			hasUser: !!user, 
-			hasWorker: !!timeTracking.worker,
-			isWorking: timeTracking.isWorking,
-			hasEnrollment,
-			userId: user?.uid 
-		});
-
-		// Owners are exempt from time tracking since they're not assigned to branches
 		const isExemptOwner = timeTracking.worker?.isOwner;
 
-		if (!timeTracking.worker || isExemptOwner || isTimeTracking) {
-			console.log('❌ TopBar: Cannot proceed - no worker, exempt owner, or already tracking');
-			return;
-		}
+		if (!timeTracking.worker || isExemptOwner || isTimeTracking || !user) return;
 
-		// Check if face enrollment exists
-		if (hasEnrollment === null) {
-			console.log('⏳ TopBar: Enrollment status still loading...');
-			alert('Checking face enrollment status...');
-			return;
-		}
+		const action = timeTracking.isWorking ? 'clockOut' : 'clockIn';
+		setPendingAction(action);
 
-		// If no enrollment, prompt to enroll first
-		if (!hasEnrollment) {
-			console.log('📸 TopBar: No enrollment found, showing prompt');
-			const shouldEnroll = confirm(
-				'No face enrollment found. You need to enroll your face before clocking in/out. Would you like to enroll now?'
-			);
-			
-			if (shouldEnroll) {
-				console.log('✅ TopBar: User agreed to enroll');
-				setFaceRecognitionMode('enroll');
-				setPendingAction(timeTracking.isWorking ? 'clockOut' : 'clockIn');
-				setShowFaceRecognition(true);
-			} else {
-				console.log('❌ TopBar: User declined enrollment');
-			}
-			return;
+		// Check if user has a PIN set
+		try {
+			const hasPinSet = await workerService.hasPin(user.uid);
+			setPinMode(hasPinSet ? 'verify' : 'setup');
+			setShowPinModal(true);
+		} catch (error) {
+			console.error('Error checking PIN status:', error);
+			alert('Failed to check PIN status. Please try again.');
 		}
-
-		// Proceed with face verification
-		console.log('🔐 TopBar: Proceeding with face verification');
-		setFaceRecognitionMode('verify');
-		setPendingAction(timeTracking.isWorking ? 'clockOut' : 'clockIn');
-		setShowFaceRecognition(true);
 	};
 
 	// Perform actual clock in after face verification
@@ -141,7 +87,7 @@ export default function TopBar({
 				alert("No branch selected for time tracking");
 				return;
 			}
-			await timeTracking.clockIn(branchId, "Clock-in from TopBar (Face Verified)");
+			await timeTracking.clockIn(branchId, "Clock-in from TopBar (PIN Verified)");
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : 'Clock in failed';
 			alert(errorMessage);
@@ -156,7 +102,7 @@ export default function TopBar({
 
 		setIsTimeTracking(true);
 		try {
-			await timeTracking.clockOut("Clock-out from TopBar (Face Verified)");
+			await timeTracking.clockOut("Clock-out from TopBar (PIN Verified)");
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : 'Clock out failed';
 			alert(errorMessage);
@@ -165,59 +111,34 @@ export default function TopBar({
 		}
 	}, [timeTracking, isTimeTracking]);
 
-	// Handle face recognition success
-	const handleFaceRecognitionSuccess = useCallback(async (result?: FaceRecognitionResult) => {
-		console.log('🎉 TopBar: Face recognition success!', { mode: faceRecognitionMode, result });
-		setShowFaceRecognition(false);
+	// Handle PIN verification success
+	const handlePinSuccess = useCallback(async () => {
+		setShowPinModal(false);
 
-		if (faceRecognitionMode === 'enroll') {
-			// After enrollment, update state and perform pending action
-			console.log('✅ TopBar: Enrollment successful, updating state');
-			setHasEnrollment(true);
-			alert('Face enrolled successfully! Now verifying your face...');
-			
-			// Wait a moment then show verification
-			setTimeout(() => {
-				console.log('🔐 TopBar: Showing verification modal');
-				setFaceRecognitionMode('verify');
-				setShowFaceRecognition(true);
-			}, 1500);
-		} else {
-			// Verification successful, perform the pending action
-			console.log('✅ TopBar: Verification successful, performing action:', pendingAction);
-			if (pendingAction === 'clockIn') {
-				await performClockIn();
-			} else if (pendingAction === 'clockOut') {
-				await performClockOut();
-			}
-			
-			setPendingAction(null);
+		if (pendingAction === 'clockIn') {
+			await performClockIn();
+		} else if (pendingAction === 'clockOut') {
+			await performClockOut();
 		}
-	}, [faceRecognitionMode, pendingAction, performClockIn, performClockOut]);
 
-	// Handle face recognition cancel
-	const handleFaceRecognitionCancel = useCallback(() => {
-		console.log('❌ TopBar: Face recognition cancelled');
-		setShowFaceRecognition(false);
 		setPendingAction(null);
-	}, []);
+	}, [pendingAction, performClockIn, performClockOut]);
 
-	// Handle face recognition error
-	const handleFaceRecognitionError = useCallback((error: string) => {
-		console.error('❌ TopBar: Face recognition error:', error);
-		alert(error);
+	// Handle PIN modal cancel
+	const handlePinCancel = useCallback(() => {
+		setShowPinModal(false);
+		setPendingAction(null);
 	}, []);
 
 	return (
 		<>
-			{/* Face Recognition Modal */}
-			{showFaceRecognition && user && (
-				<FaceRecognitionCamera
+			{/* PIN Verification Modal */}
+			{showPinModal && user && (
+				<PinEntryModal
 					userId={user.uid}
-					mode={faceRecognitionMode}
-					onSuccess={handleFaceRecognitionSuccess}
-					onCancel={handleFaceRecognitionCancel}
-					onError={handleFaceRecognitionError}
+					mode={pinMode}
+					onSuccess={handlePinSuccess}
+					onCancel={handlePinCancel}
 				/>
 			)}
 

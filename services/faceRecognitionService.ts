@@ -1,4 +1,4 @@
-import * as faceapi from 'face-api.js';
+import * as faceapi from '@vladmandic/face-api';
 import { db } from '@/firebase-config';
 import { doc, getDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore';
 

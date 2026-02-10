@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { branchService, Branch } from "@/services/branchService";
-import { faceRecognitionService, FaceRecognitionResult } from "@/services/faceRecognitionService";
-import FaceRecognitionCamera from "@/components/FaceRecognitionCamera";
+import { workerService } from "@/services/workerService";
+import PinEntryModal from "@/components/PinEntryModal";
 
 interface POSTimeTrackingProps {
 	currentBranchId: string;
@@ -20,19 +20,17 @@ export default function POSTimeTracking({
 	const timeTracking = useTimeTracking({ autoRefresh: true });
 	const [loading, setLoading] = useState(false);
 	const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
-	const [showFaceRecognition, setShowFaceRecognition] = useState(false);
-	const [faceRecognitionMode, setFaceRecognitionMode] = useState<'enroll' | 'verify'>('verify');
+	const [showPinModal, setShowPinModal] = useState(false);
+	const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
 	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
-	const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null);
 
 	console.log('📊 Component State:', {
 		hasUser: !!user,
 		userId: user?.uid,
 		hasWorker: !!timeTracking.worker,
 		isWorking: timeTracking.isWorking,
-		hasEnrollment,
-		showFaceRecognition,
-		faceRecognitionMode,
+		showPinModal,
+		pinMode: pinMode,
 	});
 
 	const loadBranchData = useCallback(async () => {
@@ -48,29 +46,6 @@ export default function POSTimeTracking({
 		loadBranchData();
 	}, [loadBranchData]);
 
-	// Check if user has face enrollment
-	useEffect(() => {
-		const checkEnrollment = async () => {
-			if (!user) {
-				console.log('⚠️ No user found, skipping enrollment check');
-				return;
-			}
-			
-			console.log('🔍 Checking face enrollment for user:', user.uid);
-			
-			try {
-				const enrolled = await faceRecognitionService.hasEnrollment(user.uid);
-				console.log('✅ Enrollment check result:', enrolled);
-				setHasEnrollment(enrolled);
-			} catch (error) {
-				console.error('❌ Error checking face enrollment:', error);
-				setHasEnrollment(false);
-			}
-		};
-
-		checkEnrollment();
-	}, [user]);
-
 	useEffect(() => {
 		// Notify parent component when status changes
 		if (onStatusChange) {
@@ -79,49 +54,19 @@ export default function POSTimeTracking({
 	}, [timeTracking.isWorking, onStatusChange]);
 
 	const handleTimeIn = useCallback(async () => {
-		console.log('🔵 Clock In clicked', { 
-			hasUser: !!user, 
-			hasWorker: !!timeTracking.worker,
-			hasEnrollment,
-			userId: user?.uid 
-		});
+		if (!user || !timeTracking.worker) return;
 
-		if (!user || !timeTracking.worker) {
-			console.log('❌ No user or worker, returning');
-			return;
-		}
-
-		// Check if face enrollment exists
-		if (hasEnrollment === null) {
-			console.log('⏳ Enrollment status still loading...');
-			alert('Checking face enrollment status...');
-			return;
-		}
-
-		// If no enrollment, prompt to enroll first
-		if (!hasEnrollment) {
-			console.log('📸 No enrollment found, showing prompt');
-			const shouldEnroll = confirm(
-				'No face enrollment found. You need to enroll your face before clocking in. Would you like to enroll now?'
-			);
-			
-			if (shouldEnroll) {
-				console.log('✅ User agreed to enroll');
-				setFaceRecognitionMode('enroll');
-				setPendingAction('clockIn');
-				setShowFaceRecognition(true);
-			} else {
-				console.log('❌ User declined enrollment');
-			}
-			return;
-		}
-
-		// Proceed with face verification
-		console.log('🔐 Proceeding with face verification');
-		setFaceRecognitionMode('verify');
 		setPendingAction('clockIn');
-		setShowFaceRecognition(true);
-	}, [user, timeTracking.worker, hasEnrollment]);
+
+		try {
+			const hasPinSet = await workerService.hasPin(user.uid);
+			setPinMode(hasPinSet ? 'verify' : 'setup');
+			setShowPinModal(true);
+		} catch (error) {
+			console.error('Error checking PIN status:', error);
+			alert('Failed to check PIN status. Please try again.');
+		}
+	}, [user, timeTracking.worker]);
 
 	const performClockIn = useCallback(async () => {
 		if (!user || !timeTracking.worker) return;
@@ -131,7 +76,7 @@ export default function POSTimeTracking({
 		try {
 			await timeTracking.clockIn(
 				currentBranchId,
-				`Self time-in at POS - ${currentBranch?.name || "Unknown Branch"} (Face Verified)`
+				`Self time-in at POS - ${currentBranch?.name || "Unknown Branch"} (PIN Verified)`
 			);
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : 'Error timing in';
@@ -144,23 +89,17 @@ export default function POSTimeTracking({
 	const handleTimeOut = useCallback(async () => {
 		if (!user || !timeTracking.worker || !timeTracking.currentAttendance) return;
 
-		// Check if face enrollment exists
-		if (hasEnrollment === null) {
-			alert('Checking face enrollment status...');
-			return;
-		}
-
-		// If no enrollment, prompt to enroll first
-		if (!hasEnrollment) {
-			alert('No face enrollment found. Please enroll your face to use face verification for clock out.');
-			return;
-		}
-
-		// Proceed with face verification
-		setFaceRecognitionMode('verify');
 		setPendingAction('clockOut');
-		setShowFaceRecognition(true);
-	}, [user, timeTracking.worker, timeTracking.currentAttendance, hasEnrollment]);
+
+		try {
+			const hasPinSet = await workerService.hasPin(user.uid);
+			setPinMode(hasPinSet ? 'verify' : 'setup');
+			setShowPinModal(true);
+		} catch (error) {
+			console.error('Error checking PIN status:', error);
+			alert('Failed to check PIN status. Please try again.');
+		}
+	}, [user, timeTracking.worker, timeTracking.currentAttendance]);
 
 	const performClockOut = useCallback(async () => {
 		if (!user || !timeTracking.worker || !timeTracking.currentAttendance) return;
@@ -169,7 +108,7 @@ export default function POSTimeTracking({
 
 		try {
 			await timeTracking.clockOut(
-				`Self time-out at POS - ${currentBranch?.name || "Unknown Branch"} (Face Verified)`
+				`Self time-out at POS - ${currentBranch?.name || "Unknown Branch"} (PIN Verified)`
 			);
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : 'Error timing out';
@@ -179,45 +118,23 @@ export default function POSTimeTracking({
 		}
 	}, [user, timeTracking.worker, timeTracking.currentAttendance, timeTracking.clockOut, currentBranch?.name]);
 
-	// Handle face recognition success
-	const handleFaceRecognitionSuccess = useCallback(async (result?: FaceRecognitionResult) => {
-		console.log('🎉 Face recognition success!', { mode: faceRecognitionMode, result });
-		setShowFaceRecognition(false);
+	// Handle PIN verification success
+	const handlePinSuccess = useCallback(async () => {
+		setShowPinModal(false);
 
-		if (faceRecognitionMode === 'enroll') {
-			// After enrollment, update state and perform pending action
-			console.log('✅ Enrollment successful, updating state');
-			setHasEnrollment(true);
-			alert('Face enrolled successfully! Now verifying your face...');
-			
-			// Wait a moment then show verification
-			setTimeout(() => {
-				console.log('🔐 Showing verification modal');
-				setFaceRecognitionMode('verify');
-				setShowFaceRecognition(true);
-			}, 1500);
-		} else {
-			// Verification successful, perform the pending action
-			console.log('✅ Verification successful, performing action:', pendingAction);
-			if (pendingAction === 'clockIn') {
-				await performClockIn();
-			} else if (pendingAction === 'clockOut') {
-				await performClockOut();
-			}
-			
-			setPendingAction(null);
+		if (pendingAction === 'clockIn') {
+			await performClockIn();
+		} else if (pendingAction === 'clockOut') {
+			await performClockOut();
 		}
-	}, [faceRecognitionMode, pendingAction, performClockIn, performClockOut]);
 
-	// Handle face recognition cancel
-	const handleFaceRecognitionCancel = useCallback(() => {
-		setShowFaceRecognition(false);
 		setPendingAction(null);
-	}, []);
+	}, [pendingAction, performClockIn, performClockOut]);
 
-	// Handle face recognition error
-	const handleFaceRecognitionError = useCallback((error: string) => {
-		alert(error);
+	// Handle PIN modal cancel
+	const handlePinCancel = useCallback(() => {
+		setShowPinModal(false);
+		setPendingAction(null);
 	}, []);
 
 	// Memoize the access check to prevent unnecessary re-calculations
@@ -273,14 +190,13 @@ export default function POSTimeTracking({
 
 	return (
 		<>
-			{/* Face Recognition Modal */}
-			{showFaceRecognition && user && (
-				<FaceRecognitionCamera
+			{/* PIN Verification Modal */}
+			{showPinModal && user && (
+				<PinEntryModal
 					userId={user.uid}
-					mode={faceRecognitionMode}
-					onSuccess={handleFaceRecognitionSuccess}
-					onCancel={handleFaceRecognitionCancel}
-					onError={handleFaceRecognitionError}
+					mode={pinMode}
+					onSuccess={handlePinSuccess}
+					onCancel={handlePinCancel}
 				/>
 			)}
 
@@ -367,32 +283,18 @@ export default function POSTimeTracking({
 					</div>
 				)}
 
-				{/* Face Recognition Status */}
-				{hasEnrollment === null && (
-					<div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-						<div className='flex items-center text-sm text-blue-700'>
-							<div className='animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent mr-2'></div>
-							Checking face recognition status...
-						</div>
-					</div>
-				)}
 
 				{/* Action Button */}
 				<div className='flex flex-col space-y-2'>
 					{!isWorking ? (
 						<button
 							onClick={handleTimeIn}
-							disabled={loading || timeTracking.loading || hasEnrollment === null}
-							className='w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
-							{loading || timeTracking.loading ? (
-								<div className='flex items-center'>
-									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
-									Clocking In...
-								</div>
-							) : hasEnrollment === null ? (
-								<div className='flex items-center'>
-									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
-									Loading...
+						disabled={loading || timeTracking.loading}
+						className='w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
+						{loading || timeTracking.loading ? (
+							<div className='flex items-center'>
+								<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+								Clocking In...
 								</div>
 							) : (
 								<div className='flex items-center'>

@@ -20,6 +20,7 @@ import {
 	writeBatch,
 } from "firebase/firestore";
 import { db } from "@/firebase-config";
+import { hashPin, verifyPin } from "@/lib/pin";
 
 // Worker interface matching the User structure with additional fields
 export interface Worker {
@@ -50,6 +51,7 @@ export interface Worker {
 	lastLoginAt?: Date;
 	passwordResetRequired?: boolean;
 	twoFactorEnabled?: boolean;
+	pinHash?: string;
 }
 
 export interface WorkerService {
@@ -82,6 +84,12 @@ export interface WorkerService {
 
 	// Worker Statistics (work attendance data will come from attendanceService)
 	getWorkerStats: (userId: string) => Promise<WorkerStats>;
+
+	// PIN Management
+	setWorkerPin: (userId: string, pin: string) => Promise<void>;
+	verifyWorkerPin: (userId: string, pin: string) => Promise<boolean>;
+	hasPin: (userId: string) => Promise<boolean>;
+	resetWorkerPin: (userId: string) => Promise<void>;
 }
 
 export const workerService: WorkerService = {
@@ -150,6 +158,7 @@ export const workerService: WorkerService = {
 					lastLoginAt: data.lastLoginAt?.toDate(),
 					passwordResetRequired: data.passwordResetRequired || false,
 					twoFactorEnabled: data.twoFactorEnabled || false,
+					pinHash: data.pinHash,
 				} as Worker;
 			}
 
@@ -348,6 +357,7 @@ export const workerService: WorkerService = {
 					lastLoginAt: data.lastLoginAt?.toDate(),
 					passwordResetRequired: data.passwordResetRequired || false,
 					twoFactorEnabled: data.twoFactorEnabled || false,
+					pinHash: data.pinHash,
 				});
 			});
 
@@ -593,6 +603,72 @@ export const workerService: WorkerService = {
 			};
 		} catch (error) {
 			console.error("Error getting worker stats:", error);
+			throw error;
+		}
+	},
+
+	// ── PIN Management ────────────────────────────────────────────────────
+
+	setWorkerPin: async (userId: string, pin: string): Promise<void> => {
+		try {
+			const pinHashValue = await hashPin(pin);
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				pinHash: pinHashValue,
+				updatedAt: Timestamp.now(),
+			});
+			console.log("✅ PIN set for worker:", userId);
+		} catch (error) {
+			console.error("Error setting worker PIN:", error);
+			throw error;
+		}
+	},
+
+	verifyWorkerPin: async (userId: string, pin: string): Promise<boolean> => {
+		try {
+			const userDocRef = doc(db, "users", userId);
+			const userDocSnap = await getDoc(userDocRef);
+
+			if (!userDocSnap.exists()) {
+				throw new Error("User not found");
+			}
+
+			const storedHash = userDocSnap.data().pinHash;
+			if (!storedHash) {
+				throw new Error("No PIN set for this user");
+			}
+
+			return await verifyPin(pin, storedHash);
+		} catch (error) {
+			console.error("Error verifying worker PIN:", error);
+			throw error;
+		}
+	},
+
+	hasPin: async (userId: string): Promise<boolean> => {
+		try {
+			const userDocRef = doc(db, "users", userId);
+			const userDocSnap = await getDoc(userDocRef);
+
+			if (!userDocSnap.exists()) return false;
+
+			return !!userDocSnap.data().pinHash;
+		} catch (error) {
+			console.error("Error checking worker PIN:", error);
+			return false;
+		}
+	},
+
+	resetWorkerPin: async (userId: string): Promise<void> => {
+		try {
+			const userDocRef = doc(db, "users", userId);
+			await updateDoc(userDocRef, {
+				pinHash: null,
+				updatedAt: Timestamp.now(),
+			});
+			console.log("✅ PIN reset for worker:", userId);
+		} catch (error) {
+			console.error("Error resetting worker PIN:", error);
 			throw error;
 		}
 	},
