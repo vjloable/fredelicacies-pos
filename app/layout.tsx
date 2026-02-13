@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import "@/app/globals.css";
+import "./globals.css";
 import { DateTimeProvider } from "@/contexts/DateTimeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";

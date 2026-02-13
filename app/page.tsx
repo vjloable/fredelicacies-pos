@@ -35,7 +35,8 @@ export default function RootPage() {
 	}, [loading, isAuthenticated, user, isUserOwner, router]);
 
 	return (
-		<div className='flex flex-col items-center justify-center h-screen bg-[var(--background)]'>
+		// <div className='flex flex-col items-center justify-center h-screen bg-[var(--background)]'>
+		<div className='flex flex-col items-center justify-center h-screen bg-red-500'>
 			<LoadingSpinner size="lg" />
 			<p className='text-[var(--secondary)] mt-4'>Loading...</p>
 		</div>
