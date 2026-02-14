@@ -8,10 +8,21 @@ export const authRepository = {
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: data.options,
+      options: {
+        ...data.options,
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/waiting-room` : undefined,
+        // Disable email confirmation for auto-approval
+        data: {
+          ...data.options?.data,
+          email_confirm: false,
+        }
+      },
     });
 
-    if (error) return { user: null, error };
+    if (error) {
+      console.error('Supabase signup error:', error);
+      return { user: null, error };
+    }
     
     const user: User | null = authData.user ? {
       id: authData.user.id,
