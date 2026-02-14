@@ -4,10 +4,11 @@ import type { User, SignUpData, SignInData, AuthSession } from '@/types/domain/a
 
 export const authRepository = {
   // Sign up new user
-  async signUp(data: SignUpData): Promise<{ user: User | null; error: any }> {
+  async signUp(data: SignUpData & { options?: any }): Promise<{ user: User | null; error: any }> {
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: data.options,
     });
 
     if (error) return { user: null, error };

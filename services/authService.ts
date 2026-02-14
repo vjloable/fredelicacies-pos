@@ -6,27 +6,42 @@ import type { SignUpData, SignInData, UserWithRoles, CreateUserProfileData, Upda
 export const authService = {
   // Sign up new user with profile
   signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; error: any }> => {
-    // Create auth user
-    const { user, error: signUpError } = await authRepository.signUp(data);
+    // Create auth user (trigger will auto-create profile)
+    const { user, error: signUpError } = await authRepository.signUp({
+      ...data,
+      // Pass metadata to trigger for profile creation
+      options: {
+        data: {
+          name: data.name,
+          is_owner: data.isOwner || false,
+        }
+      }
+    });
     
     if (signUpError || !user) {
+      console.error('Signup error:', signUpError);
       return { userId: null, error: signUpError };
     }
 
-    // Create user profile
-    const profileData: CreateUserProfileData = {
-      id: user.id,
-      email: user.email,
-      name: data.name,
-      is_owner: data.isOwner || false,
-    };
+    // Check if profile was created by trigger
+    const { profile } = await userProfileRepository.getById(user.id);
+    
+    if (!profile) {
+      // Trigger didn't create profile, create it manually as fallback
+      console.log('Profile not found, creating manually...');
+      const profileData: CreateUserProfileData = {
+        id: user.id,
+        email: user.email,
+        name: data.name,
+        is_owner: data.isOwner || false,
+      };
 
-    const { error: profileError } = await userProfileRepository.create(profileData);
+      const { error: profileError } = await userProfileRepository.create(profileData);
 
-    if (profileError) {
-      // Profile creation failed, but auth user exists - log error
-      console.error('Failed to create user profile:', profileError);
-      return { userId: user.id, error: profileError };
+      if (profileError) {
+        console.error('Failed to create user profile:', profileError);
+        return { userId: user.id, error: profileError };
+      }
     }
 
     return { userId: user.id, error: null };
