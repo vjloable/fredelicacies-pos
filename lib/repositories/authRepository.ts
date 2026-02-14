@@ -4,13 +4,24 @@ import type { User, SignUpData, SignInData, AuthSession } from '@/types/domain/a
 
 export const authRepository = {
   // Sign up new user
-  async signUp(data: SignUpData): Promise<{ user: User | null; error: any }> {
+  async signUp(data: SignUpData & { name?: string }): Promise<{ user: User | null; session: any; error: any }> {
+    // Get the callback URL for email confirmation
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/auth/callback`
+      : `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`;
+
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          name: data.name, // Store name in user metadata for later use
+        },
+      },
     });
 
-    if (error) return { user: null, error };
+    if (error) return { user: null, session: null, error };
     
     const user: User | null = authData.user ? {
       id: authData.user.id,
@@ -18,7 +29,7 @@ export const authRepository = {
       created_at: authData.user.created_at,
     } : null;
 
-    return { user, error: null };
+    return { user, session: authData.session, error: null };
   },
 
   // Sign in user

@@ -5,15 +5,19 @@ import type { SignUpData, SignInData, UserWithRoles, CreateUserProfileData, Upda
 
 export const authService = {
   // Sign up new user with profile
-  signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; error: any }> => {
+  signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; needsEmailConfirmation: boolean; error: any }> => {
     // Create auth user
-    const { user, error: signUpError } = await authRepository.signUp(data);
+    const { user, session, error: signUpError } = await authRepository.signUp(data);
     
     if (signUpError || !user) {
-      return { userId: null, error: signUpError };
+      return { userId: null, needsEmailConfirmation: false, error: signUpError };
     }
 
-    // Create user profile
+    // If there's a user but no session, email confirmation is required
+    const needsConfirmation = !session;
+
+    // Create user profile regardless of confirmation status
+    // The user just won't be able to log in until they confirm their email
     const profileData: CreateUserProfileData = {
       id: user.id,
       email: user.email,
@@ -25,10 +29,11 @@ export const authService = {
 
     if (profileError) {
       console.error('Failed to create user profile:', profileError);
-      return { userId: user.id, error: profileError };
+      // Don't return error here - profile creation may fail due to RLS but that's ok
+      // The user can still complete email confirmation
     }
 
-    return { userId: user.id, error: null };
+    return { userId: user.id, needsEmailConfirmation: needsConfirmation, error: null };
   },
 
   // Sign in

@@ -1,21 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
 
-export default function LoginPage() {
+function LoginContent() {
 	const [credentials, setCredentials] = useState({
 		email: "",
 		password: "",
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
+	const [successMessage, setSuccessMessage] = useState("");
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { user, login, isUserOwner } = useAuth();
+
+	useEffect(() => {
+		// Check for email confirmation status from URL params
+		const confirmed = searchParams.get("confirmed");
+		const errorParam = searchParams.get("error");
+		const messageParam = searchParams.get("message");
+
+		if (confirmed === "true") {
+			setSuccessMessage("Email confirmed successfully! You can now log in.");
+			// Clear URL params
+			window.history.replaceState({}, "", "/login");
+		} else if (errorParam) {
+			setError(decodeURIComponent(messageParam || "Email confirmation failed. Please try again."));
+			// Clear URL params
+			window.history.replaceState({}, "", "/login");
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		// If user is already logged in, redirect based on their role
@@ -102,8 +121,9 @@ export default function LoginPage() {
 				...prev,
 				[field]: e.target.value,
 			}));
-			// Clear error when user starts typing
+			// Clear error and success messages when user starts typing
 			if (error) setError("");
+			if (successMessage) setSuccessMessage("");
 		};
 
 	return (
@@ -162,6 +182,25 @@ export default function LoginPage() {
 									autoComplete='current-password'
 								/>
 							</div>
+
+							{/* Success Message */}
+							{successMessage && (
+								<div className='bg-green-50 border border-green-200 rounded-xl p-3'>
+									<div className='flex items-center gap-2'>
+										<svg
+											className='w-5 h-5 text-green-600'
+											fill='currentColor'
+											viewBox='0 0 20 20'>
+											<path
+												fillRule='evenodd'
+												d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+												clipRule='evenodd'
+											/>
+										</svg>
+										<span className='text-sm text-green-600'>{successMessage}</span>
+									</div>
+								</div>
+							)}
 
 							{/* Error Message */}
 							{error && (
@@ -224,5 +263,17 @@ export default function LoginPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export default function LoginPage() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+			</div>
+		}>
+			<LoginContent />
+		</Suspense>
 	);
 }
