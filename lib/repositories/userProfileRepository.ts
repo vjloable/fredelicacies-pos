@@ -90,15 +90,21 @@ export const userProfileRepository = {
 
   // Get user profile with role assignments (aggregated from workers table)
   async getWithRoles(userId: string): Promise<{ user: UserWithRoles | null; error: any }> {
-    // Get profile
+    // Get profile (use maybeSingle to avoid error when profile doesn't exist)
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
       return { user: null, error: profileError };
+    }
+
+    if (!profile) {
+      console.log('User profile not found for user:', userId);
+      return { user: null, error: { message: 'User profile not found. Please complete email confirmation.' } };
     }
 
     // Get role assignments from workers table

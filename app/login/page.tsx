@@ -95,7 +95,9 @@ function LoginContent() {
 			if (error && typeof error === 'object' && 'message' in error) {
 				const message = String(error.message).toLowerCase();
 				
-				if (message.includes('invalid') && (message.includes('email') || message.includes('password') || message.includes('credential'))) {
+				if (message.includes('email confirmation') || message.includes('user profile not found')) {
+					errorMessage = "Please confirm your email address first. Check your inbox for the confirmation link.";
+				} else if (message.includes('invalid') && (message.includes('email') || message.includes('password') || message.includes('credential'))) {
 					errorMessage = "Invalid email or password.";
 				} else if (message.includes('not found') || message.includes('user')) {
 					errorMessage = "No account found with this email address.";

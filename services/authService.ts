@@ -16,21 +16,24 @@ export const authService = {
     // If there's a user but no session, email confirmation is required
     const needsConfirmation = !session;
 
-    // Create user profile regardless of confirmation status
-    // The user just won't be able to log in until they confirm their email
-    const profileData: CreateUserProfileData = {
-      id: user.id,
-      email: user.email,
-      name: data.name,
-      is_owner: data.isOwner || false,
-    };
+    console.log('[Auth Service] User created:', { userId: user.id, needsConfirmation });
 
-    const { error: profileError } = await userProfileRepository.create(profileData);
+    // Only create profile if email confirmation is NOT needed (instant login)
+    // If confirmation is needed, profile will be created by the callback handler
+    if (!needsConfirmation) {
+      const profileData: CreateUserProfileData = {
+        id: user.id,
+        email: user.email,
+        name: data.name,
+        is_owner: data.isOwner || false,
+      };
 
-    if (profileError) {
-      console.error('Failed to create user profile:', profileError);
-      // Don't return error here - profile creation may fail due to RLS but that's ok
-      // The user can still complete email confirmation
+      const { error: profileError } = await userProfileRepository.create(profileData);
+
+      if (profileError) {
+        console.error('Failed to create user profile:', profileError);
+        return { userId: user.id, needsEmailConfirmation: false, error: profileError };
+      }
     }
 
     return { userId: user.id, needsEmailConfirmation: needsConfirmation, error: null };
