@@ -44,3 +44,4 @@ svgr.d.ts
 *.sql
 
 /docs
+/supabase
