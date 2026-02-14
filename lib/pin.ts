@@ -1,7 +1,7 @@
 /**
  * PIN hashing and verification utility.
  * Uses SHA-256 with a static salt for hashing 4-digit PINs.
- * Brute-force is mitigated by Firestore security rules + rate limiting at the UI level.
+ * Brute-force is mitigated by RLS policies + rate limiting at the UI level.
  */
 
 const PIN_SALT = 'fredelicacies-pos-pin-v1';

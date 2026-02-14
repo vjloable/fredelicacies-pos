@@ -5,7 +5,7 @@ import { attendanceService } from '@/services/attendanceService';
 import type { UserWithRoles, RoleAssignment, CreateUserProfileData } from '@/types/domain';
 import { hashPin, verifyPin } from '@/lib/pin';
 
-// Worker interface matching the old Firebase structure (for backward compatibility)
+// Worker interface for backward compatibility
 export interface Worker {
   id: string;
   name: string;

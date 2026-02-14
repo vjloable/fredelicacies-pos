@@ -9,7 +9,7 @@ import {
 	loadSettingsFromLocal,
 	saveSettingsToLocal,
 	loadSettings,
-	syncSettingsToFirebase,
+	syncSettingsToBackend,
 } from "@/services/settingsService";
 import SettingsIcon from "@/components/icons/SidebarNav/SettingsIcon";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
@@ -86,7 +86,7 @@ export default function SettingsScreen() {
 			// Use current settings (which may include unsaved changes)
 			const settingsToSync = hasChanges ? settings : savedSettings;
 
-			const result = await syncSettingsToFirebase(settingsToSync);
+			const result = await syncSettingsToBackend(settingsToSync);
 
 			// If we synced unsaved changes, update savedSettings to match
 			if (hasChanges) {
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
 				setSavedSettings(settings);
 			}
 
-			// Force refresh settings from Firebase to ensure sync
+			// Force refresh settings from backend to ensure sync
 			const refreshedSettings = await loadSettings(true);
 			setSettings(refreshedSettings);
 			setSavedSettings(refreshedSettings);
