@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
+import VersionDisplay from "@/components/VersionDisplay";
 
 export default function WaitingRoomPage() {
   const { user, logout, refreshUserData } = useAuth();
@@ -19,8 +20,8 @@ export default function WaitingRoomPage() {
     }
 
     // If user already has access, redirect them
-    if (user.isOwner || user.roleAssignments.length > 0) {
-      if (user.isOwner) {
+    if (user.is_owner || user.roleAssignments.length > 0) {
+      if (user.is_owner) {
         router.push('/branches');
       } else {
         const branchId = user.roleAssignments[0]?.branchId;
@@ -35,7 +36,7 @@ export default function WaitingRoomPage() {
         await refreshUserData();
         setLastChecked(new Date());
         // The useEffect will run again after refreshUserData updates the user state
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error checking user access:', error);
       }
     }, 30000); // Check every 30 seconds
@@ -48,7 +49,7 @@ export default function WaitingRoomPage() {
     try {
       await refreshUserData();
       setLastChecked(new Date());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error refreshing user data:', error);
     } finally {
       setIsCheckingAccess(false);
@@ -59,7 +60,7 @@ export default function WaitingRoomPage() {
     try {
       await logout();
       router.push('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error logging out:', error);
     }
   };
@@ -187,7 +188,7 @@ export default function WaitingRoomPage() {
             {/* Footer */}
             <div className="mt-6">
               <p className="text-xs text-[var(--secondary)] opacity-50">
-                Fredelicacies Point-of-Sales System v1.0
+                Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
               </p>
             </div>
           </div>

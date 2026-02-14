@@ -22,9 +22,9 @@ export default function EditBranchModal({
   const [loading, setLoading] = useState(false);
   const [branchData, setBranchData] = useState({
     name: '',
-    location: '',
-    isActive: true,
-    imgUrl: ''
+    address: '',
+    status: 'active' as 'active' | 'inactive',
+    logo_url: ''
   });
 
   // Update form data when branch prop changes
@@ -32,9 +32,9 @@ export default function EditBranchModal({
     if (branch) {
       setBranchData({
         name: branch.name,
-        location: branch.location,
-        isActive: branch.isActive,
-        imgUrl: branch.imgUrl || ''
+        address: branch.address || '',
+        status: branch.status,
+        logo_url: branch.logo_url || ''
       });
     }
   }, [branch]);
@@ -46,7 +46,7 @@ export default function EditBranchModal({
       onError('Branch name is required');
       return false;
     }
-    if (!branchData.location.trim()) {
+    if (!branchData.address.trim()) {
       onError('Branch location is required');
       return false;
     }
@@ -60,9 +60,9 @@ export default function EditBranchModal({
     try {
       await branchService.updateBranch(branch.id, {
         name: branchData.name.trim(),
-        location: branchData.location.trim(),
-        isActive: branchData.isActive,
-        imgUrl: branchData.imgUrl || ''
+        address: branchData.address.trim(),
+        status: branchData.status,
+        logo_url: branchData.logo_url || ''
       });
 
       onSuccess();
@@ -84,9 +84,9 @@ export default function EditBranchModal({
 
   const hasChanges = branch && (
     branchData.name !== branch.name ||
-    branchData.location !== branch.location ||
-    branchData.isActive !== branch.isActive
-    || branchData.imgUrl !== (branch.imgUrl || '')
+    branchData.address !== (branch.address || '') ||
+    branchData.status !== branch.status
+    || branchData.logo_url !== (branch.logo_url || '')
   );
 
   return (
@@ -150,8 +150,8 @@ export default function EditBranchModal({
                 </label>
                 <input
                   type="text"
-                  value={branchData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  value={branchData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
                   className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch location"
                   maxLength={200}
@@ -165,25 +165,25 @@ export default function EditBranchModal({
                 </label>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => handleInputChange('isActive', !branchData.isActive)}
+                    onClick={() => handleInputChange('status', branchData.status === 'active' ? 'inactive' : 'active')}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      branchData.isActive ? 'bg-[var(--accent)]' : 'bg-gray-300'
+                      branchData.status === 'active' ? 'bg-[var(--accent)]' : 'bg-gray-300'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        branchData.isActive ? 'translate-x-6' : 'translate-x-1'
+                        branchData.status === 'active' ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
                   <span className={`text-sm font-medium ${
-                    branchData.isActive ? 'text-[var(--success)]' : 'text-[var(--error)]'
+                    branchData.status === 'active' ? 'text-[var(--success)]' : 'text-[var(--error)]'
                   }`}>
-                    {branchData.isActive ? 'Active' : 'Inactive'}
+                    {branchData.status === 'active' ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 <p className="text-xs text-[var(--secondary)] opacity-70 mt-1">
-                  {branchData.isActive 
+                  {branchData.status === 'active' 
                     ? 'Branch is currently operational and accessible to users'
                     : 'Branch is disabled and will not appear in user selections'
                   }
@@ -191,9 +191,9 @@ export default function EditBranchModal({
               </div>
               <div>
                   <ImageUpload
-                    currentImageUrl={branchData.imgUrl}
-                    onImageUpload={(imageUrl) => setBranchData({...branchData, imgUrl: imageUrl})}
-                    onImageRemove={() => setBranchData({...branchData, imgUrl: ""})}
+                    currentImageUrl={branchData.logo_url}
+                    onImageUpload={(imageUrl) => setBranchData({...branchData, logo_url: imageUrl})}
+                    onImageRemove={() => setBranchData({...branchData, logo_url: ""})}
                   />
                 </div>
 
@@ -223,16 +223,16 @@ export default function EditBranchModal({
                       {branchData.name || 'Branch Name'}
                     </h4>
                     <p className="text-sm text-[var(--secondary)] opacity-70">
-                      {branchData.location || 'Branch Location'}
+                      {branchData.address || 'Branch Location'}
                     </p>
                   </div>
                   <div className="text-center">
                     <div className={`text-xs px-2 py-1 rounded ${
-                      branchData.isActive 
+                      branchData.status === 'active' 
                         ? 'text-green-600 bg-green-50' 
                         : 'text-red-600 bg-red-50'
                     }`}>
-                      {branchData.isActive ? 'Active' : 'Inactive'}
+                      {branchData.status === 'active' ? 'Active' : 'Inactive'}
                     </div>
                   </div>
                 </div>
@@ -249,9 +249,9 @@ export default function EditBranchModal({
               </button>
               <button
                 onClick={handleUpdateBranch}
-                disabled={!branchData.name.trim() || !branchData.location.trim() || !hasChanges}
+                disabled={!branchData.name.trim() || !branchData.address.trim() || !hasChanges}
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
-                  branchData.name.trim() && branchData.location.trim() && hasChanges
+                  branchData.name.trim() && branchData.address.trim() && hasChanges
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}

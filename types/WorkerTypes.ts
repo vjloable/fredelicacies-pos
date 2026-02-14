@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+// Worker types - migrated from Firebase to Supabase
 
 export type UserRole = "owner" | "manager" | "worker";
 export interface CreateWorkerRequest {
@@ -28,8 +28,8 @@ export interface WorkerFilters {
 export interface WorkSession {
 	userId: string;
 	branchId: string;
-	timeInAt: Timestamp;
-	timeOutAt?: Timestamp;
+	timeInAt: string; // ISO string timestamp
+	timeOutAt?: string; // ISO string timestamp
 	clockedInBy: string;
 	clockedOutBy?: string;
 	duration?: number;
@@ -38,8 +38,8 @@ export interface WorkSession {
 }
 
 export interface DateRange {
-	startDate: Timestamp;
-	endDate: Timestamp;
+	startDate: string; // ISO string timestamp
+	endDate: string; // ISO string timestamp
 }
 
 export interface WorkerStats {
@@ -60,8 +60,8 @@ export interface WorkerStats {
 		daysWorked: number;
 	};
 	lastAttendance?: {
-		timeInAt: Timestamp;
-		timeOutAt?: Timestamp;
+		timeInAt: string; // ISO string timestamp
+		timeOutAt?: string; // ISO string timestamp
 		branchId: string;
 		duration?: number;
 	};
@@ -69,7 +69,7 @@ export interface WorkerStats {
 		branchId: string;
 		hoursWorked: number;
 		attendancesCount: number;
-		lastWorked?: Timestamp;
+		lastWorked?: string; // ISO string timestamp
 	}>;
 	overtime: {
 		thisWeek: number; // overtime hours this week

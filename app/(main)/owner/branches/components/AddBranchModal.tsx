@@ -4,6 +4,7 @@ import { useState } from 'react';
 import PlusIcon from '@/components/icons/PlusIcon';
 import { branchService } from '@/services/branchService';
 import ImageUpload from '@/components/ImageUpload';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddBranchModalProps {
   isOpen: boolean;
@@ -18,11 +19,12 @@ export default function AddBranchModal({
   onSuccess,
   onError
 }: AddBranchModalProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [branchData, setBranchData] = useState({
     name: '',
-    location: '',
-    imgUrl: ''
+    address: '',
+    logo_url: ''
   });
 
   if (!isOpen) return null;
@@ -32,7 +34,7 @@ export default function AddBranchModal({
       onError('Branch name is required');
       return false;
     }
-    if (!branchData.location.trim()) {
+    if (!branchData.address.trim()) {
       onError('Branch location is required');
       return false;
     }
@@ -41,21 +43,24 @@ export default function AddBranchModal({
 
   const handleCreateBranch = async () => {
     if (!validateForm()) return;
+    if (!user) {
+      onError('User not authenticated');
+      return;
+    }
 
     setLoading(true);
     try {
-      await branchService.createBranch({
+      await branchService.createBranch(user.uid, {
         name: branchData.name.trim(),
-        location: branchData.location.trim(),
-        isActive: true,
-        imgUrl: branchData.imgUrl
+        address: branchData.address.trim(),
+        logo_url: branchData.logo_url
       });
 
       // Reset form
       setBranchData({
         name: '',
-        location: '',
-        imgUrl: ''
+        address: '',
+        logo_url: ''
       });
       
       onSuccess();
@@ -134,8 +139,8 @@ export default function AddBranchModal({
                 </label>
                 <input
                   type="text"
-                  value={branchData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  value={branchData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
                   className="w-full px-3 py-2 text-sm sm:text-[14px] h-10 sm:h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter branch location"
                   maxLength={200}
@@ -145,14 +150,14 @@ export default function AddBranchModal({
               </div>
               <div>
                   <ImageUpload
-                    currentImageUrl={branchData.imgUrl}
-                    onImageUpload={(imageUrl) => setBranchData({...branchData, imgUrl: imageUrl})}
-                    onImageRemove={() => setBranchData({...branchData, imgUrl: ""})}
+                    currentImageUrl={branchData.logo_url}
+                    onImageUpload={(imageUrl) => setBranchData({...branchData, logo_url: imageUrl})}
+                    onImageRemove={() => setBranchData({...branchData, logo_url: ""})}
                   />
                 </div>
 
               {/* Preview Section */}
-              {/* {(branchData.name.trim() || branchData.location.trim()) && (
+              {/* {(branchData.name.trim() || branchData.address.trim()) && (
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="text-sm text-[var(--secondary)] opacity-70 mb-2">Preview:</div>
                   <div className="flex items-center gap-4">
@@ -166,7 +171,7 @@ export default function AddBranchModal({
                         {branchData.name.trim() || 'Branch Name'}
                       </h4>
                       <p className="text-sm text-[var(--secondary)] opacity-70">
-                        {branchData.location.trim() || 'Branch Location'}
+                        {branchData.address.trim() || 'Branch Location'}
                       </p>
                     </div>
                     <div className="text-center">
@@ -189,9 +194,9 @@ export default function AddBranchModal({
               </button>
               <button
                 onClick={handleCreateBranch}
-                disabled={!branchData.name.trim() || !branchData.location.trim()}
+                disabled={!branchData.name.trim() || !branchData.address.trim()}
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
-                  branchData.name.trim() && branchData.location.trim()
+                  branchData.name.trim() && branchData.address.trim()
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}

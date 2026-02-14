@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
-import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 
 interface AttendanceTrackerProps {
@@ -30,24 +29,28 @@ export default function AttendanceTracker({
 			setError(null);
 
 			// Get active attendances
-			const attendances = branchId
-				? await attendanceService.getBranchAttendances(branchId)
-				: [];
+			const { records: attendances = [], error: fetchError } = branchId
+				? await attendanceService.getAttendancesByBranch(branchId)
+				: { records: [], error: null };
 
-			// Filter only active attendances (no timeOutAt)
-			const activeOnly = attendances.filter((attendance) => !attendance.timeOutAt);
+			if (fetchError) {
+				throw fetchError;
+			}
+
+			// Filter only active attendances (no clock_out)
+			const activeOnly = attendances.filter((attendance) => !attendance.clock_out);
 
 			// Get worker and branch details for each attendance
 			const enrichedAttendances = await Promise.all(
 				activeOnly.map(async (attendance) => {
-					const [worker, branch] = await Promise.all([
-						workerService.getWorker(attendance.userId),
-						branchService.getBranchById(attendance.branchId),
+					const [workerResult, branchResult] = await Promise.all([
+						workerService.getWorker(attendance.worker_id),
+						branchService.getBranchById(attendance.branch_id),
 					]);
 					return {
 						...attendance,
-						worker: worker!,
-						branch: branch!,
+						worker: workerResult!,
+						branch: branchResult.branch!,
 					};
 				})
 			);
@@ -61,9 +64,9 @@ export default function AttendanceTracker({
 		}
 	};
 
-	const calculateCurrentDuration = (timeInAt: any): string => {
+	const calculateCurrentDuration = (timeInAt: string): string => {
 		const now = new Date();
-		const timeInDate = timeInAt.toDate ? timeInAt.toDate() : timeInAt;
+		const timeInDate = new Date(timeInAt);
 		const diffMs = now.getTime() - timeInDate.getTime();
 		const diffMins = Math.floor(diffMs / (1000 * 60));
 		const hours = Math.floor(diffMins / 60);
@@ -75,8 +78,8 @@ export default function AttendanceTracker({
 		return `${minutes}m`;
 	};
 
-	const formatTime = (date: Timestamp): string => {
-		const dateObj = date.toDate();
+	const formatTime = (date: string): string => {
+		const dateObj = new Date(date);
 		return new Intl.DateTimeFormat("en-US", {
 			hour: "2-digit",
 			minute: "2-digit",
@@ -84,16 +87,7 @@ export default function AttendanceTracker({
 		}).format(dateObj);
 	};
 
-	const getSessionTypeColor = (type: string) => {
-		switch (type) {
-			case "emergency":
-				return "bg-red-100 text-red-800";
-			case "overtime":
-				return "bg-orange-100 text-orange-800";
-			default:
-				return "bg-green-100 text-green-800";
-		}
-	};
+
 
 	if (loading) {
 		return (
@@ -216,7 +210,7 @@ export default function AttendanceTracker({
 					<div className='space-y-3'>
 						{activeAttendances.map((attendance) => (
 							<div
-								key={`${attendance.userId}-${attendance.timeInAt}`}
+								key={`${attendance.worker_id}-${attendance.clock_in}`}
 								className='flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg'>
 								<div className='flex items-center space-x-4'>
 									{/* Worker Avatar */}
@@ -240,7 +234,7 @@ export default function AttendanceTracker({
 											{attendance.worker.name}
 										</div>
 										<div className='flex items-center space-x-2 text-sm text-gray-600'>
-											<span>Clocked in at {formatTime(attendance.timeInAt)}</span>
+											<span>Clocked in at {formatTime(attendance.clock_in)}</span>
 											{!branchId && (
 												<>
 													<span>•</span>
@@ -252,18 +246,10 @@ export default function AttendanceTracker({
 								</div>
 
 								<div className='flex items-center space-x-3'>
-									{/* Session Type */}
-									<span
-										className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSessionTypeColor(
-											attendance.attendanceType
-										)}`}>
-										{attendance.attendanceType}
-									</span>
-
-									{/* Duration */}
-									<div className='text-right'>
-										<div className='font-semibold text-gray-900'>
-											{calculateCurrentDuration(attendance.timeInAt)}
+										{/* Duration */}
+										<div className='text-right'>
+											<div className='font-semibold text-gray-900'>
+												{calculateCurrentDuration(attendance.clock_in)}
 										</div>
 										<div className='text-xs text-gray-500'>Duration</div>
 									</div>
@@ -292,11 +278,11 @@ export default function AttendanceTracker({
 										? Math.round(
 												activeAttendances.reduce((acc, attendance) => {
 													const now = new Date();
-													const timeInDate = (attendance.timeInAt).toDate();
+													const timeInDate = new Date(attendance.clock_in);
 													const diffMs = now.getTime() - timeInDate.getTime();
 													return acc + diffMs / (1000 * 60);
 												}, 0) / activeAttendances.length
-										  )
+									  )
 										: 0}
 									m
 								</strong>

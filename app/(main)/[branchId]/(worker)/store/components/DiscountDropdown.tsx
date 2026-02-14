@@ -2,26 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { subscribeToDiscounts, Discount, calculateDiscountAmount } from "@/services/discountService";
-import { Category } from "@/services/categoryService";
 import { formatCurrency } from "@/lib/currency_formatter";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface DiscountDropdownProps {
   value: string;
   onChange: (code: string) => void;
   onDiscountApplied: (discount: Discount | null, amount: number) => void;
   subtotal: number;
-  cartCategoryIds: string[];
-  categories: Category[];
 }
 
 export default function DiscountDropdown({
   value,
   onChange,
   onDiscountApplied,
-  subtotal,
-  cartCategoryIds,
-  categories
+  subtotal
 }: DiscountDropdownProps) {
+  const { currentBranch } = useBranch();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [filteredDiscounts, setFilteredDiscounts] = useState<Discount[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -30,21 +27,16 @@ export default function DiscountDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Subscribe to discounts from Firebase
+  // Subscribe to discounts
   useEffect(() => {
-    const loadDiscounts = async () => {
-      try {
-        // For now, we'll use a default branchId - you may want to get this from context or props
-        const branchId = "default"; // Replace with actual branchId
-        const discountsData = await subscribeToDiscounts(branchId);
-        setDiscounts(discountsData);
-      } catch (error) {
-        console.error("Error loading discounts:", error);
-      }
-    };
+    if (!currentBranch) return;
 
-    loadDiscounts();
-  }, []);
+    const unsubscribe = subscribeToDiscounts(currentBranch.id, (discountsData) => {
+      setDiscounts(discountsData);
+    });
+
+    return () => unsubscribe();
+  }, [currentBranch]);
 
   // Filter discounts based on input
   useEffect(() => {
@@ -55,7 +47,8 @@ export default function DiscountDropdown({
     }
 
     const filtered = discounts.filter(discount =>
-      discount.discount_code.toLowerCase().includes(value.toLowerCase())
+      discount.name.toLowerCase().includes(value.toLowerCase()) &&
+      discount.status === 'active'
     );
 
     setFilteredDiscounts(filtered);
@@ -71,7 +64,8 @@ export default function DiscountDropdown({
     }
 
     const exactMatch = discounts.find(discount => 
-      discount.discount_code.toLowerCase() === value.toLowerCase()
+      discount.name.toLowerCase() === value.toLowerCase() &&
+      discount.status === 'active'
     );
 
     if (exactMatch) {
@@ -103,7 +97,7 @@ export default function DiscountDropdown({
   };
 
   const handleSuggestionClick = (discount: Discount) => {
-    onChange(discount.discount_code);
+    onChange(discount.name);
     setShowSuggestions(false);
     inputRef.current?.blur();
   };
@@ -112,8 +106,7 @@ export default function DiscountDropdown({
     if (appliedDiscount) {
       const discountAmount = calculateDiscountAmount(
         appliedDiscount, 
-        subtotal, 
-        cartCategoryIds
+        subtotal
       );
       onDiscountApplied(appliedDiscount, discountAmount);
     } else {
@@ -121,28 +114,8 @@ export default function DiscountDropdown({
     }
   };
 
-  const getCategoryName = (categoryId: string | null): string => {
-    if (!categoryId) return "All Items";
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : "Unknown Category";
-  };
-
   const getDiscountPreview = (discount: Discount): number => {
-    return calculateDiscountAmount(discount, subtotal, cartCategoryIds);
-  };
-
-  const canApplyDiscount = (discount: Discount): boolean => {
-    if (!discount.applies_to) return true; // Applies to all items
-    return cartCategoryIds.includes(discount.applies_to);
-  };
-
-  const getApplicabilityText = (discount: Discount): string => {
-    if (!discount.applies_to) return "Applies to all items";
-    const canApply = canApplyDiscount(discount);
-    const categoryName = getCategoryName(discount.applies_to);
-    return canApply 
-      ? `Applies to ${categoryName} (✓ Available in cart)`
-      : `Applies to ${categoryName} (✗ Not in cart)`;
+    return calculateDiscountAmount(discount, subtotal);
   };
 
   return (
@@ -184,54 +157,38 @@ export default function DiscountDropdown({
         <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {filteredDiscounts.map((discount) => {
             const previewAmount = getDiscountPreview(discount);
-            const canApply = canApplyDiscount(discount);
-            const applicabilityText = getApplicabilityText(discount);
 
             return (
               <div
                 key={discount.id}
                 onClick={() => handleSuggestionClick(discount)}
-                className={`p-3 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
-                  canApply ? 'hover:bg-gray-50' : 'bg-gray-50 opacity-75'
-                }`}
+                className="p-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[var(--secondary)] text-sm">
-                        {discount.discount_code}
+                        {discount.name}
                       </span>
-                      {!canApply && (
-                        <span className="text-xs text-[var(--error)] font-medium">
-                          Not applicable
-                        </span>
-                      )}
                     </div>
                     <div className="text-xs text-[var(--secondary)] opacity-70 mt-1">
                       {discount.type === 'percentage' 
                         ? `${discount.value}% off`
                         : `₱${discount.value} off`
                       }
-                      {previewAmount > 0 && canApply && (
+                      {previewAmount > 0 && (
                         <span className="text-[var(--success)] font-medium ml-2">
                           (-{formatCurrency(previewAmount)})
                         </span>
                       )}
                     </div>
-                    <div className={`text-xs mt-1 ${
-                      canApply ? 'text-[var(--success)]' : 'text-[var(--error)]'
-                    }`}>
-                      {applicabilityText}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500">Savings</div>
+                    <div className="font-semibold text-[var(--success)]">
+                      {formatCurrency(previewAmount)}
                     </div>
                   </div>
-                  {canApply && (
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500">Savings</div>
-                      <div className="font-semibold text-[var(--success)]">
-                        {formatCurrency(previewAmount)}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -250,7 +207,7 @@ export default function DiscountDropdown({
           <div className="flex items-center justify-between text-[14px]">
             <div>
               <span className="font-semibold text-[var(--secondary)]">
-                {appliedDiscount.discount_code}
+                {appliedDiscount.name}
               </span>
               <span className="text-[var(--secondary)] ml-2">
                 ({appliedDiscount.type === 'percentage' 
@@ -264,9 +221,6 @@ export default function DiscountDropdown({
                 -{formatCurrency(getDiscountPreview(appliedDiscount))}
               </div>
             </div>
-          </div>
-          <div className="text-[10px] text-[var(--secondary)] mt-1">
-            {getApplicabilityText(appliedDiscount)}
           </div>
         </div>
       )}

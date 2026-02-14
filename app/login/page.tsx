@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
-import { FirebaseError } from "@firebase/util";
-
 import Link from "next/link";
+import VersionDisplay from "@/components/VersionDisplay";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -68,13 +67,16 @@ export default function LoginPage() {
 			await login(credentials.email, credentials.password);
 			// After successful login, redirect based on user role
 			// Note: The user state will be updated, and the useEffect will handle the redirect
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Login error:", error);
 
 			// Handle specific Firebase auth errors
 			let errorMessage = "Login failed. Please try again.";
-			if (error instanceof FirebaseError && error.code) {
-				switch (error.code) {
+			
+			// Type guard for Firebase error objects
+			if (error && typeof error === 'object' && 'code' in error) {
+				const errorCode = (error as { code: string }).code;
+				switch (errorCode) {
 					case "auth/user-not-found":
 						errorMessage = "No account found with this email address.";
 						break;
@@ -94,7 +96,9 @@ export default function LoginPage() {
 						errorMessage = "Invalid email or password.";
 						break;
 					default:
-						errorMessage = error.message || "Login failed. Please try again.";
+						if ('message' in error && typeof (error as { message: unknown }).message === 'string') {
+							errorMessage = (error as { message: string }).message;
+						}
 				}
 			}
 
@@ -226,7 +230,7 @@ export default function LoginPage() {
 						{/* Footer */}
 						<div className='mt-6 text-center'>
 							<p className='text-xs text-[var(--secondary)] opacity-50'>
-								Fredelicacies Point-of-Sales System v1.0
+							Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
 							</p>
 						</div>
 					</div>

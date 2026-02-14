@@ -5,8 +5,6 @@ import { Discount } from '@/services/discountService';
 import { createDiscount, updateDiscount } from '@/services/discountService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranch } from '@/contexts/BranchContext';
-import { subscribeToCategories } from '@/stores/dataStore';
-import { Category } from '@/services/categoryService';
 import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
 import DropdownField from '@/components/DropdownField';
 
@@ -21,45 +19,32 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
   const { user } = useAuth();
   const { currentBranch } = useBranch();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [valueInput, setValueInput] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
-    discount_code: '',
-    type: 'flat' as 'percentage' | 'flat',
+    name: '',
+    type: 'fixed' as 'percentage' | 'fixed',
     value: 0,
-    applies_to: null as string | null,
-    scope: 'specific_branch' as 'all_branches' | 'specific_branch'
+    status: 'active' as 'active' | 'inactive'
   });
-
-  // Load categories
-  useEffect(() => {
-    const unsubscribe = subscribeToCategories((categories) => {
-      setCategories(categories);
-    });
-
-    return unsubscribe;
-  }, []);
 
   // Initialize form data when discount prop changes
   useEffect(() => {
     if (discount) {
       setFormData({
-        discount_code: discount.discount_code,
+        name: discount.name,
         type: discount.type,
         value: discount.value,
-        applies_to: discount.applies_to,
-        scope: discount.scope || 'specific_branch'
+        status: discount.status
       });
       setValueInput(discount.value > 0 ? discount.value.toString() : '');
     } else {
       setFormData({
-        discount_code: '',
-        type: 'flat',
+        name: '',
+        type: 'fixed',
         value: 0,
-        applies_to: null,
-        scope: 'specific_branch'
+        status: 'active'
       });
       setValueInput('');
     }
@@ -83,8 +68,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
       return;
     }
 
-    if (!formData.discount_code.trim()) {
-      alert('Please enter a discount code');
+    if (!formData.name.trim()) {
+      alert('Please enter a discount name');
       return;
     }
 
@@ -103,24 +88,22 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
     try {
       if (discount) {
         // Update existing discount
-        await updateDiscount(discount.discount_code, {
+        const { error } = await updateDiscount(discount.id, {
+          name: formData.name.trim(),
           type: formData.type,
           value: formData.value,
-          applies_to: formData.applies_to,
-          scope: formData.scope,
-          modified_by: user.uid
+          status: formData.status
         });
+        if (error) throw error;
       } else {
         // Create new discount
-        await createDiscount({
-          discount_code: formData.discount_code.trim().toUpperCase(), // Ensure uppercase and trimmed
+        const { error } = await createDiscount(currentBranch.id, {
+          name: formData.name.trim(),
           type: formData.type,
           value: formData.value,
-          applies_to: formData.applies_to,
-          scope: formData.scope,
-          branchId: currentBranch.id,
-          created_by: user.uid
+          status: formData.status
         });
+        if (error) throw error;
       }
 
       onSuccess?.();
@@ -157,25 +140,19 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Discount Code */}
+          {/* Discount Name */}
           <div>
             <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Discount Code <span className="text-[var(--error)]">*</span>
+              Discount Name <span className="text-[var(--error)]">*</span>
             </label>
             <input
               type="text"
-              value={formData.discount_code}
-              onChange={(e) => handleInputChange('discount_code', e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               className="w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="e.g., SAVE20, WELCOME10"
-              disabled={!!discount}
               required
             />
-            {discount && (
-              <p className="text-sm text-[var(--secondary)]/50 mt-1">
-                Discount code cannot be changed
-              </p>
-            )}
           </div>
 
           {/* Type */}
@@ -184,13 +161,13 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
               Discount Type <span className="text-[var(--error)]">*</span>
             </label>
             <DropdownField
-              options={["FLAT AMOUNT", "PERCENTAGE"]}
+              options={["FIXED AMOUNT", "PERCENTAGE"]}
               hasAllOptionsVisible={false}
-              defaultValue={formData.type === 'percentage' ? "PERCENTAGE" : "FLAT AMOUNT"}
+              defaultValue={formData.type === 'percentage' ? "PERCENTAGE" : "FIXED AMOUNT"}
               dropdownPosition='bottom-right'
               dropdownOffset={{ top: 2, right: 0 }}
               onChange={(e) => {
-                const type = e === "PERCENTAGE" ? 'percentage' : 'flat';
+                const type = e === "PERCENTAGE" ? 'percentage' : 'fixed';
                 handleInputChange('type', type);
               }}
               roundness={"[6px]"}
@@ -201,20 +178,20 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             />
           </div>
 
-          {/* Scope */}
+          {/* Status */}
           <div>
             <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Discount Scope <span className="text-[var(--error)]">*</span>
+              Status <span className="text-[var(--error)]">*</span>
             </label>
             <DropdownField
-              options={["THIS BRANCH ONLY", "ALL BRANCHES"]}
+              options={["ACTIVE", "INACTIVE"]}
               hasAllOptionsVisible={false}
-              defaultValue={formData.scope === 'specific_branch' ? "THIS BRANCH ONLY" : "ALL BRANCHES"}
+              defaultValue={formData.status === 'active' ? "ACTIVE" : "INACTIVE"}
               dropdownPosition='bottom-right'
               dropdownOffset={{ top: 2, right: 0 }}
               onChange={(e) => {
-                const scope = e === "ALL BRANCHES" ? 'all_branches' : 'specific_branch';
-                handleInputChange('scope', scope);
+                const status = e === "ACTIVE" ? 'active' : 'inactive';
+                handleInputChange('status', status);
               }}
               roundness={"[6px]"}
               height={42}
@@ -223,7 +200,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
               shadow={false}
             />
             <p className="text-sm text-[var(--secondary)]/50 mt-1">
-              Choose whether this discount applies to all branches or just this branch
+              Active discounts are available for use at checkout
             </p>
           </div>
 
@@ -281,42 +258,6 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 {formData.type === 'percentage' ? '%' : '₱'}
               </span>
             </div>
-          </div>
-
-          {/* Applies To */}
-          <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-            Applies To
-          </label>
-          <div>
-            <DropdownField
-              options={categories.map((category) => category.name)}
-              hasAllOptionsVisible={true}
-              defaultValue={
-                formData.applies_to 
-                  ? categories.find(cat => cat.id === formData.applies_to)?.name || "ALL CATEGORIES"
-                  : "ALL CATEGORIES"
-              }
-              allSuffix="CATEGORIES"
-              dropdownPosition='bottom-right'
-              dropdownOffset={{ top: 2, right: 0 }}
-              onChange={(e) => {
-                if (e === "ALL CATEGORIES") {
-                  handleInputChange('applies_to', null);
-                } else {
-                  // Find the category ID by name
-                  const category = categories.find(cat => cat.name === e);
-                  handleInputChange('applies_to', category?.id || null);
-                }
-              }}
-              roundness={"[6px]"}
-              height={42}
-              valueAlignment={"left"}
-              padding=''
-              shadow={false}
-            />
-            <p className="text-sm text-[var(--secondary)]/50 mt-2">
-              Leave as {"ALL CATEGORIES"} to apply discount to entire order
-            </p>
           </div>
 
           {/* Buttons */}

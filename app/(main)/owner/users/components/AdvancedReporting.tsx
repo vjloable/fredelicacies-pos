@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService, Attendance } from "@/services/attendanceService";
-import { useAccessibleBranches } from "@/contexts/BranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
-import { Timestamp } from "firebase/firestore";
+import type { Branch } from "@/types/domain";
 
 interface ReportFilters {
 	dateRange: {
@@ -62,7 +62,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 	const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const { allBranches } = useAccessibleBranches();
+	const { allBranches } = useBranch();
 
 	const generateSummaryReport = useCallback(async () => {
 		try {
@@ -90,14 +90,15 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			const allAttendances = [];
 			for (const worker of filteredWorkers) {
 				try {
-					const sessions =
-						(await attendanceService.listAttendances(worker.id, {
-							startDate: Timestamp.fromDate(filters.dateRange.startDate),
-							endDate: Timestamp.fromDate(filters.dateRange.endDate),
-						})) || [];
+				const { records: sessions } =
+					await attendanceService.getAttendancesByWorker(
+						worker.id,
+						filters.dateRange.startDate,
+						filters.dateRange.endDate
+					);
 
-					allAttendances.push(
-						...sessions.map((attendance) => ({
+				allAttendances.push(
+					...sessions.map((attendance: Attendance) => ({
 							...attendance,
 							workerId: worker.id,
 							workerName: worker.name,
@@ -133,32 +134,27 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 		// Calculate total hours
 		const totalHours = attendances.reduce((sum, attendance) => {
-			if (attendance.duration) {
-				return sum + attendance.duration / 60; // Convert minutes to hours
+			if (attendance.duration_minutes) {
+				return sum + attendance.duration_minutes / 60; // Convert minutes to hours
 			}
-			if (attendance.timeInAt && attendance.timeOutAt) {
-				const startTime = attendance.timeInAt instanceof Timestamp
-					? attendance.timeInAt.toDate()
-					: attendance.timeInAt;
-				const endTime = attendance.timeOutAt instanceof Timestamp
-					? attendance.timeOutAt.toDate()
-					: attendance.timeOutAt;
-				return (
-					sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
-				);
-			}
-			return sum;
-		}, 0);
+			if (attendance.clock_in && attendance.clock_out) {
+			const startTime = new Date(attendance.clock_in);
+			const endTime = new Date(attendance.clock_out);
+			return (
+				sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+			);
+		}
+		return sum;
+	}, 0);
 
-		// Active workers (workers with attendances in date range)
-		const activeWorkerIds = new Set(attendances.map((s) => s.workerId));
-		const activeWorkers = activeWorkerIds.size;
+	// Active workers (workers with attendances in date range)
+	const activeWorkerIds = new Set(attendances.map((s) => s.workerId));
+	const activeWorkers = activeWorkerIds.size;
 
-		// Average hours per worker
-		const averageHoursPerWorker =
-			totalWorkers > 0 ? totalHours / totalWorkers : 0;
+		// Calculate average hours per worker
+		const averageHoursPerWorker = activeWorkers > 0 ? totalHours / activeWorkers : 0;
 
-		// Branch coverage
+		// Calculate branch coverage
 		const branchCoverage = calculateBranchCoverage(attendances);
 
 		// Top performers
@@ -182,22 +178,22 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		const branchMap = new Map();
 
 		attendances.forEach((attendance) => {
-			if (!branchMap.has(attendance.branchId)) {
-				branchMap.set(attendance.branchId, {
-					branchId: attendance.branchId,
-					branchName: getBranchName(attendance.branchId),
+			if (!branchMap.has(attendance.branch_id)) {
+				branchMap.set(attendance.branch_id, {
+					branchId: attendance.branch_id,
+					branchName: getBranchName(attendance.branch_id),
 					workerIds: new Set(),
 					totalHours: 0,
 					sessionsCount: 0,
 				});
 			}
 
-			const branch = branchMap.get(attendance.branchId);
+			const branch = branchMap.get(attendance.branch_id);
 			branch.workerIds.add(attendance.workerId);
 			branch.sessionsCount++;
 
-			if (attendance.duration) {
-				branch.totalHours += attendance.duration / 60;
+			if (attendance.duration_minutes) {
+				branch.totalHours += attendance.duration_minutes / 60;
 			}
 		});
 
@@ -233,15 +229,13 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			if (workerData) {
 				workerData.sessionsCount++;
 
-				if (attendance.duration) {
-					workerData.totalHours += attendance.duration / 60;
+				if (attendance.duration_minutes) {
+					workerData.totalHours += attendance.duration_minutes / 60;
 				}
 
 				// Simple punctuality check (on-time if clocked in within 15 minutes of hour)
-				if (attendance.timeInAt) {
-					const startTime = attendance.timeInAt instanceof Timestamp
-						? attendance.timeInAt.toDate()
-						: attendance.timeInAt;
+				if (attendance.clock_in) {
+					const startTime = new Date(attendance.clock_in);
 					const minutes = startTime.getMinutes();
 					if (minutes <= 15 || minutes >= 45) {
 						workerData.onTimeSessions++;
@@ -271,17 +265,13 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		}));
 
 		attendances.forEach((attendance) => {
-			if (attendance.timeInAt) {
-				const startTime = attendance.timeInAt instanceof Timestamp
-					? attendance.timeInAt.toDate()
-					: attendance.timeInAt;
+			if (attendance.clock_in) {
+				const startTime = new Date(attendance.clock_in);
 				hourlyData[startTime.getHours()].clockInsCount++;
 			}
 
-			if (attendance.timeOutAt) {
-				const endTime = attendance.timeOutAt instanceof Timestamp
-					? attendance.timeOutAt.toDate()
-					: attendance.timeOutAt;
+			if (attendance.clock_out) {
+				const endTime = new Date(attendance.clock_out);
 				hourlyData[endTime.getHours()].clockOutsCount++;
 			}
 		});
@@ -290,7 +280,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 	};
 
 	const getBranchName = (branchId: string): string => {
-		const branch = allBranches.find((b) => b.id === branchId);
+		const branch = allBranches.find((b: Branch) => b.id === branchId);
 		return branch ? branch.name : branchId;
 	};
 
@@ -448,7 +438,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 							Filter by Branches
 						</label>
 						<div className='flex flex-wrap gap-2'>
-							{allBranches.map((branch) => (
+						{allBranches.map((branch: Branch) => (
 								<label key={branch.id} className='inline-flex items-center'>
 									<input
 										type='checkbox'

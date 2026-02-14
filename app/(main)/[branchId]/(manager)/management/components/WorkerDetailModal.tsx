@@ -7,7 +7,7 @@ import { branchService } from "@/services/branchService";
 
 import LoadingSpinner from "../../../../../../components/LoadingSpinner";
 
-interface AttendanceWithMetadata extends Attendance {
+interface AttendanceWithMetadata extends Omit<Attendance, 'id'> {
 	id?: string;
 	branchName?: string;
 	totalMinutes?: number;
@@ -46,7 +46,7 @@ export default function WorkerDetailModal({
 			const branchNameMap = new Map<string, string>();
 			
 			for (const branchId of branchIds) {
-				const branch = await branchService.getBranchById(branchId);
+				const { branch } = await branchService.getBranchById(branchId);
 				if (branch) {
 					branchNameMap.set(branchId, branch.name);
 				} else {
@@ -65,28 +65,34 @@ export default function WorkerDetailModal({
 
 		try {
 			setLoading(true);
-			const attendances: Attendance[] = await attendanceService.getAttendancesByDateRange(
-				worker.id,
-				new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-				new Date()
+			
+			// Get attendances across all branches for the worker
+			const branchIds = Array.from(
+				new Set(worker.roleAssignments.map(assignment => assignment.branchId))
 			);
+			
+			let allAttendances: Attendance[] = [];
+			const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+			
+			for (const branchId of branchIds) {
+				const { records: attendances } = await attendanceService.getAttendancesByBranch(branchId);
+				// Filter for this worker and last 30 days
+				const workerAttendances = attendances.filter(att => {
+					const clockIn = new Date(att.clock_in);
+					return att.worker_id === worker.id && clockIn >= thirtyDaysAgo;
+				});
+				allAttendances = [...allAttendances, ...workerAttendances];
+			}
 
 			// Process attendances to add metadata
-			const processedAttendances = attendances.map((attendance, index) => ({
+			const processedAttendances = allAttendances.map((attendance, index) => ({
 				...attendance,
 				id: `session-${index}`,
-				status: attendance.timeOutAt
+				status: attendance.clock_out
 					? "completed"
 					: ("active" as "active" | "completed"),
-				totalMinutes:
-					attendance.duration ||
-					(attendance.timeOutAt
-						? attendanceService.calculateAttendanceDuration(
-								attendance.timeInAt,
-								attendance.timeOutAt
-						  )
-						: undefined),
-				branchName: branchNames.get(attendance.branchId) || `Branch ${attendance.branchId}`,
+				totalMinutes: attendance.duration_minutes || undefined,
+				branchName: branchNames.get(attendance.branch_id) || `Branch ${attendance.branch_id}`,
 			}));
 
 			setAttendances(processedAttendances);
@@ -122,7 +128,7 @@ export default function WorkerDetailModal({
 					
 					const branchNameMap = new Map<string, string>();
 					for (const branchId of branchIds) {
-						const branch = await branchService.getBranchById(branchId);
+						const { branch } = await branchService.getBranchById(branchId);
 						if (branch) {
 							branchNameMap.set(branchId, branch.name);
 						} else {
@@ -345,13 +351,13 @@ export default function WorkerDetailModal({
 									{attendances.map((attendance) => (
 										<div
 											key={
-												attendance.id || `${attendance.userId}-${attendance.timeInAt}`
+												attendance.id || `${attendance.worker_id}-${attendance.clock_in}`
 											}
 											className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
 											<div className='space-y-1'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
-														{attendance.branchName || `Branch ${attendance.branchId}`}
+														{attendance.branchName || `Branch ${attendance.branch_id}`}
 													</span>
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
@@ -366,14 +372,14 @@ export default function WorkerDetailModal({
 												</div>
 												<div className='text-sm text-gray-600'>
 													<span className='font-medium'>Clock In:</span>{" "}
-													{formatDate(attendance.timeInAt.toDate())}
-													{attendance.timeOutAt && (
+													{formatDate(new Date(attendance.clock_in))}
+													{attendance.clock_out && (
 														<>
 															{" • "}
 															<span className='font-medium'>
 																Clock Out:
 															</span>{" "}
-															{formatDate(attendance.timeOutAt.toDate())}
+															{formatDate(new Date(attendance.clock_out))}
 														</>
 													)}
 												</div>

@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { createCategory } from '@/services/categoryService';
 
 interface AddCategoryModalProps {
+  branchId: string;
   isOpen: boolean;
   onClose: () => void;
   onError: (error: string) => void;
 }
 
 export default function AddCategoryModal({
+  branchId,
   isOpen,
   onClose,
   onError
@@ -23,7 +25,7 @@ export default function AddCategoryModal({
     if (newCategory.name.trim()) {
       setLoading(true);
       try {
-        await createCategory({
+        await createCategory(branchId, {
           name: newCategory.name,
           color: newCategory.color
         });

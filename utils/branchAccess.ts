@@ -1,17 +1,13 @@
-import { Branch } from "@/services/branchService";
-import { Worker } from "@/services/workerService";
-import { User } from "firebase/auth";
-
-/**
- * Branch Access Control Utilities
- * Implements simple branch-based access control as specified in the architecture
- */
+// Branch Access Control Utilities - Refactored for Supabase
+// Implements simple branch-based access control
+import type { Branch } from "@/types/domain";
+import type { Worker } from "@/services/workerService";
 
 /**
  * Get all branches that a user has access to based on their role assignments
  */
 export function getAccessibleBranches(
-	user: User,
+	user: any, // Not used, kept for backward compatibility
 	worker: Worker | null,
 	allBranches: Branch[]
 ): Branch[] {
@@ -38,7 +34,7 @@ export function getAccessibleBranches(
  * Check if a user has access to a specific branch
  */
 export function canAccessBranch(
-	user: User,
+	user: any, // Not used, kept for backward compatibility
 	worker: Worker | null,
 	branchId: string
 ): boolean {
@@ -84,7 +80,7 @@ export function getUserRoleInBranch(
  * Check if a user can manage workers in a specific branch
  */
 export function canManageWorkersInBranch(
-	user: User,
+	user: any, // Not used, kept for backward compatibility
 	worker: Worker | null,
 	branchId: string
 ): boolean {

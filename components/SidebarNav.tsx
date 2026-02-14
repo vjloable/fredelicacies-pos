@@ -55,6 +55,11 @@ export default function SidebarNav() {
 			label: "Inventory",
 			icon: InventoryIcon,
 		},
+		{
+			href: "sales",
+			label: "Sales",
+			icon: SalesIcon,
+		},
 	];
 
 	// Manager Section - Available to managers and owners
@@ -63,12 +68,6 @@ export default function SidebarNav() {
 			href: "management",
 			label: "Management",
 			icon: ManagementIcon,
-			managerOnly: true,
-		},
-		{
-			href: "sales",
-			label: "Sales",
-			icon: SalesIcon,
 			managerOnly: true,
 		},
 		{
@@ -188,7 +187,7 @@ export default function SidebarNav() {
 								{currentBranch.name}
 							</h3>
 							<p className='text-[12px] text-[var(--secondary)]/70 mt-1 leading-tight'>
-								{currentBranch.location}
+								{currentBranch.address}
 							</p>
 						</div>
 					</div>

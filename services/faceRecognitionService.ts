@@ -1,6 +1,4 @@
 import * as faceapi from '@vladmandic/face-api';
-import { db } from '@/firebase-config';
-import { doc, getDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore';
 
 export interface FaceEmbedding {
 	userId: string;
@@ -87,86 +85,28 @@ class FaceRecognitionService {
 
 	async getUserFaceEmbedding(userId: string): Promise<FaceEmbedding | null> {
 		try {
-			console.log('📥 Fetching face embedding from Firestore for:', userId);
-			const embeddingRef = doc(db, 'faceEmbeddings', userId);
-			const embeddingSnap = await getDoc(embeddingRef);
-
-			if (!embeddingSnap.exists()) {
-				console.log('📭 No face embedding found for user (collection may not exist yet)');
-				return null;
-			}
-
-			const data = embeddingSnap.data();
+			console.log('📥 Fetching face embedding from Supabase for:', userId);
+			// TODO: Implement Supabase version
+			// const { data, error } = await supabase
+			//   .from('face_embeddings')
+			//   .select('*')
+			//   .eq('user_id', userId)
+			//   .single();
 			
-			// Check if this is new multi-embedding format or old single embedding format
-			if (data.embeddings && Array.isArray(data.embeddings)) {
-				console.log(`📦 Found ${data.embeddings.length} face embeddings!`);
-				// Return the most recent embedding for backward compatibility
-				const mostRecent = data.embeddings[data.embeddings.length - 1];
-				return {
-					userId: data.userId,
-					embedding: mostRecent.embedding,
-					capturedAt: mostRecent.capturedAt.toDate(),
-					imageUrl: mostRecent.imageUrl,
-				};
-			} else {
-				// Old format - single embedding
-				console.log('📦 Face embedding found (old format)!');
-				return {
-					userId: data.userId,
-					embedding: data.embedding,
-					capturedAt: data.capturedAt.toDate(),
-					imageUrl: data.imageUrl,
-				};
-			}
+			console.log('📭 Face recognition not yet implemented for Supabase');
+			return null;
 		} catch (error) {
-			console.error('❌ Error getting face embedding:', error);
-			// Return null instead of throwing - this allows enrollment to proceed
+			console.error('❌ Error fetching face embedding:', error);
 			return null;
 		}
 	}
 
 	async getUserFaceEmbeddings(userId: string): Promise<FaceEmbeddingData | null> {
 		try {
-			console.log('📥 Fetching all face embeddings from Firestore for:', userId);
-			const embeddingRef = doc(db, 'faceEmbeddings', userId);
-			const embeddingSnap = await getDoc(embeddingRef);
-
-			if (!embeddingSnap.exists()) {
-				console.log('📭 No face embeddings found for user');
-				return null;
-			}
-
-			const data = embeddingSnap.data();
-			
-			
-			// Check if this is new multi-embedding format
-			if (data.embeddings && Array.isArray(data.embeddings)) {
-				console.log(`📦 Found ${data.embeddings.length} face embeddings!`);
-				return {
-					userId: data.userId,
-					embeddings: data.embeddings.map((emb: any) => ({
-						embedding: emb.embedding,
-						capturedAt: emb.capturedAt.toDate(),
-						imageUrl: emb.imageUrl,
-					})),
-					createdAt: data.createdAt,
-					updatedAt: data.updatedAt,
-				};
-			} else {
-				// Old format - convert to new format
-				console.log('📦 Converting old format to new format');
-				return {
-					userId: data.userId,
-					embeddings: [{
-						embedding: data.embedding,
-						capturedAt: data.capturedAt.toDate(),
-						imageUrl: data.imageUrl,
-					}],
-					createdAt: data.capturedAt,
-					updatedAt: data.updatedAt,
-				};
-			}
+			console.log('📥 Fetching all face embeddings from Supabase for:', userId);
+			// TODO: Implement Supabase version
+			console.log('📝 Face recognition not yet implemented for Supabase');
+			return null;
 		} catch (error) {
 			console.error('❌ Error getting face embeddings:', error);
 			return null;
@@ -180,65 +120,9 @@ class FaceRecognitionService {
 		replaceAll: boolean = false
 	): Promise<void> {
 		try {
-			console.log('💾 Saving face embedding to Firestore...');
-			const embeddingRef = doc(db, 'faceEmbeddings', userId);
-			
-			const newEmbedding = {
-				embedding: Array.from(descriptor),
-				capturedAt: new Date(),
-				imageUrl: imageUrl || null,
-			};
-
-			if (replaceAll) {
-				// Replace all embeddings with this one
-				const embeddingData: any = {
-					userId,
-					embeddings: [newEmbedding],
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				};
-				await setDoc(embeddingRef, embeddingData);
-				console.log('✅ Face embedding saved (replaced all)! Collection created if needed.');
-			} else {
-				// Check if document exists
-				const docSnap = await getDoc(embeddingRef);
-				
-				if (docSnap.exists()) {
-					// Add to existing embeddings
-					const data = docSnap.data();
-					const existingEmbeddings = data.embeddings || [
-						{
-							embedding: data.embedding,
-							capturedAt: data.capturedAt,
-							imageUrl: data.imageUrl,
-						}
-					];
-					
-					// Limit to maximum 5 embeddings
-					const updatedEmbeddings = [...existingEmbeddings, newEmbedding];
-					if (updatedEmbeddings.length > 5) {
-						updatedEmbeddings.shift(); // Remove oldest
-					}
-					
-					await updateDoc(embeddingRef, {
-						embeddings: updatedEmbeddings,
-						updatedAt: new Date(),
-					});
-					console.log(`✅ Added embedding! Total: ${updatedEmbeddings.length}/5`);
-				} else {
-					// Create new document
-					const embeddingData: any = {
-						userId,
-						embeddings: [newEmbedding],
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					};
-					await setDoc(embeddingRef, embeddingData);
-					console.log('✅ First face embedding saved! Collection created.');
-				}
-			}
-
-			console.log('📍 Location: faceEmbeddings/' + userId);
+			console.log('💾 Saving face embedding to Supabase...');
+			// TODO: Implement Supabase version
+			console.log('📝 Face recognition save not yet implemented for Supabase');
 		} catch (error) {
 			console.error('❌ Error saving face embedding:', error);
 			throw error;
@@ -251,15 +135,9 @@ class FaceRecognitionService {
 		imageUrl?: string
 	): Promise<void> {
 		try {
-			const embeddingRef = doc(db, 'faceEmbeddings', userId);
-			
-			await updateDoc(embeddingRef, {
-				embedding: Array.from(descriptor),
-				capturedAt: new Date(),
-				...(imageUrl && { imageUrl }),
-			});
-
-			console.log('Face embedding updated successfully for user:', userId);
+			console.log('💾 Updating face embedding in Supabase...');
+			// TODO: Implement Supabase version
+			console.log('📝 Face recognition update not yet implemented for Supabase');
 		} catch (error) {
 			console.error('Error updating face embedding:', error);
 			throw error;
@@ -269,13 +147,8 @@ class FaceRecognitionService {
 	async deleteFaceEmbedding(userId: string): Promise<void> {
 		try {
 			console.log('🗑️ Deleting face embedding for user:', userId);
-			const embeddingRef = doc(db, 'faceEmbeddings', userId);
-			
-			// Delete the document
-			const { deleteDoc } = await import('firebase/firestore');
-			await deleteDoc(embeddingRef);
-			
-			console.log('✅ Face embedding deleted successfully for user:', userId);
+			// TODO: Implement Supabase version
+			console.log('📝 Face recognition delete not yet implemented for Supabase');
 		} catch (error) {
 			console.error('❌ Error deleting face embedding:', error);
 			throw error;

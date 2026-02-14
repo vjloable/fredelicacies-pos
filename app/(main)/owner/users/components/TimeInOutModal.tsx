@@ -67,21 +67,27 @@ export default function TimeInOutModal({
 
 		try {
 			if (action === "time_in") {
-				await attendanceService.timeInWorker(
-					worker.id,
+				const { id, error } = await attendanceService.clockIn(
 					selectedBranchId,
-					notes
-				);
-			} else {
-				const activeAttendance = await attendanceService.getActiveAttendance(
 					worker.id
 				);
+				if (error) {
+					throw error;
+				}
+			} else {
+				const { attendance: activeAttendance, error: getError } = await attendanceService.getActiveAttendance(
+					worker.id
+				);
+				if (getError) {
+					throw getError;
+				}
 				if (activeAttendance) {
-					await attendanceService.timeOutWorker(
-						worker.id,
-						activeAttendance.id,
-						notes
+					const { error: clockOutError } = await attendanceService.clockOut(
+						activeAttendance.id
 					);
+					if (clockOutError) {
+						throw clockOutError;
+					}
 				} else {
 					throw new Error("No active attendance found");
 				}
@@ -264,7 +270,7 @@ export default function TimeInOutModal({
 										<option value=''>Choose a branch...</option>
 										{workerBranches.map((branch) => (
 											<option key={branch.id} value={branch.id}>
-												{branch.name} - {branch.location}
+													{branch.name} - {branch.address || 'No address'}
 											</option>
 										))}
 									</select>

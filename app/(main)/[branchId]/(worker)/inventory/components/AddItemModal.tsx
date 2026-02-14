@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import ImageUpload from '@/components/ImageUpload';
-import { InventoryItem, createInventoryItem } from '@/services/inventoryService';
-import { Category } from '@/services/categoryService';
+import { createInventoryItem } from '@/services/inventoryService';
+import type { Category, CreateInventoryItemData } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
@@ -27,18 +27,18 @@ export default function AddItemModal({
     name: "", 
     price: 0, 
     cost: undefined as number | undefined, // Add optional cost field
-    categoryId: categories[0]?.id || '', 
+    category_id: categories[0]?.id || '', 
     stock: 0, 
     description: "",
-    imgUrl: ""
+    img_url: ""
   });
   const [priceInput, setPriceInput] = useState('');
   const [costInput, setCostInput] = useState('');
   const [stockInput, setStockInput] = useState('');
 
-  // Update categoryId when categories change and current selection is invalid
-  if (categories.length > 0 && !categories.find(cat => cat.id === newItem.categoryId)) {
-    setNewItem(prev => ({ ...prev, categoryId: categories[0].id || '' }));
+  // Update category_id when categories change and current selection is invalid
+  if (categories.length > 0 && !categories.find(cat => cat.id === newItem.category_id)) {
+    setNewItem(prev => ({ ...prev, category_id: categories[0].id || '' }));
   }
 
   if (!isOpen) return null;
@@ -72,15 +72,14 @@ export default function AddItemModal({
     
     setLoading(true);
     try {
-      const itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'> = {
+      const itemData: CreateInventoryItemData = {
         name: newItem.name,
         price: finalPrice,
         cost: finalCost,
-        categoryId: newItem.categoryId,
+        category_id: newItem.category_id,
         stock: finalStock,
-        description: newItem.description,
-        imgUrl: newItem.imgUrl || '',
-        branchId: currentBranch!.id
+        description: newItem.description || undefined,
+        img_url: newItem.img_url || undefined
       };
       
       await createInventoryItem(currentBranch!.id, itemData);
@@ -90,10 +89,10 @@ export default function AddItemModal({
         name: "", 
         price: 0, 
         cost: undefined, // Reset cost field
-        categoryId: categories[0]?.id || '', 
+        category_id: categories[0]?.id || '', 
         stock: 0, 
         description: "",
-        imgUrl: ""
+        img_url: ""
       });
       setPriceInput('');
       setCostInput('');
@@ -315,13 +314,13 @@ export default function AddItemModal({
                   </label>
                   <DropdownField
                     options={categories.map(cat => cat.name)}
-                    defaultValue={categories.find(cat => cat.id === newItem.categoryId)?.name || categories[0]?.name || ''}
+                    defaultValue={categories.find(cat => cat.id === newItem.category_id)?.name || categories[0]?.name || ''}
                     dropdownPosition="bottom-right"
                     dropdownOffset={{ top: 2, right: 0 }}
                     onChange={(categoryName) => {
                       const selectedCategory = categories.find(cat => cat.name === categoryName);
                       if (selectedCategory) {
-                        setNewItem({...newItem, categoryId: selectedCategory.id});
+                        setNewItem({...newItem, category_id: selectedCategory.id});
                       }
                     }}
                     height={44}
@@ -335,9 +334,9 @@ export default function AddItemModal({
               {/* Image Upload Section */}
               <div>
                 <ImageUpload
-                  currentImageUrl={newItem.imgUrl}
-                  onImageUpload={(imageUrl) => setNewItem({...newItem, imgUrl: imageUrl})}
-                  onImageRemove={() => setNewItem({...newItem, imgUrl: ""})}
+                  currentImageUrl={newItem.img_url}
+                  onImageUpload={(imageUrl) => setNewItem({...newItem, img_url: imageUrl})}
+                  onImageRemove={() => setNewItem({...newItem, img_url: ""})}
                 />
               </div>
 

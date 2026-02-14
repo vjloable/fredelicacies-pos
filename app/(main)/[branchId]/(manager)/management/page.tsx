@@ -4,14 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
-import {
-	collection,
-	query,
-	orderBy,
-	onSnapshot,
-	where,
-} from "firebase/firestore";
-import { db } from "@/firebase-config";
 import { WorkerFilters as WorkerFiltersType } from "@/types/WorkerTypes";
 import WorkersTable from "@/app/(main)/owner/users/components/WorkersTable";
 import WorkerFiltersComponent from "@/app/(main)/owner/users/components/WorkerFilters";
@@ -98,105 +90,20 @@ export default function ManagementPage() {
 
 	// Real-time workers collection setup
 	const setupWorkerSubscriptions = useCallback(() => {
-		if (!branchId || !user) return;
+		if (!branchId || !user || Array.isArray(branchId)) return;
 
-		try {
-			console.log(
-				`🔄 Setting up real-time subscription for branch ${branchId} workers...`
-			);
+		// Load workers directly using workerService
+		const loadBranchWorkers = async () => {
+			try {
+				const branchWorkers = await workerService.getWorkersByBranch(branchId);
+				setWorkers(branchWorkers);
+			} catch (error) {
+				console.error("❌ Error loading workers:", error);
+				setError("Failed to load workers");
+			}
+		};
 
-			// Clean up existing subscriptions
-			workerSubscriptions.current.forEach((unsubscribe) => unsubscribe());
-			workerSubscriptions.current.clear();
-
-			// Set up workers collection listener for this specific branch
-			const workersRef = collection(db, "users");
-			const workersQuery = query(
-				workersRef,
-				where("isOwner", "==", false), // Exclude admins for managers
-				orderBy("name", "asc")
-			);
-
-			const unsubscribe = onSnapshot(
-				workersQuery,
-				(snapshot) => {
-					const branchWorkers: Worker[] = [];
-
-					snapshot.forEach((doc) => {
-						const data = doc.data();
-						console.log(`🔍 Checking worker ${data.name} (${doc.id}):`, {
-							roleAssignments: data.roleAssignments,
-							isOwner: data.isOwner,
-							targetBranch: branchId,
-						});
-
-						// Check if worker has access to this branch through roleAssignments
-						const hasBranchAccess = data.roleAssignments?.some(
-							(assignment: { branchId: string; isActive: boolean }) => {
-								console.log(
-									`  - Assignment: ${assignment.branchId} === ${branchId} && ${assignment.isActive}`
-								);
-								return (
-									assignment.branchId === branchId &&
-									assignment.isActive === true
-								);
-							}
-						);
-
-						console.log(`  - Has branch access: ${hasBranchAccess}`);
-
-						if (!hasBranchAccess) return; // Skip workers without access to this branch
-
-						const worker: Worker = {
-							id: doc.id,
-							name: data.name || "",
-							email: data.email || "",
-							phoneNumber: data.phoneNumber,
-							employeeId: data.employeeId,
-							roleAssignments: data.roleAssignments || [],
-							isOwner: data.isOwner || false,
-							ownerAssignedBy: data.adminAssignedBy,
-							ownerAssignedAt: data.adminAssignedAt?.toDate(),
-							currentStatus: data.isOwner
-								? undefined
-								: data.currentStatus || "clocked_out",
-							currentBranchId: data.currentBranchId,
-							lastTimeIn: data.lastTimeIn?.toDate(),
-							lastTimeOut: data.lastTimeOut?.toDate(),
-							profilePicture: data.profilePicture,
-							createdAt: data.createdAt?.toDate() || new Date(),
-							updatedAt: data.updatedAt?.toDate() || new Date(),
-							createdBy: data.createdBy || "",
-							isActive: data.isActive !== false,
-							lastLoginAt: data.lastLoginAt?.toDate(),
-							passwordResetRequired: data.passwordResetRequired || false,
-							twoFactorEnabled: data.twoFactorEnabled || false,
-						};
-
-						branchWorkers.push(worker);
-					});
-
-					console.log(
-						`✅ Processed ${branchWorkers.length} workers for branch ${branchId}`
-					);
-					setWorkers(branchWorkers);
-					// Don't set loading to false here - let the initial load handle it
-				},
-				(error) => {
-					console.error("❌ Error in workers collection listener:", error);
-					setError("Failed to load workers in real-time");
-					setLoading(false);
-				}
-			);
-
-			// Store the unsubscribe function
-			workerSubscriptions.current.set("branch-workers", unsubscribe);
-			console.log(
-				`✅ Successfully set up real-time subscription for branch ${branchId} workers`
-			);
-		} catch (error) {
-			console.error("❌ Error setting up workers collection listener:", error);
-		}
+		loadBranchWorkers();
 	}, [branchId]);
 
 	// Load data
@@ -223,10 +130,9 @@ export default function ManagementPage() {
 			setLoading(true);
 			console.log(`📋 Starting to load workers for branch ${branchId}...`);
 
-			// Filter workers for current branch only, excluding owners
-			const workerFilters: WorkerFiltersType = {
+			// Filter workers for current branch only
+			const workerFilters = {
 				branchId: branchId as string,
-				excludeOwners: true, // New filter to exclude owners for managers
 			};
 
 			console.log(`📋 Using filters:`, workerFilters);
@@ -250,8 +156,14 @@ export default function ManagementPage() {
 
 	const loadBranches = async () => {
 		try {
-			const branchesData = await branchService.getAllBranches();
-			setBranches(branchesData);
+			const { branches: branchesData, error } = await branchService.getAllBranches();
+			if (error) {
+				console.error("Error loading branches:", error);
+				return;
+			}
+			if (branchesData) {
+				setBranches(branchesData);
+			}
 		} catch (err) {
 			console.error("Error loading branches:", err);
 		}

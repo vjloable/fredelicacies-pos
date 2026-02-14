@@ -137,15 +137,15 @@ export default function DeleteConfirmationModal({
 									<h4 className='font-semibold text-red-900 mb-1'>
 										{branch.name}
 									</h4>
-									<p className='text-sm text-red-700'>{branch.location}</p>
+									<p className='text-sm text-red-700'>{branch.address}</p>
 								</div>
 								<div
 									className={`px-2 py-1 rounded text-xs font-medium ${
-										branch.isActive
+										branch.status === 'active'
 											? "bg-green-100 text-green-700"
 											: "bg-gray-100 text-gray-700"
 									}`}>
-									{branch.isActive ? "Active" : "Inactive"}
+									{branch.status === 'active' ? "Active" : "Inactive"}
 								</div>
 							</div>
 						</div>

@@ -4,8 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { RoleAssignment, useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase-config";
 import { WorkerFilters as WorkerFiltersType } from "@/types/WorkerTypes";
 import WorkersTable from "./components/WorkersTable";
 import WorkerFiltersComponent from "./components/WorkerFilters";
@@ -85,128 +83,32 @@ export default function WorkersPage() {
 		workerSubscriptions.current.forEach((unsubscribe) => unsubscribe());
 		workerSubscriptions.current.clear();
 
-		console.log("🔗 Setting up single real-time subscription for all workers");
+		console.log("🔗 Setting up worker data refresh");
 
-		try {
-			// Create query for users collection
-			const usersRef = collection(db, "users");
-			const q = query(usersRef, orderBy("name", "asc"));
-
-			// Set up real-time listener
-			const unsubscribe = onSnapshot(
-				q,
-				(querySnapshot) => {
-					console.log(
-						`Real-time update: ${querySnapshot.size} workers received from Firestore`
-					);
-
-					const updatedWorkers: Worker[] = [];
-
-					querySnapshot.forEach((doc) => {
-						const data = doc.data();
-
-						// Convert Firestore data to Worker format (same as workerService.listWorkers)
-						const worker: Worker = {
-							id: doc.id,
-							name: data.name || "",
-							email: data.email || "",
-							phoneNumber: data.phoneNumber,
-							employeeId: data.employeeId,
-							roleAssignments: data.roleAssignments || [],
-							isOwner: data.isOwner || false,
-							ownerAssignedBy: data.ownerAssignedBy,
-							ownerAssignedAt: data.ownerAssignedAt?.toDate(),
-							currentStatus: data.isOwner
-								? undefined
-								: data.currentStatus || "clocked_out",
-							currentBranchId: data.currentBranchId,
-							lastTimeIn: data.lastTimeIn?.toDate(),
-							lastTimeOut: data.lastTimeOut?.toDate(),
-							profilePicture: data.profilePicture,
-							createdAt: data.createdAt?.toDate() || new Date(),
-							updatedAt: data.updatedAt?.toDate() || new Date(),
-							createdBy: data.createdBy || "",
-							isActive: data.isActive !== false,
-							lastLoginAt: data.lastLoginAt?.toDate(),
-							passwordResetRequired: data.passwordResetRequired || false,
-							twoFactorEnabled: data.twoFactorEnabled || false,
-						};
-
-						// Apply current filters locally (same logic as workerService)
-						if (filters?.searchQuery) {
-							const searchTerm = filters.searchQuery.toLowerCase();
-							const matchesSearch =
-								data.name?.toLowerCase().includes(searchTerm) ||
-								data.email?.toLowerCase().includes(searchTerm) ||
-								data.employeeId?.toLowerCase().includes(searchTerm);
-							if (!matchesSearch) return;
-						}
-
-						// Apply selectedBranchId filter for owners
-						const currentBranchFilter = selectedBranchId || filters?.branchId;
-						if (currentBranchFilter) {
-							// For owners, they can see all users regardless of branch
-							// For managers, only show users with access to the selected branch
-							// Always show users with no role assignments (pending approval)
-							const hasBranchAccess = data.roleAssignments?.some(
-								(assignment: RoleAssignment) =>
-									assignment.branchId === currentBranchFilter &&
-									assignment.isActive === true
-							);
-							const hasNoRoleAssignments = !data.roleAssignments || data.roleAssignments.length === 0;
-							const isOwner = data.isOwner;
-							
-							// Show user if they: have branch access OR have no role assignments OR are an owner
-							if (!hasBranchAccess && !hasNoRoleAssignments && !isOwner) return;
-						}
-
-						if (filters?.role) {
-							if (filters.role === "owner" && !data.isOwner) return;
-							if (filters.role !== "owner") {
-								const hasRole = data.roleAssignments?.some(
-									(assignment: RoleAssignment) =>
-										assignment.role === filters.role &&
-										assignment.isActive === true
-								);
-								// Don't filter out users with no role assignments when no specific role is selected
-								if (!hasRole) return;
-							}
-						}
-
-						if (filters?.status && !data.isOwner) {
-							if (data.currentStatus !== filters.status) return;
-						}
-
-						updatedWorkers.push(worker);
-					});
-
-					console.log(
-						`✅ Processed ${updatedWorkers.length} workers after filtering`
-					);
-					setWorkers(updatedWorkers);
-				},
-				(error) => {
-					console.error("❌ Error in workers collection listener:", error);
-				}
-			);
-
-			// Store the unsubscribe function
-			workerSubscriptions.current.set("all-workers", unsubscribe);
-			console.log(
-				"✅ Successfully set up real-time subscription for all workers"
-			);
-		} catch (error) {
-			console.error("❌ Error setting up workers collection listener:", error);
-		}
-	}, [filters, selectedBranchId]);
+		// Note: Real-time subscriptions removed - using service layer polling instead
+		// The workerService.listWorkers() method handles data fetching
+	}, []);
 
 	const loadWorkers = useCallback(async () => {
 		try {
 			setLoading(true);
 
 			// Apply branch filtering based on selected branch for owners
-			const workerFilters = { ...filters };
-			if (user?.isOwner) {
+			const workerFilters: {
+				branchId?: string;
+				role?: 'manager' | 'worker';
+				status?: 'clocked_in' | 'clocked_out';
+				searchQuery?: string;
+				limit?: number;
+			} = {
+				branchId: filters.branchId,
+				role: filters.role === 'owner' ? undefined : filters.role as 'manager' | 'worker' | undefined,
+				status: filters.status,
+				searchQuery: filters.searchQuery,
+				limit: filters.limit,
+			};
+			
+			if (user?.is_owner) {
 				// For owners, use the selected branch filter
 				if (selectedBranchId) {
 					workerFilters.branchId = selectedBranchId;
@@ -234,7 +136,7 @@ export default function WorkersPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [filters, selectedBranchId, user?.isOwner, getAccessibleBranches, setupWorkerSubscriptions]);
+	}, [filters, selectedBranchId, user?.is_owner, getAccessibleBranches, setupWorkerSubscriptions]);
 
 	// Load data only after auth loading is complete
 	useEffect(() => {
@@ -255,8 +157,8 @@ export default function WorkersPage() {
 
 	const loadBranches = async () => {
 		try {
-			const branchesData = await branchService.getAllBranches();
-			setBranches(branchesData);
+			const result = await branchService.getAllBranches();
+			setBranches(result.branches || []);
 		} catch (err) {
 			console.error("Error loading branches:", err);
 		}
@@ -407,7 +309,7 @@ export default function WorkersPage() {
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
 						{/* Branch Selector - Only show for owners */}
-						{user?.isOwner && (
+					{user?.is_owner && (
 							<div className='w-full sm:min-w-40 sm:w-auto'>
 								<DropdownField
 									options={branches.map((branch) => branch.name)}
@@ -459,7 +361,7 @@ export default function WorkersPage() {
 
 					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
 						{/* Branch Selector - Only show for owners */}
-						{user?.isOwner && (
+					{user?.is_owner && (
 							<div className='w-full sm:min-w-40 sm:w-auto'>
 								<DropdownField
 									options={branches.map((branch) => branch.name)}
@@ -508,8 +410,8 @@ export default function WorkersPage() {
 						branches={branches}
 						onFiltersChange={handleFiltersChange}
 						userAccessibleBranches={getAccessibleBranches()}
-						isOwner={user?.isOwner || false}
-						hideBranchFilter={user?.isOwner || false}
+					isOwner={user?.is_owner || false}
+					hideBranchFilter={user?.is_owner || false}
 					/>
 				</div>
 			)}
@@ -576,13 +478,13 @@ export default function WorkersPage() {
 				}}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isOwner
+					user?.is_owner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isOwner={user?.isOwner || false}
+				isOwner={user?.is_owner || false}
 				defaultBranchId={selectedBranchId}
 			/>			
 			<EditWorkerModal
@@ -592,13 +494,13 @@ export default function WorkersPage() {
 				onSuccess={handleWorkerUpdated}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isOwner
+					user?.is_owner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isOwner={user?.isOwner || false}
+				isOwner={user?.is_owner || false}
 				currentUserId={user?.uid}
 			/>
 
@@ -623,13 +525,13 @@ export default function WorkersPage() {
 				worker={selectedWorker}
 				branches={branches}
 				userAccessibleBranches={
-					user?.isOwner
+					user?.is_owner
 						? selectedBranchId
 							? [selectedBranchId]
 							: []
 						: getAccessibleBranches()
 				}
-				isOwner={user?.isOwner || false}
+				isOwner={user?.is_owner || false}
 				onClose={handleModalClose}
 				onSuccess={handleWorkerUpdated}
 			/>

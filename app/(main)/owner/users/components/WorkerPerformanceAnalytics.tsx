@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService, Attendance } from "@/services/attendanceService";
-import { useAccessibleBranches } from "@/contexts/BranchContext";
-import { Timestamp } from "firebase/firestore";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkerPerformanceProps {
 	worker: Worker;
@@ -43,21 +42,17 @@ export default function WorkerPerformanceAnalytics({
 	const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { allBranches } = useAccessibleBranches();
+	const { allBranches } = useBranch();
 
 	const calculatePerformanceMetrics = (attendances: Attendance[]): PerformanceMetrics => {
 		// Basic calculations
 		const totalHours = attendances.reduce((sum, attendance) => {
-			if (attendance.duration) {
-				return sum + attendance.duration / 60; // Convert minutes to hours
+			if (attendance.duration_minutes) {
+				return sum + attendance.duration_minutes / 60; // Convert minutes to hours
 			}
-			if (attendance.timeInAt && attendance.timeOutAt) {
-				const startTime = attendance.timeInAt instanceof Timestamp
-					? attendance.timeInAt.toDate()
-					: attendance.timeInAt;
-				const endTime = attendance.timeOutAt instanceof Timestamp
-					? attendance.timeOutAt.toDate()
-					: attendance.timeOutAt;
+			if (attendance.clock_in && attendance.clock_out) {
+				const startTime = new Date(attendance.clock_in);
+				const endTime = new Date(attendance.clock_out);
 				return (
 					sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 				);
@@ -100,16 +95,17 @@ export default function WorkerPerformanceAnalytics({
 			setError(null);
 
 			// Get work sessions for the worker
-			const sessions =
-				(await attendanceService.listAttendances(
-					worker.id,
-					dateRange
-						? {
-								startDate: Timestamp.fromDate(dateRange.startDate),
-								endDate: Timestamp.fromDate(dateRange.endDate),
-						  }
-						: undefined
-				)) || [];
+			const { records, error: fetchError } = await attendanceService.getAttendancesByWorker(
+				worker.id,
+				dateRange?.startDate,
+				dateRange?.endDate
+			);
+
+			if (fetchError) {
+				throw new Error(fetchError.message || 'Failed to fetch attendance records');
+			}
+
+			const sessions = records || [];
 
 			// Calculate performance metrics
 			const calculatedMetrics = calculatePerformanceMetrics(sessions);
@@ -129,11 +125,9 @@ export default function WorkerPerformanceAnalytics({
 	const calculatePunctualityScore = (attendances: Attendance[]): number => {
 		// Simplified punctuality: assume on-time if clocked in within 15 minutes of hour
 		const punctualAttendances = attendances.filter((attendance) => {
-			if (!attendance.timeInAt) return false;
+			if (!attendance.clock_in) return false;
 
-			const startTime = attendance.timeInAt instanceof Timestamp
-				? attendance.timeInAt.toDate()
-				: attendance.timeInAt;
+			const startTime = new Date(attendance.clock_in);
 			const minutes = startTime.getMinutes();
 
 			// Consider on-time if within 15 minutes of the hour
@@ -157,12 +151,12 @@ export default function WorkerPerformanceAnalytics({
 
 		const firstHalfAvg =
 			firstHalf.reduce((sum, attendance) => {
-				return sum + (attendance.duration || 0);
+				return sum + (attendance.duration_minutes || 0);
 			}, 0) / firstHalf.length;
 
 		const secondHalfAvg =
 			secondHalf.reduce((sum, attendance) => {
-				return sum + (attendance.duration || 0);
+				return sum + (attendance.duration_minutes || 0);
 			}, 0) / secondHalf.length;
 
 		const difference = secondHalfAvg - firstHalfAvg;
@@ -177,26 +171,24 @@ export default function WorkerPerformanceAnalytics({
 		const branchMap = new Map();
 
 		attendances.forEach((attendance) => {
-			if (!branchMap.has(attendance.branchId)) {
-				branchMap.set(attendance.branchId, {
-					branchId: attendance.branchId,
-					branchName: getBranchName(attendance.branchId),
+			if (!branchMap.has(attendance.branch_id)) {
+				branchMap.set(attendance.branch_id, {
+					branchId: attendance.branch_id,
+					branchName: getBranchName(attendance.branch_id),
 					hours: 0,
 					attendances: 0,
 					lastWorked: null,
 				});
 			}
 
-			const branch = branchMap.get(attendance.branchId);
-			branch.sessions++;
+			const branch = branchMap.get(attendance.branch_id);
+			branch.attendances++;
 
-			if (attendance.duration) {
-				branch.hours += attendance.duration / 60;
+			if (attendance.duration_minutes) {
+				branch.hours += attendance.duration_minutes / 60;
 			}
 
-			const sessionDate = attendance.timeInAt.toDate
-				? attendance.timeInAt.toDate()
-				: attendance.timeInAt;
+			const sessionDate = new Date(attendance.clock_in);
 			if (!branch.lastWorked || sessionDate > branch.lastWorked) {
 				branch.lastWorked = sessionDate;
 			}
@@ -209,9 +201,7 @@ export default function WorkerPerformanceAnalytics({
 		const weekMap = new Map();
 
 		attendances.forEach((attendance) => {
-			const attendanceDate = attendance.timeInAt instanceof Timestamp
-				? attendance.timeInAt.toDate()
-				: attendance.timeInAt;
+			const attendanceDate = new Date(attendance.clock_in);
 			const weekStart = getWeekStart(attendanceDate);
 			const weekKey = weekStart.toISOString().split("T")[0];
 
@@ -226,8 +216,8 @@ export default function WorkerPerformanceAnalytics({
 			const week = weekMap.get(weekKey);
 			week.attendances++;
 
-			if (attendance.duration) {
-				week.hours += attendance.duration / 60;
+			if (attendance.duration_minutes) {
+				week.hours += attendance.duration_minutes / 60;
 			}
 		});
 
@@ -252,21 +242,19 @@ export default function WorkerPerformanceAnalytics({
 			dayMap.set(day, {
 				day,
 				averageHours: 0,
-				sessionsCount: 0,
+				attendancesCount: 0,
 			});
 		});
 
 		attendances.forEach((attendance) => {
-			const attendanceDate = attendance.timeInAt instanceof Timestamp
-				? attendance.timeInAt.toDate()
-				: attendance.timeInAt;
+			const attendanceDate = new Date(attendance.clock_in);
 			const dayName = dayNames[attendanceDate.getDay()];
 
 			const dayData = dayMap.get(dayName);
-			dayData.attendances++;
+			dayData.attendancesCount++;
 
-			if (attendance.duration) {
-				dayData.averageHours += attendance.duration / 60;
+			if (attendance.duration_minutes) {
+				dayData.averageHours += attendance.duration_minutes / 60;
 			}
 		});
 

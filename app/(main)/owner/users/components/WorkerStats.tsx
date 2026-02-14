@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { WorkerStats } from "@/types/WorkerTypes";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { Worker } from "@/services/workerService";
-import { useAccessibleBranches } from "@/contexts/BranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkerStatsProps {
 	worker: Worker;
@@ -19,7 +19,7 @@ export default function WorkerStatsComponent({
 	const [stats, setStats] = useState<WorkerStats | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { allBranches } = useAccessibleBranches();
+	const { allBranches } = useBranch();
 
 	const calculateWorkerStats = useCallback((
 		userId: string,
@@ -79,18 +79,18 @@ export default function WorkerStatsComponent({
 		const thisWeekDates = new Set();
 		const thisMonthDates = new Set();
 
-		attendances.forEach((attendance) => {
-			const attendanceDate = attendance.timeInAt.toDate();
+		attendances.forEach((attendance: Attendance) => {
+			const attendanceDate = new Date(attendance.clock_in);
 			const dayKey = attendanceDate.toDateString();
 			workedDates.add(dayKey);
 
 			// Calculate attendance duration
 			let duration = 0;
-			if (attendance.duration) {
-				duration = attendance.duration;
-			} else if (attendance.timeInAt && attendance.timeOutAt) {
-				const startTime = attendance.timeInAt.toDate();
-				const endTime = attendance.timeOutAt.toDate();
+			if (attendance.duration_minutes) {
+				duration = attendance.duration_minutes;
+			} else if (attendance.clock_in && attendance.clock_out) {
+				const startTime = new Date(attendance.clock_in);
+				const endTime = new Date(attendance.clock_out);
 				duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60); // minutes
 			}
 
@@ -98,21 +98,21 @@ export default function WorkerStatsComponent({
 			stats.totalHoursWorked += duration / 60;
 
 			// Track branch stats
-			if (!branchMap.has(attendance.branchId)) {
-				branchMap.set(attendance.branchId, {
-					branchId: attendance.branchId,
+			if (!branchMap.has(attendance.branch_id)) {
+				branchMap.set(attendance.branch_id, {
+					branchId: attendance.branch_id,
 					hoursWorked: 0,
 					attendancesCount: 0,
-					lastWorked: attendance.timeInAt,
+					lastWorked: attendance.clock_in,
 				});
 			}
 
-			const branchStat = branchMap.get(attendance.branchId);
+			const branchStat = branchMap.get(attendance.branch_id);
 			branchStat.hoursWorked += duration / 60;
 			branchStat.attendancesCount++;
 
-			if (attendance.timeInAt.toDate() > branchStat.lastWorked.toDate()) {
-				branchStat.lastWorked = attendance.timeInAt;
+			if (new Date(attendance.clock_in) > new Date(branchStat.lastWorked)) {
+				branchStat.lastWorked = attendance.clock_in;
 			}
 
 			// This week stats
@@ -171,20 +171,20 @@ export default function WorkerStatsComponent({
 
 		// Set last attendance
 		if (attendances.length > 0) {
-			const lastAttendance = attendances[0]; // Attendances are ordered by timeInAt desc
+			const lastAttendance = attendances[0]; // Attendances are ordered by clock_in desc
 			stats.lastAttendance = {
-				timeInAt: lastAttendance.timeInAt,
-				timeOutAt: lastAttendance.timeOutAt,
-				branchId: lastAttendance.branchId,
-				duration: lastAttendance.duration,
+				timeInAt: lastAttendance.clock_in,
+				timeOutAt: lastAttendance.clock_out ?? undefined,
+				branchId: lastAttendance.branch_id,
+				duration: lastAttendance.duration_minutes ?? undefined,
 			};
 		}
 
 		// Simple overtime calculation (anything over 8 hours per day)
 		const dailyHours = new Map();
-		attendances.forEach((attendance) => {
-			const dayKey = attendance.timeInAt.toDate().toDateString();
-			const duration = attendance.duration || 0;
+		attendances.forEach((attendance: Attendance) => {
+			const dayKey = new Date(attendance.clock_in).toDateString();
+			const duration = attendance.duration_minutes || 0;
 			dailyHours.set(dayKey, (dailyHours.get(dayKey) || 0) + duration);
 		});
 
@@ -222,12 +222,20 @@ export default function WorkerStatsComponent({
 			setError(null);
 
 			// Get all attendances for the worker
-			const allAttendances = await attendanceService.listAttendances(worker.id);
+			const { records: allAttendances, error: fetchError } = await attendanceService.getAttendancesByWorker(
+				worker.id,
+				dateRange?.startDate,
+				dateRange?.endDate
+			);
 
-			// Filter attendances by date range if provided
+			if (fetchError) {
+				throw new Error(fetchError.message || 'Failed to fetch attendances');
+			}
+
+			// Filter attendances by date range if provided (additional client-side filtering if needed)
 			const filteredAttendances = dateRange
-				? allAttendances.filter((attendance) => {
-						const attendanceDate = attendance.timeInAt.toDate();
+				? allAttendances.filter((attendance: Attendance) => {
+						const attendanceDate = new Date(attendance.clock_in);
 						return (
 							attendanceDate >= dateRange.startDate &&
 							attendanceDate <= dateRange.endDate
@@ -307,7 +315,7 @@ export default function WorkerStatsComponent({
 	};
 
 	const getBranchName = (branchId: string): string => {
-		const branch = allBranches.find((b) => b.id === branchId);
+		const branch = allBranches.find((b: { id: string }) => b.id === branchId);
 		return branch ? branch.name : `Branch ${branchId}`;
 	};
 
@@ -639,7 +647,7 @@ export default function WorkerStatsComponent({
 										<div className='text-sm text-gray-600'>
 											Last worked:{" "}
 											{branchStat.lastWorked
-												? branchStat.lastWorked.toDate().toLocaleDateString()
+												? new Date(branchStat.lastWorked).toLocaleDateString()
 												: "Never"}
 										</div>
 									</div>
@@ -665,14 +673,14 @@ export default function WorkerStatsComponent({
 							<div>
 								<span className='text-gray-600'>Time In:</span>
 								<div className='font-semibold'>
-									{stats.lastAttendance.timeInAt.toDate().toLocaleString()}
+									{new Date(stats.lastAttendance.timeInAt).toLocaleString()}
 								</div>
 							</div>
 							{stats.lastAttendance.timeOutAt && (
 								<div>
 									<span className='text-gray-600'>Time Out:</span>
 									<div className='font-semibold'>
-										{stats.lastAttendance.timeOutAt.toDate().toLocaleString()}
+										{new Date(stats.lastAttendance.timeOutAt).toLocaleString()}
 									</div>
 								</div>
 							)}
@@ -686,8 +694,8 @@ export default function WorkerStatsComponent({
 								<div>
 									<span className='text-gray-600'>Duration:</span>
 									<div className='font-semibold'>
-										{Math.round(stats.lastAttendance.duration / 60)}h{" "}
-										{stats.lastAttendance.duration % 60}m
+										{Math.floor(stats.lastAttendance.duration / 60)}h{" "}
+										{Math.round(stats.lastAttendance.duration % 60)}m
 									</div>
 								</div>
 							)}

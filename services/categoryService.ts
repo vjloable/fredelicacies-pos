@@ -1,102 +1,53 @@
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc,
-  deleteDoc, 
-  query, 
-  orderBy,
-  onSnapshot,
-  Timestamp 
-} from 'firebase/firestore';
-import { db } from '../firebase-config';
+import { categoryRepository } from '@/lib/repositories';
+import type { Category, CreateCategoryData, UpdateCategoryData } from '@/types/domain';
 
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
-  createdAt?: Timestamp;
-}
-
-const COLLECTION_NAME = 'categories';
+// Re-export types for convenience
+export type { Category, CreateCategoryData, UpdateCategoryData };
 
 // Create a new category
-export const createCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-  try {
-    const docData = {
-      ...categoryData,
-      createdAt: Timestamp.now(),
-    };
-    
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), docData);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating category:', error);
-    throw error;
-  }
+export const createCategory = async (branchId: string, categoryData: CreateCategoryData): Promise<{ id: string | null; error: any }> => {
+  const { category, error } = await categoryRepository.create(branchId, categoryData);
+  return { id: category?.id || null, error };
 };
 
-// Get all categories
-export const getCategories = async (): Promise<Category[]> => {
-  try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('name', 'asc'));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Category[];
-  } catch (error) {
-    console.error('Error getting categories:', error);
-    throw error;
-  }
+// Get all categories for a branch
+export const getCategories = async (branchId: string): Promise<{ categories: Category[]; error: any }> => {
+  return await categoryRepository.getByBranch(branchId);
 };
 
-// Subscribe to categories changes
-export const subscribeToCategories = (callback: (categories: Category[]) => void): (() => void) | null => {
-  try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('name', 'asc'));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const categories: Category[] = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Category[];
-      
-      callback(categories);
-    });
-    
-    return unsubscribe;
-  } catch (error) {
-    console.error('Error subscribing to categories:', error);
-    return null;
-  }
+// Get category by ID
+export const getCategoryById = async (id: string): Promise<{ category: Category | null; error: any }> => {
+  return await categoryRepository.getById(id);
+};
+
+// Update category
+export const updateCategory = async (id: string, data: UpdateCategoryData): Promise<{ category: Category | null; error: any }> => {
+  return await categoryRepository.update(id, data);
 };
 
 // Delete a category
-export const deleteCategory = async (id: string): Promise<void> => {
-  try {
-    const categoryRef = doc(db, COLLECTION_NAME, id);
-    await deleteDoc(categoryRef);
-  } catch (error) {
-    console.error('Error deleting category:', error);
-    throw error;
-  }
+export const deleteCategory = async (id: string): Promise<{ error: any }> => {
+  return await categoryRepository.delete(id);
 };
 
-// Helper function to get category by ID
-export const getCategoryById = (categories: Category[], categoryId: string): Category => {
-  return categories.find(cat => cat.id === categoryId) || { id: categoryId, name: "Unknown", color: "#000000" };
+// Subscribe to categories changes for a branch
+export const subscribeToCategories = (branchId: string, callback: (categories: Category[]) => void): (() => void) => {
+  return categoryRepository.subscribe(branchId, callback);
+};
+
+// Helper function to find category by ID in a list
+export const findCategoryById = (categories: Category[], categoryId: string): Category | undefined => {
+  return categories.find(cat => cat.id === categoryId);
 };
 
 // Helper function to get category name by ID
 export const getCategoryName = (categories: Category[], categoryId: string): string => {
-  const category = getCategoryById(categories, categoryId);
-  return category?.name;
+  const category = findCategoryById(categories, categoryId);
+  return category?.name || "Unknown";
 };
 
 // Helper function to get category color by ID
 export const getCategoryColor = (categories: Category[], categoryId: string): string => {
-  const category = getCategoryById(categories, categoryId);
-  return category?.color;
+  const category = findCategoryById(categories, categoryId);
+  return category?.color || "#000000";
 };

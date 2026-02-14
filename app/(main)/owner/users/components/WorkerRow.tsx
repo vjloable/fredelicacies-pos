@@ -134,7 +134,7 @@ export default function WorkerRow({
 }: WorkerRowProps) {
 	// Permission checks
 	const canEdit =
-		currentUser.isOwner ||
+		currentUser.is_owner ||
 		(currentUser.roleAssignments.some(
 			(assignment) => assignment.role === "manager"
 		) &&
@@ -145,14 +145,14 @@ export default function WorkerRow({
 				)
 			));
 
-	const canDelete = currentUser.isOwner;
+	const canDelete = currentUser.is_owner;
 
 	const canTimeInOut = canEdit && !worker.isOwner;
 
 	// Debug logging to help identify the issue
 	console.log('🔍 WorkerRow permissions debug:', {
 		workerName: worker.name,
-		currentUserIsOwner: currentUser.isOwner,
+		currentUserIsOwner: currentUser.is_owner,
 		canEdit,
 		hasOnAssignBranch: !!onAssignBranch,
 		shouldShowBranchButton: canEdit && onAssignBranch

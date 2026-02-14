@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { branchService, Branch } from "@/services/branchService";
 import { useRouter } from "next/navigation";
 import PlusIcon from "@/components/icons/PlusIcon";
-import { subscribeToBranches } from "@/stores/dataStore";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import BranchesIcon from "@/components/icons/SidebarNav/BranchesIcon";
@@ -58,7 +57,8 @@ export default function BranchesPage() {
 			try {
 				setLoading(true);
 				setError(null);
-				const branchesData = await branchService.getAllBranches();
+				const { branches: branchesData, error: branchError } = await branchService.getAllBranches();
+				if (branchError) throw branchError;
 				setBranches(branchesData);
 			} catch (err) {
 				console.error("Error loading branches:", err);
@@ -72,12 +72,14 @@ export default function BranchesPage() {
 	}, [user, isUserOwner]);
 
 	useEffect(() => {
-		const unsubscribe = subscribeToBranches((branches) => {
+		if (!user || !isUserOwner()) return;
+
+		const unsubscribe = branchService.subscribeToBranches((branches: Branch[]) => {
 			setBranches(branches);
 		});
 
 		return unsubscribe; // Cleanup on unmount
-	}, []);
+	}, [user, isUserOwner]);
 
 	// Don't render for non-owner users (will redirect)
 	if (!user || !isUserOwner()) {
@@ -104,7 +106,8 @@ export default function BranchesPage() {
 		// Refresh the branches list
 		try {
 			setLoading(true);
-			const branchesData = await branchService.getAllBranches();
+			const { branches: branchesData, error: branchError } = await branchService.getAllBranches();
+			if (branchError) throw branchError;
 			setBranches(branchesData);
 		} catch (err) {
 			console.error("Error refreshing branches:", err);
@@ -302,11 +305,11 @@ export default function BranchesPage() {
 									branch={{
 										branchId: branch.id,
 										name: branch.name,
-										location: branch.location,
-										createdAt: branch.createdAt.toDate(),
-										updatedAt: branch.updatedAt.toDate(),
-										isActive: branch.isActive,
-										imgUrl: branch.imgUrl, // Default image
+									location: branch.address || 'No address',
+									createdAt: new Date(branch.created_at),
+									updatedAt: new Date(branch.updated_at),
+									isActive: branch.status === 'active',
+									imgUrl: branch.logo_url || '', // Default image
 									}}
 									formatDate={formatDate}
 									onClick={handleBranchClick}

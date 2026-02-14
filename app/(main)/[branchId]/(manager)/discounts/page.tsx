@@ -3,10 +3,7 @@
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
-import { Discount, deleteDiscount } from "@/services/discountService";
-import { subscribeToDiscounts } from "@/stores/dataStore";
-import { subscribeToCategories } from "@/stores/dataStore";
-import { Category } from "@/services/categoryService";
+import { Discount, deleteDiscount, subscribeToDiscounts } from "@/services/discountService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import DiscountModal from "./components/DiscountModal";
@@ -15,7 +12,6 @@ import EmptyDiscounts from "./illustrations/EmptyDiscounts";
 import EditIcon from "./icons/EditIcon";
 import DeleteIcon from "./icons/DeleteIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
-import { Timestamp } from "firebase/firestore";
 import { formatCurrency } from "@/lib/currency_formatter";
 import DiscountsIcon from "@/components/icons/SidebarNav/DiscountsIcon";
 
@@ -23,7 +19,6 @@ export default function DiscountsScreen() {
 	const { user, isAuthenticated } = useAuth();
 	const { currentBranch } = useBranch();
 	const [discounts, setDiscounts] = useState<Discount[]>([]);
-	const [categories, setCategories] = useState<Category[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	// Modal states
@@ -45,7 +40,7 @@ export default function DiscountsScreen() {
 	useEffect(() => {
 		if (!currentBranch?.id) return;
 
-		const unsubscribeDiscounts = subscribeToDiscounts(
+		const unsubscribe = subscribeToDiscounts(
 			currentBranch.id,
 			(discounts: Discount[]) => {
 				setDiscounts(discounts);
@@ -53,16 +48,7 @@ export default function DiscountsScreen() {
 			}
 		);
 
-		const unsubscribeCategories = subscribeToCategories(
-			(categories: Category[]) => {
-				setCategories(categories);
-			}
-		);
-
-		return () => {
-			unsubscribeDiscounts();
-			unsubscribeCategories();
-		};
+		return unsubscribe;
 	}, [currentBranch?.id]);
 
 	const handleCreateDiscount = () => {
@@ -83,7 +69,8 @@ export default function DiscountsScreen() {
 		if (!deleteConfirmation.discount) return;
 
 		try {
-			await deleteDiscount(deleteConfirmation.discount.discount_code);
+			const { error } = await deleteDiscount(deleteConfirmation.discount.id);
+			if (error) throw error;
 			setDeleteConfirmation({ isOpen: false, discount: null });
 		} catch (error) {
 			console.error("Error deleting discount:", error);
@@ -97,24 +84,11 @@ export default function DiscountsScreen() {
 			: `-${formatCurrency(discount.value)}`;
 	};
 
-	const getAppliesTo = (discount: Discount) => {
-		if (!discount.applies_to || discount.applies_to === "ALL CATEGORIES") return "ALL CATEGORIES";
-
-		const category = categories.find((cat) => cat.id === discount.applies_to);
-		return category ? category.name : "Unknown Category";
-	};
-
-	const getScopeDisplay = (discount: Discount) => {
-		// Fallback for existing discounts that might not have scope field
-		if (!discount.scope) return "This Branch";
-		return discount.scope === "all_branches" ? "All Branches" : "This Branch";
-	};
-
-	const formatDate = (timestamp: Timestamp) => {
-		if (!timestamp) return "N/A";
+	const formatDate = (dateString: string) => {
+		if (!dateString) return "N/A";
 
 		try {
-			const date = timestamp.toDate();
+			const date = new Date(dateString);
 			return new Intl.DateTimeFormat("en-US", {
 				year: "numeric",
 				month: "short",
@@ -270,7 +244,7 @@ export default function DiscountsScreen() {
 											<thead className='bg-[var(--secondary)]/5'>
 												<tr>
 													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
-														Discount Code
+														Name
 													</th>
 													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 														Value
@@ -279,16 +253,13 @@ export default function DiscountsScreen() {
 														Type
 													</th>
 													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
-														Scope
-													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
-														Applies To
+														Status
 													</th>
 													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 														Created
 													</th>
 													<th className='px-6 py-3 text-left text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
-														Modified
+														Updated
 													</th>
 													<th className='px-6 py-3 text-right text-xs font-medium text-[var(--secondary)]/60 uppercase tracking-wider'>
 														Actions
@@ -301,7 +272,7 @@ export default function DiscountsScreen() {
 														<td className='px-6 py-4 whitespace-nowrap'>
 															<div className='flex items-center'>
 																<div className='text-sm font-medium text-[var(--secondary)]'>
-																	{discount.discount_code}
+																{discount.name}
 																</div>
 															</div>
 														</td>
@@ -324,22 +295,19 @@ export default function DiscountsScreen() {
 															<div className='flex items-center'>
 																<span
 																	className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-																		(discount.scope || 'specific_branch') === "all_branches"
-																			? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]"
-																			: "bg-[var(--accent)] text-white"
+																		discount.status === "active"
+																			? "bg-green-100 text-green-800 border border-green-300"
+																			: "bg-gray-100 text-gray-800 border border-gray-300"
 																	}`}>
-																	{getScopeDisplay(discount)}
+																	{discount.status === "active" ? "Active" : "Inactive"}
 																</span>
 															</div>
-														</td>
-														<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary)]'>
-															{getAppliesTo(discount)}
 														</td>
 														<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary)]'>
 															{formatDate(discount.created_at)}
 														</td>
 														<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary)]'>
-															{formatDate(discount.modified_at)}
+															{formatDate(discount.updated_at)}
 														</td>
 														<td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
 															<div className='flex items-center justify-end gap-2'>
@@ -394,7 +362,7 @@ export default function DiscountsScreen() {
 					}
 					onConfirm={confirmDelete}
 					title='Delete Discount'
-					message={`Are you sure you want to delete the discount code "${deleteConfirmation.discount?.discount_code}"? This action cannot be undone.`}
+					message={`Are you sure you want to delete the discount "${deleteConfirmation.discount?.name}"? This action cannot be undone.`}
 				/>
 			</div>
 		</div>

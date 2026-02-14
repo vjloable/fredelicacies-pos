@@ -7,10 +7,9 @@ import MobileTopBar from "@/components/MobileTopBar";
 import EditItemModal from "./components/EditItemModal";
 import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
-import { InventoryItem } from "@/services/inventoryService";
-import { subscribeToInventoryItems } from "@/stores/dataStore";
+import type { InventoryItem, Category } from "@/types/domain";
+import { subscribeToInventoryItems } from "@/services/inventoryService";
 import {
-	Category,
 	subscribeToCategories,
 	getCategoryColor,
 	deleteCategory,
@@ -61,9 +60,9 @@ export default function InventoryScreen() {
 
 	// Set up real-time subscription to categories
 	useEffect(() => {
-		if (!isClient) return;
+		if (!isClient || !currentBranch) return;
 
-		const unsubscribe = subscribeToCategories((firestoreCategories) => {
+		const unsubscribe = subscribeToCategories(currentBranch.id, (firestoreCategories: Category[]) => {
 			setCategories(firestoreCategories);
 			// Set default category if none selected
 			if (firestoreCategories.length > 0 && !newItem.categoryId) {
@@ -99,7 +98,7 @@ export default function InventoryScreen() {
 				);
 
 				// Convert Firestore items to local Item type
-				const localItems: Item[] = firestoreItems.map(
+				const localItems: InventoryItem[] = firestoreItems.map(
 					(item: InventoryItem) => ({
 						...item,
 						id: item.id!, // We know id exists from Firestore
@@ -127,7 +126,7 @@ export default function InventoryScreen() {
 		};
 	}, [isClient, currentBranch]);
 
-	const openEditModal = (item: Item) => {
+	const openEditModal = (item: InventoryItem) => {
 		setEditingItem({ ...item });
 		setShowEditModal(true);
 	};
@@ -144,7 +143,7 @@ export default function InventoryScreen() {
 	const handleDeleteCategory = (category: Category) => {
 		// Check if category has items
 		const categoryItems = items.filter(
-			(item) => item.categoryId === category.id
+			(item) => item.category_id === category.id
 		);
 		if (categoryItems.length > 0) {
 			setError(
@@ -411,14 +410,14 @@ export default function InventoryScreen() {
 																style={{
 																	backgroundColor: getCategoryColor(
 																		categories,
-																		item.categoryId
+																	item.category_id || ''
 																	),
 																}}
 															/>
 															<div className='w-[120px] h-[120px] md:w-[56px] md:h-[56px] bg-gray-100 rounded-[3px] flex items-center justify-center flex-shrink-0 overflow-hidden relative'>
-																{item.imgUrl ? (
+																{item.img_url ? (
 																	<Image
-																		src={item.imgUrl}
+																		src={item.img_url}
 																		alt={item.name}
 																		width={48}
 																		height={48}
@@ -578,10 +577,11 @@ export default function InventoryScreen() {
 						/>
 
 						<AddCategoryModal
-							isOpen={showCategoryForm}
-							onClose={() => setShowCategoryForm(false)}
-							onError={handleError}
-						/>
+						branchId={currentBranch?.id || ''}
+						isOpen={showCategoryForm}
+						onClose={() => setShowCategoryForm(false)}
+						onError={handleError}
+					/>
 
 						{/* Delete Confirmation Modal */}
 						{showDeleteConfirm && categoryToDelete && (

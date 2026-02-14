@@ -35,7 +35,11 @@ export default function POSTimeTracking({
 
 	const loadBranchData = useCallback(async () => {
 		try {
-			const branch = await branchService.getBranchById(currentBranchId);
+			const { branch, error } = await branchService.getBranchById(currentBranchId);
+			if (error) {
+				console.error("Error loading branch data:", error);
+				return;
+			}
 			setCurrentBranch(branch);
 		} catch (err: unknown) {
 			console.error("Error loading branch data:", err);

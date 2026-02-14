@@ -89,27 +89,24 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 
 			const allAttendances: AttendanceData[] = [];
 
-			// Fetch attendance for each worker
+			// Fetch all attendance for branch and filter by date and workers
+			const { records: branchAttendances } = await attendanceService.getAttendancesByBranch(branchId);
+			
 			for (const worker of workers) {
-				try {
-					const workerAttendances = await attendanceService.getAttendancesByDateRange(
-						worker.id,
-						startDate,
-						endDate
-					);
+				const workerAttendances = branchAttendances.filter((att: Attendance) => {
+					const clockIn = new Date(att.clock_in);
+					return att.worker_id === worker.id && clockIn >= startDate && clockIn <= endDate;
+				});
 
-					const processedAttendances = workerAttendances.map((attendance, index) => ({
-						...attendance,
-						id: `${worker.id}-${index}`,
-						workerName: worker.name || worker.email,
-						clockInTime: attendance.timeInAt.toDate(),
-						clockOutTime: attendance.timeOutAt?.toDate(),
-					}));
+				const processedAttendances = workerAttendances.map((attendance: Attendance, index: number) => ({
+					...attendance,
+					id: `${worker.id}-${index}`,
+					workerName: worker.name || worker.email,
+					clockInTime: new Date(attendance.clock_in),
+					clockOutTime: attendance.clock_out ? new Date(attendance.clock_out) : undefined,
+				}));
 
 					allAttendances.push(...processedAttendances);
-				} catch (error) {
-					console.warn(`Failed to load attendance for worker ${worker.name}:`, error);
-				}
 			}
 
 			setAttendances(allAttendances);
@@ -132,7 +129,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 	// Filter attendances based on selected workers
 	const filteredAttendances = useMemo(() => {
 		return attendances.filter(attendance => 
-			selectedWorkers.includes(attendance.userId)
+			selectedWorkers.includes(attendance.worker_id)
 		);
 	}, [attendances, selectedWorkers]);
 
@@ -165,8 +162,8 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 		const { startHour, endHour } = timeRangeBounds;
 		
 		filteredAttendances.forEach(attendance => {
-			if (!data[attendance.userId]) {
-				data[attendance.userId] = { segments: [] };
+			if (!data[attendance.worker_id]) {
+				data[attendance.worker_id] = { segments: [] };
 			}
 			
 			// Calculate start point (clock-in)
@@ -201,7 +198,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 				const clippedStart = Math.max(startX, startHour);
 				const clippedEnd = Math.min(endX, endHour);
 				
-				data[attendance.userId].segments.push({
+				data[attendance.worker_id].segments.push({
 					start: clippedStart,
 					end: clippedEnd,
 					startTime: startX >= startHour ? startTime : `${startHour.toString().padStart(2, '0')}:00`,
@@ -561,7 +558,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 						{workers
 							.filter(worker => selectedWorkers.includes(worker.id))
 							.map(worker => {
-								const workerAttendances = filteredAttendances.filter(a => a.userId === worker.id);
+								const workerAttendances = filteredAttendances.filter(a => a.worker_id === worker.id);
 								const totalMinutes = workerAttendances.reduce((sum, attendance) => {
 									if (attendance.clockOutTime) {
 										return sum + Math.floor((attendance.clockOutTime.getTime() - attendance.clockInTime.getTime()) / (1000 * 60));

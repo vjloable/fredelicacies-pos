@@ -10,7 +10,7 @@ import React, {
 import { useAuth } from "@/contexts/AuthContext";
 import { workerService, Worker } from "@/services/workerService";
 import { Attendance, attendanceService } from "@/services/attendanceService";
-import { subscribeToWorker } from "@/stores/dataStore";
+import { dataStore } from "@/stores/dataStore";
 
 interface TimeTrackingOptions {
 	autoRefresh?: boolean;
@@ -76,9 +76,9 @@ export function TimeTrackingProvider({
 
 	// Calculate working duration
 	const calculateDuration = useCallback((attendance: Attendance): number => {
-		if (!attendance || !attendance.timeInAt) return 0;
+		if (!attendance || !attendance.clock_in) return 0;
 
-		const startTime = attendance.timeInAt.toDate();
+		const startTime = new Date(attendance.clock_in);
 		const now = new Date();
 		return Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
 	}, []);
@@ -99,7 +99,9 @@ export function TimeTrackingProvider({
 
 		setState((prev) => ({ ...prev, loading: true, error: null }));
 
-		const unsubscribe = subscribeToWorker(user.uid, async (workerData) => {
+		dataStore.startWorkerListeners(user.uid);
+
+		const handleWorkerUpdate = async (workerData: Worker | null) => {
 			try {
 				if (!workerData) {
 					setState((prev) => ({
@@ -122,11 +124,12 @@ export function TimeTrackingProvider({
 
 				if (isWorking && needsTimeTracking) {
 					try {
-						currentAttendance = await attendanceService.getActiveAttendance(
+						const result = await attendanceService.getActiveAttendance(
 							user.uid
 						);
-						if (currentAttendance) {
-							workingDuration = calculateDuration(currentAttendance);
+						if (result.attendance && !result.error) {
+							currentAttendance = result.attendance;
+							workingDuration = calculateDuration(result.attendance);
 						}
 					} catch (attendanceError) {
 						console.warn("Could not fetch active attendance:", attendanceError);
@@ -159,26 +162,29 @@ export function TimeTrackingProvider({
 					error: err.message || "Failed to process worker data",
 				}));
 			}
-		});
+	};
 
-		return () => {
-			unsubscribe();
-		};
-	}, [user, calculateDuration]);
+	dataStore.subscribe(`workerChanged:${user.uid}`, handleWorkerUpdate);
 
-	// Manual refresh function (now just triggers a re-fetch of current session)
-	const refreshStatus = useCallback(async () => {
+	return () => {
+		dataStore.unsubscribe(`workerChanged:${user.uid}`, handleWorkerUpdate);
+		dataStore.stopWorkerListeners(user.uid);
+	};
+}, [user, calculateDuration]);
+
+// Manual refresh function (now just triggers a re-fetch of current session)
+const refreshStatus = useCallback(async () => {
 		if (!user || !state.worker || !state.isWorking) return;
 
 		try {
-			const currentAttendance = await attendanceService.getActiveAttendance(
+			const result = await attendanceService.getActiveAttendance(
 				user.uid
 			);
-			if (currentAttendance) {
-				const workingDuration = calculateDuration(currentAttendance);
+			if (result.attendance && !result.error) {
+				const workingDuration = calculateDuration(result.attendance);
 				setState((prev) => ({
 					...prev,
-					currentAttendance,
+					currentAttendance: result.attendance,
 					workingDuration,
 				}));
 			}
@@ -204,11 +210,14 @@ export function TimeTrackingProvider({
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await attendanceService.timeInWorker(
-					user.uid,
+				const result = await attendanceService.clockIn(
 					branchId,
-					notes || `Clock-in via POS at ${new Date().toLocaleString()}`
+					user.uid
 				);
+
+				if (result.error) {
+					throw new Error(result.error.message || "Failed to clock in");
+				}
 
 				// Status will be updated automatically via dataStore subscription
 			} catch (err: any) {
@@ -235,11 +244,13 @@ export function TimeTrackingProvider({
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
-				await attendanceService.timeOutWorker(
-					user.uid,
-					state.currentAttendance.id || user.uid,
-					notes || `Clock-out via POS at ${new Date().toLocaleString()}`
+				const result = await attendanceService.clockOut(
+					state.currentAttendance.id
 				);
+
+				if (result.error) {
+					throw new Error(result.error.message || "Failed to clock out");
+				}
 
 				// Status will be updated automatically via dataStore subscription
 			} catch (err: any) {

@@ -1,5 +1,5 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase-config';
+// Supabase settings service - migrated from Firebase
+// TODO: Implement Supabase version of settings management
 
 export interface AppSettings {
   hideOutOfStock: boolean;
@@ -58,34 +58,24 @@ export const loadSettings = async (forceRefresh: boolean = false): Promise<AppSe
     return loadSettingsFromLocal();
   }
 
-  // Cache is invalid or refresh forced, load from Firebase
+  // Cache is invalid or refresh forced, load from Supabase
   try {
-    console.log('🔍 Loading settings from Firebase...');
-    const settingsRef = doc(db, 'settings', 'global');
-    const settingsSnap = await getDoc(settingsRef);
+    console.log('🔍 Loading settings from Supabase...');
+    // TODO: Implement Supabase version
+    // const { data, error } = await supabase
+    //   .from('settings')
+    //   .select('*')
+    //   .eq('id', 'global')
+    //   .single();
     
-    if (settingsSnap.exists()) {
-      console.log('📄 Found existing settings in Firebase');
-      const firebaseSettings = settingsSnap.data() as AppSettings;
-      // Merge with defaults to ensure all fields exist
-      const mergedSettings = { ...DEFAULT_SETTINGS, ...firebaseSettings };
-      // Save to localStorage with timestamp
-      saveSettingsToLocal(mergedSettings);
-      console.log('✅ Settings loaded and cached:', mergedSettings);
-      return mergedSettings;
-    } else {
-      console.log('📄 No settings found in Firebase, will create default');
-      // Create default settings in Firebase
-      const defaultSettings = DEFAULT_SETTINGS;
-      await setDoc(settingsRef, defaultSettings);
-      saveSettingsToLocal(defaultSettings);
-      console.log('✅ Created default settings in Firebase and cached');
-      return defaultSettings;
-    }
+    // For now, use local storage
+    const settings = loadSettingsFromLocal();
+    console.log('✅ Settings loaded from localStorage:', settings);
+    return settings;
   } catch (error) {
-    console.error('❌ Error loading settings from Firebase:', error);
+    console.error('❌ Error loading settings:', error);
     
-    // Fallback to localStorage if Firebase fails
+    // Fallback to localStorage if Supabase fails
     console.log('⚠️ Falling back to cached localStorage settings');
     return loadSettingsFromLocal();
   }
@@ -96,29 +86,27 @@ export const loadSettingsFromFirebase = async (): Promise<AppSettings> => {
   return loadSettings(true); // Force refresh when called directly
 };
 
-// Sync settings to Firebase (manual sync)
+// Sync settings to Supabase (manual sync)
+// TODO: Migrate to Supabase when ready
 export const syncSettingsToFirebase = async (settings: AppSettings): Promise<{ isNew: boolean }> => {
   try {
-    console.log('🔄 Starting global settings sync to Firebase...');
+    console.log('🔄 Syncing settings...');
     console.log('⚙️ Settings to sync:', settings);
     
-    const settingsRef = doc(db, 'settings', 'global');
-    console.log('📄 Using global settings document');
-
-    const settingsSnap = await getDoc(settingsRef);
-    const isNew = !settingsSnap.exists();
-    console.log('🆕 Is new document:', isNew);
+    // TODO: Implement Supabase version
+    // const { data, error } = await supabase
+    //   .from('settings')
+    //   .upsert({ id: 'global', ...settings })
+    //   .select()
+    //   .single();
     
-    await setDoc(settingsRef, settings, { merge: true });
-    console.log('✅ Global settings synced to Firebase successfully');
-    
-    // Also save to localStorage with new timestamp to refresh cache
+    // For now, just save to localStorage
     saveSettingsToLocal(settings);
     console.log('💾 Settings cached locally with updated timestamp');
     
-    return { isNew };
+    return { isNew: false };
   } catch (error) {
-    console.error('❌ Error syncing settings to Firebase:', error);
+    console.error('❌ Error syncing settings:', error);
     console.error('📊 Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       code: (error as any)?.code || 'Unknown code',

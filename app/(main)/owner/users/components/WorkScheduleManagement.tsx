@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService } from "@/services/attendanceService";
-import { useAccessibleBranches } from "@/contexts/BranchContext";
-import { Timestamp } from "firebase/firestore";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkScheduleTarget {
 	workerId: string;
@@ -41,7 +40,7 @@ export default function WorkScheduleManagement({
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const { allBranches } = useAccessibleBranches();
+	const { allBranches } = useBranch();
 
 	useEffect(() => {
 		loadScheduleTargets();
@@ -152,25 +151,30 @@ export default function WorkScheduleManagement({
 			const startDate = new Date(endDate);
 			startDate.setDate(startDate.getDate() - 7);
 
-			const attendances =
-				(await attendanceService.listAttendances(target.workerId, {
-					startDate: Timestamp.fromDate(startDate),
-					endDate: Timestamp.fromDate(endDate),
-				})) || [];
+			const { records: attendances = [], error } =
+				await attendanceService.getAttendancesByWorker(
+					target.workerId,
+					startDate,
+					endDate
+				);
+
+			if (error) {
+				throw error;
+			}
 
 			// Filter attendances for this branch
 			const branchAttendances = attendances.filter(
-				(a) => a.branchId === target.branchId
+				(a) => a.branch_id === target.branchId
 			);
 
 			// Calculate total hours worked
 			const totalHours = branchAttendances.reduce((sum, attendance) => {
-				if (attendance.duration) {
-					return sum + attendance.duration / 60;
+				if (attendance.duration_minutes) {
+					return sum + attendance.duration_minutes / 60;
 				}
-				if (attendance.timeInAt && attendance.timeOutAt) {
-					const startTime = attendance.timeInAt.toDate();
-					const endTime = attendance.timeOutAt.toDate();
+				if (attendance.clock_in && attendance.clock_out) {
+					const startTime = new Date(attendance.clock_in);
+					const endTime = new Date(attendance.clock_out);
 					return (
 						sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 					);
@@ -207,7 +211,7 @@ export default function WorkScheduleManagement({
 	};
 
 	const getBranchName = (branchId: string): string => {
-		const branch = allBranches.find((b) => b.id === branchId);
+		const branch = allBranches.find((b: { id: string }) => b.id === branchId);
 		return branch ? branch.name : branchId;
 	};
 
@@ -385,7 +389,7 @@ export default function WorkScheduleManagement({
 										<option value=''>Select a branch</option>
 										{selectedWorker.roleAssignments?.map((assignment) => {
 											const branch = allBranches.find(
-												(b) => b.id === assignment.branchId
+											(b: { id: string }) => b.id === assignment.branchId
 											);
 											return branch && assignment.isActive ? (
 												<option key={branch.id} value={branch.id}>

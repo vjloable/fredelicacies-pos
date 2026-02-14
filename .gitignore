@@ -41,4 +41,6 @@ yarn-error.log*
 next-env.d.ts
 svgr.d.ts
 
-foodmood-firebaseadmin-credentials.json
+*.sql
+
+/docs

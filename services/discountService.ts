@@ -1,255 +1,88 @@
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy,
-  Timestamp,
-  setDoc 
-} from 'firebase/firestore';
-import { db } from '../firebase-config';
+import { discountRepository } from '@/lib/repositories';
+import type { Discount, CreateDiscountData, UpdateDiscountData } from '@/types/domain';
 
-export interface Discount {
-  id: string; // This will be the discount_code
-  discount_code: string; // Same as id
-  type: 'percentage' | 'flat';
-  value: number;
-  applies_to: string | null; // category document ID or null for all
-  branchId: string; // Branch ID for multi-branch support
-  scope: 'all_branches' | 'specific_branch'; // Whether discount applies to all branches or specific branch
-  created_at: Timestamp;
-  modified_at: Timestamp;
-  created_by: string; // user ID from Firebase Auth
-}
+// Re-export types for convenience
+export type { Discount, CreateDiscountData, UpdateDiscountData };
 
-const COLLECTION_NAME = 'discounts';
-
-// Create a new discount (using discount_code as document ID)
+// Create a new discount
 export const createDiscount = async (
-  discountData: Omit<Discount, 'id' | 'created_at' | 'modified_at'> & { created_by: string; branchId: string }
-): Promise<string> => {
-  try {
-    // Validate that created_by and branchId are not undefined
-    if (!discountData.created_by) {
-      throw new Error('created_by field is required');
-    }
-    if (!discountData.branchId) {
-      throw new Error('branchId field is required');
-    }
-
-    const docData = {
-      discount_code: discountData.discount_code,
-      type: discountData.type,
-      value: discountData.value,
-      applies_to: discountData.applies_to,
-      branchId: discountData.branchId,
-      scope: discountData.scope,
-      created_by: discountData.created_by,
-      created_at: Timestamp.now(),
-      modified_at: Timestamp.now()
-    };
-    
-    // Use discount_code as document ID
-    const discountRef = doc(db, COLLECTION_NAME, discountData.discount_code);
-    await setDoc(discountRef, docData);
-    
-    console.log('Discount created with ID:', discountData.discount_code);
-    return discountData.discount_code;
-  } catch (error) {
-    console.error('Error creating discount:', error);
-    throw new Error('Failed to create discount');
-  }
+  branchId: string,
+  discountData: CreateDiscountData
+): Promise<{ id: string | null; error: any }> => {
+  const { discount, error } = await discountRepository.create(branchId, discountData);
+  return { id: discount?.id || null, error };
 };
 
-// Get all discounts for a specific branch (includes both branch-specific and all-branches discounts)
-export const getDiscounts = async (branchId?: string): Promise<Discount[]> => {
-  try {
-    let q;
-    if (branchId) {
-      // Get discounts that either apply to all branches OR are specific to this branch
-      q = query(
-        collection(db, COLLECTION_NAME),
-        orderBy('created_at', 'desc')
-      );
-    } else {
-      q = query(collection(db, COLLECTION_NAME), orderBy('created_at', 'desc'));
-    }
-    
-    const querySnapshot = await getDocs(q);
-    
-    const discounts: Discount[] = [];
-    querySnapshot.forEach((doc) => {
-      const discountData = doc.data() as Discount;
-      
-      // If branchId is provided, filter to include:
-      // 1. Discounts with scope 'all_branches'
-      // 2. Discounts with scope 'specific_branch' that match the branchId
-      if (branchId) {
-        if (discountData.scope === 'all_branches' || 
-           (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
-          discounts.push({
-            ...discountData,
-            id: doc.id
-          });
-        }
-      } else {
-        // No branchId filter, return all discounts
-        discounts.push({
-          ...discountData,
-          id: doc.id
-        });
-      }
-    });
-    
-    console.log('Retrieved', discounts.length, 'discounts for branch:', branchId || 'all');
-    return discounts;
-  } catch (error) {
-    console.error('Error fetching discounts:', error);
-    throw new Error('Failed to fetch discounts');
-  }
+// Get all discounts for a branch
+export const getDiscounts = async (branchId: string): Promise<{ discounts: Discount[]; error: any }> => {
+  return await discountRepository.getByBranch(branchId);
 };
 
-// Get discounts for a specific branch with real-time data (includes both branch-specific and all-branches discounts)
-export const subscribeToDiscounts = async (branchId: string): Promise<Discount[]> => {
-  try {
-    // Query all discounts and filter for the branch
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      orderBy('created_at', 'desc')
-    );
-    
-    const querySnapshot = await getDocs(q);
-    const discounts: Discount[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      const discountData = doc.data() as Discount;
-      
-      // Include discounts that either apply to all branches OR are specific to this branch
-      if (discountData.scope === 'all_branches' || 
-         (discountData.scope === 'specific_branch' && discountData.branchId === branchId)) {
-        discounts.push({
-          ...discountData,
-          id: doc.id
-        });
-      }
-    });
-    
-    console.log('Retrieved', discounts.length, 'discounts for branch:', branchId);
-    return discounts;
-  } catch (error) {
-    console.error('Error fetching discounts:', error);
-    throw new Error('Failed to fetch discounts');
-  }
+// Get active discounts only
+export const getActiveDiscounts = async (branchId: string): Promise<{ discounts: Discount[]; error: any }> => {
+  return await discountRepository.getActiveByBranch(branchId);
+};
+
+// Get discount by ID
+export const getDiscountById = async (id: string): Promise<{ discount: Discount | null; error: any }> => {
+  return await discountRepository.getById(id);
 };
 
 // Update a discount
 export const updateDiscount = async (
-  discount_code: string, 
-  updates: Partial<Omit<Discount, 'id' | 'discount_code' | 'created_at' | 'created_by'>> & { modified_by?: string }
-): Promise<void> => {
-  try {
-    const discountRef = doc(db, COLLECTION_NAME, discount_code);
-    
-    // Create update data object, filtering out undefined values
-    const updateData: any = {
-      modified_at: Timestamp.now()
-    };
-    
-    // Only add fields that are not undefined
-    if (updates.type !== undefined) updateData.type = updates.type;
-    if (updates.value !== undefined) updateData.value = updates.value;
-    if (updates.applies_to !== undefined) updateData.applies_to = updates.applies_to;
-    if (updates.scope !== undefined) updateData.scope = updates.scope;
-    if (updates.branchId !== undefined) updateData.branchId = updates.branchId;
-    if (updates.modified_by !== undefined) updateData.modified_by = updates.modified_by;
-    
-    await updateDoc(discountRef, updateData);
-    console.log('Discount updated:', discount_code);
-  } catch (error) {
-    console.error('Error updating discount:', error);
-    throw new Error('Failed to update discount');
-  }
+  id: string,
+  updates: UpdateDiscountData
+): Promise<{ discount: Discount | null; error: any }> => {
+  return await discountRepository.update(id, updates);
 };
 
 // Delete a discount
-export const deleteDiscount = async (discount_code: string): Promise<void> => {
-  try {
-    const discountRef = doc(db, COLLECTION_NAME, discount_code);
-    await deleteDoc(discountRef);
-    console.log('Discount deleted:', discount_code);
-  } catch (error) {
-    console.error('Error deleting discount:', error);
-    throw new Error('Failed to delete discount');
-  }
+export const deleteDiscount = async (id: string): Promise<{ error: any }> => {
+  return await discountRepository.delete(id);
 };
 
-// Get discount by code (now branch-specific)
-export const getDiscountByCode = async (discount_code: string, branchId?: string): Promise<Discount | null> => {
-  try {
-    const discounts = await getDiscounts(branchId);
-    return discounts.find(discount => discount.discount_code === discount_code) || null;
-  } catch (error) {
-    console.error('Error getting discount by code:', error);
-    throw new Error('Failed to get discount by code');
-  }
-};
-
-// Validate discount code (now branch-specific)
-export const validateDiscountCode = async (discount_code: string, branchId?: string): Promise<boolean> => {
-  try {
-    const discount = await getDiscountByCode(discount_code, branchId);
-    return discount !== null;
-  } catch (error) {
-    console.error('Error validating discount code:', error);
-    return false;
-  }
+// Subscribe to discounts
+export const subscribeToDiscounts = (
+  branchId: string,
+  callback: (discounts: Discount[]) => void
+): (() => void) => {
+  return discountRepository.subscribe(branchId, callback);
 };
 
 // Calculate discount amount
 export const calculateDiscountAmount = (
-  discount: Discount, 
-  subtotal: number, 
-  categoryIds: string[] = []
+  discount: Discount,
+  subtotal: number
 ): number => {
-  // If discount applies to specific category and none of the items match
-  if (discount.applies_to && !categoryIds.includes(discount.applies_to)) {
-    return 0;
-  }
-  
   if (discount.type === 'percentage') {
     return Math.round((subtotal * discount.value / 100) * 100) / 100; // Round to 2 decimal places
   } else {
-    return Math.min(discount.value, subtotal); // Flat discount can't exceed subtotal
+    // Fixed discount
+    return Math.min(discount.value, subtotal); // Discount can't exceed subtotal
   }
 };
 
-// Helper function to check if discount is empty (now branch-specific)
-export const isDiscountsEmpty = async (branchId?: string): Promise<boolean> => {
-  try {
-    const discounts = await getDiscounts(branchId);
-    return discounts.length === 0;
-  } catch (error) {
-    console.error('Error checking if discounts are empty:', error);
-    return true; // Assume empty on error
-  }
+// Helper function to check if discounts are empty
+export const isDiscountsEmpty = async (branchId: string): Promise<boolean> => {
+  const { discounts, error } = await getDiscounts(branchId);
+  if (error) return true; // Assume empty on error
+  return discounts.length === 0;
 };
 
-// Search discounts by code (now branch-specific)
-export const searchDiscountsByCode = async (searchTerm: string, branchId?: string): Promise<Discount[]> => {
-  try {
-    const allDiscounts = await getDiscounts(branchId);
-    
-    const filteredDiscounts = allDiscounts.filter(discount => 
-      discount.discount_code.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    console.log('Search for "' + searchTerm + '" returned', filteredDiscounts.length, 'discounts');
-    return filteredDiscounts;
-  } catch (error) {
-    console.error('Error searching discounts:', error);
-    throw new Error('Failed to search discounts');
+// Search discounts by name
+export const searchDiscounts = async (
+  branchId: string,
+  searchTerm: string
+): Promise<{ discounts: Discount[]; error: any }> => {
+  const { discounts, error } = await getDiscounts(branchId);
+  
+  if (error || !discounts) {
+    return { discounts: [], error };
   }
+  
+  const filteredDiscounts = discounts.filter(discount =>
+    discount.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  return { discounts: filteredDiscounts, error: null };
 };

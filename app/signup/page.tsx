@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/firebase-config";
 import { authService } from "@/services/authService";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
-import { FirebaseError } from "@firebase/util";
 import Link from "next/link";
+import VersionDisplay from "@/components/VersionDisplay";
 
 interface SignUpFormData {
   firstName: string;
@@ -32,35 +30,10 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const router = useRouter();
 
-  // Debounced validation functions
-  const checkEmailAvailability = async (email: string) => {
-    if (!email || email.length < 3) return;
-    
-    setIsCheckingEmail(true);
-    try {
-      const exists = await authService.checkEmailExists(email);
-      setValidationErrors(prev => ({ ...prev, emailTaken: exists }));
-    } catch (error) {
-      console.error("Error checking email:", error);
-    } finally {
-      setIsCheckingEmail(false);
-    }
-  };
-
-  // Debounce timers
-  const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (emailTimeoutRef.current) {
-        clearTimeout(emailTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Note: Email availability check removed as it's handled during sign up
+  // Supabase will return an error if email already exists
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,56 +71,40 @@ export default function SignUpPage() {
       return;
     }
 
-    // Check if email is already taken
-    const emailExists = await authService.checkEmailExists(formData.email);
-    if (emailExists) {
-      setError("An account with this email already exists");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Create Firebase user
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-
-      // Create user profile in Firestore
+      // Create user account with Supabase
       const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
-      await authService.createUserProfile(userCredential.user.uid, {
-        name: fullName,
+      const { userId, error: signUpError } = await authService.signUp({
         email: formData.email,
+        password: formData.password,
+        name: fullName,
         isOwner: false, // New users are not admin by default
-        roleAssignments: [], // No branch assignments by default
       });
+
+      if (signUpError) {
+        throw signUpError;
+      }
 
       // Redirect to waiting room since user needs admin approval
       router.push("/waiting-room");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Sign up error:", error);
 
-      // Handle specific Firebase auth errors
+      // Handle Supabase auth errors
       let errorMessage = "Sign up failed. Please try again.";
-      if (error instanceof FirebaseError && error.code) {
-        switch (error.code) {
-          case "auth/email-already-in-use":
-            errorMessage = "An account with this email already exists.";
-            // Update validation state to reflect this
-            setValidationErrors(prev => ({ ...prev, emailTaken: true }));
-            break;
-          case "auth/invalid-email":
-            errorMessage = "Invalid email address.";
-            break;
-          case "auth/weak-password":
-            errorMessage = "Password is too weak. Please choose a stronger password.";
-            break;
-          case "auth/operation-not-allowed":
-            errorMessage = "Email/password accounts are not enabled.";
-            break;
-          default:
-            errorMessage = error.message || "Sign up failed. Please try again.";
+      
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errMsg = (error as { message: string }).message.toLowerCase();
+        
+        if (errMsg.includes('already registered') || errMsg.includes('already exists')) {
+          errorMessage = "An account with this email already exists.";
+          setValidationErrors(prev => ({ ...prev, emailTaken: true }));
+        } else if (errMsg.includes('invalid email')) {
+          errorMessage = "Invalid email address.";
+        } else if (errMsg.includes('password')) {
+          errorMessage = "Password is too weak. Please choose a stronger password.";
+        } else {
+          errorMessage = (error as { message: string }).message || "Sign up failed. Please try again.";
         }
       }
 
@@ -167,19 +124,9 @@ export default function SignUpPage() {
     // Clear error when user starts typing
     if (error) setError("");
     
-    // Debounced validation for email
+    // Clear validation errors for email field
     if (field === "email") {
-      // Clear previous timeout
-      if (emailTimeoutRef.current) {
-        clearTimeout(emailTimeoutRef.current);
-      }
-      // Clear previous validation error
       setValidationErrors(prev => ({ ...prev, emailTaken: undefined }));
-      
-      // Set new timeout for validation
-      emailTimeoutRef.current = setTimeout(() => {
-        checkEmailAvailability(value);
-      }, 800); // 800ms delay
     }
   };
 
@@ -249,44 +196,15 @@ export default function SignUpPage() {
                 <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                   Email
                 </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange("email")}
-                    className={`w-full px-4 py-3 pr-10 border-2 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all ${
-                      validationErrors.emailTaken
-                        ? "border-red-300 bg-red-50"
-                        : formData.email && !isCheckingEmail && validationErrors.emailTaken === false
-                        ? "border-green-300 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    placeholder="Enter your email"
-                    disabled={isLoading}
-                    autoComplete="email"
-                  />
-                  {/* Status Icon */}
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    {isCheckingEmail ? (
-                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                    ) : validationErrors.emailTaken === true ? (
-                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    ) : formData.email && validationErrors.emailTaken === false ? (
-                      <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    ) : null}
-                  </div>
-                </div>
-                {/* Validation Message */}
-                {validationErrors.emailTaken && (
-                  <p className="mt-1 text-sm text-red-600">This email is already registered</p>
-                )}
-                {formData.email && !isCheckingEmail && validationErrors.emailTaken === false && (
-                  <p className="mt-1 text-sm text-green-600">Email is available</p>
-                )}
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange("email")}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  placeholder="Enter your email"
+                  disabled={isLoading}
+                  autoComplete="email"
+                />
               </div>
 
               {/* Password Fields */}
@@ -349,13 +267,11 @@ export default function SignUpPage() {
                 type="submit"
                 disabled={
                   isLoading || 
-                  validationErrors.emailTaken || 
-                  isCheckingEmail
+                  validationErrors.emailTaken
                 }
                 className={`w-full py-3 rounded-[6px] font-semibold transition-all shadow-lg ${
                   isLoading || 
-                  validationErrors.emailTaken || 
-                  isCheckingEmail
+                  validationErrors.emailTaken
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95"
                 }`}
@@ -387,7 +303,7 @@ export default function SignUpPage() {
             {/* Footer */}
             <div className="mt-6 text-center">
               <p className="text-xs text-[var(--secondary)] opacity-50">
-                Fredelicacies Point-of-Sales System v1.0
+                Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
               </p>
             </div>
           </div>

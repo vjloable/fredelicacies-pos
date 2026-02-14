@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import ImageUpload from '@/components/ImageUpload';
-import { InventoryItem, updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
-import { Category } from '@/services/categoryService';
+import { updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
+import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
 
@@ -84,17 +84,17 @@ export default function EditItemModal({
     
     setLoading(true);
     try {
-      const updates: Partial<InventoryItem> = {
+      const updates: UpdateInventoryItemData = {
         name: localEditingItem.name,
         price: finalPrice,
         cost: finalCost,
         stock: localEditingItem.stock,
-        description: localEditingItem.description,
-        categoryId: localEditingItem.categoryId,
-        imgUrl: localEditingItem.imgUrl
+        description: localEditingItem.description || undefined,
+        category_id: localEditingItem.category_id || undefined,
+        img_url: localEditingItem.img_url || undefined
       };
       
-      await updateInventoryItem(currentBranch!.id, localEditingItem.id, updates);
+      await updateInventoryItem(localEditingItem.id, updates);
       
       onClose();
     } catch (error) {
@@ -108,7 +108,7 @@ export default function EditItemModal({
   const handleDeleteItem = async (itemId: string) => {
     setLoading(true);
     try {
-      await deleteInventoryItem(currentBranch!.id, itemId);
+      await deleteInventoryItem(itemId);
       setShowDeleteConfirm(false); // Reset delete confirmation first
       onClose(); // Then close the modal
     } catch (error) {
@@ -169,9 +169,9 @@ export default function EditItemModal({
         {/* Item Image Upload */}
           {/* Image Upload */}
           <ImageUpload
-            currentImageUrl={localEditingItem.imgUrl}
-            onImageUpload={(imageUrl) => setLocalEditingItem({...localEditingItem, imgUrl: imageUrl})}
-            onImageRemove={() => setLocalEditingItem({...localEditingItem, imgUrl: ""})}
+            currentImageUrl={localEditingItem.img_url || ''}
+            onImageUpload={(imageUrl) => setLocalEditingItem({...localEditingItem, img_url: imageUrl})}
+            onImageRemove={() => setLocalEditingItem({...localEditingItem, img_url: ''})}
           />
         
         {/* Edit Form */}
@@ -197,11 +197,11 @@ export default function EditItemModal({
             </label>
             <DropdownField
               options={categories.map((category) => category.name)}
-              defaultValue={categories.find(cat => cat.id === localEditingItem.categoryId)?.name || ''}
+              defaultValue={categories.find(cat => cat.id === localEditingItem.category_id)?.name || ''}
               onChange={(categoryName) => {
                 const selectedCategory = categories.find(cat => cat.name === categoryName);
                 if (selectedCategory) {
-                  setLocalEditingItem({...localEditingItem, categoryId: selectedCategory.id});
+                  setLocalEditingItem({...localEditingItem, category_id: selectedCategory.id});
                 }
               }}
               roundness={"[12px]"}
@@ -217,7 +217,7 @@ export default function EditItemModal({
               Description
             </label>
             <textarea
-              value={localEditingItem.description}
+              value={localEditingItem.description || ''}
               onChange={(e) => setLocalEditingItem({...localEditingItem, description: e.target.value})}
               className="w-full px-4 py-3 border-2 border-[var(--secondary)]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
               placeholder="Enter item description"
@@ -303,9 +303,9 @@ export default function EditItemModal({
                     e.target.select();
                   }}
                   onBlur={() => {
-                    // If empty or invalid, set to undefined
+                    // If empty or invalid, set to null
                     if (costInput === '' || isNaN(parseFloat(costInput))) {
-                      setLocalEditingItem({...localEditingItem, cost: undefined});
+                      setLocalEditingItem({...localEditingItem, cost: null});
                       setCostInput('');
                     }
                   }}

@@ -5,23 +5,19 @@ import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
 import OrderCartIcon from "./icons/OrderCartIcon";
-import { InventoryItem } from "@/services/inventoryService";
-import {
-	subscribeToInventoryItems,
-	subscribeToCategories,
-} from "@/stores/dataStore";
+import type { InventoryItem, Category, Discount } from "@/types/domain";
+import { subscribeToInventoryItems } from "@/services/inventoryService";
+import { subscribeToCategories } from "@/services/categoryService";
 import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { Category } from "@/services/categoryService";
 import EmptyOrderIllustration from "./illustrations/EmptyOrder";
 import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
-import { Discount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
@@ -128,6 +124,7 @@ export default function StoreScreen() {
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
+	const [isCustomBundleModalOpen, setIsCustomBundleModalOpen] = useState(false);
 	const [cart, setCart] = useState<
 		Array<{
 			id: string;
@@ -152,7 +149,7 @@ export default function StoreScreen() {
 
 		setLoading(true);
 
-		const unsubscribe = subscribeToInventoryItems(currentBranch.id, (items) => {
+		const unsubscribe = subscribeToInventoryItems(currentBranch.id, (items: InventoryItem[]) => {
 			setInventoryItems(items);
 			setLoading(false);
 		});
@@ -172,9 +169,9 @@ export default function StoreScreen() {
 
 	// Set up real-time subscription to categories using singleton dataStore
 	useEffect(() => {
-		if (!isClient) return;
+		if (!isClient || !currentBranch) return;
 
-		const unsubscribe = subscribeToCategories((categoriesData) => {
+		const unsubscribe = subscribeToCategories(currentBranch.id, (categoriesData: Category[]) => {
 			setCategories(categoriesData);
 		});
 
@@ -183,7 +180,7 @@ export default function StoreScreen() {
 				unsubscribe();
 			}
 		};
-	}, [isClient]);
+	}, [isClient, currentBranch]);
 
 	// Load settings
 	useEffect(() => {
@@ -192,12 +189,14 @@ export default function StoreScreen() {
 	}, []);
 
 	// Helper function to get category name from real categories data
-	const getCategoryName = (categoryId: number | string) => {
+	const getCategoryName = (categoryId: number | string | null) => {
+		if (categoryId === null) return "Unknown";
 		const category = categories.find((cat) => cat.id === String(categoryId));
 		return category ? category.name : "Unknown";
 	};
 
-	const getCategoryColor = (categoryId: number | string) => {
+	const getCategoryColor = (categoryId: number | string | null) => {
+		if (categoryId === null) return "transparent";
 		const category = categories.find((cat) => cat.id === String(categoryId));
 		return category ? category.color.trim() : "transparent";
 	};
@@ -242,7 +241,7 @@ export default function StoreScreen() {
 			searchQuery === "" ||
 			item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			getCategoryName(item.categoryId)
+			getCategoryName(item.category_id)
 				.toLowerCase()
 				.includes(searchQuery.toLowerCase());
 
@@ -250,7 +249,7 @@ export default function StoreScreen() {
 		const matchesCategory =
 			selectedCategories.length === 0 ||
 			selectedCategory === "All" ||
-			selectedCategories.includes(getCategoryName(item.categoryId));
+			selectedCategories.includes(getCategoryName(item.category_id));
 
 		// Filter out out-of-stock items if hideOutOfStock is enabled
 		const hasStock = hideOutOfStock ? item.stock > 0 : true;
@@ -318,11 +317,11 @@ export default function StoreScreen() {
 					id: itemId,
 					name: item.name,
 					price: item.price,
-					cost: item.cost,
+					cost: item.cost ?? undefined,
 					quantity: 1,
 					originalStock: item.stock,
-					imgUrl: item.imgUrl,
-					categoryId: item.categoryId,
+					imgUrl: item.img_url ?? undefined,
+					categoryId: item.category_id ?? "",
 				},
 			]);
 		}
@@ -347,7 +346,7 @@ export default function StoreScreen() {
 		if (discount) {
 			console.log(
 				"Discount applied:",
-				discount.discount_code,
+				discount.name,
 				"Amount:",
 				amount
 			);
@@ -404,7 +403,9 @@ export default function StoreScreen() {
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
-			const orderId = await createOrder(
+			const { id: orderId, error: orderError } = await createOrder(
+				currentBranch.id,
+				timeTracking.worker?.id || user.uid,
 				cart.map((item) => ({
 					id: item.id,
 					name: item.name,
@@ -415,18 +416,19 @@ export default function StoreScreen() {
 					categoryId: item.categoryId || "",
 					originalStock: item.originalStock,
 				})),
-				total,
 				subtotal,
-				timeTracking.worker?.name ||
-					user.displayName ||
-					user.email ||
-					"Unknown Worker",
-				timeTracking.worker?.id || user.uid,
-				orderType,
-				discountAmount,
-				appliedDiscount?.discount_code || "",
-				currentBranch.id // Add branchId parameter
+				total,
+				appliedDiscount?.id,
+				discountAmount
 			);
+
+			if (orderError) {
+				throw new Error(orderError);
+			}
+
+			if (!orderId) {
+				throw new Error("Order ID not returned");
+			}
 
 			// Prepare receipt data for printing
 			const receiptData = {
@@ -440,13 +442,12 @@ export default function StoreScreen() {
 				})),
 				subtotal,
 				discount: discountAmount,
-				appliedDiscountCode: appliedDiscount?.discount_code || "",
+				appliedDiscountCode: appliedDiscount?.name || "",
 				total,
 				payment: total, // You may want to prompt for payment amount if needed
 				change: 0, // You may want to calculate change if payment > total
 				cashier:
 					timeTracking.worker?.name ||
-					user.displayName ||
 					user.email ||
 					"Unknown Worker",
 				cashierEmployeeId: timeTracking.worker?.employeeId || user.uid,
@@ -471,7 +472,7 @@ export default function StoreScreen() {
 			}
 
 			// Show success toast
-			setSuccessOrderId(orderId);
+			setSuccessOrderId(orderId || "");
 			setShowSuccessToast(true);
 
 			// Clear the cart after successful order
@@ -577,7 +578,7 @@ export default function StoreScreen() {
 										{
 											inventoryItems.filter(
 												(item) =>
-													getCategoryName(item.categoryId) === category.name
+													getCategoryName(item.category_id) === category.name
 											).length
 										}
 									</span>
@@ -690,9 +691,9 @@ export default function StoreScreen() {
 									`}>
 										{/* Item Image Placeholder */}
 										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-[var(--accent)]/40 transition-all duration-300'>
-											{item.imgUrl ? (
+											{item.img_url ? (
 												<SafeImage
-													src={item.imgUrl}
+													src={item.img_url}
 													alt={item.name}
 													className=''
 												/>
@@ -730,14 +731,14 @@ export default function StoreScreen() {
 												<span
 													className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
 													style={{
-														backgroundColor: getCategoryColor(item.categoryId),
+														backgroundColor: getCategoryColor(item.category_id),
 													}}>
 													{isSearching
 														? highlightSearchTerm(
-																getCategoryName(item.categoryId),
+																getCategoryName(item.category_id),
 																searchQuery
 														)
-														: getCategoryName(item.categoryId)}
+														: getCategoryName(item.category_id)}
 												</span>
 											</div>
 										</div>
@@ -975,8 +976,6 @@ export default function StoreScreen() {
 										onChange={setDiscountCode}
 										onDiscountApplied={handleDiscountApplied}
 										subtotal={subtotal}
-										cartCategoryIds={getCartCategoryIds()}
-										categories={categories}
 									/>
 								</div>
 
@@ -1223,8 +1222,6 @@ export default function StoreScreen() {
 							onChange={setDiscountCode}
 							onDiscountApplied={handleDiscountApplied}
 							subtotal={subtotal}
-							cartCategoryIds={getCartCategoryIds()}
-							categories={categories}
 						/>
 					</div>
 
@@ -1361,7 +1358,7 @@ export default function StoreScreen() {
 												Discount
 												{appliedDiscount && (
 													<span className='font-medium ml-1'>
-														({appliedDiscount.discount_code} -{" "}
+														({appliedDiscount.name} -{" "}
 														{appliedDiscount.type === "percentage"
 															? `${appliedDiscount.value}% off`
 															: `₱${appliedDiscount.value} off`}

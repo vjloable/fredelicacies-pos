@@ -13,8 +13,8 @@ import {
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { subscribeToOrders } from "@/stores/dataStore";
-import { Order } from "@/services/orderService";
+import { subscribeToOrders } from "@/services/orderService";
+import type { OrderWithItems, OrderItem } from "@/types/domain";
 import { formatCurrency } from "@/services/salesService";
 import { useBranch } from "@/contexts/BranchContext";
 import SearchIcon from "../../(worker)/store/icons/SearchIcon";
@@ -30,11 +30,19 @@ interface TimeSeriesData {
 
 type ViewPeriod = "day" | "week" | "month";
 
+// Helper function to calculate profit from an order
+const calculateOrderProfit = (order: OrderWithItems): number => {
+	return order.items.reduce((sum, item) => {
+		const itemProfit = ((item.price - (item.cost || 0)) * item.quantity);
+		return sum + itemProfit;
+	}, 0);
+};
+
 export default function SalesScreen() {
 	const { currentBranch } = useBranch(); // Get current branch context
 	const [viewPeriod, setViewPeriod] = useState<ViewPeriod>("day");
 	const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
-	const [allOrders, setAllOrders] = useState<Order[]>([]);
+	const [allOrders, setAllOrders] = useState<OrderWithItems[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [currentPeriodStats, setCurrentPeriodStats] = useState({
 		totalRevenue: 0,
@@ -59,7 +67,7 @@ export default function SalesScreen() {
 
 		const unsubscribe = subscribeToOrders(
 			currentBranch.id,
-			(orders: Order[]) => {
+			(orders: OrderWithItems[]) => {
 				console.log(
 					"📄 Received orders update in sales screen:",
 					orders.length
@@ -108,12 +116,12 @@ export default function SalesScreen() {
 
 	// Filter orders by date range
 	const getFilteredOrders = useCallback(
-		(period: ViewPeriod): Order[] => {
+		(period: ViewPeriod): OrderWithItems[] => {
 			const { startDate, endDate } = getDateRange(period);
 
 			return allOrders.filter((order) => {
-				if (!order.createdAt) return false;
-				const orderDate = order.createdAt.toDate();
+				if (!order.created_at) return false;
+				const orderDate = new Date(order.created_at);
 				return orderDate >= startDate && orderDate <= endDate;
 			});
 		},
@@ -122,7 +130,7 @@ export default function SalesScreen() {
 
 	// Generate time series data based on period
 	const generateTimeSeriesData = useCallback(
-		(orders: Order[], period: ViewPeriod): TimeSeriesData[] => {
+		(orders: OrderWithItems[], period: ViewPeriod): TimeSeriesData[] => {
 			const { startDate } = getDateRange(period);
 			const data: TimeSeriesData[] = [];
 
@@ -135,8 +143,8 @@ export default function SalesScreen() {
 					hourEnd.setHours(hour, 59, 59, 999);
 
 					const hourOrders = orders.filter((order) => {
-						if (!order.createdAt) return false;
-						const orderDate = order.createdAt.toDate();
+						if (!order.created_at) return false;
+						const orderDate = new Date(order.created_at);
 						return orderDate >= hourStart && orderDate <= hourEnd;
 					});
 
@@ -145,7 +153,7 @@ export default function SalesScreen() {
 						0
 					);
 					const profit = hourOrders.reduce(
-						(sum, order) => sum + (order.totalProfit || 0),
+						(sum, order) => sum + (calculateOrderProfit(order)),
 						0
 					);
 
@@ -170,8 +178,8 @@ export default function SalesScreen() {
 					dayEnd.setHours(23, 59, 59, 999);
 
 					const dayOrders = orders.filter((order) => {
-						if (!order.createdAt) return false;
-						const orderDate = order.createdAt.toDate();
+						if (!order.created_at) return false;
+						const orderDate = new Date(order.created_at);
 						return orderDate >= dayStart && orderDate <= dayEnd;
 					});
 
@@ -180,7 +188,7 @@ export default function SalesScreen() {
 						0
 					);
 					const profit = dayOrders.reduce(
-						(sum, order) => sum + (order.totalProfit || 0),
+						(sum, order) => sum + (calculateOrderProfit(order)),
 						0
 					);
 
@@ -233,7 +241,7 @@ export default function SalesScreen() {
 		);
 		const totalOrders = filteredOrders.length;
 		const totalProfit = filteredOrders.reduce(
-			(sum, order) => sum + (order.totalProfit || 0),
+			(sum, order) => sum + (calculateOrderProfit(order)),
 			0
 		);
 		const profitMargin =
@@ -260,11 +268,10 @@ export default function SalesScreen() {
 		if (!searchTerm) return true;
 		return (
 			(order.id && order.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-			(order.orderType &&
-				order.orderType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+			"DINE-IN".toLowerCase().includes(searchTerm.toLowerCase()) ||
 			(order.items &&
 				order.items.some(
-					(item) =>
+					(item: OrderItem) =>
 						item.name &&
 						item.name.toLowerCase().includes(searchTerm.toLowerCase())
 				))
@@ -424,9 +431,8 @@ export default function SalesScreen() {
 													</div>
 												</td>
 												<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary)]'>
-													{order.createdAt
-														? order.createdAt
-																.toDate()
+													{order.created_at
+														? new Date(order.created_at)
 																.toLocaleDateString("en-US", {
 																	month: "short",
 																	day: "numeric",
@@ -443,7 +449,7 @@ export default function SalesScreen() {
 																	// ? `${order.items.slice(0, 3).map(item => `${item.name || 'Unknown'} x${item.quantity || 0}`).join(', ')} `
 																	<>
 																		{" "}
-																		{order.items.slice(0, 2).map((item) => {
+																		{order.items.slice(0, 2).map((item: OrderItem) => {
 																			return (
 																				<div
 																					className='flex-row items-center inline-flex text-[12px] mr-1 gap-1 border-1 border-[var(--secondary)]/20 p-1 px-2 rounded-full'
@@ -460,7 +466,7 @@ export default function SalesScreen() {
 																		} more`}</div>
 																	</>
 																) : (
-																	order.items.map((item) => {
+																	order.items.map((item: OrderItem) => {
 																		return (
 																			<div
 																				className='flex-row items-center inline-flex text-[12px] mr-1 gap-1 border-1 border-[var(--secondary)]/20 p-1 px-2 rounded-full'
@@ -478,33 +484,26 @@ export default function SalesScreen() {
 															)}
 														</div>
 														<p className='text-xs text-[var(--secondary)]/50 mt-1'>
-															= {order.itemCount || 0} items total
+															= {order.items.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0) || 0} items total
 														</p>
 													</div>
 												</td>
 												<td className='px-6 py-1 whitespace-nowrap'>
 													<div
-														className={`p-2 text-xs text-center w-[100px] font-semibold rounded-full ${
-															(order.orderType || "DINE-IN") === "DINE-IN"
-																? "bg-blue-100 text-blue-800"
-																: (order.orderType || "DINE-IN") ===
-																	"TAKE OUT"
-																? "bg-green-100 text-green-800"
-																: "bg-orange-100 text-orange-800"
-														}`}>
-														{order.orderType || "DINE-IN"}
+														className="p-2 text-xs text-center w-[100px] font-semibold rounded-full bg-blue-100 text-blue-800">
+														DINE-IN
 													</div>
 												</td>
 												<td className='px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900'>
 													{formatCurrency(order.total || 0)}
-													{order.discountAmount > 0 && (
+													{order.discount_amount > 0 && (
 														<div className='text-xs text-red-500'>
-															-{formatCurrency(order.discountAmount)}
+															-{formatCurrency(order.discount_amount)}
 														</div>
 													)}
 												</td>
 												<td className='px-6 py-1 whitespace-nowrap text-sm text-green-600 font-medium'>
-													{formatCurrency(order.totalProfit || 0)}
+													{formatCurrency(calculateOrderProfit(order))}
 												</td>
 											</tr>
 										))}

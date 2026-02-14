@@ -23,8 +23,8 @@ export default function ViewBranchModal({
 }: ViewBranchModalProps) {
   if (!isOpen || !branch) return null;
 
-  const createdAt = branch.createdAt.toDate();
-  const updatedAt = branch.updatedAt.toDate();
+  const createdAt = new Date(branch.created_at);
+  const updatedAt = new Date(branch.updated_at);
   const isRecent = (Date.now() - updatedAt.getTime()) < 24 * 60 * 60 * 1000; // Less than 24 hours
 
   return (
@@ -65,22 +65,22 @@ export default function ViewBranchModal({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span>{branch.location}</span>
+                  <span>{branch.address}</span>
                 </div>
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                branch.isActive 
+                branch.status === 'active' 
                   ? 'bg-[var(--success)]/80 text-[var(--primary)]' 
                   : 'bg-[var(--error)]/80 text-[var(--primary)]'
               }`}>
-                {branch.isActive ? 'Active' : 'Inactive'}
+                {branch.status === 'active' ? 'Active' : 'Inactive'}
               </div>
             </div>
 
             {/* Status Description */}
             <div className="border-t border-gray-200 pt-4">
               <p className="text-sm text-[var(--secondary)] opacity-70">
-                {branch.isActive 
+                {branch.status === 'active' 
                   ? 'This branch is currently operational and accessible to users for transactions and management.'
                   : 'This branch is currently disabled and will not appear in user selections or operations.'
                 }
@@ -157,7 +157,7 @@ export default function ViewBranchModal({
                 <div className="flex-1">
                 <p className="text-sm font-medium text-[var(--secondary)]">Branch Operations</p>
                 <p className="text-xs text-[var(--secondary)] opacity-70">
-                  {branch.isActive 
+                  {branch.status === 'active' 
                     ? 'Ready for business operations, inventory management, and sales tracking'
                     : 'Operations suspended - branch requires activation to resume business activities'
                   }
