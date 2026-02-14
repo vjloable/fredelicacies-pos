@@ -22,10 +22,12 @@ export default function WaitingRoomPage() {
     // If user already has access, redirect them
     if (user.is_owner || user.roleAssignments.length > 0) {
       if (user.is_owner) {
-        router.push('/branches');
+        router.push('/owner/branches');
       } else {
         const branchId = user.roleAssignments[0]?.branchId;
-        router.push(`/${branchId}/store`);
+        if (branchId) {
+          router.push(`/${branchId}/store`);
+        }
       }
       return;
     }
