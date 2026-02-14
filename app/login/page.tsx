@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
+import VersionDisplay from "@/components/VersionDisplay";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -216,7 +217,7 @@ export default function LoginPage() {
 						{/* Footer */}
 						<div className='mt-6 text-center'>
 							<p className='text-xs text-[var(--secondary)] opacity-50'>
-								Fredelicacies Point-of-Sales System v1.0
+							Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
 							</p>
 						</div>
 					</div>
