@@ -138,7 +138,7 @@ export default function StoreScreen() {
 		}>
 	>([]);
 
-	// Ensure we're on the client before running Firebase code
+	// Ensure we're on the client before running data subscriptions
 	useEffect(() => {
 		setIsClient(true);
 	}, []);

@@ -1,4 +1,4 @@
-// Worker types - migrated from Firebase to Supabase
+// Worker types - Supabase schema
 
 export type UserRole = "owner" | "manager" | "worker";
 export interface CreateWorkerRequest {

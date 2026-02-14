@@ -53,7 +53,7 @@ export default function InventoryScreen() {
 		imgUrl: "",
 	});
 
-	// Ensure we're on the client before running Firebase code
+	// Ensure we're on the client before running data subscriptions
 	useEffect(() => {
 		setIsClient(true);
 	}, []);
@@ -62,13 +62,13 @@ export default function InventoryScreen() {
 	useEffect(() => {
 		if (!isClient || !currentBranch) return;
 
-		const unsubscribe = subscribeToCategories(currentBranch.id, (firestoreCategories: Category[]) => {
-			setCategories(firestoreCategories);
+		const unsubscribe = subscribeToCategories(currentBranch.id, (categories: Category[]) => {
+			setCategories(categories);
 			// Set default category if none selected
-			if (firestoreCategories.length > 0 && !newItem.categoryId) {
+			if (categories.length > 0 && !newItem.categoryId) {
 				setNewItem((prev) => ({
 					...prev,
-					categoryId: firestoreCategories[0].id!,
+					categoryId: categories[0].id!,
 				}));
 			}
 		});
@@ -90,18 +90,18 @@ export default function InventoryScreen() {
 
 		const unsubscribe = subscribeToInventoryItems(
 			currentBranch.id,
-			(firestoreItems: InventoryItem[]) => {
+			(items: InventoryItem[]) => {
 				console.log(
 					"Inventory items received in inventory page:",
-					firestoreItems.length,
+					items.length,
 					"items"
 				);
 
-				// Convert Firestore items to local Item type
-				const localItems: InventoryItem[] = firestoreItems.map(
+				// Ensure all items have IDs
+				const localItems: InventoryItem[] = items.map(
 					(item: InventoryItem) => ({
 						...item,
-						id: item.id!, // We know id exists from Firestore
+						id: item.id!,
 					})
 				);
 

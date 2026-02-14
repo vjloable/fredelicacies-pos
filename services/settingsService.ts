@@ -1,4 +1,4 @@
-// Supabase settings service - migrated from Firebase
+// Settings service - Supabase backend
 // TODO: Implement Supabase version of settings management
 
 export interface AppSettings {
@@ -81,14 +81,14 @@ export const loadSettings = async (forceRefresh: boolean = false): Promise<AppSe
   }
 };
 
-// Load settings from Firebase (legacy function - kept for backward compatibility)
-export const loadSettingsFromFirebase = async (): Promise<AppSettings> => {
+// Load settings from backend (force refresh)
+export const loadSettingsFromBackend = async (): Promise<AppSettings> => {
   return loadSettings(true); // Force refresh when called directly
 };
 
-// Sync settings to Supabase (manual sync)
-// TODO: Migrate to Supabase when ready
-export const syncSettingsToFirebase = async (settings: AppSettings): Promise<{ isNew: boolean }> => {
+// Sync settings to backend (manual sync)
+// TODO: Implement Supabase version
+export const syncSettingsToBackend = async (settings: AppSettings): Promise<{ isNew: boolean }> => {
   try {
     console.log('🔄 Syncing settings...');
     console.log('⚙️ Settings to sync:', settings);

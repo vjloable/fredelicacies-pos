@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
-import VersionDisplay from "@/components/VersionDisplay";
 
 export default function LoginPage() {
 	const [credentials, setCredentials] = useState({
@@ -25,7 +24,7 @@ export default function LoginPage() {
 				setIsLoading(false);
 				router.push("/owner/branches");
 			} else if (user.roleAssignments.length > 0) {
-				// Check if user has valid branch assignments
+				// Check if user has valid branch assignmentsgit
 				const branchId = user?.roleAssignments?.[0]?.branchId;
 				if (branchId) {
 					// Check if user is a manager for any branch
@@ -67,38 +66,25 @@ export default function LoginPage() {
 			await login(credentials.email, credentials.password);
 			// After successful login, redirect based on user role
 			// Note: The user state will be updated, and the useEffect will handle the redirect
-		} catch (error: unknown) {
+		} catch (error) {
 			console.error("Login error:", error);
 
-			// Handle specific Firebase auth errors
+			// Handle authentication errors
 			let errorMessage = "Login failed. Please try again.";
 			
-			// Type guard for Firebase error objects
-			if (error && typeof error === 'object' && 'code' in error) {
-				const errorCode = (error as { code: string }).code;
-				switch (errorCode) {
-					case "auth/user-not-found":
-						errorMessage = "No account found with this email address.";
-						break;
-					case "auth/wrong-password":
-						errorMessage = "Incorrect password.";
-						break;
-					case "auth/invalid-email":
-						errorMessage = "Invalid email address.";
-						break;
-					case "auth/user-disabled":
-						errorMessage = "This account has been disabled.";
-						break;
-					case "auth/too-many-requests":
-						errorMessage = "Too many failed attempts. Please try again later.";
-						break;
-					case "auth/invalid-credential":
-						errorMessage = "Invalid email or password.";
-						break;
-					default:
-						if ('message' in error && typeof (error as { message: unknown }).message === 'string') {
-							errorMessage = (error as { message: string }).message;
-						}
+			if (error && typeof error === 'object' && 'message' in error) {
+				const message = String(error.message).toLowerCase();
+				
+				if (message.includes('invalid') && (message.includes('email') || message.includes('password') || message.includes('credential'))) {
+					errorMessage = "Invalid email or password.";
+				} else if (message.includes('not found') || message.includes('user')) {
+					errorMessage = "No account found with this email address.";
+				} else if (message.includes('disabled')) {
+					errorMessage = "This account has been disabled.";
+				} else if (message.includes('many') && message.includes('request')) {
+					errorMessage = "Too many failed attempts. Please try again later.";
+				} else {
+					errorMessage = String(error.message);
 				}
 			}
 
@@ -230,7 +216,7 @@ export default function LoginPage() {
 						{/* Footer */}
 						<div className='mt-6 text-center'>
 							<p className='text-xs text-[var(--secondary)] opacity-50'>
-							Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
+								Fredelicacies Point-of-Sales System v1.0
 							</p>
 						</div>
 					</div>
