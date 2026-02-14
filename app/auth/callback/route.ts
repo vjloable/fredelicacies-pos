@@ -112,3 +112,4 @@ export async function GET(request: NextRequest) {
   // No token or code provided, redirect to login
   return NextResponse.redirect(new URL("/login", requestUrl.origin));
 }
+  // This route is no longer needed. Email confirmation is disabled.

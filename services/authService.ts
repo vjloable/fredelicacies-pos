@@ -5,38 +5,30 @@ import type { SignUpData, SignInData, UserWithRoles, CreateUserProfileData, Upda
 
 export const authService = {
   // Sign up new user with profile
-  signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; needsEmailConfirmation: boolean; error: any }> => {
+  signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; error: any }> => {
     // Create auth user
-    const { user, session, error: signUpError } = await authRepository.signUp(data);
+    const { user, error: signUpError } = await authRepository.signUp(data);
     
     if (signUpError || !user) {
-      return { userId: null, needsEmailConfirmation: false, error: signUpError };
+      return { userId: null, error: signUpError };
     }
 
-    // If there's a user but no session, email confirmation is required
-    const needsConfirmation = !session;
+    // Always create profile immediately
+    const profileData: CreateUserProfileData = {
+      id: user.id,
+      email: user.email,
+      name: data.name,
+      is_owner: data.isOwner || false,
+    };
 
-    console.log('[Auth Service] User created:', { userId: user.id, needsConfirmation });
+    const { error: profileError } = await userProfileRepository.create(profileData);
 
-    // Only create profile if email confirmation is NOT needed (instant login)
-    // If confirmation is needed, profile will be created by the callback handler
-    if (!needsConfirmation) {
-      const profileData: CreateUserProfileData = {
-        id: user.id,
-        email: user.email,
-        name: data.name,
-        is_owner: data.isOwner || false,
-      };
-
-      const { error: profileError } = await userProfileRepository.create(profileData);
-
-      if (profileError) {
-        console.error('Failed to create user profile:', profileError);
-        return { userId: user.id, needsEmailConfirmation: false, error: profileError };
-      }
+    if (profileError) {
+      console.error('Failed to create user profile:', profileError);
+      return { userId: user.id, error: profileError };
     }
 
-    return { userId: user.id, needsEmailConfirmation: needsConfirmation, error: null };
+    return { userId: user.id, error: null };
   },
 
   // Sign in

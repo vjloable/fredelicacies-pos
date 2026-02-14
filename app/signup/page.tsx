@@ -74,7 +74,7 @@ export default function SignUpPage() {
     try {
       // Create user account with Supabase
       const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
-      const { userId, needsEmailConfirmation, error: signUpError } = await authService.signUp({
+      const { userId, error: signUpError } = await authService.signUp({
         email: formData.email,
         password: formData.password,
         name: fullName,
@@ -85,13 +85,7 @@ export default function SignUpPage() {
         throw signUpError;
       }
 
-      // If email confirmation is needed, redirect to confirmation page
-      if (needsEmailConfirmation) {
-        router.push(`/confirm-email?email=${encodeURIComponent(formData.email)}`);
-        return;
-      }
-
-      // Otherwise, redirect to waiting room since user needs admin approval
+      // Always redirect to waiting room after signup
       router.push("/waiting-room");
     } catch (error: unknown) {
       console.error("Sign up error:", error);
