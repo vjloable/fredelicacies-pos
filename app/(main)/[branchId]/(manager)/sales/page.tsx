@@ -256,7 +256,8 @@ export default function SalesScreen() {
 	}, [allOrders, viewPeriod, getFilteredOrders, generateTimeSeriesData]);
 
 	// Custom tooltip formatter
-	const formatTooltipValue = (value: number, name: string) => {
+	const formatTooltipValue = (value: number | undefined, name: string | undefined) => {
+		if (value === undefined || name === undefined) return [0, ''];
 		if (name === "revenue" || name === "profit") {
 			return [formatCurrency(value), name === "revenue" ? "Revenue" : "Profit"];
 		}
