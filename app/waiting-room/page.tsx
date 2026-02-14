@@ -44,7 +44,7 @@ export default function WaitingRoomPage() {
     }, 30000); // Check every 30 seconds
 
     return () => clearInterval(checkInterval);
-  }, [user, router, refreshUserData]);
+  }, [user?.is_owner, user?.roleAssignments.length, router, refreshUserData]);
 
   const handleManualRefresh = async () => {
     setIsCheckingAccess(true);

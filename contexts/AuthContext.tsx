@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authService } from "@/services/authService";
 import type { UserWithRoles, RoleAssignment } from "@/types/domain";
 
@@ -164,18 +164,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
   };
 
-  const refreshUserData = async () => {
+  const refreshUserData = useCallback(async () => {
     if (user) {
       const userData = await authService.getUserData(user.id);
       if (userData) {
-        const extendedUser: User = {
-          ...userData,
-          uid: userData.id,
-        };
-        setUser(extendedUser);
+        // Only update if data actually changed (deep comparison of relevant fields)
+        const hasChanged = 
+          user.is_owner !== userData.is_owner ||
+          user.roleAssignments.length !== userData.roleAssignments.length ||
+          JSON.stringify(user.roleAssignments) !== JSON.stringify(userData.roleAssignments);
+        
+        if (hasChanged) {
+          const extendedUser: User = {
+            ...userData,
+            uid: userData.id,
+          };
+          setUser(extendedUser);
+        }
       }
     }
-  };
+  }, [user]);
 
   // Worker Management helper methods
   const isManager = () => {

@@ -154,6 +154,11 @@ class TimeService {
     const localDate = new Date();
     const formatted = this.formatLocalDateTime(localDate);
     
+    // Only update if time or date actually changed
+    if (this.cachedData.date === formatted.date && this.cachedData.time === formatted.time) {
+      return; // No change, skip update
+    }
+    
     const updatedData: DateTimeState = {
       ...this.cachedData,
       date: formatted.date,
