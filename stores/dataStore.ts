@@ -7,6 +7,7 @@ import { subscribeToDiscounts } from "@/services/discountService";
 import { branchService } from "@/services/branchService";
 import { subscribeToBundles } from "@/services/bundleService";
 import { workerService } from "@/services/workerService";
+import { supabase } from "@/lib/supabase";
 import type { Category } from "@/types/domain";
 import type { InventoryItem } from "@/types/domain";
 import type { Order } from "@/types/domain";
@@ -250,21 +251,75 @@ class DataStore {
     if (this.activeWorkerListeners.has(userId)) return;
 
     try {
-      // For now, we'll poll periodically since workerService doesn't have realtime yet
-      // In the future, we can add realtime subscriptions to user_profiles table
-      const pollInterval = setInterval(async () => {
-        const worker = await workerService.getWorker(userId);
+      // Initial fetch
+      workerService.getWorker(userId).then((worker) => {
         if (worker) {
           this.workers[userId] = worker;
           this.eventEmitter.emit(`workerChanged:${userId}`, worker);
         }
-      }, 5000); // Poll every 5 seconds
+      });
+
+      // Subscribe to user_profiles, workers, and attendance tables for realtime updates
+      const channel = supabase
+        .channel(`worker-changes-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_profiles',
+            filter: `id=eq.${userId}`,
+          },
+          async () => {
+            // Refetch worker data when profile changes
+            const worker = await workerService.getWorker(userId);
+            if (worker) {
+              this.workers[userId] = worker;
+              this.eventEmitter.emit(`workerChanged:${userId}`, worker);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'workers',
+            filter: `user_id=eq.${userId}`,
+          },
+          async () => {
+            // Refetch worker data when workers table changes
+            const worker = await workerService.getWorker(userId);
+            if (worker) {
+              this.workers[userId] = worker;
+              this.eventEmitter.emit(`workerChanged:${userId}`, worker);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'attendance',
+            filter: `user_id=eq.${userId}`,
+          },
+          async () => {
+            // Refetch worker data when attendance changes (clock in/out)
+            const worker = await workerService.getWorker(userId);
+            if (worker) {
+              this.workers[userId] = worker;
+              this.eventEmitter.emit(`workerChanged:${userId}`, worker);
+            }
+          }
+        )
+        .subscribe();
 
       this.workersUnsubscribes[userId] = () => {
-        clearInterval(pollInterval);
+        channel.unsubscribe();
       };
       this.activeWorkerListeners.add(userId);
-      console.log(`✅ Worker listener started for user ${userId}`);
+      console.log(`✅ Worker realtime listener started for user ${userId}`);
     } catch (error) {
       console.error(`Error starting worker listener for user ${userId}:`, error);
     }

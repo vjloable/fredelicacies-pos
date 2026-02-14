@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import VersionDisplay from "@/components/VersionDisplay";
 
@@ -12,7 +13,7 @@ export default function WaitingRoomPage() {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const router = useRouter();
 
-  // Check for access periodically
+  // Check for access with realtime subscriptions
   useEffect(() => {
     if (!user) {
       router.push('/login');
@@ -32,19 +33,41 @@ export default function WaitingRoomPage() {
       return;
     }
 
-    // Set up periodic checking every 30 seconds
-    const checkInterval = setInterval(async () => {
-      try {
-        await refreshUserData();
-        setLastChecked(new Date());
-        // The useEffect will run again after refreshUserData updates the user state
-      } catch (error: unknown) {
-        console.error('Error checking user access:', error);
-      }
-    }, 30000); // Check every 30 seconds
+    // Subscribe to realtime changes in user_profiles and workers tables
+    const channel = supabase
+      .channel(`waiting-room-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        async () => {
+          await refreshUserData();
+          setLastChecked(new Date());
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'workers',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async () => {
+          await refreshUserData();
+          setLastChecked(new Date());
+        }
+      )
+      .subscribe();
 
-    return () => clearInterval(checkInterval);
-  }, [user?.is_owner, user?.roleAssignments.length, router, refreshUserData]);
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user?.is_owner, user?.roleAssignments.length, user?.id, router, refreshUserData]);
 
   const handleManualRefresh = async () => {
     setIsCheckingAccess(true);
