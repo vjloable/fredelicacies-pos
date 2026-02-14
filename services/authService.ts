@@ -7,25 +7,12 @@ export const authService = {
   // Sign up new user with profile
   signUp: async (data: SignUpData & { name: string; isOwner?: boolean }): Promise<{ userId: string | null; error: any }> => {
     // Create auth user
+    // Profile is automatically created by a database trigger (handle_new_user)
+    // The trigger reads the name from user metadata
     const { user, error: signUpError } = await authRepository.signUp(data);
     
     if (signUpError || !user) {
       return { userId: null, error: signUpError };
-    }
-
-    // Always create profile immediately
-    const profileData: CreateUserProfileData = {
-      id: user.id,
-      email: user.email,
-      name: data.name,
-      is_owner: data.isOwner || false,
-    };
-
-    const { error: profileError } = await userProfileRepository.create(profileData);
-
-    if (profileError) {
-      console.error('Failed to create user profile:', profileError);
-      return { userId: user.id, error: profileError };
     }
 
     return { userId: user.id, error: null };
