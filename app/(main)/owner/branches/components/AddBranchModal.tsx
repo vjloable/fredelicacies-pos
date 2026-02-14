@@ -153,6 +153,7 @@ export default function AddBranchModal({
                     currentImageUrl={branchData.logo_url}
                     onImageUpload={(imageUrl) => setBranchData({...branchData, logo_url: imageUrl})}
                     onImageRemove={() => setBranchData({...branchData, logo_url: ""})}
+                    bucket="branch-logos"
                   />
                 </div>
 

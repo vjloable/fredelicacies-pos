@@ -2,20 +2,22 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToSupabase } from '@/lib/supabaseStorage';
 
 interface ImageUploadProps {
   currentImageUrl?: string;
   onImageUpload: (imageUrl: string) => void;
   onImageRemove?: () => void;
   className?: string;
+  bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images'; // Supabase storage bucket
 }
 
 export default function ImageUpload({ 
   currentImageUrl, 
   onImageUpload, 
   onImageRemove,
-  className = ''
+  className = '',
+  bucket = 'inventory-images' // Default to inventory bucket
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -41,8 +43,8 @@ export default function ImageUpload({
     setUploadError(null);
 
     try {
-      const result = await uploadToCloudinary(file);
-      onImageUpload(result.secure_url);
+      const result = await uploadToSupabase(file, bucket);
+      onImageUpload(result.publicUrl);
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError('Failed to upload image. Please try again.');

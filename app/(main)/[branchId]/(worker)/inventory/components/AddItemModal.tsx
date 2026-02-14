@@ -337,6 +337,7 @@ export default function AddItemModal({
                   currentImageUrl={newItem.img_url}
                   onImageUpload={(imageUrl) => setNewItem({...newItem, img_url: imageUrl})}
                   onImageRemove={() => setNewItem({...newItem, img_url: ""})}
+                  bucket="inventory-images"
                 />
               </div>
 

@@ -172,6 +172,7 @@ export default function EditItemModal({
             currentImageUrl={localEditingItem.img_url || ''}
             onImageUpload={(imageUrl) => setLocalEditingItem({...localEditingItem, img_url: imageUrl})}
             onImageRemove={() => setLocalEditingItem({...localEditingItem, img_url: ''})}
+            bucket="inventory-images"
           />
         
         {/* Edit Form */}
