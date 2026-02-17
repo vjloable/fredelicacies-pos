@@ -183,56 +183,53 @@ export default function EditBundleModal({
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
           /* Loading Screen */
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-amber-500"></div>
+          <div className="text-center py-8">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-amber-500"></div>
             </div>
-            <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+            <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
               {showDeleteConfirm ? 'Deleting Bundle...' : 'Updating Bundle...'}
             </h3>
-            <p className="text-[var(--secondary)] opacity-70">
-              {showDeleteConfirm
-                ? 'Please wait while we delete the bundle'
-                : 'Please wait while we save your changes'
-              }
+            <p className="text-sm text-[var(--secondary)] opacity-70">
+              Please wait
             </p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+              <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
                 Edit Bundle
               </h3>
-              <p className="text-[var(--secondary)] opacity-70">
+              <p className="text-sm text-[var(--secondary)] opacity-70">
                 Update bundle information and components
               </p>
 
               {/* Availability Indicator */}
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-lg border border-amber-200">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <span className="text-sm font-medium text-amber-700">
+                <span className="text-xs font-medium text-amber-700">
                   Can make {currentAvailability} {currentAvailability === 1 ? 'bundle' : 'bundles'} with current stock
                 </span>
               </div>
             </div>
 
             {/* Form */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Bundle Name and Price */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                     Bundle Name <span className="text-[var(--error)]">*</span>
@@ -241,7 +238,7 @@ export default function EditBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -266,7 +263,7 @@ export default function EditBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -294,11 +291,12 @@ export default function EditBundleModal({
                 onImageUpload={(imageUrl) => setImgUrl(imageUrl)}
                 onImageRemove={() => setImgUrl('')}
                 bucket="bundle-images"
+                compact
               />
 
               {/* Component Selector */}
-              <div className="border-t-2 border-[var(--secondary)]/20 pt-6">
-                <label className="block text-sm font-medium text-[var(--secondary)] mb-3">
+              <div className="border-t-2 border-[var(--secondary)]/20 pt-4">
+                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                   Bundle Components <span className="text-[var(--error)]">*</span>
                 </label>
 
@@ -313,7 +311,7 @@ export default function EditBundleModal({
                       onChange={(itemName) => {
                         handleSelectItem(itemName);
                       }}
-                      height={44}
+                      height={38}
                       roundness={"[8px]"}
                       valueAlignment={'left'}
                       shadow={false}
@@ -323,14 +321,14 @@ export default function EditBundleModal({
 
                 {/* Selected Components List */}
                 {selectedComponents.length > 0 && (
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
                     {selectedComponents.map((component) => (
                       <div
                         key={component.inventoryItemId}
-                        className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200"
+                        className="flex items-center gap-3 p-2 bg-amber-50 rounded-lg border border-amber-200"
                       >
                         {/* Item Image */}
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {component.item.img_url ? (
                             <Image
                               src={component.item.img_url}
@@ -385,16 +383,16 @@ export default function EditBundleModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex-1 px-6 py-3 bg-[var(--error)]/10 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="flex-1 py-2 bg-[var(--error)]/10 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Delete
               </button>
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Cancel
               </button>
@@ -407,7 +405,7 @@ export default function EditBundleModal({
                   parseFloat(priceInput) <= 0 ||
                   selectedComponents.length === 0
                 }
-                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
+                className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                   name.trim() &&
                   priceInput &&
                   !isNaN(parseFloat(priceInput)) &&

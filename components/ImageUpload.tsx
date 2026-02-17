@@ -10,14 +10,16 @@ interface ImageUploadProps {
   onImageRemove?: () => void;
   className?: string;
   bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images'; // Supabase storage bucket
+  compact?: boolean; // Smaller preview/upload area for modals
 }
 
-export default function ImageUpload({ 
-  currentImageUrl, 
-  onImageUpload, 
+export default function ImageUpload({
+  currentImageUrl,
+  onImageUpload,
   onImageRemove,
   className = '',
-  bucket = 'inventory-images' // Default to inventory bucket
+  bucket = 'inventory-images', // Default to inventory bucket
+  compact = false
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export default function ImageUpload({
         {currentImageUrl ? (
           // Image Preview
           <div className="relative group">
-            <div className="w-full h-[300px] bg-[var(--secondary)]/5 rounded-xl overflow-hidden border-2 border-[var(--secondary)]/20 relative">
+            <div className={`w-full ${compact ? 'h-[180px]' : 'h-[300px]'} bg-[var(--secondary)]/5 rounded-xl overflow-hidden border-2 border-[var(--secondary)]/20 relative`}>
               <Image
                 src={currentImageUrl}
                 alt="Item preview"
@@ -110,7 +112,7 @@ export default function ImageUpload({
           // Upload Area
           <div 
             onClick={triggerFileInput}
-            className="group w-full h-48 border-2 border-dashed border-[var(--secondary)]/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all"
+            className={`group w-full ${compact ? 'h-28' : 'h-48'} border-2 border-dashed border-[var(--secondary)]/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all`}
           >
             {uploading ? (
               <div className="flex flex-col items-center">
@@ -119,7 +121,7 @@ export default function ImageUpload({
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <svg className="w-12 h-12 text-[var(--secondary)]/50 mb-3 group-hover:text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} text-[var(--secondary)]/50 mb-2 group-hover:text-[var(--accent)]`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <span className="text-sm font-medium text-[var(--secondary)]/50 mb-1 group-hover:text-[var(--accent)]">Click to upload image</span>

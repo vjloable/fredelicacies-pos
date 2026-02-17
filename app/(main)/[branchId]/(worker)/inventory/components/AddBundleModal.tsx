@@ -130,41 +130,41 @@ export default function AddBundleModal({
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
           /* Loading Screen */
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-amber-500"></div>
+            <div className="w-10 h-10 bg-amber-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-amber-500"></div>
             </div>
-            <h3 className="text-xl font-bold text-secondary mb-2">
+            <h3 className="text-base font-bold text-secondary mb-1">
               Creating Bundle...
             </h3>
-            <p className="text-secondary opacity-70">
-              Please wait while we create your bundle
+            <p className="text-sm text-secondary opacity-70">
+              Please wait
             </p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <PlusIcon className='size-6 text-amber-500'/>
+            <div className="text-center mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <PlusIcon className='size-5 text-amber-500'/>
               </div>
-              <h3 className="text-xl font-bold text-secondary mb-2">
+              <h3 className="text-base font-bold text-secondary mb-1">
                 Create New Bundle
               </h3>
-              <p className="text-secondary opacity-70">
+              <p className="text-sm text-secondary opacity-70">
                 Combine multiple items into a special offer
               </p>
             </div>
 
             {/* Form */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Bundle Name and Description */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-secondary mb-2">
                     Bundle Name <span className="text-(--error)">*</span>
@@ -227,6 +227,7 @@ export default function AddBundleModal({
                 onImageUpload={(imageUrl) => setImgUrl(imageUrl)}
                 onImageRemove={() => setImgUrl('')}
                 bucket="bundle-images"
+                compact
               />
 
               {/* Component Selector */}
@@ -264,14 +265,14 @@ export default function AddBundleModal({
 
                 {/* Selected Components List */}
                 {selectedComponents.length > 0 && (
-                  <div className="space-y-3 max-h-75 overflow-y-auto">
+                  <div className="space-y-2 max-h-50 overflow-y-auto">
                     {selectedComponents.map((component) => (
                       <div
                         key={component.inventoryItemId}
-                        className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200"
+                        className="flex items-center gap-3 p-2 bg-amber-50 rounded-lg border border-amber-200"
                       >
                         {/* Item Image */}
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                           {component.item.img_url ? (
                             <Image
                               src={component.item.img_url}
@@ -324,8 +325,8 @@ export default function AddBundleModal({
                 )}
 
                 {selectedComponents.length === 0 && (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-center py-5 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                     <p className="text-sm text-gray-500">No items added yet</p>
@@ -336,10 +337,10 @@ export default function AddBundleModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
@@ -352,7 +353,7 @@ export default function AddBundleModal({
                   parseFloat(priceInput) <= 0 ||
                   selectedComponents.length === 0
                 }
-                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                   name.trim() &&
                   priceInput &&
                   !isNaN(parseFloat(priceInput)) &&

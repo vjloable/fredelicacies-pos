@@ -245,10 +245,10 @@ export default function InventoryScreen() {
 						{!loading && (
 							<div className='flex-1 px-6 overflow-y-auto pb-6'>
 								{/* Tab Navigation */}
-								<div className='flex gap-2 mb-6'>
+								<div className='flex gap-2 mb-4'>
 									<button
 										onClick={() => setActiveTab('items')}
-										className={`px-6 py-2 rounded-lg font-medium transition-all ${
+										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
 											activeTab === 'items'
 												? 'bg-accent text-primary text-shadow-lg'
 												: 'bg-gray-200 text-secondary hover:bg-gray-300'
@@ -258,7 +258,7 @@ export default function InventoryScreen() {
 									</button>
 									<button
 										onClick={() => setActiveTab('bundles')}
-										className={`px-6 py-2 rounded-lg font-medium transition-all ${
+										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
 											activeTab === 'bundles'
 												? 'bg-amber-500 text-white'
 												: 'bg-gray-200 text-secondary hover:bg-gray-300'
@@ -272,7 +272,7 @@ export default function InventoryScreen() {
 								{activeTab === 'items' && (
 									<>
 										{/* Categories Section */}
-										<div className='mb-6'>
+										<div className='mb-4'>
 									<div className='flex items-center justify-between mb-3'>
 										<h2 className='text-lg font-semibold text-[var(--secondary)]'>
 											Categories
@@ -320,7 +320,7 @@ export default function InventoryScreen() {
 
 								{/* Items Section */}
 								<div>
-									<div className='flex items-center justify-between mb-4'>
+									<div className='flex items-center justify-between mb-3'>
 										<h2 className='text-xl font-semibold text-secondary'>
 											Items
 										</h2>

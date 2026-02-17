@@ -130,38 +130,35 @@ export default function EditItemModal({
       onClick={!loading ? closeModal : undefined}
     >
       <div 
-        className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
           /* Loading Screen */
-          <div className="text-center py-12">
-            <div className="w-12 h-12 bg-transparent rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-dashed border-[var(--accent)]"></div>
+          <div className="text-center py-8">
+            <div className="w-10 h-10 bg-transparent rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-dashed border-[var(--accent)]"></div>
             </div>
-            <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+            <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
               {showDeleteConfirm ? 'Removing Item...' : 'Updating Item...'}
             </h3>
-            <p className="text-[var(--secondary)] opacity-70">
-              {showDeleteConfirm 
-                ? 'Please wait while we remove the item from your inventory'
-                : 'Please wait while we save your changes'
-              }
+            <p className="text-sm text-[var(--secondary)] opacity-70">
+              Please wait
             </p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-[var(--accent)]/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-8 h-8 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-4">
+              <div className="w-10 h-10 bg-[var(--accent)]/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+              <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
                 Edit Item
               </h3>
-              <p className="text-[var(--secondary)] opacity-70">
+              <p className="text-sm text-[var(--secondary)] opacity-70">
                 Update item information and manage stock
               </p>
             </div>
@@ -173,10 +170,11 @@ export default function EditItemModal({
             onImageUpload={(imageUrl) => setLocalEditingItem({...localEditingItem, img_url: imageUrl})}
             onImageRemove={() => setLocalEditingItem({...localEditingItem, img_url: ''})}
             bucket="inventory-images"
+            compact
           />
         
         {/* Edit Form */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Item Name */}
           <div>
             <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
@@ -186,7 +184,7 @@ export default function EditItemModal({
               type="text"
               value={localEditingItem.name}
               onChange={(e) => setLocalEditingItem({...localEditingItem, name: e.target.value})}
-              className="w-full px-4 py-3 border-2 border-[var(--secondary)]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="w-full px-3 py-2 h-[38px] text-[14px] border-2 border-[var(--secondary)]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="Enter item name"
             />
           </div>
@@ -205,8 +203,8 @@ export default function EditItemModal({
                   setLocalEditingItem({...localEditingItem, category_id: selectedCategory.id});
                 }
               }}
-              roundness={"[12px]"}
-              height={52}
+              roundness={"[8px]"}
+              height={38}
               valueAlignment={'left'}
               shadow={false}
             />
@@ -220,14 +218,14 @@ export default function EditItemModal({
             <textarea
               value={localEditingItem.description || ''}
               onChange={(e) => setLocalEditingItem({...localEditingItem, description: e.target.value})}
-              className="w-full px-4 py-3 border-2 border-[var(--secondary)]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+              className="w-full px-3 py-1.5 text-[14px] border-2 border-[var(--secondary)]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
               placeholder="Enter item description"
               rows={3}
             />
           </div>
 
           {/* Price, Cost, and Stock Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                 Selling Price <span className='text-[var(--error)]'>*</span>
@@ -266,7 +264,7 @@ export default function EditItemModal({
                         setPriceInput('');
                       }
                     }}
-                    className="w-full pl-8 pr-4 py-3 border-2 border-[var(--secondary)]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent "
+                    className="w-full pl-8 pr-4 py-2 h-[38px] text-[14px] border-2 border-[var(--secondary)]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     placeholder="0.00"
                     inputMode="decimal"
                   />
@@ -319,13 +317,13 @@ export default function EditItemModal({
           </div>
 
           {/* Stock Adjustment Section */}
-          <div className="bg-[var(--primary)] rounded-xl p-6 border-2 border-[var(--secondary)]/20">
-            <h4 className="text-lg font-semibold text-[var(--secondary)] mb-4 flex items-center gap-2">
+          <div className="bg-[var(--primary)] rounded-xl p-4 border-2 border-[var(--secondary)]/20">
+            <h4 className="text-sm font-semibold text-[var(--secondary)] mb-2 flex items-center gap-2">
               Stock Adjustment
             </h4>
-            
+
             {/* Quick Stock Buttons */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="space-y-3">
                 <label className="block text-center text-sm font-medium text-[var(--secondary)]/50">Remove Stock</label>
                 <div className="grid grid-rows-3 grid-cols-1 gap-2">
@@ -333,7 +331,7 @@ export default function EditItemModal({
                     <button
                       key={`remove-${amount}`}
                       onClick={() => setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)})}
-                      className="py-2 px-3 bg-[var(--error)]/10 hover:bg-[var(--error)]/20 border-1 border-[var(--error)] text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-sm"
+                      className="py-1 px-2 bg-[var(--error)]/10 hover:bg-[var(--error)]/20 border-1 border-[var(--error)] text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-sm"
                     >
                       -{amount}
                     </button>
@@ -343,7 +341,7 @@ export default function EditItemModal({
 
               <div className="space-y-3">
                 <label className="block text-sm text-center font-medium text-[var(--secondary)]/50">Current Stock</label>
-                <div className="text-center items-center justify-center flex flex-col bg-gray-50 rounded-xl border-1 border-gray-200 h-[130px]">
+                <div className="text-center items-center justify-center flex flex-col bg-gray-50 rounded-xl border-1 border-gray-200 h-[80px]">
                   <div className="text-2xl font-bold text-[var(--secondary)]">{localEditingItem.stock}</div>
                   <div className="text-xs text-[var(--secondary)] opacity-70">units in stock</div>
                 </div>
@@ -356,7 +354,7 @@ export default function EditItemModal({
                     <button
                       key={`add-${amount}`}
                       onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
-                      className="py-2 px-3 bg-[var(--success)]/10 border-1 border-[var(--success)] hover:bg-[var(--success)]/20 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-sm"
+                      className="py-1 px-2 bg-[var(--success)]/10 border-1 border-[var(--success)] hover:bg-[var(--success)]/20 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-sm"
                     >
                       +{amount}
                     </button>
@@ -367,7 +365,7 @@ export default function EditItemModal({
             </div>
 
             {/* Custom Amount Input */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                   Custom Amount
@@ -419,7 +417,7 @@ export default function EditItemModal({
                       if (input) input.value = '';
                     }
                   }}
-                  className="flex-1 py-2 h-[44px] bg-[var(--success)]/10 border-1 border-[var(--success)] hover:bg-[var(--success)]/20 text-[var(--secondary)] rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-sm"
+                  className="flex-1 py-1.5 h-[38px] bg-[var(--success)]/10 border-1 border-[var(--success)] hover:bg-[var(--success)]/20 text-[var(--secondary)] rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-sm"
                 >
                   Add
                 </button>
@@ -432,7 +430,7 @@ export default function EditItemModal({
                       if (input) input.value = '';
                     }
                   }}
-                  className="flex-1 py-2 h-[44px] bg-[var(--error)]/10 border-1 border-[var(--error)] hover:bg-[var(--error)]/20 text-[var(--secondary)] rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-sm"
+                  className="flex-1 py-1.5 h-[38px] bg-[var(--error)]/10 border-1 border-[var(--error)] hover:bg-[var(--error)]/20 text-[var(--secondary)] rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-sm"
                 >
                   Remove
                 </button>
@@ -443,32 +441,32 @@ export default function EditItemModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 mt-8 grid-cols-3">
+        <div className="flex gap-3 mt-5">
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="flex-1 px-6 py-3 bg-[var(--error)]/10 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 py-2 bg-[var(--error)]/10 hover:bg-[var(--error)]/40 text-[var(--error)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             Remove
           </button>
           <button
             onClick={closeModal}
-            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={saveItemEdit}
             disabled={
-              !localEditingItem.name.trim() || 
-              priceInput === '' || 
-              isNaN(parseFloat(priceInput)) || 
+              !localEditingItem.name.trim() ||
+              priceInput === '' ||
+              isNaN(parseFloat(priceInput)) ||
               parseFloat(priceInput) <= 0 ||
               (costInput !== '' && (isNaN(parseFloat(costInput)) || parseFloat(costInput) < 0))
             }
-            className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
-              localEditingItem.name.trim() && 
-              priceInput !== '' && 
-              !isNaN(parseFloat(priceInput)) && 
+            className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
+              localEditingItem.name.trim() &&
+              priceInput !== '' &&
+              !isNaN(parseFloat(priceInput)) &&
               parseFloat(priceInput) > 0 &&
               (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                 ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'

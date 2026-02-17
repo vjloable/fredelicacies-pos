@@ -112,41 +112,41 @@ export default function AddItemModal({
       onClick={!loading ? onClose : undefined}
     >
       <div 
-        className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
           /* Loading Screen */
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[var(--light-accent)] rounded-xl mx-auto mb-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-[var(--accent)]"></div>
+          <div className="text-center py-8">
+            <div className="w-10 h-10 bg-[var(--light-accent)] rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-[var(--accent)]"></div>
             </div>
-            <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+            <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
               Adding Item...
             </h3>
-            <p className="text-[var(--secondary)] opacity-70">
-              Please wait while we add your new item to the inventory
+            <p className="text-sm text-[var(--secondary)] opacity-70">
+              Please wait
             </p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-[var(--light-accent)] rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <PlusIcon className='size-6 text-[var(--accent)]'/>
+            <div className="text-center mb-4">
+              <div className="w-10 h-10 bg-[var(--light-accent)] rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <PlusIcon className='size-5 text-[var(--accent)]'/>
               </div>
-              <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+              <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
                 Add New Item
               </h3>
-              <p className="text-[var(--secondary)] opacity-70">
+              <p className="text-sm text-[var(--secondary)] opacity-70">
                 Create a new item for your inventory
               </p>
             </div>
 
             {/* Add Item Form */}
-            <div className="space-y-6">
+            <div className="space-y-4">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                     Item Name <span className="text-[var(--error)]">*</span>
@@ -155,7 +155,7 @@ export default function AddItemModal({
                     type="text"
                     value={newItem.name}
                     onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     placeholder="Enter item name"
                   />
                 </div>
@@ -169,14 +169,14 @@ export default function AddItemModal({
                       type="text"
                       value={newItem.description}
                       onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                      className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="Enter description"
                     />
                   </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                     Selling Price <span className="text-[var(--error)]">*</span>
@@ -215,7 +215,7 @@ export default function AddItemModal({
                           setPriceInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -259,7 +259,7 @@ export default function AddItemModal({
                           setCostInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -267,7 +267,7 @@ export default function AddItemModal({
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
                     Initial Stock <span className="text-[var(--error)]">*</span>
@@ -303,7 +303,7 @@ export default function AddItemModal({
                         setStockInput('');
                       }
                     }}
-                    className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     placeholder="0"
                     inputMode="numeric"
                   />
@@ -323,22 +323,12 @@ export default function AddItemModal({
                         setNewItem({...newItem, category_id: selectedCategory.id});
                       }
                     }}
-                    height={44}
+                    height={38}
                     roundness={"[8px]"}
                     valueAlignment={'left'}
                     shadow={false}
                   />
                 </div>
-              </div>
-
-              {/* Image Upload Section */}
-              <div>
-                <ImageUpload
-                  currentImageUrl={newItem.img_url}
-                  onImageUpload={(imageUrl) => setNewItem({...newItem, img_url: imageUrl})}
-                  onImageRemove={() => setNewItem({...newItem, img_url: ""})}
-                  bucket="inventory-images"
-                />
               </div>
 
               {/* Preview Section */}
@@ -411,27 +401,36 @@ export default function AddItemModal({
               )} */}
             </div>
 
+            {/* Image Upload */}
+            <ImageUpload
+              currentImageUrl={newItem.img_url}
+              onImageUpload={(imageUrl) => setNewItem({...newItem, img_url: imageUrl})}
+              onImageRemove={() => setNewItem({...newItem, img_url: ""})}
+              bucket="inventory-images"
+              compact
+            />
+
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
               <button
                 onClick={addItem}
                 disabled={
-                  !newItem.name.trim() || 
-                  priceInput === '' || 
-                  isNaN(parseFloat(priceInput)) || 
+                  !newItem.name.trim() ||
+                  priceInput === '' ||
+                  isNaN(parseFloat(priceInput)) ||
                   parseFloat(priceInput) <= 0 ||
                   (costInput !== '' && (isNaN(parseFloat(costInput)) || parseFloat(costInput) < 0))
                 }
-                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-                  newItem.name.trim() && 
-                  priceInput !== '' && 
-                  !isNaN(parseFloat(priceInput)) && 
+                className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
+                  newItem.name.trim() &&
+                  priceInput !== '' &&
+                  !isNaN(parseFloat(priceInput)) &&
                   parseFloat(priceInput) > 0 &&
                   (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
