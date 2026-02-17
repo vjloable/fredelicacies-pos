@@ -36,7 +36,6 @@ export default function EditBundleModal({
   const [priceInput, setPriceInput] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
-  const [selectedItemName, setSelectedItemName] = useState('');
 
   // Initialize form with bundle data
   useEffect(() => {
@@ -96,7 +95,6 @@ export default function EditBundleModal({
         item
       }
     ]);
-    setSelectedItemName('');
   };
 
   const handleRemoveComponent = (inventoryItemId: string) => {
@@ -310,7 +308,6 @@ export default function EditBundleModal({
                     <DropdownField
                       options={availableItems.map(item => item.name)}
                       defaultValue="Select an item to add..."
-                      value={selectedItemName}
                       dropdownPosition="bottom-left"
                       dropdownOffset={{ top: 2, left: 0 }}
                       onChange={(itemName) => {

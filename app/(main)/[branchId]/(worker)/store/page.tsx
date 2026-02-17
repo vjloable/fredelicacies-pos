@@ -296,7 +296,7 @@ export default function StoreScreen() {
 		availability: number;
 		components?: BundleComponent[];
 		category_id?: string | number;
-		description?: string;
+		description?: string | null;
 	};
 
 	const displayItems: DisplayItem[] = useMemo(() => {

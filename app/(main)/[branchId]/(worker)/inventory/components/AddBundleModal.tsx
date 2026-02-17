@@ -36,7 +36,6 @@ export default function AddBundleModal({
   const [priceInput, setPriceInput] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
-  const [selectedItemName, setSelectedItemName] = useState('');
 
   if (!isOpen) return null;
 
@@ -56,7 +55,6 @@ export default function AddBundleModal({
         item
       }
     ]);
-    setSelectedItemName('');
   };
 
   const handleRemoveComponent = (inventoryItemId: string) => {
@@ -243,7 +241,6 @@ export default function AddBundleModal({
                     <DropdownField
                       options={availableItems.map(item => item.name)}
                       defaultValue="Select an item to add..."
-                      value={selectedItemName}
                       dropdownPosition="bottom-left"
                       dropdownOffset={{ top: 2, left: 0 }}
                       onChange={(itemName) => {
