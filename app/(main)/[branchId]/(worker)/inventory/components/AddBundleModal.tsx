@@ -126,7 +126,7 @@ export default function AddBundleModal({
 
   return (
     <div
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
@@ -139,10 +139,10 @@ export default function AddBundleModal({
             <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-amber-500"></div>
             </div>
-            <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+            <h3 className="text-xl font-bold text-secondary mb-2">
               Creating Bundle...
             </h3>
-            <p className="text-[var(--secondary)] opacity-70">
+            <p className="text-secondary opacity-70">
               Please wait while we create your bundle
             </p>
           </div>
@@ -153,10 +153,10 @@ export default function AddBundleModal({
               <div className="w-16 h-16 bg-amber-100 rounded-xl mx-auto mb-4 flex items-center justify-center">
                 <PlusIcon className='size-6 text-amber-500'/>
               </div>
-              <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+              <h3 className="text-xl font-bold text-secondary mb-2">
                 Create New Bundle
               </h3>
-              <p className="text-[var(--secondary)] opacity-70">
+              <p className="text-secondary opacity-70">
                 Combine multiple items into a special offer
               </p>
             </div>
@@ -166,20 +166,20 @@ export default function AddBundleModal({
               {/* Bundle Name and Description */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Bundle Name <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Bundle Name <span className="text-(--error)">*</span>
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-[14px] h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Price <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Price <span className="text-(--error)">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
@@ -198,7 +198,7 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-[14px] h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -208,14 +208,14 @@ export default function AddBundleModal({
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Description
-                  <span className="text-xs text-[var(--secondary)]/50 ml-1">(Optional)</span>
+                  <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full px-3 py-2 text-[14px] rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -230,9 +230,9 @@ export default function AddBundleModal({
               />
 
               {/* Component Selector */}
-              <div className="border-t-2 border-[var(--secondary)]/20 pt-6">
-                <label className="block text-sm font-medium text-[var(--secondary)] mb-3">
-                  Bundle Components <span className="text-[var(--error)]">*</span>
+              <div className="border-t-2 border-(--secondary)/20 pt-6">
+                <label className="block text-sm font-medium text-secondary mb-3">
+                  Bundle Components <span className="text-(--error)">*</span>
                 </label>
 
                 {/* Item Selector Dropdown */}
@@ -253,7 +253,7 @@ export default function AddBundleModal({
                     />
                   </div>
                 ) : selectedComponents.length > 0 ? (
-                  <div className="mb-4 text-sm text-[var(--secondary)]/70 text-center py-2 bg-gray-50 rounded-lg">
+                  <div className="mb-4 text-sm text-(--secondary)/70 text-center py-2 bg-gray-50 rounded-lg">
                     All available items have been added to the bundle
                   </div>
                 ) : (
@@ -264,14 +264,14 @@ export default function AddBundleModal({
 
                 {/* Selected Components List */}
                 {selectedComponents.length > 0 && (
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-3 max-h-75 overflow-y-auto">
                     {selectedComponents.map((component) => (
                       <div
                         key={component.inventoryItemId}
                         className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200"
                       >
                         {/* Item Image */}
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                           {component.item.img_url ? (
                             <Image
                               src={component.item.img_url}
@@ -289,17 +289,17 @@ export default function AddBundleModal({
 
                         {/* Item Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-[var(--secondary)] truncate">
+                          <div className="font-medium text-secondary truncate">
                             {component.item.name}
                           </div>
-                          <div className="text-xs text-[var(--secondary)]/50">
+                          <div className="text-xs text-(--secondary)/50">
                             Stock: {component.item.stock} • {formatCurrency(component.item.price)}
                           </div>
                         </div>
 
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-[var(--secondary)]/70">Qty:</label>
+                          <label className="text-sm text-(--secondary)/70">Qty:</label>
                           <input
                             type="number"
                             value={component.quantity}
@@ -339,7 +339,7 @@ export default function AddBundleModal({
             <div className="flex gap-4 mt-8">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
@@ -359,7 +359,7 @@ export default function AddBundleModal({
                   parseFloat(priceInput) > 0 &&
                   selectedComponents.length > 0
                     ? 'bg-amber-500 hover:bg-amber-600 text-white hover:scale-105 cursor-pointer'
-                    : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Create Bundle
