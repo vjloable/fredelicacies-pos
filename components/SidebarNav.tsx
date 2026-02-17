@@ -14,6 +14,7 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useState } from "react";
 import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
 import UsersIcon from "./icons/SidebarNav/UsersIcon";
+import VersionDisplay from "./VersionDisplay";
 
 // Import icons for new sections (create if they don't exist)
 interface NavItem {
@@ -284,6 +285,12 @@ export default function SidebarNav() {
 						</li>
 					</ul>
 				</nav>
+			{/* Version */}
+			<div className='px-4 py-3 border-t border-gray-200'>
+				<p className='text-[10px] text-[var(--secondary)]/30 text-center'>
+					<VersionDisplay variant="simple" />
+				</p>
+			</div>
 			</div>
 		</div>
 	);
