@@ -199,7 +199,7 @@ export default function InventoryScreen() {
 				{!isClient ? (
 					<div className='flex items-center justify-center py-8'>
 						<LoadingSpinner size="md"/>
-						<span className='ml-3 text-[var(--secondary)]'>
+						<span className='ml-3 text-secondary'>
 							Initializing...
 						</span>
 					</div>
@@ -207,10 +207,10 @@ export default function InventoryScreen() {
 					<>
 						{/* Error Display */}
 						{error && (
-							<div className='mx-6 mb-4 p-2 bg-[var(--error)]/10 border border-[var(--error)]/40 rounded-lg'>
+							<div className='mx-6 mb-4 p-2 bg-(--error)/10 border border-(--error)/40 rounded-lg'>
 								<div className='flex items-center gap-3'>
 									<svg
-										className='w-5 h-5 text-[var(--error)]'
+										className='w-5 h-5 text-(--error)'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -219,12 +219,12 @@ export default function InventoryScreen() {
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-[var(--error)] font-medium text-[12px]'>
+									<span className='text-(--error) font-medium text-[12px]'>
 										{error}
 									</span>
 									<button
 										onClick={() => setError(null)}
-										className='ml-auto text-[var(--error)] hover:text-[var(--error)]/20'>
+										className='ml-auto text-(--error) hover:text-(--error)/20'>
 										<DeleteIcon />
 									</button>
 								</div>
@@ -297,19 +297,19 @@ export default function InventoryScreen() {
 										{categories.map((category) => (
 											<div
 												key={category.id}
-												className='inline-flex items-center gap-2 bg-[var(--primary)] px-3 py-2 rounded-lg border border-gray-200 group hover:border-gray-300 transition-colors'>
+												className='inline-flex items-center gap-2 bg-primary px-3 py-2 rounded-lg border border-gray-200 group hover:border-gray-300 transition-colors'>
 												<div
 													className=' w-3 h-3 rounded-full'
 													style={{
 														backgroundColor: category.color,
 													}}
 												/>
-												<span className='text-sm font-medium text-[var(--secondary)]'>
+												<span className='text-sm font-medium text-secondary'>
 													{category.name}
 												</span>
 												<button
 													onClick={() => handleDeleteCategory(category)}
-													className='w-0 opacity-0 group-hover:w-[18px] group-hover:opacity-100 bg-transparent text-transparent group-hover:text-[var(--error)] group-hover:bg-[var(--error)]/40 rounded-md border transition-all duration-200'
+													className='w-0 opacity-0 group-hover:w-4.5 group-hover:opacity-100 bg-transparent text-transparent group-hover:text-(--error) group-hover:bg-(--error)/40 rounded-md border transition-all duration-200'
 													title='Delete category'>
 													<DeleteIcon className='w-4 h-4' />
 												</button>
@@ -321,21 +321,21 @@ export default function InventoryScreen() {
 								{/* Items Section */}
 								<div>
 									<div className='flex items-center justify-between mb-4'>
-										<h2 className='text-xl font-semibold text-[var(--secondary)]'>
+										<h2 className='text-xl font-semibold text-secondary'>
 											Items
 										</h2>
 										<button
 											onClick={() => setShowItemForm(true)}
-											className={`bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 
-														rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all 
+											className={`bg-accent text-secondary text-[12px] px-4 py-2 
+														rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all 
 														font-semibold hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
-											<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-[14px]'>
 												<div className='size-4'>
 													<PlusIcon className='drop-shadow-lg' />
 												</div>
-												<span className='mt-[2px]'>ADD ITEM</span>
+												<span className='mt-0.5'>ADD ITEM</span>
 											</div>
 										</button>
 									</div>
