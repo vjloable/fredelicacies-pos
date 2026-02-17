@@ -235,7 +235,7 @@ export default function InventoryScreen() {
 						{loading && (
 							<div className='flex items-center justify-center py-8'>
 								<LoadingSpinner size="md"/>
-								<span className='ml-3 text-[var(--secondary)]'>
+								<span className='ml-3 text-secondary'>
 									Loading inventory...
 								</span>
 							</div>
@@ -250,18 +250,18 @@ export default function InventoryScreen() {
 										onClick={() => setActiveTab('items')}
 										className={`px-6 py-2 rounded-lg font-medium transition-all ${
 											activeTab === 'items'
-												? 'bg-[var(--accent)] text-[var(--primary)] text-shadow-lg'
-												: 'bg-gray-200 text-[var(--secondary)] hover:bg-gray-300'
+												? 'bg-accent text-primary text-shadow-lg'
+												: 'bg-gray-200 text-secondary hover:bg-gray-300'
 										}`}
 									>
-										Inventory Items
+										Pieces
 									</button>
 									<button
 										onClick={() => setActiveTab('bundles')}
 										className={`px-6 py-2 rounded-lg font-medium transition-all ${
 											activeTab === 'bundles'
 												? 'bg-amber-500 text-white'
-												: 'bg-gray-200 text-[var(--secondary)] hover:bg-gray-300'
+												: 'bg-gray-200 text-secondary hover:bg-gray-300'
 										}`}
 									>
 										Bundles
