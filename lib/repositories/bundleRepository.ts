@@ -2,6 +2,15 @@
 import { supabase } from '@/lib/supabase';
 import type { Bundle, BundleComponent, BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain/bundle';
 
+// Module-level callback registry for immediate post-mutation refresh
+const activeCallbacks = new Map<string, Set<(bundles: BundleWithComponents[]) => void>>();
+// Map bundleId → branchId so update/delete can find which branch to refresh
+const bundleBranchIndex = new Map<string, string>();
+
+function registerBundles(bundles: BundleWithComponents[], branchId: string) {
+  bundles.forEach(bundle => { if (bundle.id) bundleBranchIndex.set(bundle.id, branchId); });
+}
+
 export const bundleRepository = {
   // Create a new bundle
   async create(branchId: string, data: CreateBundleData): Promise<{ bundle: Bundle | null; error: any }> {
@@ -174,10 +183,34 @@ export const bundleRepository = {
     return { error };
   },
 
+  // Immediately notify all subscribers for a branch (call after mutations)
+  async triggerRefresh(branchId: string): Promise<void> {
+    const cbs = activeCallbacks.get(branchId);
+    if (!cbs || cbs.size === 0) return;
+    const { bundles } = await this.getByBranchWithComponents(branchId);
+    registerBundles(bundles, branchId);
+    cbs.forEach(cb => cb(bundles));
+  },
+
+  // Trigger refresh when only bundle ID is known (update/delete use case)
+  async triggerRefreshByBundleId(bundleId: string): Promise<void> {
+    const branchId = bundleBranchIndex.get(bundleId);
+    if (branchId) await this.triggerRefresh(branchId);
+  },
+
   // Subscribe to bundle changes for a branch
   subscribe(branchId: string, callback: (bundles: BundleWithComponents[]) => void) {
+    // Register callback for immediate post-mutation refresh
+    if (!activeCallbacks.has(branchId)) {
+      activeCallbacks.set(branchId, new Set());
+    }
+    activeCallbacks.get(branchId)!.add(callback);
+
     // Initial fetch
-    this.getByBranchWithComponents(branchId).then(({ bundles }) => callback(bundles));
+    this.getByBranchWithComponents(branchId).then(({ bundles }) => {
+      registerBundles(bundles, branchId);
+      callback(bundles);
+    });
 
     const bundleChannel = supabase
       .channel(`bundles-${branchId}`)
@@ -190,7 +223,10 @@ export const bundleRepository = {
           filter: `branch_id=eq.${branchId}`,
         },
         () => {
-          this.getByBranchWithComponents(branchId).then(({ bundles }) => callback(bundles));
+          this.getByBranchWithComponents(branchId).then(({ bundles }) => {
+            registerBundles(bundles, branchId);
+            callback(bundles);
+          });
         }
       )
       .on(
@@ -201,12 +237,16 @@ export const bundleRepository = {
           table: 'bundle_components',
         },
         () => {
-          this.getByBranchWithComponents(branchId).then(({ bundles }) => callback(bundles));
+          this.getByBranchWithComponents(branchId).then(({ bundles }) => {
+            registerBundles(bundles, branchId);
+            callback(bundles);
+          });
         }
       )
       .subscribe();
 
     return () => {
+      activeCallbacks.get(branchId)?.delete(callback);
       bundleChannel.unsubscribe();
     };
   },

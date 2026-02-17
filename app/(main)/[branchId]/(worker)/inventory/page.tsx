@@ -7,6 +7,7 @@ import MobileTopBar from "@/components/MobileTopBar";
 import EditItemModal from "./components/EditItemModal";
 import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
+import BundlesView from "./components/BundlesView";
 import type { InventoryItem, Category } from "@/types/domain";
 import { subscribeToInventoryItems } from "@/services/inventoryService";
 import {
@@ -36,6 +37,7 @@ export default function InventoryScreen() {
 	const [error, setError] = useState<string | null>(null);
 	const [isClient, setIsClient] = useState(false);
 	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id); // Get POS access control
+	const [activeTab, setActiveTab] = useState<'items' | 'bundles'>('items');
 	const [showCategoryForm, setShowCategoryForm] = useState(false);
 	const [showItemForm, setShowItemForm] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
@@ -242,8 +244,35 @@ export default function InventoryScreen() {
 						{/* Main Content - Scrollable */}
 						{!loading && (
 							<div className='flex-1 px-6 overflow-y-auto pb-6'>
-								{/* Categories Section */}
-								<div className='mb-6'>
+								{/* Tab Navigation */}
+								<div className='flex gap-2 mb-6'>
+									<button
+										onClick={() => setActiveTab('items')}
+										className={`px-6 py-2 rounded-lg font-medium transition-all ${
+											activeTab === 'items'
+												? 'bg-[var(--accent)] text-[var(--primary)] text-shadow-lg'
+												: 'bg-gray-200 text-[var(--secondary)] hover:bg-gray-300'
+										}`}
+									>
+										Inventory Items
+									</button>
+									<button
+										onClick={() => setActiveTab('bundles')}
+										className={`px-6 py-2 rounded-lg font-medium transition-all ${
+											activeTab === 'bundles'
+												? 'bg-amber-500 text-white'
+												: 'bg-gray-200 text-[var(--secondary)] hover:bg-gray-300'
+										}`}
+									>
+										Bundles
+									</button>
+								</div>
+
+								{/* Items View */}
+								{activeTab === 'items' && (
+									<>
+										{/* Categories Section */}
+										<div className='mb-6'>
 									<div className='flex items-center justify-between mb-3'>
 										<h2 className='text-lg font-semibold text-[var(--secondary)]'>
 											Categories
@@ -556,10 +585,17 @@ export default function InventoryScreen() {
 										)}
 									</div>
 								</div>
-							</div>
-						)}
+								</>
+							)}
 
-						{/* Modal Components */}
+							{/* Bundles View */}
+							{activeTab === 'bundles' && (
+								<BundlesView />
+							)}
+						</div>
+					)}
+
+					{/* Modal Components */}
 						<EditItemModal
 							isOpen={showEditModal}
 							editingItem={editingItem}

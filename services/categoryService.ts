@@ -7,6 +7,7 @@ export type { Category, CreateCategoryData, UpdateCategoryData };
 // Create a new category
 export const createCategory = async (branchId: string, categoryData: CreateCategoryData): Promise<{ id: string | null; error: any }> => {
   const { category, error } = await categoryRepository.create(branchId, categoryData);
+  if (!error) await categoryRepository.triggerRefresh(branchId);
   return { id: category?.id || null, error };
 };
 
@@ -22,12 +23,16 @@ export const getCategoryById = async (id: string): Promise<{ category: Category 
 
 // Update category
 export const updateCategory = async (id: string, data: UpdateCategoryData): Promise<{ category: Category | null; error: any }> => {
-  return await categoryRepository.update(id, data);
+  const result = await categoryRepository.update(id, data);
+  if (!result.error) await categoryRepository.triggerRefreshByCategoryId(id);
+  return result;
 };
 
 // Delete a category
 export const deleteCategory = async (id: string): Promise<{ error: any }> => {
-  return await categoryRepository.delete(id);
+  const result = await categoryRepository.delete(id);
+  if (!result.error) await categoryRepository.triggerRefreshByCategoryId(id);
+  return result;
 };
 
 // Subscribe to categories changes for a branch

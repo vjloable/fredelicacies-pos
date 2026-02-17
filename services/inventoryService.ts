@@ -7,6 +7,7 @@ export const createInventoryItem = async (
   item: CreateInventoryItemData
 ): Promise<{ id: string | null; error: any }> => {
   const { item: createdItem, error } = await inventoryRepository.create(branchId, item);
+  if (!error) await inventoryRepository.triggerRefresh(branchId);
   return { id: createdItem?.id || null, error };
 };
 
@@ -41,12 +42,16 @@ export const updateInventoryItem = async (
   id: string,
   updates: UpdateInventoryItemData
 ): Promise<{ item: InventoryItem | null; error: any }> => {
-  return await inventoryRepository.update(id, updates);
+  const result = await inventoryRepository.update(id, updates);
+  if (!result.error) await inventoryRepository.triggerRefreshByItemId(id);
+  return result;
 };
 
 // Delete an inventory item
 export const deleteInventoryItem = async (id: string): Promise<{ error: any }> => {
-  return await inventoryRepository.delete(id);
+  const result = await inventoryRepository.delete(id);
+  if (!result.error) await inventoryRepository.triggerRefreshByItemId(id);
+  return result;
 };
 
 // Helper function to check if inventory is empty

@@ -1,5 +1,5 @@
 import { orderRepository, inventoryRepository } from '@/lib/repositories';
-import type { OrderWithItems } from '@/types/domain';
+import type { OrderWithItems, BundleComponent } from '@/types/domain';
 
 // Generate order number (simple incrementing format)
 function generateOrderNumber(): string {
@@ -18,9 +18,11 @@ export const createOrder = async (
     price: number;
     cost?: number;
     quantity: number;
+    type?: 'item' | 'bundle';
     is_bundle?: boolean;
     bundle_id?: string;
     item_id?: string;
+    components?: BundleComponent[];
     bundle_components?: any;
   }>,
   subtotal: number,
@@ -30,16 +32,20 @@ export const createOrder = async (
 ): Promise<{ id: string | null; error: any }> => {
   const orderNumber = generateOrderNumber();
 
+  // Separate regular items and bundles
+  const regularItems = items.filter(i => !i.type || i.type === 'item');
+  const bundleItems = items.filter(i => i.type === 'bundle');
+
   // Prepare order items
   const orderItems = items.map(item => ({
-    item_id: item.is_bundle ? null : (item.item_id || item.id),
-    bundle_id: item.is_bundle ? (item.bundle_id || item.id) : null,
+    item_id: (!item.type || item.type === 'item') ? item.id : null,
+    bundle_id: item.type === 'bundle' ? item.id : null,
     name: item.name,
     price: item.price,
     cost: item.cost || 0,
     quantity: item.quantity,
-    is_bundle: item.is_bundle || false,
-    bundle_components: item.bundle_components || null,
+    is_bundle: item.type === 'bundle',
+    bundle_components: item.type === 'bundle' ? item.components : null,
   }));
 
   // Create order with items
@@ -60,16 +66,34 @@ export const createOrder = async (
     return { id: null, error };
   }
 
-  // Update inventory stock for non-bundle items
-  const stockUpdates = items
-    .filter(item => !item.is_bundle && item.id)
-    .map(item => ({
-      id: item.id,
-      stock: -item.quantity, // Negative to reduce stock
-    }));
+  // Calculate stock updates
+  // 1. Regular items: deduct their quantity
+  const regularStockUpdates = regularItems.map(item => ({
+    id: item.id,
+    stock: -item.quantity
+  }));
 
-  if (stockUpdates.length > 0) {
-    await inventoryRepository.bulkUpdateStock(stockUpdates);
+  // 2. Bundle components: deduct based on component quantities
+  const bundleStockMap = new Map<string, number>();
+  bundleItems.forEach(bundle => {
+    bundle.components?.forEach(component => {
+      const currentDeduction = bundleStockMap.get(component.inventory_item_id) || 0;
+      bundleStockMap.set(
+        component.inventory_item_id,
+        currentDeduction - (component.quantity * bundle.quantity)
+      );
+    });
+  });
+
+  const bundleStockUpdates = Array.from(bundleStockMap.entries()).map(
+    ([itemId, stockDelta]) => ({ id: itemId, stock: stockDelta })
+  );
+
+  // Combine all stock updates
+  const allStockUpdates = [...regularStockUpdates, ...bundleStockUpdates];
+
+  if (allStockUpdates.length > 0) {
+    await inventoryRepository.bulkUpdateStock(allStockUpdates);
   }
 
   return { id: order.id, error: null };

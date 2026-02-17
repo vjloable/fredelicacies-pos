@@ -2,6 +2,15 @@
 import { supabase } from '@/lib/supabase';
 import type { InventoryItem, CreateInventoryItemData, UpdateInventoryItemData } from '@/types/domain/inventory';
 
+// Module-level callback registry for immediate post-mutation refresh
+const activeCallbacks = new Map<string, Set<(items: InventoryItem[]) => void>>();
+// Map itemId → branchId so update/delete can find which branch to refresh
+const itemBranchIndex = new Map<string, string>();
+
+function registerItems(items: InventoryItem[], branchId: string) {
+  items.forEach(item => { if (item.id) itemBranchIndex.set(item.id, branchId); });
+}
+
 export const inventoryRepository = {
   // Create a new inventory item
   async create(branchId: string, data: CreateInventoryItemData): Promise<{ item: InventoryItem | null; error: any }> {
@@ -71,13 +80,13 @@ export const inventoryRepository = {
     return { item, error };
   },
 
-  // Bulk update stock for multiple items
+  // Bulk update stock for multiple items using incremental updates
   async bulkUpdateStock(updates: Array<{ id: string; stock: number }>): Promise<{ error: any }> {
     const promises = updates.map(update =>
-      supabase
-        .from('inventory_items')
-        .update({ stock: update.stock })
-        .eq('id', update.id)
+      supabase.rpc('increment_stock', {
+        item_id: update.id,
+        stock_delta: update.stock  // Positive to add, negative to subtract
+      })
     );
 
     const results = await Promise.all(promises);
@@ -96,10 +105,34 @@ export const inventoryRepository = {
     return { error };
   },
 
+  // Immediately notify all subscribers for a branch (call after mutations)
+  async triggerRefresh(branchId: string): Promise<void> {
+    const cbs = activeCallbacks.get(branchId);
+    if (!cbs || cbs.size === 0) return;
+    const { items } = await this.getByBranch(branchId);
+    registerItems(items, branchId);
+    cbs.forEach(cb => cb(items));
+  },
+
+  // Trigger refresh when only item ID is known (update/delete use case)
+  async triggerRefreshByItemId(itemId: string): Promise<void> {
+    const branchId = itemBranchIndex.get(itemId);
+    if (branchId) await this.triggerRefresh(branchId);
+  },
+
   // Subscribe to inventory changes for a branch
   subscribe(branchId: string, callback: (items: InventoryItem[]) => void) {
+    // Register callback for immediate post-mutation refresh
+    if (!activeCallbacks.has(branchId)) {
+      activeCallbacks.set(branchId, new Set());
+    }
+    activeCallbacks.get(branchId)!.add(callback);
+
     // Initial fetch
-    this.getByBranch(branchId).then(({ items }) => callback(items));
+    this.getByBranch(branchId).then(({ items }) => {
+      registerItems(items, branchId);
+      callback(items);
+    });
 
     const channel = supabase
       .channel(`inventory-${branchId}`)
@@ -113,12 +146,16 @@ export const inventoryRepository = {
         },
         () => {
           // Refetch items when any change occurs
-          this.getByBranch(branchId).then(({ items }) => callback(items));
+          this.getByBranch(branchId).then(({ items }) => {
+            registerItems(items, branchId);
+            callback(items);
+          });
         }
       )
       .subscribe();
 
     return () => {
+      activeCallbacks.get(branchId)?.delete(callback);
       channel.unsubscribe();
     };
   },

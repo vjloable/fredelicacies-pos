@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
 import OrderCartIcon from "./icons/OrderCartIcon";
-import type { InventoryItem, Category, Discount } from "@/types/domain";
+import type { InventoryItem, Category, Discount, BundleWithComponents, BundleComponent } from "@/types/domain";
 import { subscribeToInventoryItems } from "@/services/inventoryService";
 import { subscribeToCategories } from "@/services/categoryService";
+import { subscribeToBundles, calculateBundleAvailability } from "@/services/bundleService";
 import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
@@ -110,6 +111,8 @@ export default function StoreScreen() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 	const [categories, setCategories] = useState<Category[]>([]);
+	const [bundles, setBundles] = useState<BundleWithComponents[]>([]);
+	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
 	const [orderType, setOrderType] = useState<
@@ -135,6 +138,8 @@ export default function StoreScreen() {
 			originalStock: number;
 			imgUrl?: string | null;
 			categoryId: number | string;
+			type?: 'item' | 'bundle';
+			components?: BundleComponent[];
 		}>
 	>([]);
 
@@ -166,6 +171,30 @@ export default function StoreScreen() {
 			}
 		};
 	}, [isClient, currentBranch]);
+
+	// Subscribe to bundles
+	useEffect(() => {
+		if (!isClient || !currentBranch) return;
+
+		const unsubscribe = subscribeToBundles(currentBranch.id, (bundlesData) => {
+			setBundles(bundlesData);
+		});
+
+		return () => {
+			if (unsubscribe) {
+				unsubscribe();
+			}
+		};
+	}, [isClient, currentBranch]);
+
+	// Calculate bundle availability
+	useEffect(() => {
+		const availability = new Map<string, number>();
+		bundles.filter(b => b.status === 'active').forEach(bundle => {
+			availability.set(bundle.id, calculateBundleAvailability(bundle, inventoryItems));
+		});
+		setBundleAvailability(availability);
+	}, [bundles, inventoryItems]);
 
 	// Set up real-time subscription to categories using singleton dataStore
 	useEffect(() => {
@@ -257,6 +286,54 @@ export default function StoreScreen() {
 		return matchesSearch && matchesCategory && hasStock;
 	});
 
+	// Combine inventory items and bundles for display
+	type DisplayItem = (InventoryItem & { type: 'item'; availability: number }) | {
+		id: string;
+		name: string;
+		price: number;
+		img_url: string | null | undefined;
+		type: 'bundle';
+		availability: number;
+		components?: BundleComponent[];
+		category_id?: string | number;
+		description?: string;
+	};
+
+	const displayItems: DisplayItem[] = useMemo(() => {
+		const items: DisplayItem[] = filteredItems.map(item => ({
+			...item,
+			type: 'item' as const,
+			availability: item.stock
+		}));
+
+		const bundleItems = bundles
+			.filter(b => b.status === 'active')
+			.map(bundle => ({
+				id: bundle.id,
+				name: bundle.name,
+				price: bundle.price,
+				img_url: bundle.img_url,
+				description: bundle.description,
+				type: 'bundle' as const,
+				availability: bundleAvailability.get(bundle.id) || 0,
+				components: bundle.components
+			}))
+			.filter(bundle => {
+				// Apply search filter
+				const matchesSearch =
+					searchQuery === "" ||
+					bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+					bundle.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+				// Filter out unavailable bundles if hideOutOfStock is enabled
+				const hasAvailability = hideOutOfStock ? bundle.availability > 0 : true;
+
+				return matchesSearch && hasAvailability;
+			});
+
+		return [...items, ...bundleItems];
+	}, [filteredItems, bundles, bundleAvailability, searchQuery, hideOutOfStock]);
+
 	// Determine if we're showing search results
 	const isSearching = searchQuery.trim() !== "";
 
@@ -294,36 +371,58 @@ export default function StoreScreen() {
 		return Math.max(0, originalStock - reservedQuantity);
 	};
 
-	const addToCart = (item: InventoryItem) => {
-		const availableStock = getAvailableStock(item.id || "0");
+	const addToCart = (item: DisplayItem) => {
+		const isBundle = item.type === 'bundle';
+		const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
 
 		if (availableStock <= 0) return;
 
 		const itemId = item.id || "0";
-		const existingItem = cart.find((cartItem) => cartItem.id === itemId);
+		const existingItem = cart.find((cartItem) => cartItem.id === itemId && (cartItem.type || 'item') === item.type);
 
 		if (existingItem) {
+			const currentInCart = existingItem.quantity;
+			if (currentInCart >= availableStock) return; // Can't add more
+
 			setCart(
 				cart.map((cartItem) =>
-					cartItem.id === itemId
+					cartItem.id === itemId && (cartItem.type || 'item') === item.type
 						? { ...cartItem, quantity: cartItem.quantity + 1 }
 						: cartItem
 				)
 			);
 		} else {
-			setCart([
-				...cart,
-				{
-					id: itemId,
-					name: item.name,
-					price: item.price,
-					cost: item.cost ?? undefined,
-					quantity: 1,
-					originalStock: item.stock,
-					imgUrl: item.img_url ?? undefined,
-					categoryId: item.category_id ?? "",
-				},
-			]);
+			if (isBundle) {
+				setCart([
+					...cart,
+					{
+						id: itemId,
+						name: item.name,
+						price: item.price,
+						quantity: 1,
+						originalStock: availableStock,
+						imgUrl: item.img_url ?? undefined,
+						categoryId: 0,
+						type: 'bundle',
+						components: item.components,
+					},
+				]);
+			} else {
+				setCart([
+					...cart,
+					{
+						id: itemId,
+						name: item.name,
+						price: item.price,
+						cost: item.cost ?? undefined,
+						quantity: 1,
+						originalStock: item.stock,
+						imgUrl: item.img_url ?? undefined,
+						categoryId: item.category_id ?? "",
+						type: 'item',
+					},
+				]);
+			}
 		}
 	};
 
@@ -355,17 +454,24 @@ export default function StoreScreen() {
 		}
 	};
 
-	const updateQuantity = (id: string, delta: number) => {
-		console.log(`Updating quantity for item ${id} by ${delta}`);
+	const updateQuantity = (id: string, delta: number, itemType: 'item' | 'bundle' = 'item') => {
+		console.log(`Updating quantity for ${itemType} ${id} by ${delta}`);
 		setCart(
 			cart
 				.map((item) => {
-					if (item.id === id) {
+					if (item.id === id && (item.type || 'item') === itemType) {
 						const newQuantity = Math.max(0, item.quantity + delta);
 						// Check if we can increase quantity based on available stock
 						if (delta > 0) {
-							const availableStock = getAvailableStock(id);
-							if (availableStock <= 0) {
+							let maxAvailable = 0;
+							if (itemType === 'bundle') {
+								const bundle = bundles.find(b => b.id === id);
+								maxAvailable = bundle ? calculateBundleAvailability(bundle, inventoryItems) : 0;
+							} else {
+								maxAvailable = getAvailableStock(id);
+							}
+
+							if (maxAvailable <= 0 || item.quantity >= maxAvailable) {
 								return item; // Don't increase if no available stock
 							}
 						}
@@ -415,6 +521,8 @@ export default function StoreScreen() {
 					imgUrl: item.imgUrl || "",
 					categoryId: item.categoryId || "",
 					originalStock: item.originalStock,
+					type: item.type,
+					components: item.components,
 				})),
 				subtotal,
 				total,
@@ -618,7 +726,7 @@ export default function StoreScreen() {
 								</button>
 							</div>
 						</div>
-					) : filteredItems.length === 0 ? (
+					) : displayItems.length === 0 ? (
 						// Filtered Results Empty State
 						<div className='flex flex-col items-center justify-center py-12'>
 							<div className='w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center mb-4'>
@@ -668,11 +776,12 @@ export default function StoreScreen() {
 						</div>
 					) : (
 						<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 justify-center gap-6'>
-							{filteredItems.map((item, index) => {
-								const availableStock = getAvailableStock(item.id || "0");
+							{displayItems.map((item, index) => {
+								const isBundle = item.type === 'bundle';
+								const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
 								const isOutOfStock = availableStock <= 0;
 								const cartItem = cart.find(
-									(cartItem) => cartItem.id === item.id
+									(cartItem) => cartItem.id === item.id && (cartItem.type || 'item') === item.type
 								);
 								const inCartQuantity = cartItem ? cartItem.quantity : 0;
 
@@ -703,15 +812,22 @@ export default function StoreScreen() {
 												</div>
 											)}
 
+											{/* Bundle Badge */}
+											{isBundle && (
+												<div className='absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium select-none'>
+													Bundle
+												</div>
+											)}
+
 											{/* Stock indicator badges */}
 											{isOutOfStock && (
-												<div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+												<div className='absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg'>
 													<span className='text-white text-xs sm:text-sm font-semibold select-none'>
-														OUT OF STOCK
+														{isBundle ? 'UNAVAILABLE' : 'OUT OF STOCK'}
 													</span>
 												</div>
 											)}
-											{!isOutOfStock && availableStock <= 5 && (
+											{!isOutOfStock && !isBundle && availableStock <= 5 && (
 												<div className='absolute top-2 right-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded select-none'>
 													Low Stock
 												</div>
@@ -727,20 +843,29 @@ export default function StoreScreen() {
 													{inCartQuantity}
 												</div>
 											)}
-											<div className='absolute bottom-2 left-2 rounded select-none'>
-												<span
-													className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
-													style={{
-														backgroundColor: getCategoryColor(item.category_id),
-													}}>
-													{isSearching
-														? highlightSearchTerm(
-																getCategoryName(item.category_id),
-																searchQuery
-														)
-														: getCategoryName(item.category_id)}
-												</span>
-											</div>
+											{!isBundle && (
+												<div className='absolute bottom-2 left-2 rounded select-none'>
+													<span
+														className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
+														style={{
+															backgroundColor: getCategoryColor(item.category_id),
+														}}>
+														{isSearching
+															? highlightSearchTerm(
+																	getCategoryName(item.category_id),
+																	searchQuery
+															)
+															: getCategoryName(item.category_id)}
+													</span>
+												</div>
+											)}
+											{isBundle && (
+												<div className='absolute bottom-2 left-2 rounded select-none'>
+													<span className='text-[9px] sm:text-[10px] text-white bg-amber-500 px-2 py-1 rounded-full'>
+														Available: {availableStock}
+													</span>
+												</div>
+											)}
 										</div>
 
 										{/* Item Details */}
@@ -910,13 +1035,32 @@ export default function StoreScreen() {
 																		</span>
 																	</span>
 																</div>
+
+																{/* Bundle Component Details */}
+																{item.type === 'bundle' && item.components && (
+																	<div className='mt-1 p-2 bg-amber-50 rounded-lg border border-amber-200'>
+																		<div className='text-xs font-medium text-amber-800 mb-1'>Bundle includes:</div>
+																		<div className='space-y-0.5'>
+																			{item.components.map((comp) => (
+																				<div key={comp.id} className='flex justify-between text-xs text-gray-600'>
+																					<span className='truncate flex-1'>
+																						{comp.inventory_item?.name || 'Item'}
+																					</span>
+																					<span className='text-amber-600 font-medium ml-2'>
+																						×{comp.quantity}
+																					</span>
+																				</div>
+																			))}
+																		</div>
+																	</div>
+																)}
 															</div>
 
 															<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
 																<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
 																	<button
 																		onClick={() =>
-																			updateQuantity(item.id, -1)
+																			updateQuantity(item.id, -1, item.type || 'item')
 																		}
 																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
 																		<MinusIcon />
@@ -927,7 +1071,7 @@ export default function StoreScreen() {
 																	</span>
 
 																	<button
-																		onClick={() => updateQuantity(item.id, 1)}
+																		onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
 																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
 																		<PlusIcon />
 																	</button>
@@ -1156,6 +1300,25 @@ export default function StoreScreen() {
 															</span>
 														</span>
 													</div>
+
+													{/* Bundle Component Details */}
+													{item.type === 'bundle' && item.components && (
+														<div className='mt-1 p-2 bg-amber-50 rounded-lg border border-amber-200'>
+															<div className='text-xs font-medium text-amber-800 mb-1'>Bundle includes:</div>
+															<div className='space-y-0.5'>
+																{item.components.map((comp) => (
+																	<div key={comp.id} className='flex justify-between text-xs text-gray-600'>
+																		<span className='truncate flex-1'>
+																			{comp.inventory_item?.name || 'Item'}
+																		</span>
+																		<span className='text-amber-600 font-medium ml-2'>
+																			×{comp.quantity}
+																		</span>
+																	</div>
+																))}
+															</div>
+														</div>
+													)}
 												</div>
 
 												{/* Controls Section */}
@@ -1163,7 +1326,7 @@ export default function StoreScreen() {
 													{/* Quantity Controls */}
 													<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
 														<button
-															onClick={() => updateQuantity(item.id, -1)}
+															onClick={() => updateQuantity(item.id, -1, item.type || 'item')}
 															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
 															<MinusIcon />
 														</button>
@@ -1173,7 +1336,7 @@ export default function StoreScreen() {
 														</span>
 
 														<button
-															onClick={() => updateQuantity(item.id, 1)}
+															onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
 															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
 															<PlusIcon />
 														</button>

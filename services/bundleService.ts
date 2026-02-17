@@ -34,13 +34,14 @@ export const createBundle = async (
 
   // Add components
   const { error: componentsError } = await bundleRepository.addComponents(bundle.id, components);
-  
+
   if (componentsError) {
     // Rollback: delete the bundle if components fail
     await bundleRepository.delete(bundle.id);
     return { id: null, error: componentsError };
   }
 
+  await bundleRepository.triggerRefresh(branchId);
   return { id: bundle.id, error: null };
 };
 
@@ -67,12 +68,15 @@ export const updateBundle = async (
     }
   }
 
+  await bundleRepository.triggerRefreshByBundleId(id);
   return { error: null };
 };
 
 // Delete bundle
 export const deleteBundle = async (id: string): Promise<{ error: any }> => {
-  return await bundleRepository.delete(id);
+  const result = await bundleRepository.delete(id);
+  if (!result.error) await bundleRepository.triggerRefreshByBundleId(id);
+  return result;
 };
 
 // Get bundles with components
