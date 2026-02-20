@@ -102,11 +102,11 @@ export default function WaitingRoomPage() {
     >
       <div className="w-full max-w-lg">
         {/* Waiting Room Card */}
-        <div className="bg-white rounded-[12px] shadow-xl">
+        <div className="bg-white rounded-xl shadow-xl">
           {/* Logo/Header */}
           <div className="text-center">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]">
-              <div className="w-[165px] h-[120px]">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl">
+              <div className="w-41.25 h-30">
                 <LogoVerticalIcon />
               </div>
             </div>
@@ -115,28 +115,28 @@ export default function WaitingRoomPage() {
           <div className="p-8 text-center">
             {/* Waiting Icon with Animation */}
             <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center relative">
-                <svg className="w-8 h-8 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mx-auto w-16 h-16 bg-(--light-accent) rounded-full flex items-center justify-center relative">
+                <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {/* Pulse animation */}
-                <div className="absolute inset-0 rounded-full bg-[var(--accent)] animate-ping opacity-25"></div>
+                <div className="absolute inset-0 rounded-full bg-accent animate-ping opacity-25"></div>
               </div>
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold text-[var(--secondary)] mb-4">
+            <h1 className="text-2xl font-bold text-secondary mb-4">
               Welcome to Fredelicacies POS!
             </h1>
 
             {/* Status Message */}
             <div className="mb-6">
-              <p className="text-[var(--secondary)] mb-3">
+              <p className="text-secondary mb-3">
                 Your account has been created successfully.
               </p>
-              <div className="bg-[var(--light-accent)] border border-[var(--accent)] rounded-lg p-4 text-left">
+              <div className="bg-(--light-accent) border border-accent rounded-lg p-4 text-left">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 text-[var(--accent)] mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-accent mt-0.5 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <div>
@@ -154,7 +154,7 @@ export default function WaitingRoomPage() {
 
             {/* User Info */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg text-left">
-              <h3 className="text-sm font-medium text-[var(--secondary)] mb-2">Account Details:</h3>
+              <h3 className="text-sm font-medium text-secondary mb-2">Account Details:</h3>
               <div className="space-y-1 text-xs text-gray-600">
                 <p><span className="font-medium">Name:</span> {user?.name || 'N/A'}</p>
                 <p><span className="font-medium">Email:</span> {user?.email || 'N/A'}</p>
@@ -171,7 +171,7 @@ export default function WaitingRoomPage() {
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                   isCheckingAccess
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:shadow-lg"
+                    : "bg-accent hover:bg-(--accent)/90 text-white hover:shadow-lg"
                 }`}
               >
                 {isCheckingAccess ? (
@@ -212,7 +212,7 @@ export default function WaitingRoomPage() {
 
             {/* Footer */}
             <div className="mt-6">
-              <p className="text-xs text-[var(--secondary)] opacity-50">
+              <p className="text-xs text-secondary opacity-50">
                 Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
               </p>
             </div>
