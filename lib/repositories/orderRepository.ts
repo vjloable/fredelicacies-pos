@@ -6,7 +6,7 @@ export const orderRepository = {
   // Create order with items (transaction-like behavior)
   async create(
     branchId: string,
-    workerId: string,
+    userId: string,
     orderData: {
       order_number: string;
       total: number;
@@ -30,7 +30,7 @@ export const orderRepository = {
       .from('orders')
       .insert({
         branch_id: branchId,
-        worker_id: workerId,
+        user_id: userId,
         order_number: orderData.order_number,
         total: orderData.total,
         subtotal: orderData.subtotal,
@@ -109,7 +109,7 @@ export const orderRepository = {
     const orders: OrderWithItems[] = data.map(order => ({
       id: order.id,
       branch_id: order.branch_id,
-      worker_id: order.worker_id,
+      user_id: order.user_id,
       order_number: order.order_number,
       total: order.total,
       subtotal: order.subtotal,
@@ -142,7 +142,7 @@ export const orderRepository = {
     const order: OrderWithItems = {
       id: data.id,
       branch_id: data.branch_id,
-      worker_id: data.worker_id,
+      user_id: data.user_id,
       order_number: data.order_number,
       total: data.total,
       subtotal: data.subtotal,
@@ -157,15 +157,15 @@ export const orderRepository = {
     return { order, error: null };
   },
 
-  // Get orders by worker
-  async getByWorker(workerId: string, options?: { limit?: number }): Promise<{ orders: OrderWithItems[]; error: any }> {
+  // Get orders by user
+  async getByUser(userId: string, options?: { limit?: number }): Promise<{ orders: OrderWithItems[]; error: any }> {
     let query = supabase
       .from('orders')
       .select(`
         *,
         order_items (*)
       `)
-      .eq('worker_id', workerId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (options?.limit) {
@@ -181,7 +181,7 @@ export const orderRepository = {
     const orders: OrderWithItems[] = data.map(order => ({
       id: order.id,
       branch_id: order.branch_id,
-      worker_id: order.worker_id,
+      user_id: order.user_id,
       order_number: order.order_number,
       total: order.total,
       subtotal: order.subtotal,

@@ -55,9 +55,9 @@ const SuccessToast = ({
 
 	return (
 		<div className='fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300'>
-			<div className='bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px]'>
+			<div className='bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-75'>
 				{/* Success Icon */}
-				<div className='flex-shrink-0'>
+				<div className='shrink-0'>
 					<svg
 						className='w-6 h-6'
 						fill='none'
@@ -81,7 +81,7 @@ const SuccessToast = ({
 				{/* Close Button */}
 				<button
 					onClick={onClose}
-					className='flex-shrink-0 text-white hover:text-gray-200 transition-colors'>
+					className='shrink-0 text-white hover:text-gray-200 transition-colors'>
 					<svg
 						className='w-5 h-5'
 						fill='none'
@@ -349,7 +349,7 @@ export default function StoreScreen() {
 
 		return parts.map((part, index) =>
 			regex.test(part) ? (
-				<span key={index} className='bg-[var(--light-accent)] font-semibold'>
+				<span key={index} className='bg-(--light-accent) font-semibold'>
 					{part}
 				</span>
 			) : (
@@ -511,7 +511,7 @@ export default function StoreScreen() {
 			// Create order using the new service signature
 			const { id: orderId, error: orderError } = await createOrder(
 				currentBranch.id,
-				timeTracking.worker?.id || user.uid,
+				user.id,
 				cart.map((item) => ({
 					id: item.id,
 					name: item.name,
@@ -633,16 +633,16 @@ export default function StoreScreen() {
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder='Search items, categories, or descriptions...'
-							className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
+							className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 								searchQuery ? "animate-pulse transition-all" : ""
 							}`}
 						/>
 						<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
 							{searchQuery ? (
-								<div className='size-[30px] border-[var(--accent)] border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
+								<div className='size-7.5 border-accent border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
 							) : (
-								<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
-									<SearchIcon className='mr-[2px] mb-[2px] text-[var(--accent)]' />
+								<div className='size-7.5 bg-(--light-accent) rounded-full flex items-center justify-center'>
+									<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
 								</div>
 							)}
 						</div>
@@ -652,11 +652,11 @@ export default function StoreScreen() {
 				{/* Results Header - Fixed */}
 				<div className={`flex items-center justify-between px-6 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='flex flex-col'>
-						<h2 className='text-[var(--secondary)] font-bold'>
+						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
 						</h2>
 						{isSearching && (
-							<p className='text-xs text-[var(--secondary)] opacity-60'>
+							<p className='text-xs text-secondary opacity-60'>
 								Searching for `{searchQuery}`
 							</p>
 						)}
@@ -673,16 +673,16 @@ export default function StoreScreen() {
 								isCategorySelected(category.name)
 									? `${
 											!category.isSpecial
-												? "bg-[var(--secondary)]/20"
-												: "bg-[var(--accent)]"
-										} text-[var(--secondary)] shadow-none`
-									: "bg-white text-[var(--secondary)] hover:bg-gray-200 shadow-md"
+												? "bg-(--secondary)/20"
+												: "bg-accent"
+										} text-secondary shadow-none`
+									: "bg-white text-secondary hover:bg-gray-200 shadow-md"
 							}`}>
 							<div>
 								{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
 								{category.name}
 								{!category.isSpecial && (
-									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-[var(--secondary)]/10 text-[var(--secondary)]/50'>
+									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-(--secondary)/10 text-(--secondary)/50'>
 										{
 											inventoryItems.filter(
 												(item) =>
@@ -701,27 +701,27 @@ export default function StoreScreen() {
 					{loading ? (
 						<div className='flex flex-col items-center justify-center py-8 gap-4'>
 							<LoadingSpinner size="lg"/>
-							<span className='ml-3 text-[var(--secondary)]'>
+							<span className='ml-3 text-secondary'>
 								Loading menu...
 							</span>
 						</div>
 					) : inventoryItems.length === 0 ? (
 						// Empty Inventory Collection State
 						<div className='flex flex-col items-center justify-center py-12'>
-							<div className='w-[360px] mb-6 pr-[50px] mx-auto opacity-50 flex items-center justify-center'>
+							<div className='w-90 mb-6 pr-12.5 mx-auto opacity-50 flex items-center justify-center'>
 								<EmptyStoreIllustration />
 							</div>
-							<h3 className='text-xl font-semibold text-[var(--secondary)] mb-3'>
+							<h3 className='text-xl font-semibold text-secondary mb-3'>
 								The store front is empty
 							</h3>
-							<p className='text-[var(--secondary)] opacity-70 text-center max-w-md mb-6 leading-relaxed'>
+							<p className='text-secondary opacity-70 text-center max-w-md mb-6 leading-relaxed'>
 								The inventory is empty. You need to add items to your
 								inventory before they can appear in the store.
 							</p>
-							<div className='flex flex-col sm:flex-row gap-3 mb-[100px]'>
+							<div className='flex flex-col sm:flex-row gap-3 mb-25'>
 								<button
 									onClick={() => (window.location.href = "/inventory")}
-									className='px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90 transition-all font-medium shadow-md'>
+									className='px-6 py-3 bg-accent text-white rounded-lg hover:bg-(--accent)/90 transition-all font-medium shadow-md'>
 									Go to Inventory
 								</button>
 							</div>
@@ -729,10 +729,10 @@ export default function StoreScreen() {
 					) : displayItems.length === 0 ? (
 						// Filtered Results Empty State
 						<div className='flex flex-col items-center justify-center py-12'>
-							<div className='w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center mb-4'>
+							<div className='w-16 h-16 bg-(--light-accent) rounded-full flex items-center justify-center mb-4'>
 								{isSearching ? (
 									<svg
-										className='w-8 h-8 text-[var(--accent)]'
+										className='w-8 h-8 text-accent'
 										fill='none'
 										stroke='currentColor'
 										viewBox='0 0 24 24'>
@@ -745,7 +745,7 @@ export default function StoreScreen() {
 									</svg>
 								) : (
 									<svg
-										className='w-8 h-8 text-[var(--accent)]'
+										className='w-8 h-8 text-accent'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -756,10 +756,10 @@ export default function StoreScreen() {
 									</svg>
 								)}
 							</div>
-							<h3 className='text-md font-medium text-[var(--secondary)] mb-2'>
+							<h3 className='text-md font-medium text-secondary mb-2'>
 								{isSearching ? "No Results Found" : "No Items Available"}
 							</h3>
-							<p className='text-[var(--secondary)] text-xs opacity-70 text-center max-w-sm'>
+							<p className='text-secondary text-xs opacity-70 text-center max-w-sm'>
 								{isSearching
 									? `No items match "${searchQuery}". Try searching with different keywords or check the spelling.`
 									: selectedCategory === "All"
@@ -769,7 +769,7 @@ export default function StoreScreen() {
 							{isSearching && (
 								<button
 									onClick={() => setSearchQuery("")}
-									className='mt-4 px-4 py-2 bg-[var(--accent)] font-bold text-sm text-[var(--primary)] rounded-lg hover:bg-[var(--accent)]/90 transition-all'>
+									className='mt-4 px-4 py-2 bg-accent font-bold text-sm text-primary rounded-lg hover:bg-(--accent)/90 transition-all'>
 									Clear Search
 								</button>
 							)}
@@ -790,16 +790,16 @@ export default function StoreScreen() {
 										key={item.id || index}
 										onClick={() => !isOutOfStock && addToCart(item)}
 										className={`
-										group bg-[var(--primary)] rounded-lg cursor-pointer shadow-md min-w-[200px]
-										hover:shadow-none hover:bg-[var(--accent)]/10 border-[var(--primary)] border-2 hover:border-[var(--accent)] transition-all duration-300
+										group bg-primary rounded-lg cursor-pointer shadow-md min-w-50
+										hover:shadow-none hover:bg-(--accent)/10 border-primary border-2 hover:border-accent transition-all duration-300
 										${
 											isOutOfStock
 												? "opacity-50 cursor-not-allowed"
-												: "border-gray-200 hover:border-[var(--accent)]"
+												: "border-gray-200 hover:border-accent"
 										}
 									`}>
 										{/* Item Image Placeholder */}
-										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-[var(--accent)]/40 transition-all duration-300'>
+										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-(--accent)/40 transition-all duration-300'>
 											{item.img_url ? (
 												<SafeImage
 													src={item.img_url}
@@ -828,12 +828,12 @@ export default function StoreScreen() {
 												</div>
 											)}
 											{!isOutOfStock && !isBundle && availableStock <= 5 && (
-												<div className='absolute top-2 right-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded select-none'>
+												<div className='absolute top-2 right-2 bg-(--accent)/50 text-(--secondary)/50 text-xs px-2 py-1 rounded select-none'>
 													Low Stock
 												</div>
 											)}
 											{inCartQuantity > 0 && (
-												<div className='absolute top-2 left-2 bg-[var(--accent)]/50 text-[var(--secondary)]/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
+												<div className='absolute top-2 left-2 bg-(--accent)/50 text-(--secondary)/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
 													<svg
 														className='w-3 h-3'
 														fill='currentColor'
@@ -846,7 +846,7 @@ export default function StoreScreen() {
 											{!isBundle && (
 												<div className='absolute bottom-2 left-2 rounded select-none'>
 													<span
-														className={`text-[9px] sm:text-[10px] text-[var(--primary)] bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
+														className={`text-[9px] sm:text-[10px] text-primary bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
 														style={{
 															backgroundColor: getCategoryColor(item.category_id),
 														}}>
@@ -870,13 +870,13 @@ export default function StoreScreen() {
 
 										{/* Item Details */}
 										<div className='flex items-center justify-between mb-1 gap-2 pb-2 px-2'>
-											<h3 className='font-semibold text-[var(--secondary)] truncate text-xs sm:text-sm'>
+											<h3 className='font-semibold text-secondary truncate text-xs sm:text-sm'>
 												{isSearching
 													? highlightSearchTerm(item.name, searchQuery)
 													: item.name}
 											</h3>
 
-											<span className='font-regular text-[var(--secondary)] text-xs sm:text-sm whitespace-nowrap'>
+											<span className='font-regular text-secondary text-xs sm:text-sm whitespace-nowrap'>
 												{formatCurrency(item.price)}
 											</span>
 										</div>
@@ -908,17 +908,17 @@ export default function StoreScreen() {
 							animate={{ x: 0 }}
 							exit={{ x: "100%" }}
 							transition={{ type: "spring", damping: 50, stiffness: 300 }}
-							className='absolute top-0 right-0 bottom-0 w-full bg-[var(--primary)] flex flex-col shadow-2xl'>
+							className='absolute top-0 right-0 bottom-0 w-full bg-primary flex flex-col shadow-2xl'>
 							{/* Header with Close Button */}
-							<div className='flex-shrink-0 flex items-center justify-between p-4 border-b-2 border-[var(--accent)]'>
-								<h2 className='text-xl font-bold text-[var(--secondary)]'>
+							<div className='shrink-0 flex items-center justify-between p-4 border-b-2 border-accent'>
+								<h2 className='text-xl font-bold text-secondary'>
 									Current Order
 								</h2>
 								<button
 									onClick={() => setShowOrderMenu(false)}
-									className='w-10 h-10 flex items-center justify-center bg-[var(--light-accent)] rounded-full hover:bg-[var(--accent)] transition-all'>
+									className='w-10 h-10 flex items-center justify-center bg-(--light-accent) rounded-full hover:bg-accent transition-all'>
 									<svg
-										className='w-6 h-6 text-[var(--secondary)]'
+										className='w-6 h-6 text-secondary'
 										fill='none'
 										stroke='currentColor'
 										viewBox='0 0 24 24'>
@@ -933,8 +933,8 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Type Dropdown */}
-							<div className='flex-shrink-0 h-16 p-3 border-b-2 border-[var(--accent)]'>
-								<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
+							<div className='shrink-0 h-16 p-3 border-b-2 border-accent'>
+								<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
 									<DropdownField
 										options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 										defaultValue='TAKE OUT'
@@ -958,13 +958,13 @@ export default function StoreScreen() {
 							<div className='flex-1 overflow-y-auto px-3 p-6'>
 								{cart.length === 0 ? (
 									<div className='flex flex-col items-center justify-center h-full py-12'>
-										<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
+										<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
 											<EmptyOrderIllustration />
 										</div>
-										<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
+										<h3 className='text-lg font-medium text-secondary mb-2 select-none'>
 											Order List is Empty
 										</h3>
-										<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+										<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
 											Add items from the menu to start building your order.
 											Click on any menu item to add it to your cart.
 										</p>
@@ -992,9 +992,9 @@ export default function StoreScreen() {
 													}}
 													layout
 													layoutId={`mobile-cart-item-${item.id}`}
-													className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
-													<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
-														<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+													className='flex flex-col items-center justify-around w-full h-32 bg-white overflow-hidden'>
+													<div className='flex flex-row items-center gap-3 w-full h-25'>
+														<div className='flex-none w-25.5 h-25 bg-[#F7F7F7] rounded-md relative overflow-hidden'>
 															{item.imgUrl ? (
 																<SafeImage
 																	src={item.imgUrl}
@@ -1008,27 +1008,27 @@ export default function StoreScreen() {
 															)}
 														</div>
 
-														<div className='flex flex-col items-start gap-3 w-full h-[100px] flex-grow'>
-															<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
-																<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
-																	<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+														<div className='flex flex-col items-start gap-3 w-full h-25 grow'>
+															<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
+																<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
+																	<span className="font-normal text-base leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
 																		{item.name}
 																	</span>
 																</div>
-																<div className='flex flex-row items-center justify-between w-full h-[21px]'>
+																<div className='flex flex-row items-center justify-between w-full h-5.25'>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																		<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																			{formatCurrency(item.price)}
 																		</span>
-																		<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+																		<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-(--accent)/80 px-2 py-1 rounded-full min-w-6 text-center">
 																			×{item.quantity}
 																		</span>
 																	</span>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																		<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																			=
 																		</span>
-																		<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																		<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
 																			{formatCurrency(
 																				item.price * item.quantity
 																			)}
@@ -1056,23 +1056,23 @@ export default function StoreScreen() {
 																)}
 															</div>
 
-															<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
-																<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
+															<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
+																<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-(--light-accent) rounded-3xl'>
 																	<button
 																		onClick={() =>
 																			updateQuantity(item.id, -1, item.type || 'item')
 																		}
-																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																		className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
 																		<MinusIcon />
 																	</button>
 
-																	<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+																	<span className="font-bold text-base leading-5.25 text-secondary font-['Poppins']">
 																		{item.quantity}
 																	</span>
 
 																	<button
 																		onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
-																		className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+																		className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
 																		<PlusIcon />
 																	</button>
 																</div>
@@ -1093,7 +1093,7 @@ export default function StoreScreen() {
 																damping: 25,
 																delay: index * 0.05,
 															}}
-															className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
+															className='flex h-px border border-b border-dashed border-(--secondary)/20 w-full'
 														/>
 													</AnimatePresence>
 												</motion.div>
@@ -1104,12 +1104,12 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Summary */}
-							<div className='flex-shrink-0 border-t-2 border-[var(--accent)] pb-4'>
-								<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
+							<div className='shrink-0 border-t-2 border-accent pb-4'>
+								<div className='flex justify-between h-9.75 text-secondary text-[14px] font-medium px-3 py-1.5 items-end'>
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
 								</div>
-								<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
+								<div className='flex justify-between h-8.25 text-secondary text-[14px] font-medium px-3 py-1.5'>
 									<span>Discount</span>
 									<span>-{formatCurrency(discountAmount)}</span>
 								</div>
@@ -1123,8 +1123,8 @@ export default function StoreScreen() {
 									/>
 								</div>
 
-								<div className='border-t-1 border-dashed border-[var(--accent)]'>
-									<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
+								<div className='border-t border-dashed border-accent'>
+									<div className='flex justify-between font-semibold text-lg h-15.5 p-3 items-center'>
 										<span>Total</span>
 										<span>{formatCurrency(total)}</span>
 									</div>
@@ -1133,7 +1133,7 @@ export default function StoreScreen() {
 										{cart.length > 0 && (
 											<button
 												onClick={clearCart}
-												className='flex-1 py-4 font-black text-[14px] text-[var(--error)] bg-white border-2 border-[var(--error)] rounded-lg hover:bg-[var(--error)] hover:text-white transition-all'>
+												className='flex-1 py-4 font-black text-[14px] text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
 												CLEAR CART
 											</button>
 										)}
@@ -1142,8 +1142,8 @@ export default function StoreScreen() {
 											disabled={cart.length === 0 || isPlacingOrder || !user}
 											className={`flex-1 py-4 font-black text-[14px] rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
-													? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
-													: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+													? "bg-gray-300 text-primary cursor-not-allowed"
+													: "bg-accent text-primary hover:bg-(--accent)/80 hover:shadow-lg cursor-pointer text-shadow-lg"
 											}`}>
 											<span>
 												{!user
@@ -1164,25 +1164,25 @@ export default function StoreScreen() {
 			</AnimatePresence>
 
 			{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
-			<div className='hidden xl:flex flex-col h-screen shadow-lg bg-[var(--primary)] overflow-hidden w-[360px] flex-shrink-0'>
+			<div className='hidden xl:flex flex-col h-screen shadow-lg bg-primary overflow-hidden w-90 shrink-0'>
 				{/* Header Section - Fixed at top (154px total) */}
-				<div className='flex-shrink-0'>
-					<div className='w-full h-[90px] bg-[var(--primary)] border-b border-[var(--secondary)]/20 border-dashed'>
+				<div className='shrink-0'>
+					<div className='w-full h-22.5 bg-primary border-b border-(--secondary)/20 border-dashed'>
 						{/* Order Header */}
 						<div className='flex items-center gap-3 p-3'>
-							<div className='bg-[var(--light-accent)] w-16 h-16 rounded-full items-center justify-center flex relative'>
+							<div className='bg-(--light-accent) w-16 h-16 rounded-full items-center justify-center flex relative'>
 								<OrderCartIcon className="w-6 h-6"/>
 								{cart.length > 0 && (
-									<div className='absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1'>
+									<div className='absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1'>
 										{cart.reduce((sum, item) => sum + item.quantity, 0)}
 									</div>
 								)}
 							</div>
 							<div className='flex flex-1 flex-col items-center'>
-								<span className='text-[var(--secondary)] font-medium text-[16px] self-start'>
+								<span className='text-secondary font-medium text-[16px] self-start'>
 									{cart.length === 0 ? "New Order" : "Current Order"}
 								</span>
-								<span className='text-[var(--secondary)] font-light text-[12px] self-start'>
+								<span className='text-secondary font-light text-[12px] self-start'>
 									{cart.length === 0
 										? "No items added"
 										: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
@@ -1191,17 +1191,17 @@ export default function StoreScreen() {
 							{cart.length > 0 && (
 								<button
 									onClick={clearCart}
-									className='text-[var(--error)] border-1 border-[var(--error)] hover:text-white text-xs font-medium hover:bg-[var(--error)]/50 px-2 py-1 rounded transition-all'
+									className='text-(--error) border border-(--error) hover:text-white text-xs font-medium hover:bg-(--error)/50 px-2 py-1 rounded transition-all'
 									title='Clear all items'>
 									Clear
 								</button>
 							)}
-							<div className='hidden bg-[var(--light-accent)] w-16 h-16 rounded-full'></div>
+							<div className='hidden bg-(--light-accent) w-16 h-16 rounded-full'></div>
 						</div>
 					</div>
 
-					<div className='h-16 p-3 border-b-2 border-[var(--accent)]'>
-						<div className='flex h-[42px] items-center justify-between bg-[var(--background)] rounded-[24px] gap-3'>
+					<div className='h-16 p-3 border-b-2 border-accent'>
+						<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
 							<DropdownField
 								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 								defaultValue='TAKE OUT'
@@ -1224,13 +1224,13 @@ export default function StoreScreen() {
 				<div className='flex-1 overflow-y-auto px-3 p-6'>
 					{cart.length === 0 ? (
 						<div className='flex flex-col items-center justify-center h-full py-12'>
-							<div className='w-[150px] h-[120px] flex items-center justify-center mb-4 opacity-40'>
+							<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
 								<EmptyOrderIllustration />
 							</div>
-							<h3 className='text-lg font-medium text-[var(--secondary)] mb-2 select-none'>
+							<h3 className='text-lg font-medium text-secondary mb-2 select-none'>
 								Order List is Empty
 							</h3>
-							<p className='text-[var(--secondary)] w-[300px] opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+							<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
 								Add items from the menu to start building your order. Click on
 								any menu item to add it to your cart.
 							</p>
@@ -1259,9 +1259,9 @@ export default function StoreScreen() {
 										}}
 										layout
 										layoutId={`cart-item-${item.id}`}
-										className='flex flex-col items-center justify-around w-full h-[128px] bg-white overflow-hidden'>
-										<div className='flex flex-row items-center gap-3 w-full h-[100px]'>
-											<div className='flex-none w-[102px] h-[100px] bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+										className='flex flex-col items-center justify-around w-full h-32 bg-white overflow-hidden'>
+										<div className='flex flex-row items-center gap-3 w-full h-25'>
+											<div className='flex-none w-25.5 h-25 bg-[#F7F7F7] rounded-md relative overflow-hidden'>
 												{item.imgUrl ? (
 													<SafeImage src={item.imgUrl} alt={item.name} />
 												) : null}
@@ -1272,30 +1272,30 @@ export default function StoreScreen() {
 												)}
 											</div>
 
-											<div className='flex flex-col items-start gap-3 w-[278px] h-[100px] flex-grow'>
+											<div className='flex flex-col items-start gap-3 w-69.5 h-25 grow'>
 												{/* Item Info Section */}
-												<div className='flex flex-col items-start gap-2 w-full h-[53px] flex-grow'>
+												<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
 													{/* Title and Quantity Row */}
-													<div className='flex flex-row items-center justify-between gap-2 w-full h-[21px]'>
-														<span className="font-normal text-base leading-[21px] text-[#4C2E24] font-['Poppins'] truncate">
+													<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
+														<span className="font-normal text-base leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
 															{item.name}
 														</span>
 													</div>
 													{/* Price and Subtotal Row */}
-													<div className='flex flex-row items-center justify-between w-full h-[21px]'>
+													<div className='flex flex-row items-center justify-between w-full h-5.25'>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+															<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																{formatCurrency(item.price)}
 															</span>
-															<span className="font-bold text-sm text-shadow-lg leading-[21px] text-[var(--primary)] font-['Poppins'] bg-[var(--accent)]/80 px-2 py-1 rounded-full min-w-[24px] text-center">
+															<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-(--accent)/80 px-2 py-1 rounded-full min-w-6 text-center">
 																×{item.quantity}
 															</span>
 														</span>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+															<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																=
 															</span>
-															<span className="font-bold text-sm leading-[21px] text-[var(--secondary)] font-['Poppins']">
+															<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
 																{formatCurrency(item.price * item.quantity)}
 															</span>
 														</span>
@@ -1322,22 +1322,22 @@ export default function StoreScreen() {
 												</div>
 
 												{/* Controls Section */}
-												<div className='flex flex-row justify-end items-end gap-3 w-full h-[35px]'>
+												<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
 													{/* Quantity Controls */}
-													<div className='flex flex-row justify-between items-center px-[6px] w-[120px] h-[35px] bg-[var(--light-accent)] rounded-[24px]'>
+													<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-(--light-accent) rounded-3xl'>
 														<button
 															onClick={() => updateQuantity(item.id, -1, item.type || 'item')}
-															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+															className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
 															<MinusIcon />
 														</button>
 
-														<span className="font-bold text-base leading-[21px] text-[var(--secondary)] font-['Poppins']">
+														<span className="font-bold text-base leading-5.25 text-secondary font-['Poppins']">
 															{item.quantity}
 														</span>
 
 														<button
 															onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
-															className='flex flex-col justify-center items-center p-[6px] gap-5 w-[23px] h-[23px] bg-white rounded-[24px] hover:scale-110 hover:bg-[var(--accent)] transition-all'>
+															className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
 															<PlusIcon />
 														</button>
 													</div>
@@ -1358,7 +1358,7 @@ export default function StoreScreen() {
 													damping: 25,
 													delay: index * 0.05,
 												}}
-												className='flex h-[1px] border-1 border-b border-dashed border-[var(--secondary)]/20 w-full'
+												className='flex h-px border border-b border-dashed border-(--secondary)/20 w-full'
 											/>
 										</AnimatePresence>
 									</motion.div>
@@ -1369,12 +1369,12 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Order Summary */}
-				<div className='flex-shrink mb-[40px] border-t-2 border-[var(--accent)]'>
-					<div className='flex justify-between h-[39px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px] items-end'>
+				<div className='shrink mb-10 border-t-2 border-accent'>
+					<div className='flex justify-between h-9.75 text-secondary text-[14px] font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>
 					</div>
-					<div className='flex justify-between h-[33px] text-[var(--secondary)] text-[14px] font-medium px-3 py-[6px]'>
+					<div className='flex justify-between h-8.25 text-secondary text-[14px] font-medium px-3 py-1.5'>
 						<span>Discount</span>
 						<span>-{formatCurrency(discountAmount)}</span>
 					</div>
@@ -1388,8 +1388,8 @@ export default function StoreScreen() {
 						/>
 					</div>
 
-					<div className='border-t-1 border-dashed border-[var(--accent)] h-[124px]'>
-						<div className='flex justify-between font-semibold text-lg h-[62px] p-3 items-center'>
+					<div className='border-t border-dashed border-accent h-31'>
+						<div className='flex justify-between font-semibold text-lg h-15.5 p-3 items-center'>
 							<span>Total</span>
 							<span>{formatCurrency(total)}</span>
 						</div>
@@ -1400,8 +1400,8 @@ export default function StoreScreen() {
 							disabled={cart.length === 0 || isPlacingOrder || !user}
 							className={`w-full py-4 font-black text-[18px] transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
-									? "bg-gray-300 text-[var(--primary)] cursor-not-allowed"
-									: "bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
+									? "bg-gray-300 text-primary cursor-not-allowed"
+									: "bg-accent text-primary hover:bg-(--accent)/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
 							}`}>
 							<span>
 								{!user
@@ -1424,16 +1424,16 @@ export default function StoreScreen() {
 						{/* Modal Header */}
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex items-center justify-between'>
-								<h2 className='text-xl font-semibold text-[var(--secondary)]'>
+								<h2 className='text-xl font-semibold text-secondary'>
 									Confirm Order
 								</h2>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='text-gray-400 hover:text-[var(--secondary)] text-2xl'>
+									className='text-gray-400 hover:text-secondary text-2xl'>
 									×
 								</button>
 							</div>
-							<p className='text-sm text-[var(--secondary)]/80 mt-1'>
+							<p className='text-sm text-(--secondary)/80 mt-1'>
 								Please review your order before confirming
 							</p>
 						</div>
@@ -1442,7 +1442,7 @@ export default function StoreScreen() {
 						<div className='flex-1 overflow-y-auto p-6'>
 							{/* Order Type */}
 							<div className='mb-4 flex justify-between text-[12px]'>
-								<span className='text-[var(--secondary)] font-medium'>
+								<span className='text-secondary font-medium'>
 									Order Type:
 								</span>
 								<span className='font-medium'>{orderType}</span>
@@ -1450,7 +1450,7 @@ export default function StoreScreen() {
 
 							{/* Items List */}
 							<div className='mb-4'>
-								<h3 className='text-[12px] font-medium text-[var(--secondary)] mb-3'>
+								<h3 className='text-[12px] font-medium text-secondary mb-3'>
 									Items ({cart.length})
 								</h3>
 								<div className='space-y-3'>
@@ -1459,7 +1459,7 @@ export default function StoreScreen() {
 											key={item.id}
 											className='flex items-center gap-3 p-3 bg-gray-50 rounded-lg'>
 											{/* Item Image */}
-											<div className='w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative'>
+											<div className='w-12 h-12 bg-gray-200 rounded-lg shrink-0 overflow-hidden relative'>
 												{item.imgUrl ? (
 													<SafeImage
 														src={item.imgUrl}
@@ -1484,20 +1484,20 @@ export default function StoreScreen() {
 
 											{/* Item Details */}
 											<div className='flex-1 min-w-0'>
-												<h4 className='font-medium text-[var(--secondary)] truncate'>
+												<h4 className='font-medium text-secondary truncate'>
 													{item.name}
 												</h4>
-												<p className='text-sm text-[var(--secondary)]'>
+												<p className='text-sm text-secondary'>
 													{formatCurrency(item.price)}
 												</p>
 											</div>
 
 											{/* Quantity and Total */}
 											<div className='text-right'>
-												<div className='text-sm font-medium text-[var(--secondary)]/50'>
+												<div className='text-sm font-medium text-(--secondary)/50'>
 													Qty: {item.quantity}
 												</div>
-												<div className='text-sm font-regular text-[var(--secondary)]'>
+												<div className='text-sm font-regular text-secondary'>
 													{formatCurrency(item.price * item.quantity)}
 												</div>
 											</div>
@@ -1510,14 +1510,14 @@ export default function StoreScreen() {
 							<div className='border-t border-gray-200 pt-4'>
 								<div className='space-y-2'>
 									<div className='flex justify-between text-sm'>
-										<span className='text-[var(--secondary)]'>Subtotal:</span>
+										<span className='text-secondary'>Subtotal:</span>
 										<span className='font-medium'>
 											{formatCurrency(subtotal)}
 										</span>
 									</div>
 									{discountAmount > 0 && (
 										<div className='flex justify-between text-sm'>
-											<span className='text-[var(--secondary)]'>
+											<span className='text-secondary'>
 												Discount
 												{appliedDiscount && (
 													<span className='font-medium ml-1'>
@@ -1537,7 +1537,7 @@ export default function StoreScreen() {
 									)}
 									<div className='flex justify-between text-lg font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
-										<span className='text-[var(--secondary)]'>
+										<span className='text-secondary'>
 											{formatCurrency(total)}
 										</span>
 									</div>
@@ -1550,7 +1550,7 @@ export default function StoreScreen() {
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='flex-1 px-4 py-3 text-sm text-[var(--secondary)]/80 bg-white border border-[var(--secondary)]/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
+									className='flex-1 px-4 py-3 text-sm text-(--secondary)/80 bg-white border border-(--secondary)/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
 									CANCEL
 								</button>
 								<button
@@ -1558,8 +1558,8 @@ export default function StoreScreen() {
 									disabled={isPlacingOrder}
 									className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
 										isPlacingOrder
-											? "bg-[var(--secondary)]/50 text-[var(--primary)] cursor-not-allowed"
-											: "bg-[var(--accent)] text-shadow-md text-[var(--primary)] hover:bg-[var(--accent)]/90 cursor-pointer hover:shadow-md"
+											? "bg-(--secondary)/50 text-primary cursor-not-allowed"
+											: "bg-accent text-shadow-md text-primary hover:bg-(--accent)/90 cursor-pointer hover:shadow-md"
 									}`}>
 									{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
 								</button>
@@ -1578,20 +1578,20 @@ export default function StoreScreen() {
 
 			<button
 				onClick={() => setShowOrderMenu(!showOrderMenu)}
-				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-[var(--accent)] text-[var(--primary)] rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
-				<div className='flex-1 flex justify-between items-center text-[var(--primary)]'>
+				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
+				<div className='flex-1 flex justify-between items-center text-primary'>
 					<span className='text-sm'>
 						{cart.length === 0
 							? "No Items Selected"
 							: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
 					</span>
-					<span className='text-sm text-[var(--primary)] font-semibold'>
+					<span className='text-sm text-primary font-semibold'>
 						{formatCurrency(subtotal)}
 					</span>
 				</div>
-				<div className='rounded-full h-8 w-8 bg-[var(--primary)] p-2 flex items-center justify-center'>
+				<div className='rounded-full h-8 w-8 bg-primary p-2 flex items-center justify-center'>
 					<div className='scale-75'>
-						<OrderCartIcon className="text-[var(--secondary)]" />
+						<OrderCartIcon className="text-secondary" />
 					</div>
 				</div>
 			</button>

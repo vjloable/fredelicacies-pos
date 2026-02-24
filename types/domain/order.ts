@@ -2,7 +2,7 @@
 export interface Order {
   id: string;
   branch_id: string;
-  worker_id: string;
+  user_id: string;
   order_number: string;
   subtotal: number;
   discount_id: string | null;
@@ -32,7 +32,7 @@ export interface OrderWithItems extends Order {
 }
 
 export interface CreateOrderData {
-  worker_id: string;
+  user_id: string;
   order_number: string;
   subtotal: number;
   discount_id?: string;
