@@ -129,7 +129,7 @@ export default function AddCategoryModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
@@ -138,8 +138,8 @@ export default function AddCategoryModal({
                 disabled={!newCategory.name.trim()}
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
                   newCategory.name.trim()
-                    ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 cursor-not-allowed'
+                    ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
+                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 cursor-not-allowed'
                 }`}
               >
                 Add Category
