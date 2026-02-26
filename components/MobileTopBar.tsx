@@ -286,7 +286,7 @@ export default function MobileTopBar({
 			{title && (
 				<div className='flex items-center justify-start px-4 py-2'>
 					{icon && <div className='mr-2'>{icon}</div>}
-					<h1 className='text-secondary text-xl font-bold'>{title}</h1>
+					<h1 className='text-secondary text-lg font-bold'>{title}</h1>
 				</div>
 			)}
 			</div>

@@ -74,10 +74,10 @@ export default function WorkersTable({
 				<div className='w-16 h-16 mx-auto mb-4 bg-(--light-accent) rounded-full flex items-center justify-center'>
 					<ManagementIcon className="text-accent"/>
 				</div>
-				<h3 className='text-lg font-medium text-secondary mb-2'>
+				<h3 className='text-base font-medium text-secondary mb-2'>
 					No Workers Found
 				</h3>
-				<p className='text-secondary/50 text-sm'>
+				<p className='text-secondary/50 text-xs'>
 					No workers match your current filters. Try adjusting your search feature criteria.
 				</p>
 			</div>

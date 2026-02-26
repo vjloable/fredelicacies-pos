@@ -306,7 +306,7 @@ export default function WorkerPerformanceAnalytics({
 	if (loading) {
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
-				<h3 className='text-lg font-semibold text-gray-900 mb-4'>
+				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Performance Analytics
 				</h3>
 				<div className='space-y-4'>
@@ -326,7 +326,7 @@ export default function WorkerPerformanceAnalytics({
 	if (error) {
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
-				<h3 className='text-lg font-semibold text-gray-900 mb-4'>
+				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Performance Analytics
 				</h3>
 				<div className='text-center py-8'>
@@ -344,10 +344,10 @@ export default function WorkerPerformanceAnalytics({
 							/>
 						</svg>
 					</div>
-					<p className='text-gray-600 text-sm'>{error}</p>
+					<p className='text-gray-600 text-xs'>{error}</p>
 					<button
 						onClick={loadPerformanceMetrics}
-						className='mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium'>
+						className='mt-3 text-blue-600 hover:text-blue-800 text-xs font-medium'>
 						Retry
 					</button>
 				</div>
@@ -362,10 +362,10 @@ export default function WorkerPerformanceAnalytics({
 	return (
 		<div className='bg-white rounded-lg shadow'>
 			<div className='p-6 border-b border-gray-200'>
-				<h3 className='text-lg font-semibold text-gray-900'>
+				<h3 className='text-base font-semibold text-gray-900'>
 					Performance Analytics
 				</h3>
-				<p className='text-sm text-gray-600 mt-1'>
+				<p className='text-xs text-gray-600 mt-1'>
 					Detailed performance insights for {worker.name}
 				</p>
 			</div>
@@ -374,26 +374,26 @@ export default function WorkerPerformanceAnalytics({
 				{/* Key Metrics */}
 				<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 					<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
-						<h4 className='text-sm font-medium text-blue-800'>Total Hours</h4>
-						<p className='text-2xl font-bold text-blue-900'>
+						<h4 className='text-xs font-medium text-blue-800'>Total Hours</h4>
+						<p className='text-xl font-bold text-blue-900'>
 							{formatHours(metrics.totalHours)}
 						</p>
 					</div>
 					<div className='bg-green-50 border border-green-200 rounded-lg p-4'>
-						<h4 className='text-sm font-medium text-green-800'>Avg Session</h4>
-						<p className='text-2xl font-bold text-green-900'>
+						<h4 className='text-xs font-medium text-green-800'>Avg Session</h4>
+						<p className='text-xl font-bold text-green-900'>
 							{formatHours(metrics.averageSessionLength)}
 						</p>
 					</div>
 					<div className='bg-purple-50 border border-purple-200 rounded-lg p-4'>
-						<h4 className='text-sm font-medium text-purple-800'>Punctuality</h4>
-						<p className='text-2xl font-bold text-purple-900'>
+						<h4 className='text-xs font-medium text-purple-800'>Punctuality</h4>
+						<p className='text-xl font-bold text-purple-900'>
 							{metrics.punctualityScore}%
 						</p>
 					</div>
 					<div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
-						<h4 className='text-sm font-medium text-yellow-800'>Trend</h4>
-						<p className='text-lg font-semibold'>
+						<h4 className='text-xs font-medium text-yellow-800'>Trend</h4>
+						<p className='text-base font-semibold'>
 							{getTrendIcon(metrics.productivityTrend)}
 						</p>
 					</div>
@@ -414,7 +414,7 @@ export default function WorkerPerformanceAnalytics({
 										<div className='font-medium text-gray-900'>
 											{branch.branchName}
 										</div>
-										<div className='text-sm text-gray-600'>
+										<div className='text-xs text-gray-600'>
 											{branch.attendances} sessions • Last worked:{" "}
 											{branch.lastWorked?.toLocaleDateString() || "Never"}
 										</div>
@@ -443,7 +443,7 @@ export default function WorkerPerformanceAnalytics({
 									className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
 									<div>
 										<div className='font-medium text-gray-900'>{week.week}</div>
-										<div className='text-sm text-gray-600'>
+										<div className='text-xs text-gray-600'>
 											{week.attendances} sessions
 										</div>
 									</div>
@@ -471,7 +471,7 @@ export default function WorkerPerformanceAnalytics({
 								<div className='text-xs font-medium text-gray-600 mb-1'>
 									{day.day.slice(0, 3)}
 								</div>
-								<div className='text-sm font-semibold text-gray-900'>
+								<div className='text-xs font-semibold text-gray-900'>
 									{day.attendancesCount > 0 ? formatHours(day.averageHours) : "-"}
 								</div>
 								<div className='text-xs text-gray-500'>

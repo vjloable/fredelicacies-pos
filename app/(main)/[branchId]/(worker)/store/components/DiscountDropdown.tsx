@@ -132,7 +132,7 @@ export default function DiscountDropdown({
         />
         <button
           onClick={handleApplyDiscount}
-          className={`shrink py-2 px-4 font-bold text-sm rounded-e-md transition-all ${
+          className={`shrink py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
             isValidCode 
               ? 'bg-accent text-primary hover:bg-accent/80' 
               : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
@@ -167,7 +167,7 @@ export default function DiscountDropdown({
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-secondary text-sm">
+                      <span className="font-semibold text-secondary text-xs">
                         {discount.name}
                       </span>
                     </div>
@@ -194,7 +194,7 @@ export default function DiscountDropdown({
             );
           })}
           {filteredDiscounts.length === 0 && value && (
-            <div className="p-3 text-center text-gray-500 text-sm">
+            <div className="p-3 text-center text-gray-500 text-xs">
               No discount codes found matching &quot;{value}&quot;
             </div>
           )}
@@ -204,7 +204,7 @@ export default function DiscountDropdown({
       {/* Current Discount Info */}
       {appliedDiscount && isValidCode && (
         <div className="mt-2 px-4 py-2 bg-accent/10 border border-dashed border-accent rounded-lg">
-          <div className="flex items-center justify-between text-3.5">
+          <div className="flex items-center justify-between text-3">
             <div>
               <span className="font-semibold text-secondary">
                 {appliedDiscount.name}

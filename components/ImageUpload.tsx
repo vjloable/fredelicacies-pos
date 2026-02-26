@@ -70,7 +70,7 @@ export default function ImageUpload({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <label className="block text-sm font-medium text-secondary mb-2">
+      <label className="block text-xs font-medium text-secondary mb-2">
         Item Image <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
       </label>
       
@@ -117,14 +117,14 @@ export default function ImageUpload({
             {uploading ? (
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-accent mb-3"></div>
-                <span className="text-sm text-secondary/50">Uploading image...</span>
+                <span className="text-xs text-secondary/50">Uploading image...</span>
               </div>
             ) : (
               <div className="flex flex-col items-center">
                 <svg className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} text-secondary/50 mb-2 group-hover:text-accent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <span className="text-sm font-medium text-secondary/50 mb-1 group-hover:text-accent">Click to upload image</span>
+                <span className="text-xs font-medium text-secondary/50 mb-1 group-hover:text-accent">Click to upload image</span>
                 <span className="text-xs text-secondary/50 group-hover:text-accent">JPG or PNG, max 10MB</span>
               </div>
             )}
@@ -139,7 +139,7 @@ export default function ImageUpload({
             <svg className="w-4 h-4 text-(--error)" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm text-(--error)">{uploadError}</span>
+            <span className="text-xs text-(--error)">{uploadError}</span>
           </div>
         </div>
       )}

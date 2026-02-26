@@ -151,7 +151,7 @@ export default function SignUpPage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-4 font-medium text-secondary">
+          <p className="text-center text-3.5 font-medium text-secondary">
             Create your account
           </p>
           <div className="p-8">
@@ -160,7 +160,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-2 gap-4">
                 {/* First Name Field */}
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     First Name
                   </label>
                   <input
@@ -176,7 +176,7 @@ export default function SignUpPage() {
 
                 {/* Last Name Field */}
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Last Name
                   </label>
                   <input
@@ -193,7 +193,7 @@ export default function SignUpPage() {
 
               {/* Email Field */}
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Email
                 </label>
                 <input
@@ -211,7 +211,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 gap-4">
                 {/* Password Field */}
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Password
                   </label>
                   <input
@@ -227,7 +227,7 @@ export default function SignUpPage() {
 
                 {/* Confirm Password Field */}
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Confirm Password
                   </label>
                   <input
@@ -257,7 +257,7 @@ export default function SignUpPage() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="text-sm text-red-700">{error}</span>
+                    <span className="text-xs text-red-700">{error}</span>
                   </div>
                 </div>
               )}
@@ -289,7 +289,7 @@ export default function SignUpPage() {
 
             {/* Login Link */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-secondary">
+              <p className="text-xs text-secondary">
                 Already have an account?{" "}
                 <Link
                   href="/login"

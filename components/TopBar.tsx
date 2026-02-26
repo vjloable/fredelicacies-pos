@@ -153,7 +153,7 @@ export default function TopBar({
 
 					{/* User Info*/}
 					<div className='relative group'>
-						<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
+						<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
 							<span className='my-6 w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary'>
 								<UserIcon />
 							</span>
@@ -164,8 +164,8 @@ export default function TopBar({
 					{/* Owner Badge */}
 					{isUserOwner() && (
 						<div className='shrink-0'>
-							<div className='h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-3 lg:text-3.5 '>
-								<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary text-lg font-bold'>
+							<div className='h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-3 lg:text-3 '>
+								<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary text-base font-bold'>
 									O
 								</span>
 								<span className='text-secondary font-medium'>
@@ -183,7 +183,7 @@ export default function TopBar({
 								<button
 									onClick={handleTimeTrackingClick}
 									disabled={isTimeTracking}
-									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-3 lg:text-3.5 cursor-pointer group transition-all duration-200 ${
+									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-3 lg:text-3 cursor-pointer group transition-all duration-200 ${
 										timeTracking.isWorking
 											? "bg-(--success)/10 text-(--success) border-2 border-(--success) hover:border-secondary hover:bg-secondary/20 hover:shadow-lg"
 											: "bg-secondary/10 text-secondary border-2 border-secondary hover:border-(--success) hover:bg-(--success)/20 hover:shadow-lg"
@@ -265,7 +265,7 @@ export default function TopBar({
 							</div>
 						)}
 
-					<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
+					<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
 						<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary'>
 							<CalendarIcon className="text-secondary" />
 						</span>
@@ -283,8 +283,8 @@ export default function TopBar({
 						</div>
 					</div>
 					<span className='hidden sm:inline'>-</span>
-					<div className='shrink-0 min-w-32 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
-						<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary font-bold text-sm'>
+					<div className='shrink-0 min-w-32 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
+						<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary font-bold text-xs'>
 							<ClockIcon className="text-secondary"/>
 						</span>
 						<div className='flex flex-row items-center gap-2'>
@@ -321,7 +321,7 @@ export default function TopBar({
 			{title && (
 				<div className='flex items-center justify-start ml-6 py-1'>
 					{icon}
-					<h1 className='text-secondary text-2xl font-bold'>
+					<h1 className='text-secondary text-xl font-bold'>
 						{title}
 					</h1>
 				</div>

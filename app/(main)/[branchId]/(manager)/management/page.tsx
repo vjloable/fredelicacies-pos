@@ -379,7 +379,7 @@ export default function ManagementPage() {
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<h2 className='text-xl font-semibold text-gray-700 mb-2'>
+							<h2 className='text-lg font-semibold text-gray-700 mb-2'>
 								Access Denied
 							</h2>
 							<p className='text-gray-500'>
@@ -415,7 +415,7 @@ export default function ManagementPage() {
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<h2 className='text-xl font-semibold text-(--error) mb-2'>Error</h2>
+							<h2 className='text-lg font-semibold text-(--error) mb-2'>Error</h2>
 							<p className='text-(--error)'>{error}</p>
 						</div>
 					</div>
@@ -489,7 +489,7 @@ export default function ManagementPage() {
 						{/* Control Bar */}
 						<div className='mb-6'>
 							<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4'>
-								<div className='flex items-center gap-4 text-sm text-secondary/70'>
+								<div className='flex items-center gap-4 text-xs text-secondary/70'>
 									<span className='flex items-center gap-2'>
 										<span className='w-2 h-2 bg-accent rounded-full'></span>
 										{branches.find((branch) => branch.id === branchId)?.name ||
@@ -502,7 +502,7 @@ export default function ManagementPage() {
 									<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto'>
 										<button
 											onClick={() => setViewMode("workers")}
-											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
 												viewMode === "workers"
 													? "bg-white text-secondary shadow-sm"
 													: "text-secondary/60 hover:text-secondary"
@@ -511,7 +511,7 @@ export default function ManagementPage() {
 										</button>
 										<button
 											onClick={() => setViewMode("attendance")}
-											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
 												viewMode === "attendance"
 													? "bg-white text-secondary shadow-sm"
 													: "text-secondary/60 hover:text-secondary"
@@ -525,7 +525,7 @@ export default function ManagementPage() {
 										<button
 											onClick={handleCreateWorker}
 											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3.5'>
+											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3'>
 												<div className='w-4 h-4'> 
 													<PlusIcon className='drop-shadow-sm' />
 												</div>
@@ -572,7 +572,7 @@ export default function ManagementPage() {
 									/>
 
 									{/* Stats */}
-									<div className='mt-6 text-sm text-gray-500'>
+									<div className='mt-6 text-xs text-gray-500'>
 										Showing {sortedWorkers.length} of {workers.length} worker
 										{workers.length !== 1 ? "s" : ""} for this branch
 										{sortedWorkers.length !== workers.length && (

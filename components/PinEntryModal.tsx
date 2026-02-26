@@ -174,8 +174,8 @@ export default function PinEntryModal({
 							/>
 						</svg>
 					</div>
-					<h2 className="text-xl font-bold text-white">{title}</h2>
-					<p className="text-white/80 text-sm mt-1">{subtitle}</p>
+					<h2 className="text-lg font-bold text-white">{title}</h2>
+					<p className="text-white/80 text-xs mt-1">{subtitle}</p>
 				</div>
 
 				{/* PIN Dots */}
@@ -196,7 +196,7 @@ export default function PinEntryModal({
 					{/* Error Message */}
 					{error && (
 						<div className="mt-3 px-3 py-2 bg-(--error)/10 border border-(--error)/20 rounded-lg">
-							<p className="text-(--error) text-sm text-center font-medium">
+							<p className="text-(--error) text-xs text-center font-medium">
 								{error}
 							</p>
 						</div>
@@ -211,26 +211,26 @@ export default function PinEntryModal({
 								key={digit}
 								onClick={() => handleKeyPress(digit)}
 								disabled={loading || currentPin.length >= 4}
-								className="h-16 rounded-xl bg-(--background) text-secondary text-2xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+								className="h-16 rounded-xl bg-(--background) text-secondary text-xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 								{digit}
 							</button>
 						))}
 						<button
 							onClick={handleClear}
 							disabled={loading}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-sm font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-xs font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer">
 							Clear
 						</button>
 						<button
 							onClick={() => handleKeyPress("0")}
 							disabled={loading || currentPin.length >= 4}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-2xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 							0
 						</button>
 						<button
 							onClick={handleBackspace}
 							disabled={loading}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-sm font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-xs font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
 							<svg
 								className="w-6 h-6"
 								fill="none"

@@ -192,10 +192,10 @@ export default function EditBundleModal({
             <div className="w-10 h-10 bg-amber-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-amber-500"></div>
             </div>
-            <h3 className="text-base font-bold text-secondary mb-1">
+            <h3 className="text-sm font-bold text-secondary mb-1">
               {showDeleteConfirm ? 'Deleting Bundle...' : 'Updating Bundle...'}
             </h3>
-            <p className="text-sm text-secondary opacity-70">
+            <p className="text-xs text-secondary opacity-70">
               Please wait
             </p>
           </div>
@@ -208,10 +208,10 @@ export default function EditBundleModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-secondary mb-1">
+              <h3 className="text-sm font-bold text-secondary mb-1">
                 Edit Bundle
               </h3>
-              <p className="text-sm text-secondary opacity-70">
+              <p className="text-xs text-secondary opacity-70">
                 Update bundle information and components
               </p>
 
@@ -231,19 +231,19 @@ export default function EditBundleModal({
               {/* Bundle Name and Price */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Bundle Name <span className="text-(--error)">*</span>
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Price <span className="text-(--error)">*</span>
                   </label>
                   <div className="relative">
@@ -263,7 +263,7 @@ export default function EditBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -273,13 +273,13 @@ export default function EditBundleModal({
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Description
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full px-3 py-2 text-3 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -296,7 +296,7 @@ export default function EditBundleModal({
 
               {/* Component Selector */}
               <div className="border-t-2 border-secondary/20 pt-4">
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Bundle Components <span className="text-(--error)">*</span>
                 </label>
 
@@ -356,13 +356,13 @@ export default function EditBundleModal({
 
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-secondary/70">Qty:</label>
+                          <label className="text-xs text-secondary/70">Qty:</label>
                           <input
                             type="number"
                             value={component.quantity}
                             onChange={(e) => handleUpdateQuantity(component.inventoryItemId, parseInt(e.target.value) || 1)}
                             min="1"
-                            className="w-16 px-2 py-1 text-center text-sm border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-16 px-2 py-1 text-center text-xs border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                           />
                         </div>
 
@@ -429,7 +429,7 @@ export default function EditBundleModal({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-secondary mb-2">
+                    <h3 className="text-lg font-bold text-secondary mb-2">
                       Delete Bundle
                     </h3>
                     <p className="text-secondary opacity-70 mb-6">
@@ -438,7 +438,7 @@ export default function EditBundleModal({
                     <div className="flex gap-3">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 px-4 py-3 text-sm text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
+                        className="flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
                       >
                         CANCEL
                       </button>

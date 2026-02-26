@@ -62,10 +62,10 @@ export default function AddCategoryModal({
             <div className="w-10 h-10 bg-blue-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-dashed border-2 border-accent"></div>
             </div>
-            <h3 className="text-base font-bold text-secondary mb-1">
+            <h3 className="text-sm font-bold text-secondary mb-1">
               Adding Category...
             </h3>
-            <p className="text-sm text-secondary opacity-70">
+            <p className="text-xs text-secondary opacity-70">
               Please wait
             </p>
           </div>
@@ -78,17 +78,17 @@ export default function AddCategoryModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-secondary mb-1">
+              <h3 className="text-sm font-bold text-secondary mb-1">
                 Add New Category
               </h3>
-              <p className="text-sm text-secondary opacity-70">
+              <p className="text-xs text-secondary opacity-70">
                 Create a new category to organize your items
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Category Name <span className="text-(--error)">*</span>
                 </label>
                 <input
@@ -96,14 +96,14 @@ export default function AddCategoryModal({
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
                   onKeyDown={handleKeyDown}
-                  className="w-full px-3 py-2 h-9.5 text-3.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 h-9.5 text-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Enter category name"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Category Color
                 </label>
                 <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export default function AddCategoryModal({
                       type="text"
                       value={newCategory.color}
                       onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                      className="w-full px-3 py-2 h-9.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-sm"
+                      className="w-full px-3 py-2 h-9.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-xs"
                       placeholder="#3B82F6"
                     />
                   </div>

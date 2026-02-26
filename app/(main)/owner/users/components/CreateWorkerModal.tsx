@@ -204,7 +204,7 @@ export default function CreateWorkerModal({
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
 							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
 						</div>
-						<h3 className='text-xl font-bold text-secondary mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Creating Worker...
 						</h3>
 						<p className='text-secondary opacity-70'>
@@ -216,10 +216,10 @@ export default function CreateWorkerModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div>
-								<h2 className='text-2xl font-bold text-secondary'>
+								<h2 className='text-xl font-bold text-secondary'>
 									Add New Worker
 								</h2>
-								<p className='text-sm text-secondary/70 mt-1'>
+								<p className='text-xs text-secondary/70 mt-1'>
 									Create a new worker account with role assignments
 								</p>
 							</div>
@@ -255,7 +255,7 @@ export default function CreateWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-secondary/70 text-sm'>{error}</span>
+									<span className='text-secondary/70 text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -265,7 +265,7 @@ export default function CreateWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Full Name <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -279,7 +279,7 @@ export default function CreateWorkerModal({
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Email Address <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -296,7 +296,7 @@ export default function CreateWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Password <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -311,7 +311,7 @@ export default function CreateWorkerModal({
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -326,7 +326,7 @@ export default function CreateWorkerModal({
 							</div>
 
 							<div>
-								<label className='block text-sm font-medium text-secondary/70 mb-2'>
+								<label className='block text-xs font-medium text-secondary/70 mb-2'>
 									Employee ID
 								</label>
 								<input
@@ -349,7 +349,7 @@ export default function CreateWorkerModal({
 										onChange={handleInputChange}
 										className='h-4 w-4 text-accent focus:ring-accent border-secondary/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-secondary/70'>
+									<label className='ml-2 block text-xs text-secondary/70'>
 										Grant owner privileges
 									</label>
 								</div>
@@ -359,7 +359,7 @@ export default function CreateWorkerModal({
 							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-sm font-medium text-secondary/70 mb-2'>
+										<label className='block text-xs font-medium text-secondary/70 mb-2'>
 											Assign to Branch <span className="text-(--error)">*</span>
 										</label>
 										{availableBranches.length === 1 ? (
@@ -404,7 +404,7 @@ export default function CreateWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-sm font-medium text-secondary/70 mb-2'>
+										<label className='block text-xs font-medium text-secondary/70 mb-2'>
 											Role <span className="text-(--error)">*</span>
 										</label>
 										<DropdownField

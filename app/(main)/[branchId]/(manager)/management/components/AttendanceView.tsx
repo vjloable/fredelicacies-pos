@@ -242,10 +242,10 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 			{/* Header and Controls */}
 			<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 				<div>
-					<h2 className="text-xl font-semibold text-secondary mb-2">
+					<h2 className="text-lg font-semibold text-secondary mb-2">
 						Daily Attendance Overview
 					</h2>
-					<p className="text-sm text-secondary/70">
+					<p className="text-xs text-secondary/70">
 						{formatDateTime(selectedDate)}
 					</p>
 				</div>
@@ -257,7 +257,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 							<button
 								key={range}
 								onClick={() => setTimeRange(range as 6 | 12 | 24)}
-								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+								className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
 									timeRange === range
 										? "bg-white text-secondary shadow-sm"
 										: "text-secondary/60 hover:text-secondary"
@@ -297,7 +297,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 
 			{/* Worker Selection */}
 			<div className="bg-white rounded-lg border border-gray-200 p-4">
-				<h3 className="text-sm font-medium text-secondary mb-3">
+				<h3 className="text-xs font-medium text-secondary mb-3">
 					Select Workers to Display
 				</h3>
 				<div className="flex flex-wrap gap-2">
@@ -316,7 +316,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 								className="w-3 h-3 rounded-full"
 								style={{ backgroundColor: workerColors[worker.id] }}
 							/>
-							<span className="text-sm text-secondary">
+							<span className="text-xs text-secondary">
 								{worker.name || worker.email}
 							</span>
 						</label>
@@ -340,10 +340,10 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 					<div className="relative">
 						{/* Graph Title */}
 						<div className="mb-6">
-							<h3 className="text-lg font-medium text-secondary mb-2">
+							<h3 className="text-base font-medium text-secondary mb-2">
 								{timeRange}-Hour Attendance Timeline
 							</h3>
-							<p className="text-sm text-secondary/70">
+							<p className="text-xs text-secondary/70">
 								Horizontal lines show working periods for each employee
 								{timeRange < 24 && ` (${timeRangeBounds.startHour}:00 - ${timeRangeBounds.endHour}:00)`}
 							</p>
@@ -530,7 +530,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 						</div>
 
 						{/* Legend */}
-						<div className="mt-6 flex flex-wrap gap-4 text-sm">
+						<div className="mt-6 flex flex-wrap gap-4 text-xs">
 							<div className="flex items-center gap-2">
 								<div className="w-6 h-1.5 bg-accent rounded" />
 								<span className="text-secondary/70">Working Period</span>
@@ -551,7 +551,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 			{/* Attendance Summary */}
 			{!loading && filteredAttendances.length > 0 && (
 				<div className="bg-white rounded-lg border border-gray-200 p-4">
-					<h3 className="text-sm font-medium text-secondary mb-3">
+					<h3 className="text-xs font-medium text-secondary mb-3">
 						Daily Summary
 					</h3>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -576,7 +576,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 											style={{ backgroundColor: workerColors[worker.id] }}
 										/>
 										<div className="flex-1">
-											<p className="text-sm font-medium text-secondary">
+											<p className="text-xs font-medium text-secondary">
 												{worker.name || worker.email}
 											</p> 
 											<p className="text-xs text-secondary/70">
@@ -593,8 +593,8 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 			{/* Empty State */}
 			{!loading && filteredAttendances.length === 0 && (
 				<div className="text-center py-12">
-					<div className="text-4xl text-gray-300 mb-4">📊</div>
-					<h3 className="text-lg font-semibold text-gray-700 mb-2">
+					<div className="text-3xl text-gray-300 mb-4">📊</div>
+					<h3 className="text-base font-semibold text-gray-700 mb-2">
 						No Attendance Data
 					</h3>
 					<p className="text-gray-500">

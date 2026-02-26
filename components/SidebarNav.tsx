@@ -118,7 +118,7 @@ export default function SidebarNav() {
 			<li key={item.href}>
 				<Link
 					href={href}
-					className={`flex h-10 items-center text-3.5 font-semibold ${
+					className={`flex h-10 items-center text-3 font-semibold ${
 						isActive
 							? "bg-accent hover:bg-accent/80 text-primary text-shadow-lg"
 							: "bg-primary hover:bg-accent/50 text-secondary"
@@ -184,10 +184,10 @@ export default function SidebarNav() {
 				{currentBranch && (
 					<div className='px-4 py-3 border-b border-gray-200 bg-primary'>
 						<div className='text-left'>
-							<h3 className='text-3.5 font-bold text-secondary'>
+							<h3 className='text-3 font-bold text-secondary'>
 								{currentBranch.name}
 							</h3>
-							<p className='text-3 text-secondary/70 mt-1 leading-tight'>
+							<p className='text-[12px] text-secondary/70 mt-1 leading-tight'>
 								{currentBranch.address}
 							</p>
 						</div>
@@ -202,7 +202,7 @@ export default function SidebarNav() {
 								clearCurrentBranch();
 								router.push("/owner/branches");
 							}}
-							className='w-full flex items-center justify-start text-sm text-secondary/70 hover:text-secondary transition-colors'>
+							className='w-full flex items-center justify-start text-xs text-secondary/70 hover:text-secondary transition-colors'>
 							<svg
 								className='w-4 h-4 mr-2'
 								fill='none'
@@ -272,7 +272,7 @@ export default function SidebarNav() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className='group flex w-full h-10 items-center text-3.5 text-(--error) hover:text-primary font-semibold bg-primary hover:bg-(--error) cursor-pointer transition-colors duration-100'>
+								className='group flex w-full h-10 items-center text-3 text-(--error) hover:text-primary font-semibold bg-primary hover:bg-(--error) cursor-pointer transition-colors duration-100'>
 								<div className='w-full flex items-center justify-start transition-all duration-100'>
 									<span className='size-8 mx-3'>
 										<LogoutIcon className='gap-3 text-(--error) group-hover:text-primary' />

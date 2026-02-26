@@ -148,14 +148,14 @@ function LoginContent() {
 							</div>
 						</div>
 					</div>
-					<p className='text-center text-4 font-medium text-secondary'>
+					<p className='text-center text-3.5 font-medium text-secondary'>
 						Sign in to your account
 					</p>
 					<div className='p-8'>
 						<form onSubmit={handleSubmit} className='space-y-6'>
 							{/* Email Field */}
 							<div>
-								<label className='block text-sm font-medium text-secondary mb-2'>
+								<label className='block text-xs font-medium text-secondary mb-2'>
 									Email
 								</label>
 								<input
@@ -171,7 +171,7 @@ function LoginContent() {
 
 							{/* Password Field */}
 							<div>
-								<label className='block text-sm font-medium text-secondary mb-2'>
+								<label className='block text-xs font-medium text-secondary mb-2'>
 									Password
 								</label>
 								<input
@@ -199,7 +199,7 @@ function LoginContent() {
 												clipRule='evenodd'
 											/>
 										</svg>
-										<span className='text-sm text-green-600'>{successMessage}</span>
+										<span className='text-xs text-green-600'>{successMessage}</span>
 									</div>
 								</div>
 							)}
@@ -218,7 +218,7 @@ function LoginContent() {
 												clipRule='evenodd'
 											/>
 										</svg>
-										<span className='text-sm text-(--error)'>{error}</span>
+										<span className='text-xs text-(--error)'>{error}</span>
 									</div>
 								</div>
 							)}
@@ -245,7 +245,7 @@ function LoginContent() {
 
 						{/* Sign Up Link */}
 						<div className='mt-6 text-center'>
-							<p className='text-sm text-secondary'>
+							<p className='text-xs text-secondary'>
 								Do not have an account?{' '}
 								<Link
 									href='/signup'

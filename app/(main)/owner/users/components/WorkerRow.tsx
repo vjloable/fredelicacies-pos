@@ -177,17 +177,17 @@ export default function WorkerRow({
 						/>
 					) : (
 						<div className='w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
-							<span className='text-sm font-medium text-secondary'>
+							<span className='text-xs font-medium text-secondary'>
 								{worker.name.charAt(0).toUpperCase()}
 							</span>
 						</div>
 					)}
 					<div>
-						<div className='text-sm font-medium text-secondary'>
+						<div className='text-xs font-medium text-secondary'>
 							{worker.name}
 						</div>
 						{worker.employeeId && (
-							<div className='text-sm text-secondary/50'>
+							<div className='text-xs text-secondary/50'>
 								ID: {worker.employeeId}
 							</div>
 						)}
@@ -196,7 +196,7 @@ export default function WorkerRow({
 			</td>
 
 			{/* Email */}
-			<td className='px-6 py-4 whitespace-nowrap text-sm text-secondary font-light'>
+			<td className='px-6 py-4 whitespace-nowrap text-xs text-secondary font-light'>
 				{worker.email}
 			</td>
 
@@ -250,12 +250,12 @@ export default function WorkerRow({
 			</td>
 
 			{/* Last Active */}
-			{/* <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+			{/* <td className='px-6 py-4 whitespace-nowrap text-xs text-gray-500'>
 				{formatDate(worker.lastLoginAt)}
 			</td> */}
 
 			{/* Actions */}
-			<td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+			<td className='px-6 py-4 whitespace-nowrap text-right text-xs font-medium'>
 				<div className='flex items-center gap-2'>
 					{/* Time In/Out buttons */}
 					{canTimeInOut &&

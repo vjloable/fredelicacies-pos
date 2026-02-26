@@ -148,7 +148,7 @@ export default function QuickTimeWidget({
 							className={`w-2 h-2 rounded-full ${
 								isWorking ? "bg-green-400 animate-pulse" : "bg-gray-300"
 							}`}></div>
-						<span className='text-sm font-medium text-gray-700'>
+						<span className='text-xs font-medium text-gray-700'>
 							{isWorking ? "Working" : "Not Working"}
 						</span>
 					</div>
@@ -164,7 +164,7 @@ export default function QuickTimeWidget({
 				{isWorking && (
 					<div className='mb-3'>
 						<div className='text-xs text-gray-500 mb-1'>Working for:</div>
-						<div className='text-lg font-semibold text-blue-600'>
+						<div className='text-base font-semibold text-blue-600'>
 							{formatWorkingTime()}
 						</div>
 					</div>
@@ -174,7 +174,7 @@ export default function QuickTimeWidget({
 				<button
 					onClick={handleQuickToggle}
 					disabled={loading || timeTracking.loading}
-					className={`w-full flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+					className={`w-full flex items-center justify-center px-3 py-2 rounded-md text-xs font-medium transition-colors ${
 						isWorking
 							? "bg-orange-100 hover:bg-orange-200 text-orange-700"
 							: "bg-green-100 hover:bg-green-200 text-green-700"

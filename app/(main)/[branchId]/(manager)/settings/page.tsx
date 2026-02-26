@@ -155,7 +155,7 @@ export default function SettingsScreen() {
 								{/* Left Column - Preferences */}
 								<div className='space-y-6'>
 									<div className='mb-6'>
-										<h2 className='text-2xl font-bold text-secondary mb-2'>
+										<h2 className='text-xl font-bold text-secondary mb-2'>
 											Preferences
 										</h2>
 										<p className='text-secondary opacity-70'>
@@ -165,14 +165,14 @@ export default function SettingsScreen() {
 
 									{/* Menu Display Setting */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-secondary mb-4'>
+										<h3 className='text-base font-semibold text-secondary mb-4'>
 											Menu Display
 										</h3>
 										<div className='flex items-center justify-between'>
 											<div className='flex-1'>
 												<label
 													htmlFor='hide-out-of-stock'
-													className='block text-sm font-medium text-secondary'>
+													className='block text-xs font-medium text-secondary'>
 													Hide Out-of-Stock Items
 												</label>
 												<p className='text-xs text-gray-500 mt-1'>
@@ -202,7 +202,7 @@ export default function SettingsScreen() {
 
 									{/* Save/Sync Actions */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-secondary mb-4'>
+										<h3 className='text-base font-semibold text-secondary mb-4'>
 											Save & Sync
 										</h3>
 
@@ -297,7 +297,7 @@ export default function SettingsScreen() {
 								{/* Right Column - Utilities */}
 								<div className='space-y-6'>
 									<div className='mb-6'>
-										<h2 className='text-2xl font-bold text-secondary mb-2'>
+										<h2 className='text-xl font-bold text-secondary mb-2'>
 											Utilities
 										</h2>
 										<p className='text-secondary opacity-70'>
@@ -307,11 +307,11 @@ export default function SettingsScreen() {
 
 									{/* Bluetooth Printer Section */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-secondary mb-4 flex items-center gap-2'>
+										<h3 className='text-base font-semibold text-secondary mb-4 flex items-center gap-2'>
 											Bluetooth
 										</h3>
 
-										<p className='text-sm text-secondary opacity-70 mb-4'>
+										<p className='text-xs text-secondary opacity-70 mb-4'>
 											Connect to a thermal receipt printer. Once connected,
 											receipts will automatically print when orders are
 											confirmed.
@@ -320,7 +320,7 @@ export default function SettingsScreen() {
 										{/* Bluetooth Status Display */}
 										{bluetoothStatus && (
 											<div className='mb-4 p-3 bg-gray-50 rounded-lg border'>
-												<p className='text-sm text-secondary'>
+												<p className='text-xs text-secondary'>
 													{bluetoothStatus}
 												</p>
 											</div>
@@ -382,7 +382,7 @@ export default function SettingsScreen() {
 
 										{/* Instructions */}
 										<div className='mt-6 p-4 bg-secondary/5 rounded-lg border border-secondary/20'>
-											<h4 className='font-medium text-secondary mb-2 text-sm'>
+											<h4 className='font-medium text-secondary mb-2 text-xs'>
 												How to use:
 											</h4>
 											<ul className='text-xs text-secondary opacity-70 space-y-1'>

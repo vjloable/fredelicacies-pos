@@ -146,7 +146,7 @@ export default function LogsScreen() {
 										/>
 									</svg>
 								</div>
-								<h2 className='text-xl font-semibold text-secondary mb-2'>
+								<h2 className='text-lg font-semibold text-secondary mb-2'>
 									Logs Page
 								</h2>
 								<p className='text-secondary opacity-70 mb-8'>

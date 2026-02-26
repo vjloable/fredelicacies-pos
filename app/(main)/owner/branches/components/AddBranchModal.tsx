@@ -95,7 +95,7 @@ export default function AddBranchModal({
             <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-accent"></div>
             </div>
-            <h3 className="text-xl font-bold text-secondary mb-2">
+            <h3 className="text-lg font-bold text-secondary mb-2">
               Creating Branch...
             </h3>
             <p className="text-secondary opacity-70">
@@ -109,7 +109,7 @@ export default function AddBranchModal({
               <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
                 <PlusIcon className='size-6 text-accent'/>
               </div>
-              <h3 className="text-xl font-bold text-secondary mb-2">
+              <h3 className="text-lg font-bold text-secondary mb-2">
                 Add New Branch
               </h3>
               <p className="text-secondary opacity-70">
@@ -120,28 +120,28 @@ export default function AddBranchModal({
             {/* Add Branch Form */}
             <div className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Branch Name <span className="text-(--error)">*</span>
                 </label>
                 <input
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-xs sm:text-3 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Location <span className="text-(--error)">*</span>
                 </label>
                 <input
                   type="text"
                   value={branchData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-xs sm:text-3 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
@@ -160,7 +160,7 @@ export default function AddBranchModal({
               {/* Preview Section */}
               {/* {(branchData.name.trim() || branchData.address.trim()) && (
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="text-sm text-secondary opacity-70 mb-2">Preview:</div>
+                  <div className="text-xs text-secondary opacity-70 mb-2">Preview:</div>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-(--light-accent) rounded-lg flex items-center justify-center shrink-0">
                       <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default function AddBranchModal({
                       <h4 className="font-semibold text-secondary mb-1">
                         {branchData.name.trim() || 'Branch Name'}
                       </h4>
-                      <p className="text-sm text-secondary opacity-70">
+                      <p className="text-xs text-secondary opacity-70">
                         {branchData.address.trim() || 'Branch Location'}
                       </p>
                     </div>
@@ -189,14 +189,14 @@ export default function AddBranchModal({
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
               <button
                 onClick={onClose}
-                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-xs sm:text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateBranch}
                 disabled={!branchData.name.trim() || !branchData.address.trim()}
-                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
+                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-xs sm:text-sm ${
                   branchData.name.trim() && branchData.address.trim()
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'

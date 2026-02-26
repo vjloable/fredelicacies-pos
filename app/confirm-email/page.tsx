@@ -63,10 +63,10 @@ function ConfirmEmailContent() {
           <div className="flex justify-center mb-6">
             <LogoVerticalIcon className="h-20 w-auto" />
           </div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-2xl font-extrabold text-gray-900">
             Check Your Email
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-xs text-gray-600">
             We&apos;ve sent you a confirmation email
           </p>
         </div>
@@ -86,15 +86,15 @@ function ConfirmEmailContent() {
                 </svg>
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-medium text-blue-800">
+                <h3 className="text-xs font-medium text-blue-800">
                   Confirmation email sent
                 </h3>
                 {email && (
-                  <p className="mt-2 text-sm text-blue-700">
+                  <p className="mt-2 text-xs text-blue-700">
                     We sent a confirmation link to <strong>{email}</strong>
                   </p>
                 )}
-                <div className="mt-4 text-sm text-blue-700">
+                <div className="mt-4 text-xs text-blue-700">
                   <p className="font-medium mb-2">Next steps:</p>
                   <ol className="list-decimal list-inside space-y-1 ml-2">
                     <li>Check your email inbox</li>
@@ -123,10 +123,10 @@ function ConfirmEmailContent() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
+                <h3 className="text-xs font-medium text-yellow-800">
                   Didn&apos;t receive the email?
                 </h3>
-                <div className="mt-2 text-sm text-yellow-700 space-y-1">
+                <div className="mt-2 text-xs text-yellow-700 space-y-1">
                   <p>• Check your spam or junk folder</p>
                   <p>• Make sure you entered the correct email</p>
                   <p>• Wait a few minutes for the email to arrive</p>
@@ -141,7 +141,7 @@ function ConfirmEmailContent() {
                 type="button"
                 onClick={handleResendEmail}
                 disabled={resendStatus === "sending" || countdown > 0}
-                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md
                   ${
                     countdown > 0 || resendStatus === "sending"
                       ? "text-gray-400 bg-gray-100 cursor-not-allowed"
@@ -163,14 +163,14 @@ function ConfirmEmailContent() {
           <div className="flex items-center justify-center space-x-4 pt-4">
             <Link
               href="/login"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="text-xs font-medium text-blue-600 hover:text-blue-500"
             >
               Back to login
             </Link>
             <span className="text-gray-300">|</span>
             <Link
               href="/signup"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="text-xs font-medium text-blue-600 hover:text-blue-500"
             >
               Sign up with different email
             </Link>

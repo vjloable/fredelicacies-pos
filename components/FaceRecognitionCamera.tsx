@@ -163,11 +163,11 @@ export default function FaceRecognitionCamera({
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</div>
-						<h3 className="text-xl font-bold text-secondary mb-2">Camera Not Available</h3>
+						<h3 className="text-lg font-bold text-secondary mb-2">Camera Not Available</h3>
 						<p className="text-secondary/70 mb-6">
 							Unable to access your camera. Please ensure:
 						</p>
-						<ul className="text-left text-sm text-secondary/80 space-y-2.5 mb-6">
+						<ul className="text-left text-xs text-secondary/80 space-y-2.5 mb-6">
 							<li className="flex items-start gap-2">
 								<span className="text-accent mt-0.5">•</span>
 								<span>Camera permissions are granted in your browser</span>
@@ -199,10 +199,10 @@ export default function FaceRecognitionCamera({
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h2 className="text-2xl font-bold text-secondary">
+						<h2 className="text-xl font-bold text-secondary">
 							{mode === 'enroll' ? 'Enroll Your Face' : 'Face Verification'}
 						</h2>
-						<p className="text-sm text-secondary/70 mt-1">
+						<p className="text-xs text-secondary/70 mt-1">
 							{mode === 'enroll'
 								? 'Position your face in the frame and capture to enroll'
 								: 'Verify your identity to clock in/out'}
@@ -260,7 +260,7 @@ export default function FaceRecognitionCamera({
 						<div className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-sm flex items-center justify-center">
 							<div className="text-center">
 								<div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4" />
-								<p className="text-primary text-lg font-medium">Loading...</p>
+								<p className="text-primary text-base font-medium">Loading...</p>
 							</div>
 						</div>
 					)}
@@ -280,7 +280,7 @@ export default function FaceRecognitionCamera({
 						{isProcessing && (
 							<LoadingSpinner size='md'/>
 						)}
-						<span className={`text-sm font-semibold ${
+						<span className={`text-xs font-semibold ${
 							isProcessing 
 								? 'text-accent/60' 
 								: status.includes('success') || status.includes('Verified') 
@@ -325,7 +325,7 @@ export default function FaceRecognitionCamera({
 								clipRule="evenodd"
 							/>
 						</svg>
-						<div className="text-sm text-secondary">
+						<div className="text-xs text-secondary">
 							<p className="font-semibold mb-2">Quick Tips:</p>
 							<ul className="space-y-1 text-xs text-secondary/80">
 								<li className="flex items-start gap-2"> 

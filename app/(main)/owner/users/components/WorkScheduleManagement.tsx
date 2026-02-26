@@ -227,10 +227,10 @@ export default function WorkScheduleManagement({
 			<div className='bg-white rounded-lg shadow p-6'>
 				<div className='flex justify-between items-center'>
 					<div>
-						<h3 className='text-lg font-semibold text-gray-900'>
+						<h3 className='text-base font-semibold text-gray-900'>
 							Work Schedule Management
 						</h3>
-						<p className='text-sm text-gray-600 mt-1'>
+						<p className='text-xs text-gray-600 mt-1'>
 							Set target hours and preferred schedules for workers
 						</p>
 					</div>
@@ -245,7 +245,7 @@ export default function WorkScheduleManagement({
 			{/* Schedule Targets List */}
 			<div className='bg-white rounded-lg shadow'>
 				<div className='p-6 border-b border-gray-200'>
-					<h4 className='text-lg font-semibold text-gray-900'>
+					<h4 className='text-base font-semibold text-gray-900'>
 						Current Schedule Targets
 					</h4>
 				</div>
@@ -253,7 +253,7 @@ export default function WorkScheduleManagement({
 				{loading ? (
 					<div className='p-8 text-center'>
 						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
-						<p className='text-gray-600 text-sm mt-2'>
+						<p className='text-gray-600 text-xs mt-2'>
 							Loading schedule targets...
 						</p>
 					</div>
@@ -273,7 +273,7 @@ export default function WorkScheduleManagement({
 								/>
 							</svg>
 						</div>
-						<h3 className='text-lg font-medium text-gray-900 mb-2'>
+						<h3 className='text-base font-medium text-gray-900 mb-2'>
 							No Schedule Targets
 						</h3>
 						<p className='text-gray-600 mb-4'>
@@ -310,7 +310,7 @@ export default function WorkScheduleManagement({
 					<div className='bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto'>
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex justify-between items-center'>
-								<h3 className='text-lg font-semibold text-gray-900'>
+								<h3 className='text-base font-semibold text-gray-900'>
 									{selectedWorker ? "Edit" : "Add"} Schedule Target
 								</h3>
 								<button
@@ -344,13 +344,13 @@ export default function WorkScheduleManagement({
 							className='p-6 space-y-4'>
 							{error && (
 								<div className='bg-red-50 border border-red-200 rounded-md p-3'>
-									<div className='text-sm text-red-800'>{error}</div>
+									<div className='text-xs text-red-800'>{error}</div>
 								</div>
 							)}
 
 							{/* Worker Selection */}
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-1'>
+								<label className='block text-xs font-medium text-gray-700 mb-1'>
 									Worker
 								</label>
 								<select
@@ -373,7 +373,7 @@ export default function WorkScheduleManagement({
 							{/* Branch Selection */}
 							{selectedWorker && (
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-1'>
+									<label className='block text-xs font-medium text-gray-700 mb-1'>
 										Branch
 									</label>
 									<select
@@ -403,7 +403,7 @@ export default function WorkScheduleManagement({
 
 							{/* Target Hours */}
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-1'>
+								<label className='block text-xs font-medium text-gray-700 mb-1'>
 									Target Hours per Week
 								</label>
 								<input
@@ -425,7 +425,7 @@ export default function WorkScheduleManagement({
 							{/* Preferred Shift Times */}
 							<div className='grid grid-cols-2 gap-3'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-1'>
+									<label className='block text-xs font-medium text-gray-700 mb-1'>
 										Shift Start
 									</label>
 									<input
@@ -441,7 +441,7 @@ export default function WorkScheduleManagement({
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-1'>
+									<label className='block text-xs font-medium text-gray-700 mb-1'>
 										Shift End
 									</label>
 									<input
@@ -460,7 +460,7 @@ export default function WorkScheduleManagement({
 
 							{/* Work Days */}
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-2'>
+								<label className='block text-xs font-medium text-gray-700 mb-2'>
 									Work Days
 								</label>
 								<div className='grid grid-cols-7 gap-1'>
@@ -520,7 +520,7 @@ export default function WorkScheduleManagement({
 								/>
 								<label
 									htmlFor='isActive'
-									className='ml-2 text-sm text-gray-700'>
+									className='ml-2 text-xs text-gray-700'>
 									Active schedule target
 								</label>
 							</div>
@@ -600,11 +600,11 @@ function ScheduleTargetItem({
 						<h5 className='font-semibold text-gray-900'>
 							{getWorkerName(target.workerId)}
 						</h5>
-						<span className='text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded'>
+						<span className='text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded'>
 							{getBranchName(target.branchId)}
 						</span>
 						{!target.isActive && (
-							<span className='text-sm bg-red-100 text-red-700 px-2 py-1 rounded'>
+							<span className='text-xs bg-red-100 text-red-700 px-2 py-1 rounded'>
 								Inactive
 							</span>
 						)}
@@ -612,7 +612,7 @@ function ScheduleTargetItem({
 
 					<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-3'>
 						<div>
-							<div className='text-sm text-gray-600'>
+							<div className='text-xs text-gray-600'>
 								Target Hours/Week
 							</div>
 							<div className='font-medium'>
@@ -623,7 +623,7 @@ function ScheduleTargetItem({
 						{target.preferredShiftStart &&
 							target.preferredShiftEnd && (
 								<div>
-									<div className='text-sm text-gray-600'>
+									<div className='text-xs text-gray-600'>
 										Preferred Hours
 									</div>
 									<div className='font-medium'>
@@ -634,7 +634,7 @@ function ScheduleTargetItem({
 							)}
 
 						<div>
-							<div className='text-sm text-gray-600'>Work Days</div>
+							<div className='text-xs text-gray-600'>Work Days</div>
 							<div className='font-medium'>
 								{target.workDays
 									.map((day) => getDayName(day))
@@ -647,11 +647,11 @@ function ScheduleTargetItem({
 					{compliance && (
 						<div className='bg-gray-50 rounded-lg p-3'>
 							<div className='flex items-center justify-between mb-2'>
-								<span className='text-sm font-medium text-gray-700'>
+								<span className='text-xs font-medium text-gray-700'>
 									Weekly Compliance
 								</span>
 								<span
-									className={`text-sm font-semibold ${
+									className={`text-xs font-semibold ${
 										compliance.compliance >= 90
 											? "text-green-600"
 											: compliance.compliance >= 70

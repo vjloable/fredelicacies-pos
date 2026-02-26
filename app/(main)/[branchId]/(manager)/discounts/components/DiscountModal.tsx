@@ -125,13 +125,13 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-lg font-semibold mb-4">
         </h2>
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
             <DiscountsIcon className='text-accent'/>
           </div>
-          <h3 className="text-xl font-bold text-secondary mb-2">
+          <h3 className="text-lg font-bold text-secondary mb-2">
             {discount ? 'Edit Discount' : 'Create New Discount'}
           </h3>
           <p className="text-secondary opacity-70">
@@ -142,7 +142,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Discount Name */}
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="block text-xs font-medium text-secondary mb-1">
               Discount Name <span className="text-(--error)">*</span>
             </label>
             <input
@@ -157,7 +157,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="block text-xs font-medium text-secondary mb-1">
               Discount Type <span className="text-(--error)">*</span>
             </label>
             <DropdownField
@@ -180,7 +180,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="block text-xs font-medium text-secondary mb-1">
               Status <span className="text-(--error)">*</span>
             </label>
             <DropdownField
@@ -199,14 +199,14 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
               padding=''
               shadow={false}
             />
-            <p className="text-sm text-secondary/50 mt-1">
+            <p className="text-xs text-secondary/50 mt-1">
               Active discounts are available for use at checkout
             </p>
           </div>
 
           {/* Value */}
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="block text-xs font-medium text-secondary mb-1">
               Discount Value <span className="text-(--error)">*</span>
             </label>
             <div className="relative">

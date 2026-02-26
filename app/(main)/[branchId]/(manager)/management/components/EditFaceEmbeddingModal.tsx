@@ -266,10 +266,10 @@ export default function EditFaceEmbeddingModal({
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-secondary">
+                        <h2 className="text-xl font-bold text-secondary">
                             Face Enrollment
                         </h2>
-                        <p className="text-sm text-secondary/70 mt-1">
+                        <p className="text-xs text-secondary/70 mt-1">
                             Manage face recognition for {worker.name}
                         </p>
                     </div>
@@ -298,7 +298,7 @@ export default function EditFaceEmbeddingModal({
                             <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center">
                                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent"></div>
                             </div>
-                            <h3 className="text-xl font-bold text-secondary mb-2">
+                            <h3 className="text-lg font-bold text-secondary mb-2">
                                 Checking Status...
                             </h3>
                             <p className="text-secondary opacity-70">
@@ -349,14 +349,14 @@ export default function EditFaceEmbeddingModal({
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">
                                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-accent border-t-transparent" />
-                                        <span className="text-sm font-medium text-secondary">{status}</span>
+                                        <span className="text-xs font-medium text-secondary">{status}</span>
                                     </div>
                                 ) : cameraError ? (
-                                    <div className="text-sm text-red-700 bg-red-50 border border-red-200 p-4 rounded-xl font-medium">
+                                    <div className="text-xs text-red-700 bg-red-50 border border-red-200 p-4 rounded-xl font-medium">
                                         {cameraError}
                                     </div>
                                 ) : (
-                                    <div className="text-sm font-medium text-secondary/80">{status}</div>
+                                    <div className="text-xs font-medium text-secondary/80">{status}</div>
                                 )}
                             </div>
 
@@ -391,7 +391,7 @@ export default function EditFaceEmbeddingModal({
                                             }`}
                                         />
                                         <div>
-                                            <p className="text-sm font-semibold text-secondary">
+                                            <p className="text-xs font-semibold text-secondary">
                                                 Enrollment Status
                                             </p>
                                             <p className="text-xs text-secondary/70 mt-0.5">
@@ -424,7 +424,7 @@ export default function EditFaceEmbeddingModal({
                                             clipRule="evenodd"
                                         />
                                     </svg>
-                                    <div className="text-sm text-secondary">
+                                    <div className="text-xs text-secondary">
                                         <p className="font-semibold mb-2">Quick Tips:</p>
                                         <ul className="space-y-1 text-xs text-secondary/80">
                                             <li className="flex items-start gap-2">
@@ -462,7 +462,7 @@ export default function EditFaceEmbeddingModal({
                                                     handleStartEnrollment();
                                                 }}
                                                 disabled={isLoading}
-                                                className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                                                className="w-full bg-accent text-3 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                                                 <svg
                                                     className="w-5 h-5"
                                                     fill="none"
@@ -486,7 +486,7 @@ export default function EditFaceEmbeddingModal({
                                                 handleStartEnrollment();
                                             }}
                                             disabled={isLoading}
-                                            className="w-full bg-accent/10 text-3.5 text-accent px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-accent hover:border-accent">
+                                            className="w-full bg-accent/10 text-3 text-accent px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-accent hover:border-accent">
                                             <svg
                                                 className="w-5 h-5"
                                                 fill="none"
@@ -506,7 +506,7 @@ export default function EditFaceEmbeddingModal({
                                         <button
                                             onClick={handleDeleteEmbedding}
                                             disabled={isLoading}
-                                            className="w-full bg-(--error)/10 text-3.5 text-(--error) px-4 py-3.5 rounded-xl hover:bg-(--error)/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-(--error) hover:border-(--error)">
+                                            className="w-full bg-(--error)/10 text-3 text-(--error) px-4 py-3.5 rounded-xl hover:bg-(--error)/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-(--error) hover:border-(--error)">
                                             <svg
                                                 className="w-5 h-5"
                                                 fill="none"
@@ -529,7 +529,7 @@ export default function EditFaceEmbeddingModal({
                                             handleStartEnrollment();
                                         }}
                                         disabled={isLoading}
-                                        className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                                        className="w-full bg-accent text-3 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                                         <svg
                                             className="w-5 h-5"
                                             fill="none"

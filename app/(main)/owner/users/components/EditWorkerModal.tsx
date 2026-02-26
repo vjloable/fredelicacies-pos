@@ -358,7 +358,7 @@ export default function EditWorkerModal({
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
 							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
 						</div>
-						<h3 className='text-xl font-bold text-secondary mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Updating Worker...
 						</h3>
 						<p className='text-secondary opacity-70'>
@@ -370,10 +370,10 @@ export default function EditWorkerModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div>
-								<h2 className='text-2xl font-bold text-secondary'>
+								<h2 className='text-xl font-bold text-secondary'>
 									Edit Worker
 								</h2>
-								<p className='text-sm text-secondary/70 mt-1'>
+								<p className='text-xs text-secondary/70 mt-1'>
 									Update worker information and role assignments
 								</p>
 							</div>
@@ -409,7 +409,7 @@ export default function EditWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--error) text-sm'>{error}</span>
+									<span className='text-(--error) text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -419,7 +419,7 @@ export default function EditWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Full Name <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -433,7 +433,7 @@ export default function EditWorkerModal({
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Email Address <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -450,7 +450,7 @@ export default function EditWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -463,7 +463,7 @@ export default function EditWorkerModal({
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Employee ID
 									</label>
 									<input
@@ -487,7 +487,7 @@ export default function EditWorkerModal({
 										onChange={handleInputChange}
 										className='h-5 w-5 text-primary focus:ring-accent border-secondary/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-secondary p-1'>
+									<label className='ml-2 block text-xs text-secondary p-1'>
 										Grant admin privileges
 									</label>
 								</div>
@@ -497,7 +497,7 @@ export default function EditWorkerModal({
 							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
+										<label className='block text-xs font-medium text-gray-700 mb-2'>
 											Assign to Branch <span className="text-(--error)">*</span>
 										</label>
 										{!isOwner || availableBranches.length === 1 ? (
@@ -544,7 +544,7 @@ export default function EditWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
+										<label className='block text-xs font-medium text-gray-700 mb-2'>
 											Role <span className="text-(--error)">*</span>
 										</label>
 										{isOwner && canDemoteWorker(worker) ? (

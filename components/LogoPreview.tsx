@@ -87,7 +87,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
   if (loading) {
     return (
       <div className={`flex items-center justify-center p-4 bg-gray-100 rounded ${className}`}>
-        <div className="text-sm text-gray-600">Processing logo...</div>
+        <div className="text-xs text-gray-600">Processing logo...</div>
       </div>
     );
   }
@@ -95,14 +95,14 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
   if (error) {
     return (
       <div className={`flex items-center justify-center p-4 bg-red-100 text-red-600 rounded ${className}`}>
-        <div className="text-sm">{error}</div>
+        <div className="text-xs">{error}</div>
       </div>
     );
   }
 
   return (
     <div className={`bg-white border rounded p-4 ${className}`}>
-      <div className="text-sm text-gray-600 mb-2">Receipt Logo Preview:</div>
+      <div className="text-xs text-gray-600 mb-2">Receipt Logo Preview:</div>
       {previewUrl && (
         <div className="bg-white border rounded p-2" style={{ maxWidth: maxWidth + 'px' }}>
           <SafeImage 

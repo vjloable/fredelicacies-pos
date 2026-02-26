@@ -93,7 +93,7 @@ export default function AttendanceTracker({
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
 				<div className='flex items-center justify-between mb-4'>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Active Work Sessions
 					</h3>
 					<div className='animate-spin rounded-full h-6 w-6 border-2 border-dashed border-blue-500'></div>
@@ -120,12 +120,12 @@ export default function AttendanceTracker({
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
 				<div className='flex items-center justify-between mb-4'>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Active Work Sessions
 					</h3>
 					<button
 						onClick={loadActiveAttendances}
-						className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
+						className='text-blue-600 hover:text-blue-800 text-xs font-medium'>
 						Retry
 					</button>
 				</div>
@@ -144,7 +144,7 @@ export default function AttendanceTracker({
 							/>
 						</svg>
 					</div>
-					<p className='text-gray-600 text-sm'>{error}</p>
+					<p className='text-gray-600 text-xs'>{error}</p>
 				</div>
 			</div>
 		);
@@ -154,10 +154,10 @@ export default function AttendanceTracker({
 		<div className='bg-white rounded-lg shadow'>
 			<div className='flex items-center justify-between p-6 border-b border-gray-200'>
 				<div>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Active Attendances
 					</h3>
-					<p className='text-sm text-gray-600 mt-1'>
+					<p className='text-xs text-gray-600 mt-1'>
 						{activeAttendances.length} worker
 						{activeAttendances.length !== 1 ? "s" : ""} currently clocked in
 					</p>
@@ -201,7 +201,7 @@ export default function AttendanceTracker({
 						<h4 className='text-gray-900 font-medium mb-2'>
 							No Active Sessions
 						</h4>
-						<p className='text-gray-600 text-sm'>
+						<p className='text-gray-600 text-xs'>
 							No workers are currently clocked in
 							{branchId ? " at this branch" : ""}.
 						</p>
@@ -222,7 +222,7 @@ export default function AttendanceTracker({
 										/>
 									) : (
 										<div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center'>
-											<span className='text-sm font-medium text-gray-700'>
+											<span className='text-xs font-medium text-gray-700'>
 												{attendance.worker.name.charAt(0).toUpperCase()}
 											</span>
 										</div>
@@ -233,7 +233,7 @@ export default function AttendanceTracker({
 										<div className='font-medium text-gray-900'>
 											{attendance.worker.name}
 										</div>
-										<div className='flex items-center space-x-2 text-sm text-gray-600'>
+										<div className='flex items-center space-x-2 text-xs text-gray-600'>
 											<span>Clocked in at {formatTime(attendance.clock_in)}</span>
 											{!branchId && (
 												<>
@@ -266,7 +266,7 @@ export default function AttendanceTracker({
 			{/* Summary Footer */}
 			{activeAttendances.length > 0 && (
 				<div className='px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg'>
-					<div className='flex items-center justify-between text-sm'>
+					<div className='flex items-center justify-between text-xs'>
 						<div className='flex items-center space-x-4'>
 							<span className='text-gray-600'>
 								Total active workers: <strong>{activeAttendances.length}</strong>

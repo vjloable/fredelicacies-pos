@@ -137,7 +137,7 @@ export default function AssignBranchModal({
 								/>
 							</svg>
 						</div>
-						<h3 className='text-xl font-bold text-secondary mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Cannot Assign Admin
 						</h3>
 						<p className='text-secondary/60 mb-6'>
@@ -164,7 +164,7 @@ export default function AssignBranchModal({
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
 							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
 						</div>
-						<h3 className='text-xl font-bold text-secondary mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Updating Assignments...
 						</h3>
 						<p className='text-secondary opacity-70'>
@@ -191,10 +191,10 @@ export default function AssignBranchModal({
 									</svg>
 								</div>
 								<div>
-									<h3 className='text-xl font-bold text-secondary'>
+									<h3 className='text-lg font-bold text-secondary'>
 										Manage Branch Assignments
 									</h3>
-									<p className='text-sm text-secondary/70'>
+									<p className='text-xs text-secondary/70'>
 										Assign worker to branches and set their roles
 									</p>
 								</div>
@@ -228,14 +228,14 @@ export default function AssignBranchModal({
 									/>
 								) : (
 									<div className='w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
-										<span className='text-lg font-medium text-secondary/70'>
+										<span className='text-base font-medium text-secondary/70'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<div>
 									<div className='font-medium text-secondary'>{worker.name}</div>
-									<div className='text-sm text-secondary/50'>{worker.email}</div>
+									<div className='text-xs text-secondary/50'>{worker.email}</div>
 									{worker.isOwner && (
 										<div className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent/80 mt-1'>
 											Admin
@@ -259,7 +259,7 @@ export default function AssignBranchModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--error) text-sm'>{error}</span>
+									<span className='text-(--error) text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -268,7 +268,7 @@ export default function AssignBranchModal({
 						<form onSubmit={handleSubmit} className='space-y-6'>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-secondary/70 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Assign to Branch
 										{!worker.isOwner && (
 											<span className='text-(--error)/50 ml-1'>*</span>
@@ -314,7 +314,7 @@ export default function AssignBranchModal({
 									)}
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Role
 										{!worker.isOwner && (
 											<span className='text-(--error)/50 ml-1'>*</span>

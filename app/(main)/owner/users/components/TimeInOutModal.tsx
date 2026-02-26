@@ -147,7 +147,7 @@ export default function TimeInOutModal({
 									isTimeIn ? "border-green-500" : "border-orange-500"
 								}`}></div>
 						</div>
-						<h3 className='text-xl font-bold text-secondary mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							{isTimeIn ? "Clocking In..." : "Clocking Out..."}
 						</h3>
 						<p className='text-secondary opacity-70'>
@@ -175,10 +175,10 @@ export default function TimeInOutModal({
 									</svg>
 								</div>
 								<div>
-									<h3 className='text-xl font-bold text-secondary'>
+									<h3 className='text-lg font-bold text-secondary'>
 										{title}
 									</h3>
-									<p className='text-sm text-secondary/70'>
+									<p className='text-xs text-secondary/70'>
 										{isTimeIn
 											? "Start work session"
 											: "End current work session"}
@@ -216,14 +216,14 @@ export default function TimeInOutModal({
 									/>
 								) : (
 									<div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3'>
-										<span className='text-sm font-medium text-gray-700'>
+										<span className='text-xs font-medium text-gray-700'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<div>
 									<div className='font-medium text-gray-900'>{worker.name}</div>
-									<div className='text-sm text-gray-500'>
+									<div className='text-xs text-gray-500'>
 										{isTimeIn
 											? "Ready to clock in"
 											: `Currently at: ${
@@ -249,7 +249,7 @@ export default function TimeInOutModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-red-700 text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -259,7 +259,7 @@ export default function TimeInOutModal({
 							{/* Branch Selection (for time in only) */}
 							{isTimeIn && (
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Select Branch *
 									</label>
 									<select
@@ -279,7 +279,7 @@ export default function TimeInOutModal({
 
 							{/* Notes */}
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-2'>
+								<label className='block text-xs font-medium text-gray-700 mb-2'>
 									Notes (Optional)
 								</label>
 								<textarea
@@ -295,7 +295,7 @@ export default function TimeInOutModal({
 
 							{/* Current Time Display */}
 							<div className='bg-blue-50 border border-blue-200 rounded-lg p-3'>
-								<div className='text-sm text-blue-800'>
+								<div className='text-xs text-blue-800'>
 									<strong>Current Time:</strong> {new Date().toLocaleString()}
 								</div>
 							</div>

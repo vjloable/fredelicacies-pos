@@ -344,7 +344,7 @@ export default function WorkerStatsComponent({
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
 				<div className='flex items-center justify-between mb-6'>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
 					</h3>
 					<div className='animate-spin rounded-full h-6 w-6 border-2 border-dashed border-blue-500'></div>
@@ -367,12 +367,12 @@ export default function WorkerStatsComponent({
 		return (
 			<div className='bg-white rounded-lg shadow p-6'>
 				<div className='flex items-center justify-between mb-6'>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
 					</h3>
 					<button
 						onClick={loadWorkerStats}
-						className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
+						className='text-blue-600 hover:text-blue-800 text-xs font-medium'>
 						Retry
 					</button>
 				</div>
@@ -391,7 +391,7 @@ export default function WorkerStatsComponent({
 							/>
 						</svg>
 					</div>
-					<p className='text-gray-600 text-sm'>{error}</p>
+					<p className='text-gray-600 text-xs'>{error}</p>
 				</div>
 			</div>
 		);
@@ -406,10 +406,10 @@ export default function WorkerStatsComponent({
 			{/* Header */}
 			<div className='flex items-center justify-between p-6 border-b border-gray-200'>
 				<div>
-					<h3 className='text-lg font-semibold text-gray-900'>
+					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
 					</h3>
-					<p className='text-sm text-gray-600 mt-1'>
+					<p className='text-xs text-gray-600 mt-1'>
 						Performance metrics for {worker.name}
 					</p>
 				</div>
@@ -439,8 +439,8 @@ export default function WorkerStatsComponent({
 					<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
 						<div className='flex items-center justify-between'>
 							<div>
-								<p className='text-sm font-medium text-blue-800'>Total Hours</p>
-								<p className='text-2xl font-bold text-blue-900'>
+								<p className='text-xs font-medium text-blue-800'>Total Hours</p>
+								<p className='text-xl font-bold text-blue-900'>
 									{formatHours(stats.totalHoursWorked)}
 								</p>
 							</div>
@@ -465,10 +465,10 @@ export default function WorkerStatsComponent({
 					<div className='bg-green-50 border border-green-200 rounded-lg p-4'>
 						<div className='flex items-center justify-between'>
 							<div>
-								<p className='text-sm font-medium text-green-800'>
+								<p className='text-xs font-medium text-green-800'>
 									Total Attendances
 								</p>
-								<p className='text-2xl font-bold text-green-900'>
+								<p className='text-xl font-bold text-green-900'>
 									{stats.totalAttendances}
 								</p>
 							</div>
@@ -493,10 +493,10 @@ export default function WorkerStatsComponent({
 					<div className='bg-purple-50 border border-purple-200 rounded-lg p-4'>
 						<div className='flex items-center justify-between'>
 							<div>
-								<p className='text-sm font-medium text-purple-800'>
+								<p className='text-xs font-medium text-purple-800'>
 									Avg. Attendance
 								</p>
-								<p className='text-2xl font-bold text-purple-900'>
+								<p className='text-xl font-bold text-purple-900'>
 									{Math.round(stats.averageAttendanceDuration)}m
 								</p>
 							</div>
@@ -525,13 +525,13 @@ export default function WorkerStatsComponent({
 						<div className='flex items-center justify-between'>
 							<div>
 								<p
-									className={`text-sm font-medium ${getEfficiencyColor(
+									className={`text-xs font-medium ${getEfficiencyColor(
 										stats.attendance.punctualityScore
 									)}`}>
 									Punctuality
 								</p>
 								<p
-									className={`text-2xl font-bold ${getEfficiencyColor(
+									className={`text-xl font-bold ${getEfficiencyColor(
 										stats.attendance.punctualityScore
 									)}`}>
 									{stats.attendance.punctualityScore}%
@@ -644,7 +644,7 @@ export default function WorkerStatsComponent({
 										<div className='font-medium text-gray-900'>
 											{getBranchName(branchStat.branchId)}
 										</div>
-										<div className='text-sm text-gray-600'>
+										<div className='text-xs text-gray-600'>
 											Last worked:{" "}
 											{branchStat.lastWorked
 												? new Date(branchStat.lastWorked).toLocaleDateString()
@@ -655,7 +655,7 @@ export default function WorkerStatsComponent({
 										<div className='font-semibold text-gray-900'>
 											{formatHours(branchStat.hoursWorked)}
 										</div>
-										<div className='text-sm text-gray-600'>
+										<div className='text-xs text-gray-600'>
 											{branchStat.attendancesCount} attendances
 										</div>
 									</div>
@@ -669,7 +669,7 @@ export default function WorkerStatsComponent({
 				{stats.lastAttendance && (
 					<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
 						<h4 className='font-semibold text-gray-900 mb-3'>Last Attendance</h4>
-						<div className='grid grid-cols-2 gap-4 text-sm'>
+						<div className='grid grid-cols-2 gap-4 text-xs'>
 							<div>
 								<span className='text-gray-600'>Time In:</span>
 								<div className='font-semibold'>

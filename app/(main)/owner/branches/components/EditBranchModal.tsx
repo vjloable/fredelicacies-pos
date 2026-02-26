@@ -104,7 +104,7 @@ export default function EditBranchModal({
             <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-accent"></div>
             </div>
-            <h3 className="text-xl font-bold text-secondary mb-2">
+            <h3 className="text-lg font-bold text-secondary mb-2">
               Updating Branch...
             </h3>
             <p className="text-secondary opacity-70">
@@ -120,7 +120,7 @@ export default function EditBranchModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-secondary mb-2">
+              <h3 className="text-lg font-bold text-secondary mb-2">
                 Edit Branch
               </h3>
               <p className="text-secondary opacity-70">
@@ -131,28 +131,28 @@ export default function EditBranchModal({
             {/* Edit Branch Form */}
             <div className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Branch Name <span className="text-(--error)">*</span>
                 </label>
                 <input
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-xs sm:text-3 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Location <span className="text-(--error)">*</span>
                 </label>
                 <input
                   type="text"
                   value={branchData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-xs sm:text-3 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
@@ -160,7 +160,7 @@ export default function EditBranchModal({
 
               {/* Branch Status Toggle */}
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Branch Status
                 </label>
                 <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ export default function EditBranchModal({
                       }`}
                     />
                   </button>
-                  <span className={`text-sm font-medium ${
+                  <span className={`text-xs font-medium ${
                     branchData.status === 'active' ? 'text-(--success)' : 'text-(--error)'
                   }`}>
                     {branchData.status === 'active' ? 'Active' : 'Inactive'}
@@ -205,14 +205,14 @@ export default function EditBranchModal({
                     <svg className="w-4 h-4 text-(--error)" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-sm text-(--error) font-medium">Unsaved changes detected</span>
+                    <span className="text-xs text-(--error) font-medium">Unsaved changes detected</span>
                   </div>
                 </div>
               )}
 
               {/* Preview Section */}
               {/* <div className="bg-gray-50 rounded-xl p-4">
-                <div className="text-sm text-secondary opacity-70 mb-2">Preview:</div>
+                <div className="text-xs text-secondary opacity-70 mb-2">Preview:</div>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-(--light-accent) rounded-lg flex items-center justify-center shrink-0">
                     <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@ export default function EditBranchModal({
                     <h4 className="font-semibold text-secondary mb-1">
                       {branchData.name || 'Branch Name'}
                     </h4>
-                    <p className="text-sm text-secondary opacity-70">
+                    <p className="text-xs text-secondary opacity-70">
                       {branchData.address || 'Branch Location'}
                     </p>
                   </div>
@@ -244,14 +244,14 @@ export default function EditBranchModal({
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
               <button
                 onClick={onClose}
-                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-xs sm:text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateBranch}
                 disabled={!branchData.name.trim() || !branchData.address.trim() || !hasChanges}
-                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
+                className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-xs sm:text-sm ${
                   branchData.name.trim() && branchData.address.trim() && hasChanges
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'

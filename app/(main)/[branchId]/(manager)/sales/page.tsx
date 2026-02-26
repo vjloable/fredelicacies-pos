@@ -325,7 +325,7 @@ export default function SalesScreen() {
 				{/* Control Bar */}
 				<div className='px-6 py-4'>
 					<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
-						<div className='flex items-center gap-4 text-sm text-secondary/70'>
+						<div className='flex items-center gap-4 text-xs text-secondary/70'>
 							<span className='flex items-center gap-2'>
 								<span className='w-2 h-2 bg-accent rounded-full'></span>
 								{currentBranch?.name || "Loading..."}
@@ -337,7 +337,7 @@ export default function SalesScreen() {
 							<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto'>
 								<button
 									onClick={() => setViewMode("orders")}
-									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
 										viewMode === "orders"
 											? "bg-white text-secondary shadow-sm"
 											: "text-secondary/60 hover:text-secondary"
@@ -346,7 +346,7 @@ export default function SalesScreen() {
 								</button>
 								<button
 									onClick={() => setViewMode("analytics")}
-									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
 										viewMode === "analytics"
 											? "bg-white text-secondary shadow-sm"
 											: "text-secondary/60 hover:text-secondary"
@@ -368,7 +368,7 @@ export default function SalesScreen() {
 								<div className='bg-primary rounded-xl shadow-md mx-6'>
 									<div className='p-6 border-b border-gray-200'>
 										<div className='flex-1 flex-col items-center gap-4'>
-											<h3 className='text-lg font-semibold text-secondary'>
+											<h3 className='text-base font-semibold text-secondary'>
 												Recent Orders
 											</h3>
 											<div className='flex-1 items-center space-x-4 mt-4'>
@@ -426,12 +426,12 @@ export default function SalesScreen() {
 									<tbody className='bg-primary divide-y divide-gray-200'>
 										{currentOrders.map((order) => (
 											<tr key={order.id} className='hover:bg-gray-50'>
-												<td className='px-6 py-1 whitespace-nowrap text-sm font-medium text-secondary'>
+												<td className='px-6 py-1 whitespace-nowrap text-xs font-medium text-secondary'>
 													<div className='px-2 py-1 bg-secondary/10 max-w-30 text-center font-regular rounded-xl'>
 														#{order.id ? order.id.slice(-8) : "N/A"}
 													</div>
 												</td>
-												<td className='px-6 py-4 whitespace-nowrap text-sm text-secondary'>
+												<td className='px-6 py-4 whitespace-nowrap text-xs text-secondary'>
 													{order.created_at
 														? new Date(order.created_at)
 																.toLocaleDateString("en-US", {
@@ -442,7 +442,7 @@ export default function SalesScreen() {
 																})
 														: "N/A"}
 												</td>
-												<td className='px-6 py-1 text-sm text-secondary'>
+												<td className='px-6 py-1 text-xs text-secondary'>
 													<div className='max-w-xs'>
 														<div className='truncate flex-wrap space-y-1'>
 															{order.items && order.items.length > 0 ? (
@@ -495,7 +495,7 @@ export default function SalesScreen() {
 														DINE-IN
 													</div>
 												</td>
-												<td className='px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900'>
+												<td className='px-6 py-1 whitespace-nowrap text-xs font-medium text-gray-900'>
 													{formatCurrency(order.total || 0)}
 													{order.discount_amount > 0 && (
 														<div className='text-xs text-red-500'>
@@ -503,7 +503,7 @@ export default function SalesScreen() {
 														</div>
 													)}
 												</td>
-												<td className='px-6 py-1 whitespace-nowrap text-sm text-green-600 font-medium'>
+												<td className='px-6 py-1 whitespace-nowrap text-xs text-green-600 font-medium'>
 													{formatCurrency(calculateOrderProfit(order))}
 												</td>
 											</tr>
@@ -540,7 +540,7 @@ export default function SalesScreen() {
 							{totalPages > 1 && (
 								<div className='px-6 py-4 border-t border-secondary/20'>
 									<div className='flex items-center justify-between'>
-										<div className='text-sm text-secondary/50'>
+										<div className='text-xs text-secondary/50'>
 											Showing {indexOfFirstOrder + 1}-
 											{Math.min(
 												indexOfLastOrder,
@@ -552,7 +552,7 @@ export default function SalesScreen() {
 											<button
 												onClick={() => paginate(currentPage - 1)}
 												disabled={currentPage === 1}
-												className='px-3 py-1 text-sm bg-secondary/5 border border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30 disabled:cursor-not-allowed'>
+												className='px-3 py-1 text-xs bg-secondary/5 border border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30 disabled:cursor-not-allowed'>
 												Previous
 											</button>
 
@@ -586,7 +586,7 @@ export default function SalesScreen() {
 													<button
 														key={pageNumber}
 														onClick={() => paginate(pageNumber)}
-														className={`px-3 py-1 text-sm border font-semibold rounded-md ${
+														className={`px-3 py-1 text-xs border font-semibold rounded-md ${
 															isCurrentPage
 																? "bg-accent text-primary border-accent"
 																: "bg-secondary/5 border-secondary/50 text-secondary"
@@ -599,7 +599,7 @@ export default function SalesScreen() {
 											<button
 												onClick={() => paginate(currentPage + 1)}
 												disabled={currentPage === totalPages}
-												className='px-3 py-1 text-sm border bg-secondary/5 border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30  disabled:cursor-not-allowed'>
+												className='px-3 py-1 text-xs border bg-secondary/5 border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30  disabled:cursor-not-allowed'>
 												Next
 											</button>
 										</div>
@@ -615,7 +615,7 @@ export default function SalesScreen() {
                 <div className='px-4 lg:px-12 py-4 bg-primary shadow-md mx-6 rounded-xl'>
                   <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
                     <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-                      <span className='text-sm font-medium text-secondary/50'>
+                      <span className='text-xs font-medium text-secondary/50'>
                         Time Period:
                       </span>
                       <div className='flex bg-primary rounded-lg p-1 space-x-2'>
@@ -624,7 +624,7 @@ export default function SalesScreen() {
                             <button
                               key={period}
                               onClick={() => setViewPeriod(period)}
-                              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-md transition-colors border border-transparent ${
+                              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-xs rounded-md transition-colors border border-transparent ${
                                 viewPeriod === period
                                   ? "bg-accent text-primary text-shadow-md font-bold"
                                   : "font-medium hover:border hover:border-accent text-secondary/50 hover:text-secondary hover:bg-text-secondary/80"
@@ -643,7 +643,7 @@ export default function SalesScreen() {
                       <p className='text-xs text-gray-400'>Live Data</p>
                       <span className='flex items-center lg:justify-end'>
                         <div className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
-                        <p className='ml-2 text-sm text-(--success) drop-shadow-md'>
+                        <p className='ml-2 text-xs text-(--success) drop-shadow-md'>
                           Real-time ({allOrders.length} orders)
                         </p>
                       </span>
@@ -656,7 +656,7 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-secondary/40'>
+                        <p className='text-xs font-medium text-secondary/40'>
                           {viewPeriod === "day"
                             ? "Today"
                             : viewPeriod === "week"
@@ -664,8 +664,8 @@ export default function SalesScreen() {
                             : "30 Days"}{" "}
                           Revenue
                         </p>
-                        <p className='text-2xl text-secondary'>
-                          <span className='font-regular text-xl mr-1'>₱</span>
+                        <p className='text-xl text-secondary'>
+                          <span className='font-regular text-lg mr-1'>₱</span>
                           <span className='font-semibold'>{formatCurrency(currentPeriodStats.totalRevenue).slice(1)}</span>
                         </p>
                       </div>
@@ -691,10 +691,10 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-secondary/40'>
+                        <p className='text-xs font-medium text-secondary/40'>
                           Total Orders
                         </p>
-                        <p className='text-2xl font-bold text-secondary'>
+                        <p className='text-xl font-bold text-secondary'>
                           {currentPeriodStats.totalOrders}
                         </p>
                       </div>
@@ -721,10 +721,10 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-secondary/40'>
+                        <p className='text-xs font-medium text-secondary/40'>
                           Peak {viewPeriod === "day" ? "Hour" : "Day"}
                         </p>
-                        <p className='text-2xl font-bold text-secondary'>
+                        <p className='text-xl font-bold text-secondary'>
                           {timeSeriesData.length > 0
                             ? timeSeriesData.reduce(
                                 (peak, current) =>
@@ -765,14 +765,14 @@ export default function SalesScreen() {
                 <div className='bg-primary p-6 rounded-xl shadow-md mx-6'>
                   <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
                     <div>
-                      <h3 className='text-lg font-semibold text-secondary'>
+                      <h3 className='text-base font-semibold text-secondary'>
                         {viewPeriod === "day"
                           ? "Today's Activity"
                           : viewPeriod === "week"
                           ? "Last 7 Days"
                           : "Last 30 Days"}
                       </h3>
-                      <p className='text-sm text-gray-400'>
+                      <p className='text-xs text-gray-400'>
                         {viewPeriod === "day"
                           ? "Hourly breakdown"
                           : "Daily performance trends"}

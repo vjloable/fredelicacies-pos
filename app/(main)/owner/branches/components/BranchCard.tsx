@@ -77,11 +77,11 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			<div className='flex-1 flex flex-col justify-between px-4 sm:px-5 py-3 sm:py-4'>
 				<div className='space-y-2 sm:space-y-3'>
 					<div className='flex items-center gap-2'>
-						<h2 className='text-base sm:text-lg font-bold text-secondary'>
+						<h2 className='text-sm sm:text-base font-bold text-secondary'>
 							{branch.name}
 						</h2>
 					</div>
-					<div className='text-sm text-secondary opacity-80'>
+					<div className='text-xs text-secondary opacity-80'>
 						{branch.location}
 					</div>
 					<div className='flex flex-wrap gap-2 sm:gap-4 text-xs text-secondary opacity-70'>
@@ -100,7 +100,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onDelete(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--error)/10 text-white font-semibold hover:bg-(--error) transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--error)/10 text-white font-semibold hover:bg-(--error) transition-colors text-xs sm:text-xs flex items-center justify-center'
 								title='Delete Branch'>
 								<DeleteBranchIcon className='w-7 h-7 text-(--error)/80 group-hover:text-primary' />
 							</button>
@@ -110,7 +110,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onView(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-secondary/10 text-white font-semibold hover:bg-secondary transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-secondary/10 text-white font-semibold hover:bg-secondary transition-colors text-xs sm:text-xs flex items-center justify-center gap-1'
 								title='View Branch Details'>
 								<ViewBranchIcon className='w-7 h-7 text-secondary group-hover:text-primary' />
 							</button>
@@ -120,7 +120,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onEdit(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-accent/20 text-white font-semibold hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-accent/20 text-white font-semibold hover:bg-accent transition-colors text-xs sm:text-xs flex items-center justify-center'
 								title='Edit Branch'>
 								<EditBranchIcon className='w-7 h-7 text-accent group-hover:text-primary' />
 							</button>

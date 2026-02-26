@@ -262,7 +262,7 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<h2 className='text-xl font-semibold text-gray-700 mb-2'>
+					<h2 className='text-lg font-semibold text-gray-700 mb-2'>
 						Access Denied
 					</h2>
 					<p className='text-gray-500'>
@@ -277,7 +277,7 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<h2 className='text-xl font-semibold text-(--error) mb-2'>Error</h2>
+					<h2 className='text-lg font-semibold text-(--error) mb-2'>Error</h2>
 					<p className='text-(--error)'>{error}</p>
 				</div>
 			</div>
@@ -338,7 +338,7 @@ export default function WorkersPage() {
 							<button
 								onClick={handleCreateWorker}
 								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
+								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
 									</div>
@@ -354,7 +354,7 @@ export default function WorkersPage() {
 			<div className='hidden sm:block px-6 py-4 border-b border-secondary/20'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div>
-						<p className='text-sm text-secondary/70'>
+						<p className='text-xs text-secondary/70'>
 							Manage users, track time, and assign roles across branches
 						</p>
 					</div>
@@ -390,7 +390,7 @@ export default function WorkersPage() {
 							<button
 								onClick={handleCreateWorker}
 								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
+								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
 									</div>
@@ -427,7 +427,7 @@ export default function WorkersPage() {
 					</div>
 				) : error ? (
 					<div className='text-center py-12'>
-						<h3 className='text-lg font-semibold text-gray-700 mb-2'>
+						<h3 className='text-base font-semibold text-gray-700 mb-2'>
 							Error Loading Workers
 						</h3>
 						<p className='text-gray-500'>{error}</p>
@@ -455,7 +455,7 @@ export default function WorkersPage() {
 						/>
 
 						{/* Stats */}
-						<div className='mt-6 text-sm text-gray-500'>
+						<div className='mt-6 text-xs text-gray-500'>
 							Showing {sortedWorkers.length} worker
 							{sortedWorkers.length !== 1 ? "s" : ""}
 						</div>

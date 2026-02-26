@@ -49,16 +49,16 @@ export default function POSAccessGuard({
 								/>
 							</svg>
 						</div>
-						<h3 className='text-lg font-semibold text-gray-900 mb-2'>
+						<h3 className='text-base font-semibold text-gray-900 mb-2'>
 							POS Access Required
 						</h3>
-						<p className='text-gray-600 text-sm mb-4'>{accessMessage}</p>
+						<p className='text-gray-600 text-xs mb-4'>{accessMessage}</p>
 					</div>
 
 					{/* Current Status */}
 					{timeTracking.worker && !timeTracking.worker.isOwner && (
 						<div className='mb-4 p-3 bg-gray-50 rounded-lg'>
-							<div className='flex items-center justify-between text-sm'>
+							<div className='flex items-center justify-between text-xs'>
 								<span className='text-gray-600'>Current Status:</span>
 								<span
 									className={`font-medium ${
@@ -68,7 +68,7 @@ export default function POSAccessGuard({
 								</span>
 							</div>
 							{timeTracking.isWorking && timeTracking.workingDuration > 0 && (
-								<div className='flex items-center justify-between text-sm mt-1'>
+								<div className='flex items-center justify-between text-xs mt-1'>
 									<span className='text-gray-600'>Working for:</span>
 									<span className='font-medium text-blue-600'>
 										{Math.floor(timeTracking.workingDuration / 60)}h{" "}

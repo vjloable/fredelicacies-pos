@@ -274,7 +274,7 @@ export default function InventoryScreen() {
 										{/* Categories Section */}
 										<div className='mb-4'>
 									<div className='flex items-center justify-between mb-3'>
-										<h2 className='text-lg font-semibold text-secondary'>
+										<h2 className='text-base font-semibold text-secondary'>
 											Categories
 										</h2>
 										<button
@@ -283,7 +283,7 @@ export default function InventoryScreen() {
 														hover:bg-accent/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
-											<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3.5'>
+											<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3'>
 												<div className='w-4 h-4'>
 													<PlusIcon className='drop-shadow-lg' />
 												</div>
@@ -304,7 +304,7 @@ export default function InventoryScreen() {
 														backgroundColor: category.color,
 													}}
 												/>
-												<span className='text-sm font-medium text-secondary'>
+												<span className='text-xs font-medium text-secondary'>
 													{category.name}
 												</span>
 												<button
@@ -321,7 +321,7 @@ export default function InventoryScreen() {
 								{/* Items Section */}
 								<div>
 									<div className='flex items-center justify-between mb-3'>
-										<h2 className='text-xl font-semibold text-secondary'>
+										<h2 className='text-lg font-semibold text-secondary'>
 											Items
 										</h2>
 										<button
@@ -331,7 +331,7 @@ export default function InventoryScreen() {
 														font-semibold hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
-											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3.5'>
+											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
 												<div className='size-4'>
 													<PlusIcon className='drop-shadow-lg' />
 												</div>
@@ -348,7 +348,7 @@ export default function InventoryScreen() {
 												<div className='w-90 mb-4 mx-auto opacity-50 flex items-center justify-center'>
 													<EmptyInventory />
 												</div>
-												<h3 className='text-4.5 font-semibold text-secondary mb-3'>
+												<h3 className='text-4 font-semibold text-secondary mb-3'>
 													No Items in Inventory
 												</h3>
 												<p className='w-75 text-3 text-secondary opacity-70 mb-6 max-w-md mx-auto'>
@@ -357,7 +357,7 @@ export default function InventoryScreen() {
 												</p>
 												<button
 													onClick={() => setShowItemForm(true)}
-													className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+													className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
 													<PlusIcon className='w-4 h-4 drop-shadow-md' />
 													<span className='mt-0.5'>
 														ADD YOUR FIRST ITEM
@@ -367,7 +367,7 @@ export default function InventoryScreen() {
 												{/* Quick Setup Guide */}
 												<div className='mt-15 max-w-2xl mx-auto'>
 													<div className='bg-secondary/5 border border-secondary/10 rounded-xl p-6'>
-														<h4 className='text-lg font-semibold text-secondary/50 mb-4 flex items-center gap-2'>
+														<h4 className='text-base font-semibold text-secondary/50 mb-4 flex items-center gap-2'>
 															<svg
 																className='w-5 h-5 text-secondary/50'
 																fill='none'
@@ -389,7 +389,7 @@ export default function InventoryScreen() {
 																		1
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Create Categories
 																</h5>
 																<p className='text-3 text-secondary opacity-80'>
@@ -402,7 +402,7 @@ export default function InventoryScreen() {
 																		2
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Add Items
 																</h5>
 																<p className='text-3 text-secondary] opacity-80'>
@@ -415,7 +415,7 @@ export default function InventoryScreen() {
 																		3
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Manage Stock
 																</h5>
 																<p className='text-3 text-secondary opacity-80'>
@@ -467,7 +467,7 @@ export default function InventoryScreen() {
 															</div>
 															<div className='flex flex-1 gap-4 h-25 md:h-12 shrink truncate'>
 																<div className='flex grow md:grow-0 flex-col items-start justify-center w-auto xl:w-100 line-clamp-2'>
-																	<h3 className='leading-tight font-semibold text-secondary text-3.5 text-wrap line-clamp-2 md:truncate text-left w-full'>
+																	<h3 className='leading-tight font-semibold text-secondary text-3 text-wrap line-clamp-2 md:truncate text-left w-full'>
 																		{item.name}
 																	</h3>
 																	<div className='flex items-center w-full'>
@@ -503,7 +503,7 @@ export default function InventoryScreen() {
 																	</div>
 																</div>
 																<div className='flex-1 grow flex-row items-left w-0 hidden xl:w-75 xl:flex'>
-																	<div className='border-s-2 border-secondary/10 pl-4 h-12 text-left text-sm text-secondary opacity-70 items-center flex flex-1 truncate'>
+																	<div className='border-s-2 border-secondary/10 pl-4 h-12 text-left text-xs text-secondary opacity-70 items-center flex flex-1 truncate'>
 																		{item.description ? (
 																			item.description
 																		) : (
@@ -562,10 +562,10 @@ export default function InventoryScreen() {
 														<div className='items-center gap-6 shrink-0 ml-4 hidden md:flex'>
 															{/* Current Stock Display */}
 															<div className='text-center'>
-																<div className='text-sm text-secondary opacity-70 mb-1'>
+																<div className='text-xs text-secondary opacity-70 mb-1'>
 																	Stock
 																</div>
-																<div className='text-2xl font-bold text-secondary'>
+																<div className='text-xl font-bold text-secondary'>
 																	{item.stock}
 																</div>
 															</div>
@@ -637,7 +637,7 @@ export default function InventoryScreen() {
 											/>
 										</svg>
 									</div>
-									<h3 className='text-xl text-center font-bold text-secondary mb-2'>
+									<h3 className='text-lg text-center font-bold text-secondary mb-2'>
 										Delete Category
 									</h3>
 									<p className='text-secondary opacity-70 mb-6'>

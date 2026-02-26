@@ -157,7 +157,7 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-sm text-primary hover:text-primary bg-(--error)/50 hover:bg-(--error) rounded-lg transition-colors'>
+						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-xs text-primary hover:text-primary bg-(--error)/50 hover:bg-(--error) rounded-lg transition-colors'>
 						Clear
 					</button>
 				)}

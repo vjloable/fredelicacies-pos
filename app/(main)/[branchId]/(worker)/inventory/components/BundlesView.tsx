@@ -99,7 +99,7 @@ export default function BundlesView() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-sm font-bold text-secondary uppercase tracking-wide">
+        <h2 className="text-xs font-bold text-secondary uppercase tracking-wide">
           Bundles
           <span className="ml-2 text-xs font-normal text-secondary/50 normal-case tracking-normal">
             {bundles.length} {bundles.length === 1 ? 'bundle' : 'bundles'}
@@ -122,13 +122,13 @@ export default function BundlesView() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-secondary mb-1">No Bundles Yet</h3>
-          <p className="text-secondary/60 text-sm text-center max-w-xs mb-4">
+          <h3 className="text-lg font-bold text-secondary mb-1">No Bundles Yet</h3>
+          <p className="text-secondary/60 text-xs text-center max-w-xs mb-4">
             Combine multiple items into special offers or combo deals
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
             Create First Bundle
@@ -172,7 +172,7 @@ export default function BundlesView() {
 
                   {/* Bundle Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="text-3.5 font-semibold text-secondary truncate">
+                    <div className="text-3 font-semibold text-secondary truncate">
                       {bundle.name}
                     </div>
                     <div className="text-3 text-secondary/60">

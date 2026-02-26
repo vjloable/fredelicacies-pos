@@ -75,7 +75,7 @@ const SuccessToast = ({
 				{/* Message */}
 				<div className='flex-1'>
 					<div className='font-semibold'>Order Placed Successfully!</div>
-					<div className='text-sm opacity-90'>Order ID: {orderId}</div>
+					<div className='text-xs opacity-90'>Order ID: {orderId}</div>
 				</div>
 
 				{/* Close Button */}
@@ -711,7 +711,7 @@ export default function StoreScreen() {
 							<div className='w-90 mb-6 pr-12.5 mx-auto opacity-50 flex items-center justify-center'>
 								<EmptyStoreIllustration />
 							</div>
-							<h3 className='text-xl font-semibold text-secondary mb-3'>
+							<h3 className='text-lg font-semibold text-secondary mb-3'>
 								The store front is empty
 							</h3>
 							<p className='text-secondary opacity-70 text-center max-w-md mb-6 leading-relaxed'>
@@ -769,7 +769,7 @@ export default function StoreScreen() {
 							{isSearching && (
 								<button
 									onClick={() => setSearchQuery("")}
-									className='mt-4 px-4 py-2 bg-accent font-bold text-sm text-primary rounded-lg hover:bg-accent/90 transition-all'>
+									className='mt-4 px-4 py-2 bg-accent font-bold text-xs text-primary rounded-lg hover:bg-accent/90 transition-all'>
 									Clear Search
 								</button>
 							)}
@@ -822,7 +822,7 @@ export default function StoreScreen() {
 											{/* Stock indicator badges */}
 											{isOutOfStock && (
 												<div className='absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg'>
-													<span className='text-white text-xs sm:text-sm font-semibold select-none'>
+													<span className='text-white text-xs sm:text-xs font-semibold select-none'>
 														{isBundle ? 'UNAVAILABLE' : 'OUT OF STOCK'}
 													</span>
 												</div>
@@ -870,13 +870,13 @@ export default function StoreScreen() {
 
 										{/* Item Details */}
 										<div className='flex items-center justify-between mb-1 gap-2 pb-2 px-2'>
-											<h3 className='font-semibold text-secondary truncate text-xs sm:text-sm'>
+											<h3 className='font-semibold text-secondary truncate text-xs sm:text-xs'>
 												{isSearching
 													? highlightSearchTerm(item.name, searchQuery)
 													: item.name}
 											</h3>
 
-											<span className='font-regular text-secondary text-xs sm:text-sm whitespace-nowrap'>
+											<span className='font-regular text-secondary text-xs sm:text-xs whitespace-nowrap'>
 												{formatCurrency(item.price)}
 											</span>
 										</div>
@@ -911,7 +911,7 @@ export default function StoreScreen() {
 							className='absolute top-0 right-0 bottom-0 w-full bg-primary flex flex-col shadow-2xl'>
 							{/* Header with Close Button */}
 							<div className='shrink-0 flex items-center justify-between p-4 border-b-2 border-accent'>
-								<h2 className='text-xl font-bold text-secondary'>
+								<h2 className='text-lg font-bold text-secondary'>
 									Current Order
 								</h2>
 								<button
@@ -961,10 +961,10 @@ export default function StoreScreen() {
 										<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
 											<EmptyOrderIllustration />
 										</div>
-										<h3 className='text-lg font-medium text-secondary mb-2 select-none'>
+										<h3 className='text-base font-medium text-secondary mb-2 select-none'>
 											Order List is Empty
 										</h3>
-										<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+										<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-xs leading-relaxed select-none'>
 											Add items from the menu to start building your order.
 											Click on any menu item to add it to your cart.
 										</p>
@@ -1011,24 +1011,24 @@ export default function StoreScreen() {
 														<div className='flex flex-col items-start gap-3 w-full h-25 grow'>
 															<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
 																<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
-																	<span className="font-normal text-base leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
+																	<span className="font-normal text-sm leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
 																		{item.name}
 																	</span>
 																</div>
 																<div className='flex flex-row items-center justify-between w-full h-5.25'>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
 																			{formatCurrency(item.price)}
 																		</span>
-																		<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
+																		<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
 																			×{item.quantity}
 																		</span>
 																	</span>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
 																			=
 																		</span>
-																		<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-bold text-xs leading-5.25 text-secondary font-['Poppins']">
 																			{formatCurrency(
 																				item.price * item.quantity
 																			)}
@@ -1066,7 +1066,7 @@ export default function StoreScreen() {
 																		<MinusIcon />
 																	</button>
 
-																	<span className="font-bold text-base leading-5.25 text-secondary font-['Poppins']">
+																	<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
 																		{item.quantity}
 																	</span>
 
@@ -1105,11 +1105,11 @@ export default function StoreScreen() {
 
 							{/* Order Summary */}
 							<div className='shrink-0 border-t-2 border-accent pb-4'>
-								<div className='flex justify-between h-9.75 text-secondary text-3.5 font-medium px-3 py-1.5 items-end'>
+								<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
 								</div>
-								<div className='flex justify-between h-8.25 text-secondary text-3.5 font-medium px-3 py-1.5'>
+								<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 									<span>Discount</span>
 									<span>-{formatCurrency(discountAmount)}</span>
 								</div>
@@ -1124,7 +1124,7 @@ export default function StoreScreen() {
 								</div>
 
 								<div className='border-t border-dashed border-accent'>
-									<div className='flex justify-between font-semibold text-lg h-15.5 p-3 items-center'>
+									<div className='flex justify-between font-semibold text-base h-15.5 p-3 items-center'>
 										<span>Total</span>
 										<span>{formatCurrency(total)}</span>
 									</div>
@@ -1133,14 +1133,14 @@ export default function StoreScreen() {
 										{cart.length > 0 && (
 											<button
 												onClick={clearCart}
-												className='flex-1 py-4 font-black text-3.5 text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
+												className='flex-1 py-4 font-black text-3 text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
 												CLEAR CART
 											</button>
 										)}
 										<button
 											onClick={handlePlaceOrder}
 											disabled={cart.length === 0 || isPlacingOrder || !user}
-											className={`flex-1 py-4 font-black text-3.5 rounded-lg transition-all ${
+											className={`flex-1 py-4 font-black text-3 rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
 													? "bg-gray-300 text-primary cursor-not-allowed"
 													: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
@@ -1179,7 +1179,7 @@ export default function StoreScreen() {
 								)}
 							</div>
 							<div className='flex flex-1 flex-col items-center'>
-								<span className='text-secondary font-medium text-4 self-start'>
+								<span className='text-secondary font-medium text-3.5 self-start'>
 									{cart.length === 0 ? "New Order" : "Current Order"}
 								</span>
 								<span className='text-secondary font-light text-3 self-start'>
@@ -1227,10 +1227,10 @@ export default function StoreScreen() {
 							<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
 								<EmptyOrderIllustration />
 							</div>
-							<h3 className='text-lg font-medium text-secondary mb-2 select-none'>
+							<h3 className='text-base font-medium text-secondary mb-2 select-none'>
 								Order List is Empty
 							</h3>
-							<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-sm leading-relaxed select-none'>
+							<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-xs leading-relaxed select-none'>
 								Add items from the menu to start building your order. Click on
 								any menu item to add it to your cart.
 							</p>
@@ -1277,25 +1277,25 @@ export default function StoreScreen() {
 												<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
 													{/* Title and Quantity Row */}
 													<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
-														<span className="font-normal text-base leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
+														<span className="font-normal text-sm leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
 															{item.name}
 														</span>
 													</div>
 													{/* Price and Subtotal Row */}
 													<div className='flex flex-row items-center justify-between w-full h-5.25'>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
 																{formatCurrency(item.price)}
 															</span>
-															<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
+															<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
 																×{item.quantity}
 															</span>
 														</span>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
 																=
 															</span>
-															<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-bold text-xs leading-5.25 text-secondary font-['Poppins']">
 																{formatCurrency(item.price * item.quantity)}
 															</span>
 														</span>
@@ -1331,7 +1331,7 @@ export default function StoreScreen() {
 															<MinusIcon />
 														</button>
 
-														<span className="font-bold text-base leading-5.25 text-secondary font-['Poppins']">
+														<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
 															{item.quantity}
 														</span>
 
@@ -1370,11 +1370,11 @@ export default function StoreScreen() {
 
 				{/* Order Summary */}
 				<div className='shrink mb-10 border-t-2 border-accent'>
-					<div className='flex justify-between h-9.75 text-secondary text-3.5 font-medium px-3 py-1.5 items-end'>
+					<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>
 					</div>
-					<div className='flex justify-between h-8.25 text-secondary text-3.5 font-medium px-3 py-1.5'>
+					<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 						<span>Discount</span>
 						<span>-{formatCurrency(discountAmount)}</span>
 					</div>
@@ -1389,7 +1389,7 @@ export default function StoreScreen() {
 					</div>
 
 					<div className='border-t border-dashed border-accent h-31'>
-						<div className='flex justify-between font-semibold text-lg h-15.5 p-3 items-center'>
+						<div className='flex justify-between font-semibold text-base h-15.5 p-3 items-center'>
 							<span>Total</span>
 							<span>{formatCurrency(total)}</span>
 						</div>
@@ -1398,7 +1398,7 @@ export default function StoreScreen() {
 						<button
 							onClick={handlePlaceOrder}
 							disabled={cart.length === 0 || isPlacingOrder || !user}
-							className={`w-full py-4 font-black text-4.5 transition-all ${
+							className={`w-full py-4 font-black text-4 transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
 									? "bg-gray-300 text-primary cursor-not-allowed"
 									: "bg-accent text-primary hover:bg-accent/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
@@ -1424,16 +1424,16 @@ export default function StoreScreen() {
 						{/* Modal Header */}
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex items-center justify-between'>
-								<h2 className='text-xl font-semibold text-secondary'>
+								<h2 className='text-lg font-semibold text-secondary'>
 									Confirm Order
 								</h2>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='text-gray-400 hover:text-secondary text-2xl'>
+									className='text-gray-400 hover:text-secondary text-xl'>
 									×
 								</button>
 							</div>
-							<p className='text-sm text-secondary/80 mt-1'>
+							<p className='text-xs text-secondary/80 mt-1'>
 								Please review your order before confirming
 							</p>
 						</div>
@@ -1487,17 +1487,17 @@ export default function StoreScreen() {
 												<h4 className='font-medium text-secondary truncate'>
 													{item.name}
 												</h4>
-												<p className='text-sm text-secondary'>
+												<p className='text-xs text-secondary'>
 													{formatCurrency(item.price)}
 												</p>
 											</div>
 
 											{/* Quantity and Total */}
 											<div className='text-right'>
-												<div className='text-sm font-medium text-secondary/50'>
+												<div className='text-xs font-medium text-secondary/50'>
 													Qty: {item.quantity}
 												</div>
-												<div className='text-sm font-regular text-secondary'>
+												<div className='text-xs font-regular text-secondary'>
 													{formatCurrency(item.price * item.quantity)}
 												</div>
 											</div>
@@ -1509,14 +1509,14 @@ export default function StoreScreen() {
 							{/* Order Summary */}
 							<div className='border-t border-gray-200 pt-4'>
 								<div className='space-y-2'>
-									<div className='flex justify-between text-sm'>
+									<div className='flex justify-between text-xs'>
 										<span className='text-secondary'>Subtotal:</span>
 										<span className='font-medium'>
 											{formatCurrency(subtotal)}
 										</span>
 									</div>
 									{discountAmount > 0 && (
-										<div className='flex justify-between text-sm'>
+										<div className='flex justify-between text-xs'>
 											<span className='text-secondary'>
 												Discount
 												{appliedDiscount && (
@@ -1535,7 +1535,7 @@ export default function StoreScreen() {
 											</span>
 										</div>
 									)}
-									<div className='flex justify-between text-lg font-semibold border-t border-gray-200 pt-2'>
+									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
 										<span className='text-secondary'>
 											{formatCurrency(total)}
@@ -1550,13 +1550,13 @@ export default function StoreScreen() {
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='flex-1 px-4 py-3 text-sm text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
+									className='flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
 									CANCEL
 								</button>
 								<button
 									onClick={confirmPlaceOrder}
 									disabled={isPlacingOrder}
-									className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
+									className={`flex-1 px-4 py-3 rounded-lg text-xs font-black transition-all ${
 										isPlacingOrder
 											? "bg-secondary/50 text-primary cursor-not-allowed"
 											: "bg-accent text-shadow-md text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
@@ -1578,14 +1578,14 @@ export default function StoreScreen() {
 
 			<button
 				onClick={() => setShowOrderMenu(!showOrderMenu)}
-				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-sm gap-3'>
+				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-xs gap-3'>
 				<div className='flex-1 flex justify-between items-center text-primary'>
-					<span className='text-sm'>
+					<span className='text-xs'>
 						{cart.length === 0
 							? "No Items Selected"
 							: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
 					</span>
-					<span className='text-sm text-primary font-semibold'>
+					<span className='text-xs text-primary font-semibold'>
 						{formatCurrency(subtotal)}
 					</span>
 				</div>

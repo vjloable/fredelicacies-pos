@@ -125,7 +125,7 @@ export default function WaitingRoomPage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold text-secondary mb-4">
+            <h1 className="text-xl font-bold text-secondary mb-4">
               Welcome to Fredelicacies POS!
             </h1>
 
@@ -140,7 +140,7 @@ export default function WaitingRoomPage() {
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <div>
-                    <p className="text-sm font-medium text-yellow-800 mb-1">
+                    <p className="text-xs font-medium text-yellow-800 mb-1">
                       Waiting for Access Approval
                     </p>
                     <p className="text-xs text-yellow-700">
@@ -154,7 +154,7 @@ export default function WaitingRoomPage() {
 
             {/* User Info */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg text-left">
-              <h3 className="text-sm font-medium text-secondary mb-2">Account Details:</h3>
+              <h3 className="text-xs font-medium text-secondary mb-2">Account Details:</h3>
               <div className="space-y-1 text-xs text-gray-600">
                 <p><span className="font-medium">Name:</span> {user?.name || 'N/A'}</p>
                 <p><span className="font-medium">Email:</span> {user?.email || 'N/A'}</p>

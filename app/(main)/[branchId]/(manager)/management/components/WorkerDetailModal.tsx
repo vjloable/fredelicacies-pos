@@ -192,10 +192,10 @@ export default function WorkerDetailModal({
 							</span>
 						</div>
 						<div>
-							<h2 className='text-sm font-bold text-secondary'>
+							<h2 className='text-xs font-bold text-secondary'>
 								{worker.name || "Unnamed Worker"}
 							</h2>
-							<p className='text-secondary text-sm'>{worker.email}</p>
+							<p className='text-secondary text-xs'>{worker.email}</p>
 						</div>
 						{worker.isOwner && (
 							<span className='bg-accent/10 text-accent px-2 py-1 text-xs rounded-full font-medium'>
@@ -225,7 +225,7 @@ export default function WorkerDetailModal({
 				<div className='flex border-b border-gray-200'>
 					<button
 						onClick={() => setActiveTab("details")}
-						className={`px-6 py-3 font-medium text-sm transition-colors ${
+						className={`px-6 py-3 font-medium text-xs transition-colors ${
 							activeTab === "details"
 								? "text-accent border-b-2 border-accent"
 								: "text-secondary hover:text-secondary/60"
@@ -234,7 +234,7 @@ export default function WorkerDetailModal({
 					</button>
 					<button
 						onClick={() => setActiveTab("sessions")}
-						className={`px-6 py-3 font-medium text-sm transition-colors ${
+						className={`px-6 py-3 font-medium text-xs transition-colors ${
 							activeTab === "sessions"
 								? "text-accent border-b-2 border-accent"
 								: "text-secondary hover:text-secondary/60"
@@ -250,24 +250,24 @@ export default function WorkerDetailModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-1 gap-6'>
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-secondary'>
+									<h3 className='text-base font-semibold text-secondary'>
 										Basic Information
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Employee ID:</span>
-											<span className='font-medium text-sm'>{worker.id}</span>
+											<span className='text-secondary text-xs'>Employee ID:</span>
+											<span className='font-medium text-xs'>{worker.id}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Email:</span>
-											<span className='font-medium text-sm'>{worker.email}</span>
+											<span className='text-secondary text-xs'>Email:</span>
+											<span className='font-medium text-xs'>{worker.email}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Phone:</span>
-											<span className='font-medium text-sm'>Not provided</span>
+											<span className='text-secondary text-xs'>Phone:</span>
+											<span className='font-medium text-xs'>Not provided</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Current Status:</span>
+											<span className='text-secondary text-xs'>Current Status:</span>
 											<span
 												className={getStatusBadge(
 													worker.currentStatus || "clocked_out"
@@ -281,19 +281,19 @@ export default function WorkerDetailModal({
 								</div>
 
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-secondary'>
+									<h3 className='text-base font-semibold text-secondary'>
 										Employment Details
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Joined:</span>
-											<span className='font-medium text-sm'>
+											<span className='text-secondary text-xs'>Joined:</span>
+											<span className='font-medium text-xs'>
 												{formatDate(worker.createdAt)}
 											</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-secondary text-sm'>Last Updated:</span>
-											<span className='font-medium text-sm'>
+											<span className='text-secondary text-xs'>Last Updated:</span>
+											<span className='font-medium text-xs'>
 												{formatDate(worker.updatedAt)}
 											</span>
 										</div>
@@ -303,7 +303,7 @@ export default function WorkerDetailModal({
 
 							{/* Role Assignments */}
 							<div className='space-y-4'>
-								<h3 className='text-lg font-semibold text-secondary'>
+								<h3 className='text-base font-semibold text-secondary'>
 									Role Assignments
 								</h3>
 								{worker.roleAssignments && worker.roleAssignments.length > 0 ? (
@@ -334,7 +334,7 @@ export default function WorkerDetailModal({
 										))}
 									</div>
 								) : (
-									<p className='text-secondary/50 italic text-sm'>No role assignments</p>
+									<p className='text-secondary/50 italic text-xs'>No role assignments</p>
 								)}
 							</div>
 						</div>
@@ -370,7 +370,7 @@ export default function WorkerDetailModal({
 															: "Completed"}
 													</span>
 												</div>
-												<div className='text-sm text-gray-600'>
+												<div className='text-xs text-gray-600'>
 													<span className='font-medium'>Clock In:</span>{" "}
 													{formatDate(new Date(attendance.clock_in))}
 													{attendance.clock_out && (
@@ -397,7 +397,7 @@ export default function WorkerDetailModal({
 												) : (
 													<div className='flex flex-row items-center gap-2'>
 														<div className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
-														<span className='text-gray-500 text-sm'>
+														<span className='text-gray-500 text-xs'>
 															Working
 														</span>
 													</div>
@@ -423,7 +423,7 @@ export default function WorkerDetailModal({
 										</svg>
 									</div>
 									<p className='text-gray-500'>No work sessions found</p>
-									<p className='text-sm text-gray-400 mt-1'>
+									<p className='text-xs text-gray-400 mt-1'>
 										Sessions from the last 30 days will appear here
 									</p>
 								</div>

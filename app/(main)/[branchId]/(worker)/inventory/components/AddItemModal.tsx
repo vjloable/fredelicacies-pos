@@ -121,10 +121,10 @@ export default function AddItemModal({
             <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-accent"></div>
             </div>
-            <h3 className="text-base font-bold text-secondary mb-1">
+            <h3 className="text-sm font-bold text-secondary mb-1">
               Adding Item...
             </h3>
-            <p className="text-sm text-secondary opacity-70">
+            <p className="text-xs text-secondary opacity-70">
               Please wait
             </p>
           </div>
@@ -135,10 +135,10 @@ export default function AddItemModal({
               <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
                 <PlusIcon className='size-5 text-accent'/>
               </div>
-              <h3 className="text-base font-bold text-secondary mb-1">
+              <h3 className="text-sm font-bold text-secondary mb-1">
                 Add New Item
               </h3>
-              <p className="text-sm text-secondary opacity-70">
+              <p className="text-xs text-secondary opacity-70">
                 Create a new item for your inventory
               </p>
             </div>
@@ -148,20 +148,20 @@ export default function AddItemModal({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Item Name <span className="text-(--error)">*</span>
                   </label>
                   <input
                     type="text"
                     value={newItem.name}
                     onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="Enter item name"
                   />
                 </div>
                 <div>
                   <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
+                    <label className="block text-xs font-medium text-secondary mb-2">
                       Description
                       <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                     </label>
@@ -169,7 +169,7 @@ export default function AddItemModal({
                       type="text"
                       value={newItem.description}
                       onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                      className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="Enter description"
                     />
                   </div>
@@ -178,11 +178,11 @@ export default function AddItemModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Selling Price <span className="text-(--error)">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
                     <input
                       type="text"
                       value={priceInput}
@@ -215,18 +215,18 @@ export default function AddItemModal({
                           setPriceInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Cost Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
                     <input
                       type="text"
                       value={costInput}
@@ -259,7 +259,7 @@ export default function AddItemModal({
                           setCostInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -269,7 +269,7 @@ export default function AddItemModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Initial Stock <span className="text-(--error)">*</span>
                   </label>
                   <input
@@ -303,13 +303,13 @@ export default function AddItemModal({
                         setStockInput('');
                       }
                     }}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="0"
                     inputMode="numeric"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Category <span className="text-(--error)">*</span>
                   </label>
                   <DropdownField
@@ -334,7 +334,7 @@ export default function AddItemModal({
               {/* Preview Section */}
               {/* {(newItem.name || newItem.price || newItem.imgUrl) && (
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="text-sm text-secondary opacity-70 mb-2">Preview:</div>
+                  <div className="text-xs text-secondary opacity-70 mb-2">Preview:</div>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                       {newItem.imgUrl ? (
@@ -363,7 +363,7 @@ export default function AddItemModal({
                           {newItem.cost && newItem.cost > 0 && (
                             <>
                               <span className="text-xs text-gray-400">|</span>
-                              <div className="text-sm text-gray-600">
+                              <div className="text-xs text-gray-600">
                                 Cost: {formatCurrency(newItem.cost)}
                               </div>
                               {(newItem.price || 0) > 0 && (
@@ -376,7 +376,7 @@ export default function AddItemModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <p className="text-sm text-secondary opacity-70 flex-1">
+                        <p className="text-xs text-secondary opacity-70 flex-1">
                           {newItem.description || 'No description'}
                         </p>
                         <div className="flex items-center gap-2">
@@ -384,15 +384,15 @@ export default function AddItemModal({
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: categories.find(cat => cat.id === newItem.categoryId)?.color || '#6B7280' }}
                           ></div>
-                          <span className="text-sm text-secondary opacity-70">
+                          <span className="text-xs text-secondary opacity-70">
                             {categories.find(cat => cat.id === newItem.categoryId)?.name || 'Unknown Category'}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm text-secondary opacity-70">Initial Stock</div>
-                      <div className="text-xl font-bold text-secondary">
+                      <div className="text-xs text-secondary opacity-70">Initial Stock</div>
+                      <div className="text-lg font-bold text-secondary">
                         {newItem.stock || 0}
                       </div>
                     </div>
