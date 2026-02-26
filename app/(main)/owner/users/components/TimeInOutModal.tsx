@@ -178,7 +178,7 @@ export default function TimeInOutModal({
 									<h3 className='text-xl font-bold text-secondary'>
 										{title}
 									</h3>
-									<p className='text-sm text-(--secondary)/70'>
+									<p className='text-sm text-secondary/70'>
 										{isTimeIn
 											? "Start work session"
 											: "End current work session"}

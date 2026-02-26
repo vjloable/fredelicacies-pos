@@ -280,7 +280,7 @@ export default function InventoryScreen() {
 										<button
 											onClick={() => setShowCategoryForm(true)}
 											className={`bg-accent text-secondary text-3 px-4 py-2 rounded-lg 
-														hover:bg-(--accent)/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95
+														hover:bg-accent/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
 											<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3.5'>
@@ -327,7 +327,7 @@ export default function InventoryScreen() {
 										<button
 											onClick={() => setShowItemForm(true)}
 											className={`bg-accent text-secondary text-3 px-4 py-2 
-														rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all 
+														rounded-lg hover:bg-accent/90 shadow-sm transition-all 
 														font-semibold hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
@@ -357,7 +357,7 @@ export default function InventoryScreen() {
 												</p>
 												<button
 													onClick={() => setShowItemForm(true)}
-													className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-(--accent)/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+													className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
 													<PlusIcon className='w-4 h-4 drop-shadow-md' />
 													<span className='mt-0.5'>
 														ADD YOUR FIRST ITEM
@@ -366,10 +366,10 @@ export default function InventoryScreen() {
 
 												{/* Quick Setup Guide */}
 												<div className='mt-15 max-w-2xl mx-auto'>
-													<div className='bg-(--secondary)/5 border border-(--secondary)/10 rounded-xl p-6'>
-														<h4 className='text-lg font-semibold text-(--secondary)/50 mb-4 flex items-center gap-2'>
+													<div className='bg-secondary/5 border border-secondary/10 rounded-xl p-6'>
+														<h4 className='text-lg font-semibold text-secondary/50 mb-4 flex items-center gap-2'>
 															<svg
-																className='w-5 h-5 text-(--secondary)/50'
+																className='w-5 h-5 text-secondary/50'
 																fill='none'
 																stroke='currentColor'
 																viewBox='0 0 24 24'>
@@ -384,12 +384,12 @@ export default function InventoryScreen() {
 														</h4>
 														<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 																	<span className='text-secondary font-bold'>
 																		1
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 																	Create Categories
 																</h5>
 																<p className='text-3 text-secondary opacity-80'>
@@ -397,12 +397,12 @@ export default function InventoryScreen() {
 																</p>
 															</div>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 																	<span className='text-secondary font-bold'>
 																		2
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 																	Add Items
 																</h5>
 																<p className='text-3 text-secondary] opacity-80'>
@@ -410,12 +410,12 @@ export default function InventoryScreen() {
 																</p>
 															</div>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 																	<span className='text-secondary font-bold'>
 																		3
 																	</span>
 																</div>
-																<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+																<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 																	Manage Stock
 																</h5>
 																<p className='text-3 text-secondary opacity-80'>
@@ -497,13 +497,13 @@ export default function InventoryScreen() {
 																	<div className='flex md:hidden justify-center mt-2'>
 																		<button
 																			onClick={() => openEditModal(item)}
-																			className='w-full px-2 py-1 text-3 font-bold bg-accent shadow-none hover:shadow-md hover:bg-(--accent)/80 rounded-sm transition-all hover:scale-105 active:scale-95'>
+																			className='w-full px-2 py-1 text-3 font-bold bg-accent shadow-none hover:shadow-md hover:bg-accent/80 rounded-sm transition-all hover:scale-105 active:scale-95'>
 																			EDIT
 																		</button>
 																	</div>
 																</div>
 																<div className='flex-1 grow flex-row items-left w-0 hidden xl:w-75 xl:flex'>
-																	<div className='border-s-2 border-(--secondary)/10 pl-4 h-12 text-left text-sm text-secondary opacity-70 items-center flex flex-1 truncate'>
+																	<div className='border-s-2 border-secondary/10 pl-4 h-12 text-left text-sm text-secondary opacity-70 items-center flex flex-1 truncate'>
 																		{item.description ? (
 																			item.description
 																		) : (
@@ -518,7 +518,7 @@ export default function InventoryScreen() {
 																			<div
 																				className={`p-3 ${
 																					item.stock !== 0
-																						? "bg-(--accent)/10"
+																						? "bg-accent/10"
 																						: "bg-(--error)/10"
 																				} border ${
 																					item.stock !== 0
@@ -574,7 +574,7 @@ export default function InventoryScreen() {
 															<div>
 																<button
 																	onClick={() => openEditModal(item)}
-																	className='px-4 py-4 bg-(--light-accent) shadow-none hover:shadow-md hover:bg-(--accent)/80 rounded-sm transition-all hover:scale-105 active:scale-95'>
+																	className='px-4 py-4 bg-(--light-accent) shadow-none hover:shadow-md hover:bg-accent/80 rounded-sm transition-all hover:scale-105 active:scale-95'>
 																	<EditIcon />
 																</button>
 															</div>

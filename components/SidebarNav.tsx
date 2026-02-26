@@ -120,8 +120,8 @@ export default function SidebarNav() {
 					href={href}
 					className={`flex h-10 items-center text-3.5 font-semibold ${
 						isActive
-							? "bg-accent hover:bg-(--accent)/80 text-primary text-shadow-lg"
-							: "bg-primary hover:bg-(--accent)/50 text-secondary"
+							? "bg-accent hover:bg-accent/80 text-primary text-shadow-lg"
+							: "bg-primary hover:bg-accent/50 text-secondary"
 					}`}>
 					<div className='w-full flex items-center justify-start'>
 						<IconComponent
@@ -187,7 +187,7 @@ export default function SidebarNav() {
 							<h3 className='text-3.5 font-bold text-secondary'>
 								{currentBranch.name}
 							</h3>
-							<p className='text-3 text-(--secondary)/70 mt-1 leading-tight'>
+							<p className='text-3 text-secondary/70 mt-1 leading-tight'>
 								{currentBranch.address}
 							</p>
 						</div>
@@ -202,7 +202,7 @@ export default function SidebarNav() {
 								clearCurrentBranch();
 								router.push("/owner/branches");
 							}}
-							className='w-full flex items-center justify-start text-sm text-(--secondary)/70 hover:text-secondary transition-colors'>
+							className='w-full flex items-center justify-start text-sm text-secondary/70 hover:text-secondary transition-colors'>
 							<svg
 								className='w-4 h-4 mr-2'
 								fill='none'
@@ -229,7 +229,7 @@ export default function SidebarNav() {
 						{shouldShowWorkerSection && (
 							<>
 								<li>
-									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Worker
 										</span>
@@ -243,7 +243,7 @@ export default function SidebarNav() {
 						{shouldShowManagerSection && (
 							<>
 								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Manager
 										</span>
@@ -257,7 +257,7 @@ export default function SidebarNav() {
 						{isUserOwner() && (
 							<>
 								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Owner
 										</span>
@@ -287,8 +287,8 @@ export default function SidebarNav() {
 				</nav>
 			{/* Version */}
 			<div className='px-4 py-3 border-t border-gray-200'>
-				<p className='text-2.5 text-(--secondary)/30 text-center'>
-					<VersionDisplay variant="simple" />
+				<p className='text-2.5 text-secondary/30 text-center'>
+					<VersionDisplay variant="simple" /> 
 				</p>
 			</div>
 			</div>

@@ -190,15 +190,15 @@ export default function MobileTopBar({
 							disabled={isTimeTracking}
 							className={`flex-1 h-12 px-3 py-2 flex rounded-xl gap-2 items-center font-medium text-xs transition-all duration-200 cursor-pointer group ${
 								timeTracking.isWorking
-									? "bg-(--success)/10 text-(--success) border-2 border-(--success) hover:bg-(--secondary)/10 hover:border-secondary"
-									: "bg-(--secondary)/10 text-secondary border-2 border-secondary hover:bg-(--success)/10 hover:border-(--success)"
+									? "bg-(--success)/10 text-(--success) border-2 border-(--success) hover:bg-secondary/10 hover:border-secondary"
+									: "bg-secondary/10 text-secondary border-2 border-secondary hover:bg-(--success)/10 hover:border-(--success)"
 							} ${isTimeTracking ? "opacity-50" : "hover:scale-105"}`}>
 							<span
 								className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
 									timeTracking.isWorking
-										? "bg-(--success)/10 text-(--success) group-hover:bg-(--secondary)/10"
-										: "bg-(--secondary)/10 text-secondary group-hover:bg-(--success)/10"
-								}`}>
+										? "bg-(--success)/10 text-(--success) group-hover:bg-secondary/10"
+										: "bg-secondary/10 text-secondary group-hover:bg-(--success)/10"
+								}`}> 
 								{isTimeTracking ? (
 									<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent' />
 								) : timeTracking.isWorking ? (

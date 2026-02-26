@@ -171,7 +171,7 @@ export default function WaitingRoomPage() {
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                   isCheckingAccess
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-accent hover:bg-(--accent)/90 text-white hover:shadow-lg"
+                    : "bg-accent hover:bg-accent/90 text-white hover:shadow-lg"
                 }`}
               >
                 {isCheckingAccess ? (

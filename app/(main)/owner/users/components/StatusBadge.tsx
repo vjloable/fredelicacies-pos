@@ -12,7 +12,7 @@ export default function StatusBadge({
 	// Owners don't have status tracking
 	if (isOwner) {
 		return (
-			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-(--accent)/10 text-accent'>
+			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent'>
 				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-accent' />
 				Owner
 			</span>

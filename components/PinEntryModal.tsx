@@ -187,7 +187,7 @@ export default function PinEntryModal({
 								className={`w-4 h-4 rounded-full transition-all duration-200 ${
 									i < currentPin.length
 										? "bg-accent scale-110"
-										: "bg-(--light-accent) border-2 border-(--accent)/30"
+										: "bg-(--light-accent) border-2 border-accent/30"
 								}`}
 							/>
 						))}
@@ -252,7 +252,7 @@ export default function PinEntryModal({
 					<button
 						onClick={onCancel}
 						disabled={loading}
-						className="flex-1 h-12 rounded-xl border-2 border-(--secondary)/20 text-secondary font-semibold hover:bg-(--background) transition-all cursor-pointer disabled:opacity-50">
+						className="flex-1 h-12 rounded-xl border-2 border-secondary/20 text-secondary font-semibold hover:bg-(--background) transition-all cursor-pointer disabled:opacity-50">
 						Cancel
 					</button>
 					<button

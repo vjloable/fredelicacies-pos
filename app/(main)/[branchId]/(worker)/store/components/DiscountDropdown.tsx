@@ -134,8 +134,8 @@ export default function DiscountDropdown({
           onClick={handleApplyDiscount}
           className={`shrink py-2 px-4 font-bold text-sm rounded-e-md transition-all ${
             isValidCode 
-              ? 'bg-accent text-primary hover:bg-(--accent)/80' 
-              : 'bg-(--accent)/50 text-primary text-shadow-lg cursor-not-allowed'
+              ? 'bg-accent text-primary hover:bg-accent/80' 
+              : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
           }`}
           disabled={!isValidCode}
         >
@@ -203,7 +203,7 @@ export default function DiscountDropdown({
 
       {/* Current Discount Info */}
       {appliedDiscount && isValidCode && (
-        <div className="mt-2 px-4 py-2 bg-(--accent)/10 border border-dashed border-accent rounded-lg">
+        <div className="mt-2 px-4 py-2 bg-accent/10 border border-dashed border-accent rounded-lg">
           <div className="flex items-center justify-between text-3.5">
             <div>
               <span className="font-semibold text-secondary">

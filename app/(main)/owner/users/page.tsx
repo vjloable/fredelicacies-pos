@@ -305,7 +305,7 @@ export default function WorkersPage() {
 			</div>
 
 			{/* Mobile Header with Controls */}
-			<div className='px-6 py-4 border-b border-(--secondary)/20 sm:hidden'>
+			<div className='px-6 py-4 border-b border-secondary/20 sm:hidden'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
 						{/* Branch Selector - Only show for owners */}
@@ -337,7 +337,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
 								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
@@ -351,10 +351,10 @@ export default function WorkersPage() {
 			</div>
 
 			{/* Desktop Header with Controls */}
-			<div className='hidden sm:block px-6 py-4 border-b border-(--secondary)/20'>
+			<div className='hidden sm:block px-6 py-4 border-b border-secondary/20'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div>
-						<p className='text-sm text-(--secondary)/70'>
+						<p className='text-sm text-secondary/70'>
 							Manage users, track time, and assign roles across branches
 						</p>
 					</div>
@@ -389,7 +389,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
 								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
@@ -404,7 +404,7 @@ export default function WorkersPage() {
 
 			{/* Filters - only show in workers view */}
 			{viewMode === "workers" && (
-				<div className='px-6 py-4 border-b border-(--secondary)/20 bg-(--secondary)/5'>
+				<div className='px-6 py-4 border-b border-secondary/20 bg-secondary/5'>
 					<WorkerFiltersComponent
 						filters={filters}
 						branches={branches}
@@ -433,7 +433,7 @@ export default function WorkersPage() {
 						<p className='text-gray-500'>{error}</p>
 						<button
 							onClick={loadWorkers}
-							className='mt-4 px-4 py-2 bg-accent text-primary rounded-lg hover:bg-(--accent)/90'>
+							className='mt-4 px-4 py-2 bg-accent text-primary rounded-lg hover:bg-accent/90'>
 							Retry
 						</button>
 					</div>

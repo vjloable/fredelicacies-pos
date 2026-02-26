@@ -673,7 +673,7 @@ export default function StoreScreen() {
 								isCategorySelected(category.name)
 									? `${
 											!category.isSpecial
-												? "bg-(--secondary)/20"
+												? "bg-secondary/20"
 												: "bg-accent"
 										} text-secondary shadow-none`
 									: "bg-white text-secondary hover:bg-gray-200 shadow-md"
@@ -682,7 +682,7 @@ export default function StoreScreen() {
 								{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
 								{category.name}
 								{!category.isSpecial && (
-									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-(--secondary)/10 text-(--secondary)/50'>
+									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-secondary/10 text-secondary/50'>
 										{
 											inventoryItems.filter(
 												(item) =>
@@ -721,7 +721,7 @@ export default function StoreScreen() {
 							<div className='flex flex-col sm:flex-row gap-3 mb-25'>
 								<button
 									onClick={() => (window.location.href = "/inventory")}
-									className='px-6 py-3 bg-accent text-white rounded-lg hover:bg-(--accent)/90 transition-all font-medium shadow-md'>
+									className='px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-all font-medium shadow-md'>
 									Go to Inventory
 								</button>
 							</div>
@@ -769,7 +769,7 @@ export default function StoreScreen() {
 							{isSearching && (
 								<button
 									onClick={() => setSearchQuery("")}
-									className='mt-4 px-4 py-2 bg-accent font-bold text-sm text-primary rounded-lg hover:bg-(--accent)/90 transition-all'>
+									className='mt-4 px-4 py-2 bg-accent font-bold text-sm text-primary rounded-lg hover:bg-accent/90 transition-all'>
 									Clear Search
 								</button>
 							)}
@@ -791,7 +791,7 @@ export default function StoreScreen() {
 										onClick={() => !isOutOfStock && addToCart(item)}
 										className={`
 										group bg-primary rounded-lg cursor-pointer shadow-md min-w-50
-										hover:shadow-none hover:bg-(--accent)/10 border-primary border-2 hover:border-accent transition-all duration-300
+										hover:shadow-none hover:bg-accent/10 border-primary border-2 hover:border-accent transition-all duration-300
 										${
 											isOutOfStock
 												? "opacity-50 cursor-not-allowed"
@@ -799,7 +799,7 @@ export default function StoreScreen() {
 										}
 									`}>
 										{/* Item Image Placeholder */}
-										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-(--accent)/40 transition-all duration-300'>
+										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-accent/40 transition-all duration-300'>
 											{item.img_url ? (
 												<SafeImage
 													src={item.img_url}
@@ -828,12 +828,12 @@ export default function StoreScreen() {
 												</div>
 											)}
 											{!isOutOfStock && !isBundle && availableStock <= 5 && (
-												<div className='absolute top-2 right-2 bg-(--accent)/50 text-(--secondary)/50 text-xs px-2 py-1 rounded select-none'>
+												<div className='absolute top-2 right-2 bg-accent/50 text-secondary/50 text-xs px-2 py-1 rounded select-none'>
 													Low Stock
 												</div>
 											)}
 											{inCartQuantity > 0 && (
-												<div className='absolute top-2 left-2 bg-(--accent)/50 text-(--secondary)/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
+												<div className='absolute top-2 left-2 bg-accent/50 text-secondary/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
 													<svg
 														className='w-3 h-3'
 														fill='currentColor'
@@ -1020,7 +1020,7 @@ export default function StoreScreen() {
 																		<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																			{formatCurrency(item.price)}
 																		</span>
-																		<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-(--accent)/80 px-2 py-1 rounded-full min-w-6 text-center">
+																		<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
 																			×{item.quantity}
 																		</span>
 																	</span>
@@ -1093,7 +1093,7 @@ export default function StoreScreen() {
 																damping: 25,
 																delay: index * 0.05,
 															}}
-															className='flex h-px border border-b border-dashed border-(--secondary)/20 w-full'
+															className='flex h-px border border-b border-dashed border-secondary/20 w-full'
 														/>
 													</AnimatePresence>
 												</motion.div>
@@ -1143,7 +1143,7 @@ export default function StoreScreen() {
 											className={`flex-1 py-4 font-black text-3.5 rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
 													? "bg-gray-300 text-primary cursor-not-allowed"
-													: "bg-accent text-primary hover:bg-(--accent)/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+													: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
 											}`}>
 											<span>
 												{!user
@@ -1167,7 +1167,7 @@ export default function StoreScreen() {
 			<div className='hidden xl:flex flex-col h-screen shadow-lg bg-primary overflow-hidden w-90 shrink-0'>
 				{/* Header Section - Fixed at top (154px total) */}
 				<div className='shrink-0'>
-					<div className='w-full h-22.5 bg-primary border-b border-(--secondary)/20 border-dashed'>
+					<div className='w-full h-22.5 bg-primary border-b border-secondary/20 border-dashed'>
 						{/* Order Header */}
 						<div className='flex items-center gap-3 p-3'>
 							<div className='bg-(--light-accent) w-16 h-16 rounded-full items-center justify-center flex relative'>
@@ -1287,7 +1287,7 @@ export default function StoreScreen() {
 															<span className="font-normal text-sm leading-5.25 text-secondary font-['Poppins']">
 																{formatCurrency(item.price)}
 															</span>
-															<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-(--accent)/80 px-2 py-1 rounded-full min-w-6 text-center">
+															<span className="font-bold text-sm text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
 																×{item.quantity}
 															</span>
 														</span>
@@ -1358,7 +1358,7 @@ export default function StoreScreen() {
 													damping: 25,
 													delay: index * 0.05,
 												}}
-												className='flex h-px border border-b border-dashed border-(--secondary)/20 w-full'
+												className='flex h-px border border-b border-dashed border-secondary/20 w-full'
 											/>
 										</AnimatePresence>
 									</motion.div>
@@ -1401,7 +1401,7 @@ export default function StoreScreen() {
 							className={`w-full py-4 font-black text-4.5 transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
 									? "bg-gray-300 text-primary cursor-not-allowed"
-									: "bg-accent text-primary hover:bg-(--accent)/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
+									: "bg-accent text-primary hover:bg-accent/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
 							}`}>
 							<span>
 								{!user
@@ -1433,7 +1433,7 @@ export default function StoreScreen() {
 									×
 								</button>
 							</div>
-							<p className='text-sm text-(--secondary)/80 mt-1'>
+							<p className='text-sm text-secondary/80 mt-1'>
 								Please review your order before confirming
 							</p>
 						</div>
@@ -1494,7 +1494,7 @@ export default function StoreScreen() {
 
 											{/* Quantity and Total */}
 											<div className='text-right'>
-												<div className='text-sm font-medium text-(--secondary)/50'>
+												<div className='text-sm font-medium text-secondary/50'>
 													Qty: {item.quantity}
 												</div>
 												<div className='text-sm font-regular text-secondary'>
@@ -1550,7 +1550,7 @@ export default function StoreScreen() {
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='flex-1 px-4 py-3 text-sm text-(--secondary)/80 bg-white border border-(--secondary)/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
+									className='flex-1 px-4 py-3 text-sm text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
 									CANCEL
 								</button>
 								<button
@@ -1558,8 +1558,8 @@ export default function StoreScreen() {
 									disabled={isPlacingOrder}
 									className={`flex-1 px-4 py-3 rounded-lg text-sm font-black transition-all ${
 										isPlacingOrder
-											? "bg-(--secondary)/50 text-primary cursor-not-allowed"
-											: "bg-accent text-shadow-md text-primary hover:bg-(--accent)/90 cursor-pointer hover:shadow-md"
+											? "bg-secondary/50 text-primary cursor-not-allowed"
+											: "bg-accent text-shadow-md text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
 									}`}>
 									{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
 								</button>

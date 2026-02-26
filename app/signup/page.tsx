@@ -273,7 +273,7 @@ export default function SignUpPage() {
                   isLoading || 
                   validationErrors.emailTaken
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-accent hover:bg-(--accent)/90 text-white hover:scale-105 active:scale-95"
+                    : "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
                 }`}
               >
                 {isLoading ? (
@@ -293,7 +293,7 @@ export default function SignUpPage() {
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="font-medium text-accent hover:text-(--accent)/80 transition-colors"
+                  className="font-medium text-accent hover:text-accent/80 transition-colors"
                 >
                   Sign in here
                 </Link>

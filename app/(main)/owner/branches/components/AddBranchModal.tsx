@@ -82,7 +82,7 @@ export default function AddBranchModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50 p-4 sm:p-6"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={!loading ? onClose : undefined}
     >
       <div 
@@ -127,7 +127,7 @@ export default function AddBranchModal({
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
@@ -141,7 +141,7 @@ export default function AddBranchModal({
                   type="text"
                   value={branchData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-sm sm:text-3.5 h-10 sm:h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
@@ -199,7 +199,7 @@ export default function AddBranchModal({
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
                   branchData.name.trim() && branchData.address.trim()
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Create Branch

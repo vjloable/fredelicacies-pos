@@ -126,7 +126,7 @@ export default function EditItemModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
       onClick={!loading ? closeModal : undefined}
     >
       <div 
@@ -150,7 +150,7 @@ export default function EditItemModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-(--accent)/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="w-10 h-10 bg-accent/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
                 <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -184,7 +184,7 @@ export default function EditItemModal({
               type="text"
               value={localEditingItem.name}
               onChange={(e) => setLocalEditingItem({...localEditingItem, name: e.target.value})}
-              className="w-full px-3 py-2 h-9.5 text-3.5 border-2 border-(--secondary)/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              className="w-full px-3 py-2 h-9.5 text-3.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="Enter item name"
             />
           </div>
@@ -218,7 +218,7 @@ export default function EditItemModal({
             <textarea
               value={localEditingItem.description || ''}
               onChange={(e) => setLocalEditingItem({...localEditingItem, description: e.target.value})}
-              className="w-full px-3 py-1.5 text-3.5 border-2 border-(--secondary)/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
+              className="w-full px-3 py-1.5 text-3.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
               placeholder="Enter item description"
               rows={3}
             />
@@ -264,7 +264,7 @@ export default function EditItemModal({
                         setPriceInput('');
                       }
                     }}
-                    className="w-full pl-8 pr-4 py-2 h-9.5 text-3.5 border-2 border-(--secondary)/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                    className="w-full pl-8 pr-4 py-2 h-9.5 text-3.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                     placeholder="0.00"
                     inputMode="decimal"
                   />
@@ -272,7 +272,7 @@ export default function EditItemModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary mb-2">
-                Cost Price <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
+                Cost Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
@@ -308,7 +308,7 @@ export default function EditItemModal({
                       setCostInput('');
                     }
                   }}
-                  className="w-full pl-8 pr-4 py-3 border-2 border-(--secondary)/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full pl-8 pr-4 py-3 border-2 border-secondary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="0.00"
                   inputMode="decimal"
                 />
@@ -317,7 +317,7 @@ export default function EditItemModal({
           </div>
 
           {/* Stock Adjustment Section */}
-          <div className="bg-primary rounded-xl p-4 border-2 border-(--secondary)/20">
+          <div className="bg-primary rounded-xl p-4 border-2 border-secondary/20">
             <h4 className="text-sm font-semibold text-secondary mb-2 flex items-center gap-2">
               Stock Adjustment
             </h4>
@@ -325,7 +325,7 @@ export default function EditItemModal({
             {/* Quick Stock Buttons */}
             <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="space-y-3">
-                <label className="block text-center text-sm font-medium text-(--secondary)/50">Remove Stock</label>
+                <label className="block text-center text-sm font-medium text-secondary/50">Remove Stock</label>
                 <div className="grid grid-rows-3 grid-cols-1 gap-2">
                   {[1, 5, 10].map(amount => (
                     <button
@@ -340,7 +340,7 @@ export default function EditItemModal({
               </div>
 
               <div className="space-y-3">
-                <label className="block text-sm text-center font-medium text-(--secondary)/50">Current Stock</label>
+                <label className="block text-sm text-center font-medium text-secondary/50">Current Stock</label>
                 <div className="text-center items-center justify-center flex flex-col bg-gray-50 rounded-xl border border-gray-200 h-20">
                   <div className="text-2xl font-bold text-secondary">{localEditingItem.stock}</div>
                   <div className="text-xs text-secondary opacity-70">units in stock</div>
@@ -348,7 +348,7 @@ export default function EditItemModal({
               </div>
               
               <div className="space-y-3">
-                <label className="block text-sm text-center font-medium text-(--secondary)/50">Add Stock</label>
+                <label className="block text-sm text-center font-medium text-secondary/50">Add Stock</label>
                 <div className="grid grid-rows-3 gap-2">
                   {[1, 5, 10].map(amount => (
                     <button
@@ -373,7 +373,7 @@ export default function EditItemModal({
                 <input
                   type="text"
                   placeholder="Enter amount"
-                  className="w-full px-3 py-2 border-2 border-(--secondary)/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow whole numbers (no decimals for stock)
@@ -470,7 +470,7 @@ export default function EditItemModal({
               parseFloat(priceInput) > 0 &&
               (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                 ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 cursor-not-allowed'
+                : 'bg-secondary/20 text-secondary/40 hover:scale-100 cursor-not-allowed'
             }`}
           >
             Save
@@ -496,9 +496,9 @@ export default function EditItemModal({
                 <div className="flex gap-3">
                   <button
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 px-4 py-3 text-sm text-(--secondary)/80 bg-white border border-(--secondary)/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
+                      className="flex-1 px-4 py-3 text-sm text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
                   >
-                      CANCEL
+                    CANCEL
                   </button>
                   <button
                     onClick={() => handleDeleteItem(localEditingItem.id)}

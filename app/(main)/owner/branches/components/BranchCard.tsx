@@ -110,7 +110,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onView(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--secondary)/10 text-white font-semibold hover:bg-secondary transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-secondary/10 text-white font-semibold hover:bg-secondary transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
 								title='View Branch Details'>
 								<ViewBranchIcon className='w-7 h-7 text-secondary group-hover:text-primary' />
 							</button>
@@ -120,7 +120,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onEdit(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--accent)/20 text-white font-semibold hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-accent/20 text-white font-semibold hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-center'
 								title='Edit Branch'>
 								<EditBranchIcon className='w-7 h-7 text-accent group-hover:text-primary' />
 							</button>

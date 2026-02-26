@@ -215,7 +215,7 @@ export default function SettingsScreen() {
 													disabled={!hasChanges}
 													className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
 														hasChanges
-															? "bg-accent text-white hover:bg-(--accent)/90"
+															? "bg-accent text-white hover:bg-accent/90"
 															: "bg-gray-100 text-gray-400 cursor-not-allowed"
 													}`}>
 													Save Locally
@@ -237,7 +237,7 @@ export default function SettingsScreen() {
 													syncStatus === "success"
 														? "bg-(--success)/10 text-(--success) border border-(--success)"
 														: syncStatus === "created"
-														? "bg-(--secondary)/10 text-secondary border border-secondary"
+														? "bg-secondary/10 text-secondary border border-secondary"
 														: syncStatus === "error"
 														? "bg-(--error)/10 text-(--error) border border-(--error)"
 														: isSyncing
@@ -276,7 +276,7 @@ export default function SettingsScreen() {
 													syncStatus === "success"
 														? "bg-(--success)/10 text-(--success) border border-(--success)"
 														: syncStatus === "created"
-														? "bg-(--secondary)/10 text-secondary border border-secondary"
+														? "bg-secondary/10 text-secondary border border-secondary"
 														: syncStatus === "error"
 														? "bg-(--error)/10 text-(--error) border border-(--error)"
 														: "bg-gray-50 text-gray-600 border border-gray-200"
@@ -381,7 +381,7 @@ export default function SettingsScreen() {
 										</div>
 
 										{/* Instructions */}
-										<div className='mt-6 p-4 bg-(--secondary)/5 rounded-lg border border-(--secondary)/20'>
+										<div className='mt-6 p-4 bg-secondary/5 rounded-lg border border-secondary/20'>
 											<h4 className='font-medium text-secondary mb-2 text-sm'>
 												How to use:
 											</h4>

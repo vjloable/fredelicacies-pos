@@ -230,7 +230,7 @@ function LoginContent() {
 								className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
 									isLoading
 										? "bg-gray-300 text-gray-500 cursor-not-allowed"
-										: "bg-accent hover:bg-(--accent)/90 text-white hover:scale-105 active:scale-95"
+										: "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
 								}`}>
 								{isLoading ? (
 									<div className='flex items-center justify-center gap-2'>
@@ -249,7 +249,7 @@ function LoginContent() {
 								Do not have an account?{' '}
 								<Link
 									href='/signup'
-									className='font-medium text-accent hover:text-(--accent)/80 transition-colors'>
+									className='font-medium text-accent hover:text-accent/80 transition-colors'>
 									Create account
 								</Link>
 							</p>

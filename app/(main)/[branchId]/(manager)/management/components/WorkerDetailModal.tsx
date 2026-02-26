@@ -174,7 +174,7 @@ export default function WorkerDetailModal({
 			case "clocked_out":
 				return `${baseClasses} bg-(--error)/10 text-(--error)`;
 			default:
-				return `${baseClasses} bg-(--secondary)/10 text-secondary`;
+				return `${baseClasses} bg-secondary/10 text-secondary`;
 		}
 	};
 
@@ -184,9 +184,9 @@ export default function WorkerDetailModal({
 		<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
 			<div className='bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
 				{/* Header */}
-				<div className='flex items-center justify-between p-6 border-b border-(--secondary)/20'>
+				<div className='flex items-center justify-between p-6 border-b border-secondary/20'>
 					<div className='flex items-center gap-4'>
-						<div className='w-12 h-12 bg-(--secondary)/10 rounded-full flex items-center justify-center'>
+						<div className='w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center'>
 							<span className='text-secondary font-bold text-md'>
 								{worker.name?.charAt(0) || worker.email.charAt(0)}
 							</span>
@@ -198,14 +198,14 @@ export default function WorkerDetailModal({
 							<p className='text-secondary text-sm'>{worker.email}</p>
 						</div>
 						{worker.isOwner && (
-							<span className='bg-(--accent)/10 text-accent px-2 py-1 text-xs rounded-full font-medium'>
+							<span className='bg-accent/10 text-accent px-2 py-1 text-xs rounded-full font-medium'>
 								Owner
 							</span>
 						)}
 					</div>
 					<button
 						onClick={onClose}
-						className='text-secondary hover:text-(--secondary)/60 transition-colors'>
+						className='text-secondary hover:text-secondary/60 transition-colors'>
 						<svg
 							className='w-6 h-6'
 							fill='none'
@@ -228,7 +228,7 @@ export default function WorkerDetailModal({
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "details"
 								? "text-accent border-b-2 border-accent"
-								: "text-secondary hover:text-(--secondary)/60"
+								: "text-secondary hover:text-secondary/60"
 						}`}>
 						Worker Details
 					</button>
@@ -237,9 +237,9 @@ export default function WorkerDetailModal({
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "sessions"
 								? "text-accent border-b-2 border-accent"
-								: "text-secondary hover:text-(--secondary)/60"
+								: "text-secondary hover:text-secondary/60"
 						}`}>
-						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-(--secondary)/10 text-(--secondary)/50 text-xs">Last 30 Days</span>
+						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-secondary/10 text-secondary/50 text-xs">Last 30 Days</span>
 					</button>
 				</div>
 
@@ -311,7 +311,7 @@ export default function WorkerDetailModal({
 										{worker.roleAssignments.map((assignment, index) => (
 											<div
 												key={index}
-												className='flex items-center justify-between p-4 bg-(--secondary)/5 rounded-lg'>
+												className='flex items-center justify-between p-4 bg-secondary/5 rounded-lg'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
 														{branchMap.get(assignment.branchId) || `Branch ${assignment.branchId}`}
@@ -334,7 +334,7 @@ export default function WorkerDetailModal({
 										))}
 									</div>
 								) : (
-									<p className='text-(--secondary)/50 italic text-sm'>No role assignments</p>
+									<p className='text-secondary/50 italic text-sm'>No role assignments</p>
 								)}
 							</div>
 						</div>
@@ -353,7 +353,7 @@ export default function WorkerDetailModal({
 											key={
 												attendance.id || `${attendance.worker_id}-${attendance.clock_in}`
 											}
-											className='flex items-center justify-between p-4 bg-(--secondary)/5 rounded-lg'>
+											className='flex items-center justify-between p-4 bg-secondary/5 rounded-lg'>
 											<div className='space-y-1'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
@@ -363,8 +363,8 @@ export default function WorkerDetailModal({
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															attendance.status === "active"
 																? "bg-(--success)/80 text-primary"
-																: "bg-(--secondary)/10 text-(--secondary)/80"
-														}`}>
+																: "bg-secondary/10 text-secondary/80"
+														}`}> 
 														{attendance.status === "active"
 															? "In Progress"
 															: "Completed"}

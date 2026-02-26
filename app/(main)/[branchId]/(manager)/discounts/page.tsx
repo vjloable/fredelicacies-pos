@@ -148,7 +148,7 @@ export default function DiscountsScreen() {
 								</p>
 								<button
 									onClick={handleCreateDiscount}
-									className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-(--accent)/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+									className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
 									<PlusIcon className='size-5 drop-shadow-xl' />
 									<span className='mt-0.5'>
 										ADD YOUR FIRST DISCOUNT CODE
@@ -157,10 +157,10 @@ export default function DiscountsScreen() {
 
 								{/* Quick Setup Guide */}
 								<div className='mt-20 max-w-2xl mx-auto'>
-									<div className='bg-(--secondary)/5 border border-(--secondary)/10 rounded-xl p-6'>
-										<h4 className='text-lg font-semibold text-(--secondary)/50 mb-4 flex items-center gap-2'>
+									<div className='bg-secondary/5 border border-secondary/10 rounded-xl p-6'>
+										<h4 className='text-lg font-semibold text-secondary/50 mb-4 flex items-center gap-2'>
 											<svg
-												className='w-5 h-5 text-(--secondary)/50'
+												className='w-5 h-5 text-secondary/50'
 												fill='none'
 												stroke='currentColor'
 												viewBox='0 0 24 24'>
@@ -175,12 +175,12 @@ export default function DiscountsScreen() {
 										</h4>
 										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 											<div className='text-center'>
-												<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+												<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 													<span className='text-secondary font-bold'>
 														1
 													</span>
 												</div>
-												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 													Create a Discount Code
 												</h5>
 												<p className='text-3 text-secondary opacity-80'>
@@ -188,12 +188,12 @@ export default function DiscountsScreen() {
 												</p>
 											</div>
 											<div className='text-center'>
-												<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+												<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 													<span className='text-secondary font-bold'>
 														2
 													</span>
 												</div>
-												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 													Set Discount Value
 												</h5>
 												<p className='text-3 text-secondary] opacity-80'>
@@ -201,12 +201,12 @@ export default function DiscountsScreen() {
 												</p>
 											</div>
 											<div className='text-center'>
-												<div className='w-10 h-10 bg-(--secondary)/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+												<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
 													<span className='text-secondary font-bold'>
 														3
 													</span>
 												</div>
-												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-secondary/80 mb-1'>
 													Assign to a Category
 												</h5>
 												<p className='text-3 text-secondary] opacity-80'>
@@ -227,7 +227,7 @@ export default function DiscountsScreen() {
 									</h2>
 									<button
 										onClick={handleCreateDiscount}
-										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95'>
+										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95'>
 										<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3.5'>
 											<div className='w-4 h-4'>
 												<PlusIcon className='drop-shadow-lg' />
@@ -238,37 +238,37 @@ export default function DiscountsScreen() {
 								</div>
 
 								{/* Discounts Table */}
-								<div className='bg-white rounded-lg shadow-sm border border-(--secondary)/20 overflow-hidden'>
+								<div className='bg-white rounded-lg shadow-sm border border-secondary/20 overflow-hidden'>
 									<div className='overflow-x-auto'>
 										<table className='min-w-full divide-y divide-gray-200'>
-											<thead className='bg-(--secondary)/5'>
+											<thead className='bg-secondary/5'>
 												<tr>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Name
 													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Value
 													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Type
 													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Status
 													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Created
 													</th>
-													<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Updated
 													</th>
-													<th className='px-6 py-3 text-right text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+													<th className='px-6 py-3 text-right text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 														Actions
 													</th>
 												</tr>
 											</thead>
-											<tbody className='bg-white divide-y divide-(--secondary)/20'>
+											<tbody className='bg-white divide-y divide-secondary/20'>
 												{discounts.map((discount) => (
-													<tr key={discount.id} className='hover:bg-(--secondary)/5'>
+													<tr key={discount.id} className='hover:bg-secondary/5'>
 														<td className='px-6 py-4 whitespace-nowrap'>
 															<div className='flex items-center'>
 																<div className='text-sm font-medium text-secondary'>
@@ -284,7 +284,7 @@ export default function DiscountsScreen() {
 														<td className='px-6 py-4 whitespace-nowrap'>
 															<div className='flex items-center'>
 																<span
-																	className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium bg-(--secondary)/10`}>
+																	className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium bg-secondary/10`}>
 																	{discount.type === "percentage"
 																		? "Percentage"
 																		: "Flat Amount"}
@@ -313,8 +313,8 @@ export default function DiscountsScreen() {
 															<div className='flex items-center justify-end gap-2'>
 																<button
 																	onClick={() => handleEditDiscount(discount)}
-																	className='text-secondary p-1 rounded hover:bg-(--secondary)/10'
-																	title='Edit discount'>
+																	className='text-secondary p-1 rounded hover:bg-secondary/10'
+																	title='Edit discount'> 
 																	<EditIcon />
 																</button>
 																<button

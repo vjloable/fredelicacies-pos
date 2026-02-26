@@ -161,7 +161,7 @@ export default function WorkerRow({
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}
-			className={`hover:bg-(--accent)/10 cursor-pointer ${
+			className={`hover:bg-accent/10 cursor-pointer ${
 				!worker.isOwner && worker.currentStatus === "clocked_in"
 					? "bg-green-50"
 					: ""
@@ -176,7 +176,7 @@ export default function WorkerRow({
 							className='w-10 h-10 rounded-full mr-4'
 						/>
 					) : (
-						<div className='w-10 h-10 bg-(--secondary)/10 rounded-full flex items-center justify-center mr-4'>
+						<div className='w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
 							<span className='text-sm font-medium text-secondary'>
 								{worker.name.charAt(0).toUpperCase()}
 							</span>
@@ -187,7 +187,7 @@ export default function WorkerRow({
 							{worker.name}
 						</div>
 						{worker.employeeId && (
-							<div className='text-sm text-(--secondary)/50'>
+							<div className='text-sm text-secondary/50'>
 								ID: {worker.employeeId}
 							</div>
 						)}
@@ -237,7 +237,7 @@ export default function WorkerRow({
 						.map((assignment) => (
 							<span
 								key={assignment.branchId}
-								className='inline-flex items-center px-2 py-1 rounded text-xs bg-(--secondary)/10 text-secondary'>
+								className='inline-flex items-center px-2 py-1 rounded text-xs bg-secondary/10 text-secondary'>
 								{getBranchName(assignment.branchId)}
 							</span>
 						))}
@@ -292,7 +292,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onEdit(worker);
 							}}
-							className='text-secondary hover:text-(--secondary)/60 p-1 rounded hover:bg-(--secondary)/10'
+							className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'
 							title='Edit Worker'>
 							<EditIcon />
 						</button>
@@ -305,7 +305,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onAssignBranch(worker);
 							}}
-							className='text-secondary hover:text-secondary p-1 rounded hover:bg-(--secondary)/10'
+							className='text-secondary hover:text-secondary p-1 rounded hover:bg-secondary/10'
 							title='Manage Branches'>
 							<BranchIcon />
 						</button>
@@ -318,7 +318,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onEditFaceEmbedding(worker);
 							}}
-							className='text-accent hover:text-(--accent)/60 p-1 rounded hover:bg-(--accent)/10'
+							className='text-accent hover:text-accent/60 p-1 rounded hover:bg-accent/10'
 							title='Edit Face Enrollment'>
 							<FaceIcon />
 						</button>

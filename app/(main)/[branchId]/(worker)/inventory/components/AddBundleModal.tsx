@@ -126,7 +126,7 @@ export default function AddBundleModal({
 
   return (
     <div
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
@@ -173,7 +173,7 @@ export default function AddBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3.5 h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-3.5 h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -210,12 +210,12 @@ export default function AddBundleModal({
               <div>
                 <label className="block text-sm font-medium text-secondary mb-2">
                   Description
-                  <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
+                  <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -231,7 +231,7 @@ export default function AddBundleModal({
               />
 
               {/* Component Selector */}
-              <div className="border-t-2 border-(--secondary)/20 pt-6">
+              <div className="border-t-2 border-secondary/20 pt-6">
                 <label className="block text-sm font-medium text-secondary mb-3">
                   Bundle Components <span className="text-(--error)">*</span>
                 </label>
@@ -254,7 +254,7 @@ export default function AddBundleModal({
                     />
                   </div>
                 ) : selectedComponents.length > 0 ? (
-                  <div className="mb-4 text-sm text-(--secondary)/70 text-center py-2 bg-gray-50 rounded-lg">
+                  <div className="mb-4 text-sm text-secondary/70 text-center py-2 bg-gray-50 rounded-lg">
                     All available items have been added to the bundle
                   </div>
                 ) : (
@@ -293,14 +293,14 @@ export default function AddBundleModal({
                           <div className="font-medium text-secondary truncate">
                             {component.item.name}
                           </div>
-                          <div className="text-xs text-(--secondary)/50">
+                          <div className="text-xs text-secondary/50">
                             Stock: {component.item.stock} • {formatCurrency(component.item.price)}
                           </div>
                         </div>
 
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-(--secondary)/70">Qty:</label>
+                          <label className="text-sm text-secondary/70">Qty:</label>
                           <input
                             type="number"
                             value={component.quantity}
@@ -360,7 +360,7 @@ export default function AddBundleModal({
                   parseFloat(priceInput) > 0 &&
                   selectedComponents.length > 0
                     ? 'bg-amber-500 hover:bg-amber-600 text-white hover:scale-105 cursor-pointer'
-                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Create Bundle

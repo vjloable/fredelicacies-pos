@@ -50,7 +50,7 @@ export default function AddCategoryModal({
 
   return (
     <div
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
@@ -73,7 +73,7 @@ export default function AddCategoryModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-(--accent)/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="w-10 h-10 bg-accent/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
                 <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
@@ -139,7 +139,7 @@ export default function AddCategoryModal({
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
                   newCategory.name.trim()
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 cursor-not-allowed'
+                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 cursor-not-allowed'
                 }`}
               >
                 Add Category

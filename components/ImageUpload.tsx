@@ -71,7 +71,7 @@ export default function ImageUpload({
   return (
     <div className={`space-y-3 ${className}`}>
       <label className="block text-sm font-medium text-secondary mb-2">
-        Item Image <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
+        Item Image <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
       </label>
       
       {/* Image Preview or Upload Area */}
@@ -79,7 +79,7 @@ export default function ImageUpload({
         {currentImageUrl ? (
           // Image Preview
           <div className="relative group">
-            <div className={`w-full ${compact ? 'h-45' : 'h-75'} bg-(--secondary)/5 rounded-xl overflow-hidden border-2 border-(--secondary)/20 relative`}>
+            <div className={`w-full ${compact ? 'h-45' : 'h-75'} bg-secondary/5 rounded-xl overflow-hidden border-2 border-secondary/20 relative`}>
               <Image
                 src={currentImageUrl}
                 alt="Item preview"
@@ -95,7 +95,7 @@ export default function ImageUpload({
                 type="button"
                 onClick={triggerFileInput}
                 disabled={uploading}
-                className="px-4 py-2 bg-primary hover:bg-(--primary)/50 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 bg-primary hover:bg-primary/50 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
               >
                 {uploading ? 'Uploading...' : 'Change'}
               </button>
@@ -112,20 +112,20 @@ export default function ImageUpload({
           // Upload Area
           <div 
             onClick={triggerFileInput}
-            className={`group w-full ${compact ? 'h-28' : 'h-48'} border-2 border-dashed border-(--secondary)/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-(--accent)/5 transition-all`}
+            className={`group w-full ${compact ? 'h-28' : 'h-48'} border-2 border-dashed border-secondary/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all`}
           >
             {uploading ? (
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-accent mb-3"></div>
-                <span className="text-sm text-(--secondary)/50">Uploading image...</span>
+                <span className="text-sm text-secondary/50">Uploading image...</span>
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <svg className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} text-(--secondary)/50 mb-2 group-hover:text-accent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} text-secondary/50 mb-2 group-hover:text-accent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <span className="text-sm font-medium text-(--secondary)/50 mb-1 group-hover:text-accent">Click to upload image</span>
-                <span className="text-xs text-(--secondary)/50 group-hover:text-accent">JPG or PNG, max 10MB</span>
+                <span className="text-sm font-medium text-secondary/50 mb-1 group-hover:text-accent">Click to upload image</span>
+                <span className="text-xs text-secondary/50 group-hover:text-accent">JPG or PNG, max 10MB</span>
               </div>
             )}
           </div>

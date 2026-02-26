@@ -77,7 +77,7 @@ export default function WorkersTable({
 				<h3 className='text-lg font-medium text-secondary mb-2'>
 					No Workers Found
 				</h3>
-				<p className='text-(--secondary)/50 text-sm'>
+				<p className='text-secondary/50 text-sm'>
 					No workers match your current filters. Try adjusting your search feature criteria.
 				</p>
 			</div>
@@ -85,9 +85,9 @@ export default function WorkersTable({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow-sm border border-(--secondary)/20 overflow-hidden'>
+		<div className='bg-white rounded-lg shadow-sm border border-secondary/20 overflow-hidden'>
 			<div className='overflow-x-auto'>
-				<table className='min-w-full divide-y divide-(--secondary)/10'>
+				<table className='min-w-full divide-y divide-secondary/10'>
 					<TableHeader
 						sortConfig={sortConfig}
 						onSort={onSort}
@@ -101,7 +101,7 @@ export default function WorkersTable({
 							{ key: "actions", label: "Actions", sortable: false },
 						]}
 					/>
-					<tbody className='bg-white divide-y divide-(--secondary)/10'>
+					<tbody className='bg-white divide-y divide-secondary/10'>
 						{workers.map((worker) => (
 							<WorkerRow
 								key={worker.id}

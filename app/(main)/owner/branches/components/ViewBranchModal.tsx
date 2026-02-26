@@ -29,7 +29,7 @@ export default function ViewBranchModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50 p-4 sm:p-6"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={onClose}
     >
       <div 
@@ -136,7 +136,7 @@ export default function ViewBranchModal({
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-secondary">Last Updated</p>
                     {isRecent && (
-                      <span className="bg-(--secondary)/10 text-(--secondary)/80 text-2.5 px-2 py-0.2 rounded-full">Recent</span>
+                      <span className="bg-secondary/10 text-secondary/80 text-2.5 px-2 py-0.2 rounded-full">Recent</span>
                     )}
                   </div>
                   <p className="text-xs text-secondary opacity-70">

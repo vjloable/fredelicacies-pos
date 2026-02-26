@@ -191,7 +191,7 @@ export default function BranchesPage() {
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
 						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
@@ -206,13 +206,13 @@ export default function BranchesPage() {
 			<div className='hidden sm:block px-6 py-4 border-b border-gray-200'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div className="flex-col">
-						<p className='text-sm text-(--secondary)/70'>
+						<p className='text-sm text-secondary/70'>
 							Manage your business locations and settings
 						</p>
 					</div>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
 						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3.5'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
@@ -279,7 +279,7 @@ export default function BranchesPage() {
 						<h3 className='text-lg font-medium text-secondary mb-2'>
 							No Branches Found
 						</h3>
-						<p className='text-(--secondary)/70'>
+						<p className='text-secondary/70'>
 							No branches have been created yet.
 						</p>
 					</div>
@@ -292,7 +292,7 @@ export default function BranchesPage() {
 								<h3 className='text-lg font-semibold text-secondary'>
 									All Branches <span className='ml-2 text-primary text-xs bg-accent w-1 h-1 rounded-full px-2 py-0.5'>{branches.length}</span>
 								</h3>
-								<p className='text-sm text-(--secondary)/70'>
+								<p className='text-sm text-secondary/70'>
 									Click on a branch to navigate to its management interface
 								</p>
 							</div>

@@ -44,7 +44,7 @@ export default function DeleteConfirmationModal({
           {title}
         </h2>
         
-        <p className="text-(--secondary)/60 mb-6">
+        <p className="text-secondary/60 mb-6">
           {message}
         </p>
 
@@ -52,7 +52,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-(--secondary)/30 text-(--secondary)/70 rounded-md hover:bg-(--secondary)/5 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="flex-1 px-4 py-2 border border-secondary/30 text-secondary/70 rounded-md hover:bg-secondary/5 focus:outline-none focus:ring-2 focus:ring-accent"
             disabled={loading}
           >
             {cancelText}

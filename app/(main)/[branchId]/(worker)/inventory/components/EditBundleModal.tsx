@@ -179,7 +179,7 @@ export default function EditBundleModal({
 
   return (
     <div
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
@@ -238,7 +238,7 @@ export default function EditBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -263,7 +263,7 @@ export default function EditBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -279,7 +279,7 @@ export default function EditBundleModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -295,7 +295,7 @@ export default function EditBundleModal({
               />
 
               {/* Component Selector */}
-              <div className="border-t-2 border-(--secondary)/20 pt-4">
+              <div className="border-t-2 border-secondary/20 pt-4">
                 <label className="block text-sm font-medium text-secondary mb-2">
                   Bundle Components <span className="text-(--error)">*</span>
                 </label>
@@ -349,14 +349,14 @@ export default function EditBundleModal({
                           <div className="font-medium text-secondary truncate">
                             {component.item.name}
                           </div>
-                          <div className="text-xs text-(--secondary)/50">
+                          <div className="text-xs text-secondary/50">
                             Stock: {component.item.stock} • {formatCurrency(component.item.price)}
                           </div>
                         </div>
 
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-(--secondary)/70">Qty:</label>
+                          <label className="text-sm text-secondary/70">Qty:</label>
                           <input
                             type="number"
                             value={component.quantity}
@@ -412,7 +412,7 @@ export default function EditBundleModal({
                   parseFloat(priceInput) > 0 &&
                   selectedComponents.length > 0
                     ? 'bg-amber-500 hover:bg-amber-600 text-white hover:scale-105 cursor-pointer'
-                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 cursor-not-allowed'
+                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 cursor-not-allowed'
                 }`}
               >
                 Save Changes
@@ -438,7 +438,7 @@ export default function EditBundleModal({
                     <div className="flex gap-3">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 px-4 py-3 text-sm text-(--secondary)/80 bg-white border border-(--secondary)/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
+                        className="flex-1 px-4 py-3 text-sm text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
                       >
                         CANCEL
                       </button>

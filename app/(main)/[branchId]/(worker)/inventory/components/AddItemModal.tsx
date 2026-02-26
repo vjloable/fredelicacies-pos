@@ -108,7 +108,7 @@ export default function AddItemModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div 
@@ -155,7 +155,7 @@ export default function AddItemModal({
                     type="text"
                     value={newItem.name}
                     onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="Enter item name"
                   />
                 </div>
@@ -163,13 +163,13 @@ export default function AddItemModal({
                   <div>
                     <label className="block text-sm font-medium text-secondary mb-2">
                       Description
-                      <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
+                      <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                     </label>
                     <input
                       type="text"
                       value={newItem.description}
                       onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                      className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="Enter description"
                     />
                   </div>
@@ -215,7 +215,7 @@ export default function AddItemModal({
                           setPriceInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -223,7 +223,7 @@ export default function AddItemModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-secondary mb-2">
-                    Cost Price <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
+                    Cost Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
@@ -259,7 +259,7 @@ export default function AddItemModal({
                           setCostInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -303,7 +303,7 @@ export default function AddItemModal({
                         setStockInput('');
                       }
                     }}
-                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="0"
                     inputMode="numeric"
                   />
@@ -434,7 +434,7 @@ export default function AddItemModal({
                   parseFloat(priceInput) > 0 &&
                   (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Add Item

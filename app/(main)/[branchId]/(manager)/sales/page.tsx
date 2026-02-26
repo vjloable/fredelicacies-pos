@@ -325,7 +325,7 @@ export default function SalesScreen() {
 				{/* Control Bar */}
 				<div className='px-6 py-4'>
 					<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
-						<div className='flex items-center gap-4 text-sm text-(--secondary)/70'>
+						<div className='flex items-center gap-4 text-sm text-secondary/70'>
 							<span className='flex items-center gap-2'>
 								<span className='w-2 h-2 bg-accent rounded-full'></span>
 								{currentBranch?.name || "Loading..."}
@@ -334,13 +334,13 @@ export default function SalesScreen() {
 
 						<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
 							{/* View Toggle */}
-							<div className='flex bg-(--accent)/20 rounded-lg p-1 border-(--accent)/30 border w-full sm:w-auto'>
+							<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto'>
 								<button
 									onClick={() => setViewMode("orders")}
 									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 										viewMode === "orders"
 											? "bg-white text-secondary shadow-sm"
-											: "text-(--secondary)/60 hover:text-secondary"
+											: "text-secondary/60 hover:text-secondary"
 									}`}>
 									Recent Orders
 								</button>
@@ -349,7 +349,7 @@ export default function SalesScreen() {
 									className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 										viewMode === "analytics"
 											? "bg-white text-secondary shadow-sm"
-											: "text-(--secondary)/60 hover:text-secondary"
+											: "text-secondary/60 hover:text-secondary"
 									}`}>
 									Analytics
 								</button>
@@ -381,7 +381,7 @@ export default function SalesScreen() {
 															setCurrentPage(1); // Reset to first page when searching
 														}}
 														placeholder='Search orders...'
-														className={`w-full text-3 px-4 py-3 pr-12 border-2 border-(--secondary)/20 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+														className={`w-full text-3 px-4 py-3 pr-12 border-2 border-secondary/20 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 															searchTerm ? "animate-pulse transition-all" : ""
 														}`}
 													/>
@@ -403,22 +403,22 @@ export default function SalesScreen() {
 								<table className='w-full'>
 									<thead className='bg-gray-50'>
 										<tr>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Order ID
 											</th>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Date & Time
 											</th>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Items
 											</th>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Type
 											</th>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Total
 											</th>
-											<th className='px-6 py-3 text-left text-xs font-medium text-(--secondary)/60 uppercase tracking-wider'>
+											<th className='px-6 py-3 text-left text-xs font-medium text-secondary/60 uppercase tracking-wider'>
 												Profit
 											</th>
 										</tr>
@@ -427,7 +427,7 @@ export default function SalesScreen() {
 										{currentOrders.map((order) => (
 											<tr key={order.id} className='hover:bg-gray-50'>
 												<td className='px-6 py-1 whitespace-nowrap text-sm font-medium text-secondary'>
-													<div className='px-2 py-1 bg-(--secondary)/10 max-w-30 text-center font-regular rounded-xl'>
+													<div className='px-2 py-1 bg-secondary/10 max-w-30 text-center font-regular rounded-xl'>
 														#{order.id ? order.id.slice(-8) : "N/A"}
 													</div>
 												</td>
@@ -453,16 +453,16 @@ export default function SalesScreen() {
 																		{order.items.slice(0, 2).map((item: OrderItem) => {
 																			return (
 																				<div
-																					className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-(--secondary)/20 p-1 px-2 rounded-full'
+																					className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-secondary/20 p-1 px-2 rounded-full'
 																					key={item.id}>
 																					{`${item.name || "Unknown"}`}
-																					<div className='size-5 bg-(--secondary)/20 rounded-full text-center text-2.5 p-1'>
+																					<div className='size-5 bg-secondary/20 rounded-full text-center text-2.5 p-1'>
 																						{`${item.quantity || 0}`}
 																					</div>
 																				</div>
 																			);
 																		})}
-																		<div className='flex items-center justify-center h-6.25 w-15 bg-(--accent)/50 rounded-full text-center text-2.5 p-1'>{`+${
+																		<div className='flex items-center justify-center h-6.25 w-15 bg-accent/50 rounded-full text-center text-2.5 p-1'>{`+${
 																			order.items.length - 2
 																		} more`}</div>
 																	</>
@@ -470,10 +470,10 @@ export default function SalesScreen() {
 																	order.items.map((item: OrderItem) => {
 																		return (
 																			<div
-																				className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-(--secondary)/20 p-1 px-2 rounded-full'
+																				className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-secondary/20 p-1 px-2 rounded-full'
 																				key={item.id}>
 																				{`${item.name || "Unknown"}`}
-																				<div className='size-5 bg-(--secondary)/20 rounded-full text-center text-2.5 p-1'>
+																				<div className='size-5 bg-secondary/20 rounded-full text-center text-2.5 p-1'>
 																					{`${item.quantity || 0}`}
 																				</div>
 																			</div>
@@ -484,7 +484,7 @@ export default function SalesScreen() {
 																"No items"
 															)}
 														</div>
-														<p className='text-xs text-(--secondary)/50 mt-1'>
+														<p className='text-xs text-secondary/50 mt-1'>
 															= {order.items.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0) || 0} items total
 														</p>
 													</div>
@@ -538,9 +538,9 @@ export default function SalesScreen() {
 
 							{/* Pagination */}
 							{totalPages > 1 && (
-								<div className='px-6 py-4 border-t border-(--secondary)/20'>
+								<div className='px-6 py-4 border-t border-secondary/20'>
 									<div className='flex items-center justify-between'>
-										<div className='text-sm text-(--secondary)/50'>
+										<div className='text-sm text-secondary/50'>
 											Showing {indexOfFirstOrder + 1}-
 											{Math.min(
 												indexOfLastOrder,
@@ -552,7 +552,7 @@ export default function SalesScreen() {
 											<button
 												onClick={() => paginate(currentPage - 1)}
 												disabled={currentPage === 1}
-												className='px-3 py-1 text-sm bg-(--secondary)/5 border border-(--secondary)/50 rounded-md hover:bg-(--secondary)/10 disabled:opacity-30 disabled:cursor-not-allowed'>
+												className='px-3 py-1 text-sm bg-secondary/5 border border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30 disabled:cursor-not-allowed'>
 												Previous
 											</button>
 
@@ -574,7 +574,7 @@ export default function SalesScreen() {
 														return (
 															<span
 																key={pageNumber}
-																className='px-2 text-(--secondary)/40'>
+																className='px-2 text-secondary/40'>
 																...
 															</span>
 														);
@@ -589,7 +589,7 @@ export default function SalesScreen() {
 														className={`px-3 py-1 text-sm border font-semibold rounded-md ${
 															isCurrentPage
 																? "bg-accent text-primary border-accent"
-																: "bg-(--secondary)/5 border-(--secondary)/50 text-secondary"
+																: "bg-secondary/5 border-secondary/50 text-secondary"
 														}`}>
 														{pageNumber}
 													</button>
@@ -599,7 +599,7 @@ export default function SalesScreen() {
 											<button
 												onClick={() => paginate(currentPage + 1)}
 												disabled={currentPage === totalPages}
-												className='px-3 py-1 text-sm border bg-(--secondary)/5 border-(--secondary)/50 rounded-md hover:bg-(--secondary)/10 disabled:opacity-30  disabled:cursor-not-allowed'>
+												className='px-3 py-1 text-sm border bg-secondary/5 border-secondary/50 rounded-md hover:bg-secondary/10 disabled:opacity-30  disabled:cursor-not-allowed'>
 												Next
 											</button>
 										</div>
@@ -615,7 +615,7 @@ export default function SalesScreen() {
                 <div className='px-4 lg:px-12 py-4 bg-primary shadow-md mx-6 rounded-xl'>
                   <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
                     <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-                      <span className='text-sm font-medium text-(--secondary)/50'>
+                      <span className='text-sm font-medium text-secondary/50'>
                         Time Period:
                       </span>
                       <div className='flex bg-primary rounded-lg p-1 space-x-2'>
@@ -627,7 +627,7 @@ export default function SalesScreen() {
                               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-md transition-colors border border-transparent ${
                                 viewPeriod === period
                                   ? "bg-accent text-primary text-shadow-md font-bold"
-                                  : "font-medium hover:border hover:border-accent text-(--secondary)/50 hover:text-secondary hover:bg-text-(--secondary)/80"
+                                  : "font-medium hover:border hover:border-accent text-secondary/50 hover:text-secondary hover:bg-text-secondary/80"
                               }`}>
                               {period === "day"
                                 ? "24 Hours"
@@ -656,7 +656,7 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-(--secondary)/40'>
+                        <p className='text-sm font-medium text-secondary/40'>
                           {viewPeriod === "day"
                             ? "Today"
                             : viewPeriod === "week"
@@ -682,7 +682,7 @@ export default function SalesScreen() {
                         </svg>
                       </div>
                     </div>
-                    <p className='text-xs text-(--secondary)/50 mt-2'>
+                    <p className='text-xs text-secondary/50 mt-2'>
                       Profit: {formatCurrency(currentPeriodStats.totalProfit)} (
                       {currentPeriodStats.profitMargin.toFixed(1)}%)
                     </p>
@@ -691,7 +691,7 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-(--secondary)/40'>
+                        <p className='text-sm font-medium text-secondary/40'>
                           Total Orders
                         </p>
                         <p className='text-2xl font-bold text-secondary'>
@@ -707,7 +707,7 @@ export default function SalesScreen() {
                         </svg>
                       </div>
                     </div>
-                    <p className='text-xs text-(--secondary)/50 mt-2'>
+                    <p className='text-xs text-secondary/50 mt-2'>
                       Avg:{" "}
                       {formatCurrency(
                         currentPeriodStats.totalOrders > 0
@@ -721,7 +721,7 @@ export default function SalesScreen() {
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium text-(--secondary)/40'>
+                        <p className='text-sm font-medium text-secondary/40'>
                           Peak {viewPeriod === "day" ? "Hour" : "Day"}
                         </p>
                         <p className='text-2xl font-bold text-secondary'>
@@ -747,7 +747,7 @@ export default function SalesScreen() {
                         </svg>
                       </div>
                     </div>
-                    <p className='text-xs text-(--secondary)/50 mt-2'>
+                    <p className='text-xs text-secondary/50 mt-2'>
                       {timeSeriesData.length > 0
                         ? `${
                             timeSeriesData.reduce(
@@ -826,7 +826,7 @@ export default function SalesScreen() {
                           formatter={formatTooltipValue}
                           contentStyle={{
                             backgroundColor: "#FFFFFF",
-                            border: "1px solid var(--accent)/20",
+                            border: "1px solid varaccent/20",
                             borderRadius: "8px",
                             boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
                           }}

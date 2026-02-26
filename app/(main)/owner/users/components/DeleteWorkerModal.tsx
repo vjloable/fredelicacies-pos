@@ -100,7 +100,7 @@ export default function DeleteWorkerModal({
 						</div>
 
 						{/* Worker Info */}
-						<div className='bg-(--secondary)/5 rounded-lg p-4 mb-6'>
+						<div className='bg-secondary/5 rounded-lg p-4 mb-6'>
 							<div className='flex items-center'>
 								{worker.profilePicture ? (
 									<Image
@@ -109,7 +109,7 @@ export default function DeleteWorkerModal({
 										className='w-12 h-12 rounded-full mr-4'
 									/>
 								) : (
-									<div className='w-12 h-12 bg-(--secondary)/10 rounded-full flex items-center justify-center mr-4'>
+									<div className='w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
 										<span className='text-lg font-medium text-gray-700'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
@@ -117,9 +117,9 @@ export default function DeleteWorkerModal({
 								)}
 								<div>
 									<div className='font-medium text-secondary'>{worker.name}</div>
-									<div className='text-sm text-(--secondary)/70'>{worker.email}</div>
+									<div className='text-sm text-secondary/70'>{worker.email}</div>
 									{worker.employeeId && (
-										<div className='text-sm text-(--secondary)/70'>
+										<div className='text-sm text-secondary/70'>
 											ID: {worker.employeeId}
 										</div>
 									)}
@@ -131,7 +131,7 @@ export default function DeleteWorkerModal({
 						<div className='mb-6'>
 							<label className='block text-sm font-medium text-secondary mb-2'>
 								Type{" "}
-								<span className='font-mono bg-(--secondary)/10 px-1 rounded'>
+								<span className='font-mono bg-secondary/10 px-1 rounded'>
 									{worker.name}
 								</span>{" "}
 								to confirm deletion:

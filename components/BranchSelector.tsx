@@ -27,7 +27,7 @@ export default function BranchSelector({
 		return (
 			<div className={`flex items-center gap-2 ${className}`}>
 				{showLabel && (
-					<span className='text-sm text-(--secondary)/70'>Branch:</span>
+					<span className='text-sm text-secondary/70'>Branch:</span>
 				)}
 				<div className='animate-pulse bg-gray-200 h-10.5 w-full rounded'></div>
 			</div>
@@ -38,7 +38,7 @@ export default function BranchSelector({
 		return (
 			<div className={`flex items-center gap-2 ${className}`}>
 				{showLabel && (
-					<span className='text-sm text-(--secondary)/70'>Branch:</span>
+					<span className='text-sm text-secondary/70'>Branch:</span>
 				)}
 				<span className='text-sm text-(--error)'>
 					No branches available
@@ -67,7 +67,7 @@ export default function BranchSelector({
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
 			{showLabel && (
-				<span className='text-sm text-(--secondary)/70'>Branch:</span>
+				<span className='text-sm text-secondary/70'>Branch:</span>
 			)}
 
 			<DropdownField

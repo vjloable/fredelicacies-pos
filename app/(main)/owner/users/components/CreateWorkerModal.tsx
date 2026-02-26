@@ -219,13 +219,13 @@ export default function CreateWorkerModal({
 								<h2 className='text-2xl font-bold text-secondary'>
 									Add New Worker
 								</h2>
-								<p className='text-sm text-(--secondary)/70 mt-1'>
+								<p className='text-sm text-secondary/70 mt-1'>
 									Create a new worker account with role assignments
 								</p>
 							</div>
 							<button
 								onClick={handleClose}
-								className='text-(--secondary)/40 hover:text-(--secondary)/60 p-2'>
+								className='text-secondary/40 hover:text-secondary/60 p-2'>
 								<svg
 									className='w-6 h-6'
 									fill='none'
@@ -255,7 +255,7 @@ export default function CreateWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--secondary)/70 text-sm'>{error}</span>
+									<span className='text-secondary/70 text-sm'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -265,7 +265,7 @@ export default function CreateWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+									<label className='block text-sm font-medium text-secondary/70 mb-2'>
 										Full Name <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -273,13 +273,13 @@ export default function CreateWorkerModal({
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-(--secondary)/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+									<label className='block text-sm font-medium text-secondary/70 mb-2'>
 										Email Address <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -287,7 +287,7 @@ export default function CreateWorkerModal({
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-(--secondary)/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -296,7 +296,7 @@ export default function CreateWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+									<label className='block text-sm font-medium text-secondary/70 mb-2'>
 										Password <span className="text-(--error)">*</span>
 									</label>
 									<input
@@ -304,14 +304,14 @@ export default function CreateWorkerModal({
 										name='password'
 										value={formData.password}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-(--secondary)/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter password'
 										required
 										minLength={6}
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+									<label className='block text-sm font-medium text-secondary/70 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -319,14 +319,14 @@ export default function CreateWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-(--secondary)/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
 							</div>
 
 							<div>
-								<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+								<label className='block text-sm font-medium text-secondary/70 mb-2'>
 									Employee ID
 								</label>
 								<input
@@ -334,7 +334,7 @@ export default function CreateWorkerModal({
 									name='employeeId'
 									value={formData.employeeId}
 									onChange={handleInputChange}
-									className='w-full px-3 py-2 border border-(--secondary)/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+									className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 									placeholder='Enter employee ID (optional)'
 								/>
 							</div>
@@ -347,9 +347,9 @@ export default function CreateWorkerModal({
 										name='isOwner'
 										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='h-4 w-4 text-accent focus:ring-accent border-(--secondary)/30 rounded'
+										className='h-4 w-4 text-accent focus:ring-accent border-secondary/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-(--secondary)/70'>
+									<label className='ml-2 block text-sm text-secondary/70'>
 										Grant owner privileges
 									</label>
 								</div>
@@ -359,12 +359,12 @@ export default function CreateWorkerModal({
 							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+										<label className='block text-sm font-medium text-secondary/70 mb-2'>
 											Assign to Branch <span className="text-(--error)">*</span>
 										</label>
 										{availableBranches.length === 1 ? (
 											// For managers - show readonly branch name
-											<div className='w-full px-3 py-2 bg-(--secondary)/10 border border-(--secondary)/30 rounded-lg text-(--secondary)/70'>
+											<div className='w-full px-3 py-2 bg-secondary/10 border border-secondary/30 rounded-lg text-secondary/70'>
 												{availableBranches[0].name}
 											</div>
 										) : (
@@ -404,7 +404,7 @@ export default function CreateWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-sm font-medium text-(--secondary)/70 mb-2'>
+										<label className='block text-sm font-medium text-secondary/70 mb-2'>
 											Role <span className="text-(--error)">*</span>
 										</label>
 										<DropdownField
@@ -429,17 +429,17 @@ export default function CreateWorkerModal({
 							)}
 
 							{/* Form Actions */}
-							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-(--secondary)/20'>
+							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-secondary/20'>
 								<button
 									type='button'
 									onClick={handleClose}
-									className='flex-1 py-3 px-4 border border-(--secondary)/30 rounded-lg text-(--secondary)/70 font-medium hover:bg-(--secondary)/10 transition-colors'>
+									className='flex-1 py-3 px-4 border border-secondary/30 rounded-lg text-secondary/70 font-medium hover:bg-secondary/10 transition-colors'>
 									Cancel
 								</button>
 								<button
 									type='submit'
 									disabled={loading}
-									className='flex-1 py-3 px-4 bg-accent text-primary rounded-lg font-medium hover:bg-(--accent)/90 transition-colors disabled:opacity-50'>
+									className='flex-1 py-3 px-4 bg-accent text-primary rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50'>
 									Create Worker
 								</button>
 							</div>

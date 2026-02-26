@@ -489,7 +489,7 @@ export default function ManagementPage() {
 						{/* Control Bar */}
 						<div className='mb-6'>
 							<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4'>
-								<div className='flex items-center gap-4 text-sm text-(--secondary)/70'>
+								<div className='flex items-center gap-4 text-sm text-secondary/70'>
 									<span className='flex items-center gap-2'>
 										<span className='w-2 h-2 bg-accent rounded-full'></span>
 										{branches.find((branch) => branch.id === branchId)?.name ||
@@ -499,13 +499,13 @@ export default function ManagementPage() {
 
 								<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
 									{/* View Toggle */}
-									<div className='flex bg-(--accent)/20 rounded-lg p-1 border-(--accent)/30 border w-full sm:w-auto'>
+									<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto'>
 										<button
 											onClick={() => setViewMode("workers")}
 											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "workers"
 													? "bg-white text-secondary shadow-sm"
-													: "text-(--secondary)/60 hover:text-secondary"
+													: "text-secondary/60 hover:text-secondary"
 											}`}>
 											Workers
 										</button>
@@ -514,7 +514,7 @@ export default function ManagementPage() {
 											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "attendance"
 													? "bg-white text-secondary shadow-sm"
-													: "text-(--secondary)/60 hover:text-secondary"
+													: "text-secondary/60 hover:text-secondary"
 											}`}>
 											Attendance
 										</button>
@@ -524,9 +524,9 @@ export default function ManagementPage() {
 									{viewMode === "workers" && (
 										<button
 											onClick={handleCreateWorker}
-											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
 											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3.5'>
-												<div className='w-4 h-4'>
+												<div className='w-4 h-4'> 
 													<PlusIcon className='drop-shadow-sm' />
 												</div>
 												<span className='mt-0.5'>ADD WORKER</span>

@@ -269,13 +269,13 @@ export default function EditFaceEmbeddingModal({
                         <h2 className="text-2xl font-bold text-secondary">
                             Face Enrollment
                         </h2>
-                        <p className="text-sm text-(--secondary)/70 mt-1">
+                        <p className="text-sm text-secondary/70 mt-1">
                             Manage face recognition for {worker.name}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-(--secondary)/40 hover:text-(--secondary)/60 p-2">
+                        className="text-secondary/40 hover:text-secondary/60 p-2">
                         <svg
                             className="w-6 h-6"
                             fill="none"
@@ -356,22 +356,22 @@ export default function EditFaceEmbeddingModal({
                                         {cameraError}
                                     </div>
                                 ) : (
-                                    <div className="text-sm font-medium text-(--secondary)/80">{status}</div>
+                                    <div className="text-sm font-medium text-secondary/80">{status}</div>
                                 )}
                             </div>
 
                             {/* Camera Controls */}
-                            <div className="flex gap-3 pt-4 border-t border-(--secondary)/20">
+                            <div className="flex gap-3 pt-4 border-t border-secondary/20">
                                 <button
                                     onClick={handleCameraCancel}
                                     disabled={isProcessing}
-                                    className="flex-1 px-4 py-3.5 bg-gray-100 text-secondary rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50 font-semibold border border-(--secondary)/20">
+                                    className="flex-1 px-4 py-3.5 bg-gray-100 text-secondary rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50 font-semibold border border-secondary/20">
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleStartCountdown}
                                     disabled={isLoading || isProcessing || countdown !== null || !!cameraError}
-                                    className="flex-1 px-4 py-3.5 bg-accent text-primary rounded-xl hover:bg-(--accent)/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm hover:shadow-md">
+                                    className="flex-1 px-4 py-3.5 bg-accent text-primary rounded-xl hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm hover:shadow-md">
                                     {isProcessing ? 'Processing...' : countdown !== null ? 'Capturing...' : 'Capture Face'}
                                 </button>
                             </div>
@@ -394,7 +394,7 @@ export default function EditFaceEmbeddingModal({
                                             <p className="text-sm font-semibold text-secondary">
                                                 Enrollment Status
                                             </p>
-                                            <p className="text-xs text-(--secondary)/70 mt-0.5">
+                                            <p className="text-xs text-secondary/70 mt-0.5">
                                                 {hasExistingEmbedding
                                                     ? `${embeddingCount} face capture${embeddingCount !== 1 ? 's' : ''} enrolled`
                                                     : "No face data found"}
@@ -412,7 +412,7 @@ export default function EditFaceEmbeddingModal({
                             </div>
 
                             {/* Information */}
-                            <div className="mb-6 p-4 bg-(--accent)/10 border border-(--accent)/30 rounded-xl">
+                            <div className="mb-6 p-4 bg-accent/10 border border-accent/30 rounded-xl">
                                 <div className="flex gap-3">
                                     <svg
                                         className="w-5 h-5 text-accent shrink-0 mt-0.5"
@@ -426,7 +426,7 @@ export default function EditFaceEmbeddingModal({
                                     </svg>
                                     <div className="text-sm text-secondary">
                                         <p className="font-semibold mb-2">Quick Tips:</p>
-                                        <ul className="space-y-1 text-xs text-(--secondary)/80">
+                                        <ul className="space-y-1 text-xs text-secondary/80">
                                             <li className="flex items-start gap-2">
                                                 <span className="text-accent mt-0.5">•</span>
                                                 <span>Multiple captures improve accuracy (max 5)</span>
@@ -451,7 +451,7 @@ export default function EditFaceEmbeddingModal({
                             </div>
 
                             {/* Actions */}
-                            <div className="space-y-3 pt-6 border-t border-(--secondary)/20">
+                            <div className="space-y-3 pt-6 border-t border-secondary/20">
                                 {hasExistingEmbedding ? (
                                     <>
                                         {/* Add More Button (only if less than 5) */}
@@ -462,7 +462,7 @@ export default function EditFaceEmbeddingModal({
                                                     handleStartEnrollment();
                                                 }}
                                                 disabled={isLoading}
-                                                className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-(--accent)/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                                                className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                                                 <svg
                                                     className="w-5 h-5"
                                                     fill="none"
@@ -486,7 +486,7 @@ export default function EditFaceEmbeddingModal({
                                                 handleStartEnrollment();
                                             }}
                                             disabled={isLoading}
-                                            className="w-full bg-(--accent)/10 text-3.5 text-accent px-4 py-3.5 rounded-xl hover:bg-(--accent)/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-accent hover:border-accent">
+                                            className="w-full bg-accent/10 text-3.5 text-accent px-4 py-3.5 rounded-xl hover:bg-accent/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-accent hover:border-accent">
                                             <svg
                                                 className="w-5 h-5"
                                                 fill="none"
@@ -529,7 +529,7 @@ export default function EditFaceEmbeddingModal({
                                             handleStartEnrollment();
                                         }}
                                         disabled={isLoading}
-                                        className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-(--accent)/90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                                        className="w-full bg-accent text-3.5 text-primary px-4 py-3.5 rounded-xl hover:bg-accent/90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                                         <svg
                                             className="w-5 h-5"
                                             fill="none"

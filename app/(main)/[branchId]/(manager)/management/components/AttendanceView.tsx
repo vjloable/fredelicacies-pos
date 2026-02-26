@@ -245,7 +245,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 					<h2 className="text-xl font-semibold text-secondary mb-2">
 						Daily Attendance Overview
 					</h2>
-					<p className="text-sm text-(--secondary)/70">
+					<p className="text-sm text-secondary/70">
 						{formatDateTime(selectedDate)}
 					</p>
 				</div>
@@ -260,7 +260,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 									timeRange === range
 										? "bg-white text-secondary shadow-sm"
-										: "text-(--secondary)/60 hover:text-secondary"
+										: "text-secondary/60 hover:text-secondary"
 								}`}
 							>
 								{range}h
@@ -283,7 +283,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 					<button
 						onClick={loadAttendanceData}
 						disabled={loading}
-						className="flex items-center gap-2 px-4 py-2 bg-accent text-primary rounded-lg hover:bg-(--accent)/90 transition-colors disabled:opacity-50"
+						className="flex items-center gap-2 px-4 py-2 bg-accent text-primary rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50"
 					>
 						{loading ? (
 							<LoadingSpinner size="sm" />
@@ -343,7 +343,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 							<h3 className="text-lg font-medium text-secondary mb-2">
 								{timeRange}-Hour Attendance Timeline
 							</h3>
-							<p className="text-sm text-(--secondary)/70">
+							<p className="text-sm text-secondary/70">
 								Horizontal lines show working periods for each employee
 								{timeRange < 24 && ` (${timeRangeBounds.startHour}:00 - ${timeRangeBounds.endHour}:00)`}
 							</p>
@@ -533,15 +533,15 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 						<div className="mt-6 flex flex-wrap gap-4 text-sm">
 							<div className="flex items-center gap-2">
 								<div className="w-6 h-1.5 bg-accent rounded" />
-								<span className="text-(--secondary)/70">Working Period</span>
+								<span className="text-secondary/70">Working Period</span>
 							</div>
 							<div className="flex items-center gap-2">
 								<div className="w-4 h-4 bg-accent rounded-full border-2 border-white" />
-								<span className="text-(--secondary)/70">Clock In/Out</span>
+								<span className="text-secondary/70">Clock In/Out</span>
 							</div>
 							<div className="flex items-center gap-2">
 								<div className="w-3 h-3 bg-accent rounded-full animate-pulse" />
-								<span className="text-(--secondary)/70">Currently Working</span>
+								<span className="text-secondary/70">Currently Working</span>
 							</div>
 						</div>
 					</div>
@@ -578,8 +578,8 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 										<div className="flex-1">
 											<p className="text-sm font-medium text-secondary">
 												{worker.name || worker.email}
-											</p>
-											<p className="text-xs text-(--secondary)/70">
+											</p> 
+											<p className="text-xs text-secondary/70">
 												{workerAttendances.length} session{workerAttendances.length !== 1 ? 's' : ''} • {hours}h {minutes}m total
 											</p>
 										</div>
