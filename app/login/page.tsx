@@ -139,30 +139,30 @@ function LoginContent() {
 			}}>
 			<div className='w-full max-w-md'>
 				{/* Login Form */}
-				<div className='bg-white rounded-[12px] shadow-xl'>
+				<div className='bg-white rounded-xl shadow-xl'>
 					{/* Logo/Header */}
 					<div className='text-center mb-8'>
-						<div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]'>
-							<div className='w-[165px] h-[120px]'>
+						<div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl'>
+							<div className='w-41.25 h-30'>
 								<LogoVerticalIcon />
 							</div>
 						</div>
 					</div>
-					<p className='text-center text-[16px] font-medium text-[var(--secondary)]'>
+					<p className='text-center text-4 font-medium text-secondary'>
 						Sign in to your account
 					</p>
 					<div className='p-8'>
 						<form onSubmit={handleSubmit} className='space-y-6'>
 							{/* Email Field */}
 							<div>
-								<label className='block text-sm font-medium text-[var(--secondary)] mb-2'>
+								<label className='block text-sm font-medium text-secondary mb-2'>
 									Email
 								</label>
 								<input
 									type='email'
 									value={credentials.email}
 									onChange={handleInputChange("email")}
-									className='w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all'
+									className='w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
 									placeholder='Enter your email'
 									disabled={isLoading}
 									autoComplete='email'
@@ -171,14 +171,14 @@ function LoginContent() {
 
 							{/* Password Field */}
 							<div>
-								<label className='block text-sm font-medium text-[var(--secondary)] mb-2'>
+								<label className='block text-sm font-medium text-secondary mb-2'>
 									Password
 								</label>
 								<input
 									type='password'
 									value={credentials.password}
 									onChange={handleInputChange("password")}
-									className='w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all'
+									className='w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
 									placeholder='Enter your password'
 									disabled={isLoading}
 									autoComplete='current-password'
@@ -209,7 +209,7 @@ function LoginContent() {
 								<div className='bg-red-50 border border-red-200 rounded-xl p-3'>
 									<div className='flex items-center gap-2'>
 										<svg
-											className='w-5 h-5 text-[var(--error)]'
+											className='w-5 h-5 text-(--error)'
 											fill='currentColor'
 											viewBox='0 0 20 20'>
 											<path
@@ -218,7 +218,7 @@ function LoginContent() {
 												clipRule='evenodd'
 											/>
 										</svg>
-										<span className='text-sm text-[var(--error)]'>{error}</span>
+										<span className='text-sm text-(--error)'>{error}</span>
 									</div>
 								</div>
 							)}
@@ -227,10 +227,10 @@ function LoginContent() {
 							<button
 								type='submit'
 								disabled={isLoading}
-								className={`w-full py-3 rounded-[6px] font-semibold transition-all shadow-lg ${
+								className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
 									isLoading
 										? "bg-gray-300 text-gray-500 cursor-not-allowed"
-										: "bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95"
+										: "bg-accent hover:bg-(--accent)/90 text-white hover:scale-105 active:scale-95"
 								}`}>
 								{isLoading ? (
 									<div className='flex items-center justify-center gap-2'>
@@ -245,11 +245,11 @@ function LoginContent() {
 
 						{/* Sign Up Link */}
 						<div className='mt-6 text-center'>
-							<p className='text-sm text-[var(--secondary)]'>
+							<p className='text-sm text-secondary'>
 								Do not have an account?{' '}
 								<Link
 									href='/signup'
-									className='font-medium text-[var(--accent)] hover:text-[var(--accent)]/80 transition-colors'>
+									className='font-medium text-accent hover:text-(--accent)/80 transition-colors'>
 									Create account
 								</Link>
 							</p>
@@ -257,7 +257,7 @@ function LoginContent() {
 
 						{/* Footer */}
 						<div className='mt-6 text-center'>
-							<p className='text-xs text-[var(--secondary)] opacity-50'>
+							<p className='text-xs text-secondary opacity-50'>
 							Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
 							</p>
 						</div>

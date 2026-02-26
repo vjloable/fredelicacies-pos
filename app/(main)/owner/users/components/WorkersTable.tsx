@@ -43,22 +43,22 @@ export default function WorkersTable({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow-sm border border-[var(--secondary)] overflow-hidden'>
+			<div className='bg-white rounded-lg shadow-sm border border-secondary overflow-hidden'>
 				<div className='animate-pulse'>
 					{/* Header */}
-					<div className='bg-gray-50 px-6 py-3 border-b border-[var(--secondary)]'>
+					<div className='bg-gray-50 px-6 py-3 border-b border-secondary'>
 						<div className='flex space-x-4'>
 							{[1, 2, 3, 4, 5].map((i) => (
-								<div key={i} className='h-4 bg-[var(--secondary)] rounded flex-1'></div>
+								<div key={i} className='h-4 bg-secondary rounded flex-1'></div>
 							))}
 						</div>
 					</div>
 					{/* Rows */}
 					{[1, 2, 3, 4, 5].map((i) => (
-						<div key={i} className='px-6 py-4 border-b border-[var(--secondary)]'>
+						<div key={i} className='px-6 py-4 border-b border-secondary'>
 							<div className='flex space-x-4'>
 								{[1, 2, 3, 4, 5].map((j) => (
-									<div key={j} className='h-4 bg-[var(--secondary)] rounded flex-1'></div>
+									<div key={j} className='h-4 bg-secondary rounded flex-1'></div>
 								))}
 							</div>
 						</div>
@@ -71,13 +71,13 @@ export default function WorkersTable({
 	if (workers.length === 0) {
 		return (
 			<div className='bg-white rounded-lg shadow-md p-12 text-center'>
-				<div className='w-16 h-16 mx-auto mb-4 bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
-					<ManagementIcon className="text-[var(--accent)]"/>
+				<div className='w-16 h-16 mx-auto mb-4 bg-(--light-accent) rounded-full flex items-center justify-center'>
+					<ManagementIcon className="text-accent"/>
 				</div>
-				<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
+				<h3 className='text-lg font-medium text-secondary mb-2'>
 					No Workers Found
 				</h3>
-				<p className='text-[var(--secondary)]/50 text-sm'>
+				<p className='text-(--secondary)/50 text-sm'>
 					No workers match your current filters. Try adjusting your search feature criteria.
 				</p>
 			</div>
@@ -85,9 +85,9 @@ export default function WorkersTable({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow-sm border border-[var(--secondary)]/20 overflow-hidden'>
+		<div className='bg-white rounded-lg shadow-sm border border-(--secondary)/20 overflow-hidden'>
 			<div className='overflow-x-auto'>
-				<table className='min-w-full divide-y divide-[var(--secondary)]/10'>
+				<table className='min-w-full divide-y divide-(--secondary)/10'>
 					<TableHeader
 						sortConfig={sortConfig}
 						onSort={onSort}
@@ -101,7 +101,7 @@ export default function WorkersTable({
 							{ key: "actions", label: "Actions", sortable: false },
 						]}
 					/>
-					<tbody className='bg-white divide-y divide-[var(--secondary)]/10'>
+					<tbody className='bg-white divide-y divide-(--secondary)/10'>
 						{workers.map((worker) => (
 							<WorkerRow
 								key={worker.id}

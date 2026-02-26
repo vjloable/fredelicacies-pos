@@ -157,9 +157,9 @@ export default function PinEntryModal({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-			<div className="bg-[var(--primary)] rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+			<div className="bg-primary rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
 				{/* Header */}
-				<div className="bg-[var(--accent)] px-6 py-5 text-center">
+				<div className="bg-accent px-6 py-5 text-center">
 					<div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
 						<svg
 							className="w-7 h-7 text-white"
@@ -186,8 +186,8 @@ export default function PinEntryModal({
 								key={i}
 								className={`w-4 h-4 rounded-full transition-all duration-200 ${
 									i < currentPin.length
-										? "bg-[var(--accent)] scale-110"
-										: "bg-[var(--light-accent)] border-2 border-[var(--accent)]/30"
+										? "bg-accent scale-110"
+										: "bg-(--light-accent) border-2 border-(--accent)/30"
 								}`}
 							/>
 						))}
@@ -195,8 +195,8 @@ export default function PinEntryModal({
 
 					{/* Error Message */}
 					{error && (
-						<div className="mt-3 px-3 py-2 bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-lg">
-							<p className="text-[var(--error)] text-sm text-center font-medium">
+						<div className="mt-3 px-3 py-2 bg-(--error)/10 border border-(--error)/20 rounded-lg">
+							<p className="text-(--error) text-sm text-center font-medium">
 								{error}
 							</p>
 						</div>
@@ -211,26 +211,26 @@ export default function PinEntryModal({
 								key={digit}
 								onClick={() => handleKeyPress(digit)}
 								disabled={loading || currentPin.length >= 4}
-								className="h-16 rounded-xl bg-[var(--background)] text-[var(--secondary)] text-2xl font-semibold hover:bg-[var(--light-accent)] active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+								className="h-16 rounded-xl bg-(--background) text-secondary text-2xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 								{digit}
 							</button>
 						))}
 						<button
 							onClick={handleClear}
 							disabled={loading}
-							className="h-16 rounded-xl bg-[var(--background)] text-[var(--secondary)] text-sm font-medium hover:bg-[var(--light-accent)] active:scale-95 transition-all duration-150 cursor-pointer">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-sm font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer">
 							Clear
 						</button>
 						<button
 							onClick={() => handleKeyPress("0")}
 							disabled={loading || currentPin.length >= 4}
-							className="h-16 rounded-xl bg-[var(--background)] text-[var(--secondary)] text-2xl font-semibold hover:bg-[var(--light-accent)] active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-2xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 							0
 						</button>
 						<button
 							onClick={handleBackspace}
 							disabled={loading}
-							className="h-16 rounded-xl bg-[var(--background)] text-[var(--secondary)] text-sm font-medium hover:bg-[var(--light-accent)] active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
+							className="h-16 rounded-xl bg-(--background) text-secondary text-sm font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
 							<svg
 								className="w-6 h-6"
 								fill="none"
@@ -252,13 +252,13 @@ export default function PinEntryModal({
 					<button
 						onClick={onCancel}
 						disabled={loading}
-						className="flex-1 h-12 rounded-xl border-2 border-[var(--secondary)]/20 text-[var(--secondary)] font-semibold hover:bg-[var(--background)] transition-all cursor-pointer disabled:opacity-50">
+						className="flex-1 h-12 rounded-xl border-2 border-(--secondary)/20 text-secondary font-semibold hover:bg-(--background) transition-all cursor-pointer disabled:opacity-50">
 						Cancel
 					</button>
 					<button
 						onClick={handleSubmit}
 						disabled={loading || currentPin.length < 4}
-						className="flex-1 h-12 rounded-xl bg-[var(--accent)] text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center">
+						className="flex-1 h-12 rounded-xl bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center">
 						{loading ? (
 							<div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
 						) : mode === "setup" && step === "enter" ? (

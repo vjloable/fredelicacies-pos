@@ -156,34 +156,34 @@ export default function FaceRecognitionCamera({
 	if (!hasCamera) {
 		return (
 			<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-				<div className="bg-[var(--primary)] rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+				<div className="bg-primary rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
 					<div className="text-center">
-						<div className="w-16 h-16 bg-[var(--error)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-							<svg className="w-8 h-8 text-[var(--error)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<div className="w-16 h-16 bg-(--error)/10 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg className="w-8 h-8 text-(--error)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</div>
-						<h3 className="text-xl font-bold text-[var(--secondary)] mb-2">Camera Not Available</h3>
-						<p className="text-[var(--secondary)]/70 mb-6">
+						<h3 className="text-xl font-bold text-secondary mb-2">Camera Not Available</h3>
+						<p className="text-(--secondary)/70 mb-6">
 							Unable to access your camera. Please ensure:
 						</p>
-						<ul className="text-left text-sm text-[var(--secondary)]/80 space-y-2.5 mb-6">
+						<ul className="text-left text-sm text-(--secondary)/80 space-y-2.5 mb-6">
 							<li className="flex items-start gap-2">
-								<span className="text-[var(--accent)] mt-0.5">•</span>
+								<span className="text-accent mt-0.5">•</span>
 								<span>Camera permissions are granted in your browser</span>
 							</li>
 							<li className="flex items-start gap-2">
-								<span className="text-[var(--accent)] mt-0.5">•</span>
+								<span className="text-accent mt-0.5">•</span>
 								<span>Your device has a working camera</span>
 							</li>
 							<li className="flex items-start gap-2">
-								<span className="text-[var(--accent)] mt-0.5">•</span>
+								<span className="text-accent mt-0.5">•</span>
 								<span>No other application is using the camera</span>
 							</li>
 						</ul>
 						<button
 							onClick={onCancel}
-							className="w-full px-4 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--primary)] rounded-xl font-semibold transition-all shadow-sm hover:shadow-md"
+							className="w-full px-4 py-3.5 bg-accent hover:bg-(--accent)/90 text-primary rounded-xl font-semibold transition-all shadow-sm hover:shadow-md"
 						>
 							Close
 						</button>
@@ -195,14 +195,14 @@ export default function FaceRecognitionCamera({
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-			<div className="bg-[var(--primary)] rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+			<div className="bg-primary rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h2 className="text-2xl font-bold text-[var(--secondary)]">
+						<h2 className="text-2xl font-bold text-secondary">
 							{mode === 'enroll' ? 'Enroll Your Face' : 'Face Verification'}
 						</h2>
-						<p className="text-sm text-[var(--secondary)]/70 mt-1">
+						<p className="text-sm text-(--secondary)/70 mt-1">
 							{mode === 'enroll'
 								? 'Position your face in the frame and capture to enroll'
 								: 'Verify your identity to clock in/out'}
@@ -211,7 +211,7 @@ export default function FaceRecognitionCamera({
 					<button
 						onClick={onCancel}
 						disabled={isProcessing}
-						className="text-[var(--secondary)]/40 hover:text-[var(--secondary)]/60 p-2 disabled:opacity-50">
+						className="text-(--secondary)/40 hover:text-(--secondary)/60 p-2 disabled:opacity-50">
 						<svg
 							className="w-6 h-6"
 							fill="none"
@@ -243,13 +243,13 @@ export default function FaceRecognitionCamera({
 
 					{/* Face outline guide */}
 					<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-						<div className="w-64 h-80 border-4 border-[var(--primary)]/60 rounded-full shadow-2xl" />
+						<div className="w-64 h-80 border-4 border-(--primary)/60 rounded-full shadow-2xl" />
 					</div>
 
 					{/* Countdown overlay */}
 					{countdown !== null && (
 						<div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-							<div className="text-[var(--primary)] text-9xl font-bold animate-pulse drop-shadow-2xl">
+							<div className="text-primary text-9xl font-bold animate-pulse drop-shadow-2xl">
 								{countdown}
 							</div>
 						</div>
@@ -259,8 +259,8 @@ export default function FaceRecognitionCamera({
 					{isLoading && (
 						<div className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-sm flex items-center justify-center">
 							<div className="text-center">
-								<div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--primary)] border-t-transparent mx-auto mb-4" />
-								<p className="text-[var(--primary)] text-lg font-medium">Loading...</p>
+								<div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4" />
+								<p className="text-primary text-lg font-medium">Loading...</p>
 							</div>
 						</div>
 					)}
@@ -270,24 +270,24 @@ export default function FaceRecognitionCamera({
 				<div className="mb-5 text-center py-2">
 					<div className={`flex items-center justify-center p-4 rounded-xl border ${
 						isProcessing 
-							? 'bg-[var(--accent)]/10 border-[var(--accent)]/20' 
+							? 'bg-(--accent)/10 border-(--accent)/20' 
 							: status.includes('success') || status.includes('Verified') 
-								? 'bg-[var(--success)]/10 border-[var(--success)]/20' 
+								? 'bg-(--success)/10 border-(--success)/20' 
 								: status.includes('failed') || status.includes('Error') 
-									? 'bg-[var(--error)]/10 border-[var(--error)]/20' 
-									: 'bg-[var(--secondary)]/10 border-[var(--secondary)]/20'
+									? 'bg-(--error)/10 border-(--error)/20' 
+									: 'bg-(--secondary)/10 border-(--secondary)/20'
 					}`}>
 						{isProcessing && (
 							<LoadingSpinner size='md'/>
 						)}
 						<span className={`text-sm font-semibold ${
 							isProcessing 
-								? 'text-[var(--accent)]/60' 
+								? 'text-(--accent)/60' 
 								: status.includes('success') || status.includes('Verified') 
-									? 'text-[var(--success)]/60' 
+									? 'text-(--success)/60' 
 									: status.includes('failed') || status.includes('Error') 
-										? 'text-[var(--error)]/60' 
-										: 'text-[var(--secondary)]/60'
+										? 'text-(--error)/60' 
+										: 'text-(--secondary)/60'
 						}`}>
 							{status}
 						</span>
@@ -295,28 +295,28 @@ export default function FaceRecognitionCamera({
 				</div>
 
 				{/* Action Buttons */}
-				<div className="flex gap-3 pt-6 border-t border-[var(--secondary)]/20 mb-4">
+				<div className="flex gap-3 pt-6 border-t border-(--secondary)/20 mb-4">
 					<button
 						onClick={onCancel}
 						disabled={isProcessing}
-						className="flex-1 py-3.5 px-4 border border-[var(--secondary)]/30 rounded-xl text-[var(--secondary)]/70 font-semibold hover:bg-[var(--secondary)]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+						className="flex-1 py-3.5 px-4 border border-(--secondary)/30 rounded-xl text-(--secondary)/70 font-semibold hover:bg-(--secondary)/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						Cancel
 					</button>
 					<button
 						onClick={handleCapture}
 						disabled={isLoading || isProcessing || countdown !== null}
-						className="flex-1 py-3.5 px-4 bg-[var(--accent)] text-[var(--primary)] rounded-xl font-semibold hover:bg-[var(--accent)]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+						className="flex-1 py-3.5 px-4 bg-accent text-primary rounded-xl font-semibold hover:bg-(--accent)/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
 					>
 						{isProcessing ? 'Processing...' : countdown !== null ? `Capturing in ${countdown}...` : mode === 'enroll' ? 'Capture & Enroll' : 'Verify Face'}
 					</button>
 				</div>
 
 				{/* Instructions */}
-				<div className="p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-xl">
+				<div className="p-4 bg-(--accent)/10 border border-(--accent)/30 rounded-xl">
 					<div className="flex gap-3">
 						<svg
-							className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5"
+							className="w-5 h-5 text-accent shrink-0 mt-0.5"
 							fill="currentColor"
 							viewBox="0 0 20 20">
 							<path
@@ -325,23 +325,23 @@ export default function FaceRecognitionCamera({
 								clipRule="evenodd"
 							/>
 						</svg>
-						<div className="text-sm text-[var(--secondary)]">
+						<div className="text-sm text-secondary">
 							<p className="font-semibold mb-2">Quick Tips:</p>
-							<ul className="space-y-1 text-xs text-[var(--secondary)]/80">
+							<ul className="space-y-1 text-xs text-(--secondary)/80">
 								<li className="flex items-start gap-2">
-									<span className="text-[var(--accent)] mt-0.5">•</span>
+									<span className="text-accent mt-0.5">•</span>
 									<span>Good lighting & clear visibility</span>
 								</li>
 								<li className="flex items-start gap-2">
-									<span className="text-[var(--accent)] mt-0.5">•</span>
+									<span className="text-accent mt-0.5">•</span>
 									<span>Face within the oval guide</span>
 								</li>
 								<li className="flex items-start gap-2">
-									<span className="text-[var(--accent)] mt-0.5">•</span>
+									<span className="text-accent mt-0.5">•</span>
 									<span>Look directly at camera</span>
 								</li>
 								<li className="flex items-start gap-2">
-									<span className="text-[var(--accent)] mt-0.5">•</span>
+									<span className="text-accent mt-0.5">•</span>
 									<span>Stay still during capture</span>
 								</li>
 							</ul>

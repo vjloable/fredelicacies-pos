@@ -170,11 +170,11 @@ export default function WorkerDetailModal({
 		const baseClasses = "px-2 py-1 text-xs rounded-full font-medium";
 		switch (status) {
 			case "clocked_in":
-				return `${baseClasses} bg-[var(--success)]/10 text-[var(--success)]`;
+				return `${baseClasses} bg-(--success)/10 text-(--success)`;
 			case "clocked_out":
-				return `${baseClasses} bg-[var(--error)]/10 text-[var(--error)]`;
+				return `${baseClasses} bg-(--error)/10 text-(--error)`;
 			default:
-				return `${baseClasses} bg-[var(--secondary)]/10 text-[var(--secondary)]`;
+				return `${baseClasses} bg-(--secondary)/10 text-secondary`;
 		}
 	};
 
@@ -184,28 +184,28 @@ export default function WorkerDetailModal({
 		<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
 			<div className='bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
 				{/* Header */}
-				<div className='flex items-center justify-between p-6 border-b border-[var(--secondary)]/20'>
+				<div className='flex items-center justify-between p-6 border-b border-(--secondary)/20'>
 					<div className='flex items-center gap-4'>
-						<div className='w-12 h-12 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center'>
-							<span className='text-[var(--secondary)] font-bold text-md'>
+						<div className='w-12 h-12 bg-(--secondary)/10 rounded-full flex items-center justify-center'>
+							<span className='text-secondary font-bold text-md'>
 								{worker.name?.charAt(0) || worker.email.charAt(0)}
 							</span>
 						</div>
 						<div>
-							<h2 className='text-sm font-bold text-[var(--secondary)]'>
+							<h2 className='text-sm font-bold text-secondary'>
 								{worker.name || "Unnamed Worker"}
 							</h2>
-							<p className='text-[var(--secondary)] text-sm'>{worker.email}</p>
+							<p className='text-secondary text-sm'>{worker.email}</p>
 						</div>
 						{worker.isOwner && (
-							<span className='bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 text-xs rounded-full font-medium'>
+							<span className='bg-(--accent)/10 text-accent px-2 py-1 text-xs rounded-full font-medium'>
 								Owner
 							</span>
 						)}
 					</div>
 					<button
 						onClick={onClose}
-						className='text-[var(--secondary)] hover:text-[var(--secondary)]/60 transition-colors'>
+						className='text-secondary hover:text-(--secondary)/60 transition-colors'>
 						<svg
 							className='w-6 h-6'
 							fill='none'
@@ -227,8 +227,8 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("details")}
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "details"
-								? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
-								: "text-[var(--secondary)] hover:text-[var(--secondary)]/60"
+								? "text-accent border-b-2 border-accent"
+								: "text-secondary hover:text-(--secondary)/60"
 						}`}>
 						Worker Details
 					</button>
@@ -236,10 +236,10 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("sessions")}
 						className={`px-6 py-3 font-medium text-sm transition-colors ${
 							activeTab === "sessions"
-								? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
-								: "text-[var(--secondary)] hover:text-[var(--secondary)]/60"
+								? "text-accent border-b-2 border-accent"
+								: "text-secondary hover:text-(--secondary)/60"
 						}`}>
-						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-[var(--secondary)]/10 text-[var(--secondary)]/50 text-xs">Last 30 Days</span>
+						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-(--secondary)/10 text-(--secondary)/50 text-xs">Last 30 Days</span>
 					</button>
 				</div>
 
@@ -250,24 +250,24 @@ export default function WorkerDetailModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-1 gap-6'>
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-[var(--secondary)]'>
+									<h3 className='text-lg font-semibold text-secondary'>
 										Basic Information
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Employee ID:</span>
+											<span className='text-secondary text-sm'>Employee ID:</span>
 											<span className='font-medium text-sm'>{worker.id}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Email:</span>
+											<span className='text-secondary text-sm'>Email:</span>
 											<span className='font-medium text-sm'>{worker.email}</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Phone:</span>
+											<span className='text-secondary text-sm'>Phone:</span>
 											<span className='font-medium text-sm'>Not provided</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Current Status:</span>
+											<span className='text-secondary text-sm'>Current Status:</span>
 											<span
 												className={getStatusBadge(
 													worker.currentStatus || "clocked_out"
@@ -281,18 +281,18 @@ export default function WorkerDetailModal({
 								</div>
 
 								<div className='space-y-4'>
-									<h3 className='text-lg font-semibold text-[var(--secondary)]'>
+									<h3 className='text-lg font-semibold text-secondary'>
 										Employment Details
 									</h3>
 									<div className='space-y-2'>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Joined:</span>
+											<span className='text-secondary text-sm'>Joined:</span>
 											<span className='font-medium text-sm'>
 												{formatDate(worker.createdAt)}
 											</span>
 										</div>
 										<div className='flex justify-between'>
-											<span className='text-[var(--secondary)] text-sm'>Last Updated:</span>
+											<span className='text-secondary text-sm'>Last Updated:</span>
 											<span className='font-medium text-sm'>
 												{formatDate(worker.updatedAt)}
 											</span>
@@ -303,7 +303,7 @@ export default function WorkerDetailModal({
 
 							{/* Role Assignments */}
 							<div className='space-y-4'>
-								<h3 className='text-lg font-semibold text-[var(--secondary)]'>
+								<h3 className='text-lg font-semibold text-secondary'>
 									Role Assignments
 								</h3>
 								{worker.roleAssignments && worker.roleAssignments.length > 0 ? (
@@ -311,12 +311,12 @@ export default function WorkerDetailModal({
 										{worker.roleAssignments.map((assignment, index) => (
 											<div
 												key={index}
-												className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
+												className='flex items-center justify-between p-4 bg-(--secondary)/5 rounded-lg'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
 														{branchMap.get(assignment.branchId) || `Branch ${assignment.branchId}`}
 													</span>
-													<span className='rounded-full bg-[var(--accent)] text-[var(--primary)] text-xs px-3 py-1 font-bold '>
+													<span className='rounded-full bg-accent text-primary text-xs px-3 py-1 font-bold '>
 														{assignment.role.toUpperCase()}
 													</span>
 												</div>
@@ -324,8 +324,8 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															assignment.isActive
-																? "bg-[var(--success)]/10 text-[var(--success)]"
-																: "bg-[var(--error)]/10 text-[var(--error)]"
+																? "bg-(--success)/10 text-(--success)"
+																: "bg-(--error)/10 text-(--error)"
 														}`}>
 														{assignment.isActive ? "Active" : "Inactive"}
 													</span>
@@ -334,7 +334,7 @@ export default function WorkerDetailModal({
 										))}
 									</div>
 								) : (
-									<p className='text-[var(--secondary)]/50 italic text-sm'>No role assignments</p>
+									<p className='text-(--secondary)/50 italic text-sm'>No role assignments</p>
 								)}
 							</div>
 						</div>
@@ -353,7 +353,7 @@ export default function WorkerDetailModal({
 											key={
 												attendance.id || `${attendance.worker_id}-${attendance.clock_in}`
 											}
-											className='flex items-center justify-between p-4 bg-[var(--secondary)]/5 rounded-lg'>
+											className='flex items-center justify-between p-4 bg-(--secondary)/5 rounded-lg'>
 											<div className='space-y-1'>
 												<div className='flex items-center gap-3'>
 													<span className='font-medium'>
@@ -362,8 +362,8 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															attendance.status === "active"
-																? "bg-[var(--success)]/80 text-[var(--primary)]"
-																: "bg-[var(--secondary)]/10 text-[var(--secondary)]/80"
+																? "bg-(--success)/80 text-primary"
+																: "bg-(--secondary)/10 text-(--secondary)/80"
 														}`}>
 														{attendance.status === "active"
 															? "In Progress"
@@ -391,12 +391,12 @@ export default function WorkerDetailModal({
 											</div>
 											<div className='text-right'>
 												{attendance.totalMinutes !== undefined ? (
-													<span className='font-medium text-[var(--accent)]'>
+													<span className='font-medium text-accent'>
 														{formatDuration(attendance.totalMinutes)}
 													</span>
 												) : (
 													<div className='flex flex-row items-center gap-2'>
-														<div className='bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin' />
+														<div className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
 														<span className='text-gray-500 text-sm'>
 															Working
 														</span>

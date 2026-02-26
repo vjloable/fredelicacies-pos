@@ -127,7 +127,7 @@ export default function DiscountDropdown({
           value={value}
           onChange={handleInputChange}
           onFocus={() => value && filteredDiscounts.length > 0 && setShowSuggestions(true)}
-          className="grow py-2 px-4 text-[12px] border-none rounded-l-md focus:outline-none bg-transparent"
+          className="grow py-2 px-4 text-3 border-none rounded-l-md focus:outline-none bg-transparent"
           placeholder="Enter discount coupon code"
         />
         <button
@@ -204,7 +204,7 @@ export default function DiscountDropdown({
       {/* Current Discount Info */}
       {appliedDiscount && isValidCode && (
         <div className="mt-2 px-4 py-2 bg-(--accent)/10 border border-dashed border-accent rounded-lg">
-          <div className="flex items-center justify-between text-[14px]">
+          <div className="flex items-center justify-between text-3.5">
             <div>
               <span className="font-semibold text-secondary">
                 {appliedDiscount.name}

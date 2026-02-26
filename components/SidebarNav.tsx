@@ -118,17 +118,17 @@ export default function SidebarNav() {
 			<li key={item.href}>
 				<Link
 					href={href}
-					className={`flex h-10 items-center text-[14px] font-semibold ${
+					className={`flex h-10 items-center text-3.5 font-semibold ${
 						isActive
-							? "bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--primary)] text-shadow-lg"
-							: "bg-[var(--primary)] hover:bg-[var(--accent)]/50 text-[var(--secondary)]"
+							? "bg-accent hover:bg-(--accent)/80 text-primary text-shadow-lg"
+							: "bg-primary hover:bg-(--accent)/50 text-secondary"
 					}`}>
 					<div className='w-full flex items-center justify-start'>
 						<IconComponent
 							className={`w-8 h-8 mx-3 gap-3 ${
 								isActive
-									? "text-[var(--primary)] drop-shadow-lg"
-									: "text-[var(--secondary)]"
+									? "text-primary drop-shadow-lg"
+									: "text-secondary"
 							} transition-all duration-300`}
 						/>
 						<span className='w-auto opacity-100 transition-all duration-300'>
@@ -173,21 +173,21 @@ export default function SidebarNav() {
 
 	return (
 		// Sidebar container
-		<div className='h-full w-[271px] bg-[var(--primary)] border-r border-gray-200 shadow-xl xl:shadow-none duration-400'>
+		<div className='h-full w-67.75 bg-primary border-r border-gray-200 shadow-xl xl:shadow-none duration-400'>
 			<div className='flex flex-col h-full'>
 				{/* Logo */}
-				<div className='flex items-center justify-center border-b border-gray-200 bg-[var(--primary)] h-[90px] px-6'>
+				<div className='flex items-center justify-center border-b border-gray-200 bg-primary h-22.5 px-6'>
 					<HorizontalLogo className='w-auto opacity-100 transition-all' />
 				</div>
 
 				{/* Branch Information */}
 				{currentBranch && (
-					<div className='px-4 py-3 border-b border-gray-200 bg-[var(--primary)]'>
+					<div className='px-4 py-3 border-b border-gray-200 bg-primary'>
 						<div className='text-left'>
-							<h3 className='text-[14px] font-bold text-[var(--secondary)]'>
+							<h3 className='text-3.5 font-bold text-secondary'>
 								{currentBranch.name}
 							</h3>
-							<p className='text-[12px] text-[var(--secondary)]/70 mt-1 leading-tight'>
+							<p className='text-3 text-(--secondary)/70 mt-1 leading-tight'>
 								{currentBranch.address}
 							</p>
 						</div>
@@ -202,7 +202,7 @@ export default function SidebarNav() {
 								clearCurrentBranch();
 								router.push("/owner/branches");
 							}}
-							className='w-full flex items-center justify-start text-sm text-[var(--secondary)]/70 hover:text-[var(--secondary)] transition-colors'>
+							className='w-full flex items-center justify-start text-sm text-(--secondary)/70 hover:text-secondary transition-colors'>
 							<svg
 								className='w-4 h-4 mr-2'
 								fill='none'
@@ -223,13 +223,13 @@ export default function SidebarNav() {
 				)}
 
 				{/* Navigation */}
-				<nav className='flex-1 py-[8px]'>
-					<ul className='space-y-[2px]'>
+				<nav className='flex-1 py-2'>
+					<ul className='space-y-0.5'>
 						{/* Worker Section - Show for non-owners or owners with selected branch */}
 						{shouldShowWorkerSection && (
 							<>
 								<li>
-									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Worker
 										</span>
@@ -243,7 +243,7 @@ export default function SidebarNav() {
 						{shouldShowManagerSection && (
 							<>
 								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Manager
 										</span>
@@ -257,7 +257,7 @@ export default function SidebarNav() {
 						{isUserOwner() && (
 							<>
 								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-[var(--secondary)]/60 uppercase tracking-wider'>
+									<div className='px-3 py-2 text-xs font-bold text-(--secondary)/60 uppercase tracking-wider'>
 										<span className='w-auto opacity-100 transition-all duration-300'>
 											Owner
 										</span>
@@ -272,10 +272,10 @@ export default function SidebarNav() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className='group flex w-full h-10 items-center text-[14px] text-[var(--error)] hover:text-[var(--primary)] font-semibold bg-[var(--primary)] hover:bg-[var(--error)] cursor-pointer transition-colors duration-100'>
+								className='group flex w-full h-10 items-center text-3.5 text-(--error) hover:text-primary font-semibold bg-primary hover:bg-(--error) cursor-pointer transition-colors duration-100'>
 								<div className='w-full flex items-center justify-start transition-all duration-100'>
 									<span className='size-8 mx-3'>
-										<LogoutIcon className='gap-3 text-[var(--error)] group-hover:text-[var(--primary)]' />
+										<LogoutIcon className='gap-3 text-(--error) group-hover:text-primary' />
 									</span>
 									<span className='w-0 visible lg:w-auto opacity-100 transition-all duration-100 '>
 										{"Logout"}
@@ -287,7 +287,7 @@ export default function SidebarNav() {
 				</nav>
 			{/* Version */}
 			<div className='px-4 py-3 border-t border-gray-200'>
-				<p className='text-[10px] text-[var(--secondary)]/30 text-center'>
+				<p className='text-2.5 text-(--secondary)/30 text-center'>
 					<VersionDisplay variant="simple" />
 				</p>
 			</div>

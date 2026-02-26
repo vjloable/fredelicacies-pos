@@ -173,7 +173,7 @@ export default function AddBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-[14px] h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 text-3.5 h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-11 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -215,7 +215,7 @@ export default function AddBundleModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-[14px] rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full px-3 py-2 text-3.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -248,7 +248,7 @@ export default function AddBundleModal({
                         handleSelectItem(itemName);
                       }}
                       height={44}
-                      roundness={"[8px]"}
+                      roundness={"lg"}
                       valueAlignment={'left'}
                       shadow={false}
                     />

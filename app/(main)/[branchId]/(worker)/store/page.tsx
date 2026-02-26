@@ -633,7 +633,7 @@ export default function StoreScreen() {
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder='Search items, categories, or descriptions...'
-							className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+							className={`w-full text-3 px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 								searchQuery ? "animate-pulse transition-all" : ""
 							}`}
 						/>
@@ -669,7 +669,7 @@ export default function StoreScreen() {
 						<button
 							key={category.id}
 							onClick={() => toggleCategory(category.name)}
-							className={`px-4 py-2 rounded-lg font-medium text-[12px] whitespace-nowrap transition-all ${
+							className={`px-4 py-2 rounded-lg font-medium text-3 whitespace-nowrap transition-all ${
 								isCategorySelected(category.name)
 									? `${
 											!category.isSpecial
@@ -846,7 +846,7 @@ export default function StoreScreen() {
 											{!isBundle && (
 												<div className='absolute bottom-2 left-2 rounded select-none'>
 													<span
-														className={`text-[9px] sm:text-[10px] text-primary bg-white border-[$] px-2 py-1 rounded-full truncate max-w-[60%]`}
+														className={`text-2.25 sm:text-2.5 text-primary bg-white px-2 py-1 rounded-full truncate max-w-[60%]`}
 														style={{
 															backgroundColor: getCategoryColor(item.category_id),
 														}}>
@@ -861,7 +861,7 @@ export default function StoreScreen() {
 											)}
 											{isBundle && (
 												<div className='absolute bottom-2 left-2 rounded select-none'>
-													<span className='text-[9px] sm:text-[10px] text-white bg-amber-500 px-2 py-1 rounded-full'>
+													<span className='text-2.25 sm:text-2.5 text-white bg-amber-500 px-2 py-1 rounded-full'>
 														Available: {availableStock}
 													</span>
 												</div>
@@ -1105,11 +1105,11 @@ export default function StoreScreen() {
 
 							{/* Order Summary */}
 							<div className='shrink-0 border-t-2 border-accent pb-4'>
-								<div className='flex justify-between h-9.75 text-secondary text-[14px] font-medium px-3 py-1.5 items-end'>
+								<div className='flex justify-between h-9.75 text-secondary text-3.5 font-medium px-3 py-1.5 items-end'>
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
 								</div>
-								<div className='flex justify-between h-8.25 text-secondary text-[14px] font-medium px-3 py-1.5'>
+								<div className='flex justify-between h-8.25 text-secondary text-3.5 font-medium px-3 py-1.5'>
 									<span>Discount</span>
 									<span>-{formatCurrency(discountAmount)}</span>
 								</div>
@@ -1133,14 +1133,14 @@ export default function StoreScreen() {
 										{cart.length > 0 && (
 											<button
 												onClick={clearCart}
-												className='flex-1 py-4 font-black text-[14px] text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
+												className='flex-1 py-4 font-black text-3.5 text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
 												CLEAR CART
 											</button>
 										)}
 										<button
 											onClick={handlePlaceOrder}
 											disabled={cart.length === 0 || isPlacingOrder || !user}
-											className={`flex-1 py-4 font-black text-[14px] rounded-lg transition-all ${
+											className={`flex-1 py-4 font-black text-3.5 rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
 													? "bg-gray-300 text-primary cursor-not-allowed"
 													: "bg-accent text-primary hover:bg-(--accent)/80 hover:shadow-lg cursor-pointer text-shadow-lg"
@@ -1179,10 +1179,10 @@ export default function StoreScreen() {
 								)}
 							</div>
 							<div className='flex flex-1 flex-col items-center'>
-								<span className='text-secondary font-medium text-[16px] self-start'>
+								<span className='text-secondary font-medium text-4 self-start'>
 									{cart.length === 0 ? "New Order" : "Current Order"}
 								</span>
-								<span className='text-secondary font-light text-[12px] self-start'>
+								<span className='text-secondary font-light text-3 self-start'>
 									{cart.length === 0
 										? "No items added"
 										: `${cart.length} item${cart.length !== 1 ? "s" : ""}`}
@@ -1370,11 +1370,11 @@ export default function StoreScreen() {
 
 				{/* Order Summary */}
 				<div className='shrink mb-10 border-t-2 border-accent'>
-					<div className='flex justify-between h-9.75 text-secondary text-[14px] font-medium px-3 py-1.5 items-end'>
+					<div className='flex justify-between h-9.75 text-secondary text-3.5 font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>
 					</div>
-					<div className='flex justify-between h-8.25 text-secondary text-[14px] font-medium px-3 py-1.5'>
+					<div className='flex justify-between h-8.25 text-secondary text-3.5 font-medium px-3 py-1.5'>
 						<span>Discount</span>
 						<span>-{formatCurrency(discountAmount)}</span>
 					</div>
@@ -1398,7 +1398,7 @@ export default function StoreScreen() {
 						<button
 							onClick={handlePlaceOrder}
 							disabled={cart.length === 0 || isPlacingOrder || !user}
-							className={`w-full py-4 font-black text-[18px] transition-all ${
+							className={`w-full py-4 font-black text-4.5 transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
 									? "bg-gray-300 text-primary cursor-not-allowed"
 									: "bg-accent text-primary hover:bg-(--accent)/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
@@ -1441,7 +1441,7 @@ export default function StoreScreen() {
 						{/* Order Details */}
 						<div className='flex-1 overflow-y-auto p-6'>
 							{/* Order Type */}
-							<div className='mb-4 flex justify-between text-[12px]'>
+							<div className='mb-4 flex justify-between text-3'>
 								<span className='text-secondary font-medium'>
 									Order Type:
 								</span>
@@ -1450,7 +1450,7 @@ export default function StoreScreen() {
 
 							{/* Items List */}
 							<div className='mb-4'>
-								<h3 className='text-[12px] font-medium text-secondary mb-3'>
+								<h3 className='text-3 font-medium text-secondary mb-3'>
 									Items ({cart.length})
 								</h3>
 								<div className='space-y-3'>

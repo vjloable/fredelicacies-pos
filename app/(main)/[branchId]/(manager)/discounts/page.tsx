@@ -140,15 +140,15 @@ export default function DiscountsScreen() {
 								<div className='w-50 mb-4 mx-auto opacity-50 flex items-center justify-center'>
 									<EmptyDiscounts />
 								</div>
-								<h3 className='text-[18px] font-semibold text-secondary mb-3'>
+								<h3 className='text-4.5 font-semibold text-secondary mb-3'>
 									No Discounts Available
 								</h3>
-								<p className='w-75 text-[12px] text-secondary opacity-70 mb-6 max-w-md mx-auto'>
+								<p className='w-75 text-3 text-secondary opacity-70 mb-6 max-w-md mx-auto'>
 									Start by adding your first discount code.
 								</p>
 								<button
 									onClick={handleCreateDiscount}
-									className='text-[14px] inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-(--accent)/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+									className='text-3.5 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-(--accent)/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
 									<PlusIcon className='size-5 drop-shadow-xl' />
 									<span className='mt-0.5'>
 										ADD YOUR FIRST DISCOUNT CODE
@@ -180,10 +180,10 @@ export default function DiscountsScreen() {
 														1
 													</span>
 												</div>
-												<h5 className='text-[14px] font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
 													Create a Discount Code
 												</h5>
-												<p className='text-[12px] text-secondary opacity-80'>
+												<p className='text-3 text-secondary opacity-80'>
 													Choose a unique code
 												</p>
 											</div>
@@ -193,10 +193,10 @@ export default function DiscountsScreen() {
 														2
 													</span>
 												</div>
-												<h5 className='text-[14px] font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
 													Set Discount Value
 												</h5>
-												<p className='text-[12px] text-[var(--secondary)]] opacity-80'>
+												<p className='text-3 text-secondary] opacity-80'>
 													Set a percentage or fixed amount for the discount
 												</p>
 											</div>
@@ -206,10 +206,10 @@ export default function DiscountsScreen() {
 														3
 													</span>
 												</div>
-												<h5 className='text-[14px] font-medium text-(--secondary)/80 mb-1'>
+												<h5 className='text-3.5 font-medium text-(--secondary)/80 mb-1'>
 													Assign to a Category
 												</h5>
-												<p className='text-[12px] text-[var(--secondary)]] opacity-80'>
+												<p className='text-3 text-secondary] opacity-80'>
 													Choose from existing categories to assign the
 													discount
 												</p>
@@ -227,8 +227,8 @@ export default function DiscountsScreen() {
 									</h2>
 									<button
 										onClick={handleCreateDiscount}
-										className='bg-accent text-secondary text-[12px] px-4 py-2 rounded-lg hover:bg-(--accent)/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95'>
-										<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-[14px]'>
+										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95'>
+										<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3.5'>
 											<div className='w-4 h-4'>
 												<PlusIcon className='drop-shadow-lg' />
 											</div>

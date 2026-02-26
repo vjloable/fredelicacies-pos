@@ -8,7 +8,7 @@ interface DrawerProviderProps {
 
 export default function DrawerProvider({ children }: DrawerProviderProps) {
   return (
-    <div className="flex h-screen bg-[var(--background)] overflow-hidden fixed inset-0">
+    <div className="flex h-screen bg-(--background) overflow-hidden fixed inset-0">
       <Drawer>
         {children}
       </Drawer>

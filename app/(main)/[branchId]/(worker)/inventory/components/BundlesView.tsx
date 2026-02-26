@@ -81,7 +81,7 @@ export default function BundlesView() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
+      <div className="flex items-center justify-center h-100">
         <LoadingSpinner />
       </div>
     );
@@ -147,14 +147,14 @@ export default function BundlesView() {
             return (
               <div
                 key={bundle.id}
-                className="bg-(--primary) p-2 rounded-lg border border-gray-200"
+                className="bg-primary p-2 rounded-lg border border-gray-200"
               >
                 <div className="flex items-center gap-2">
                   {/* Amber left bar */}
-                  <div className="w-1 h-[56px] rounded-full bg-amber-400 flex-shrink-0" />
+                  <div className="w-1 h-14 rounded-full bg-amber-400 shrink-0" />
 
                   {/* Bundle Image */}
-                  <div className="w-[56px] h-[56px] bg-amber-50 rounded-[3px] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  <div className="w-14 h-14 bg-amber-50 rounded-0.75 shrink-0 overflow-hidden flex items-center justify-center">
                     {bundle.img_url ? (
                       <Image
                         src={bundle.img_url}
@@ -172,10 +172,10 @@ export default function BundlesView() {
 
                   {/* Bundle Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="text-[14px] font-semibold text-secondary truncate">
+                    <div className="text-3.5 font-semibold text-secondary truncate">
                       {bundle.name}
                     </div>
-                    <div className="text-[12px] text-secondary/60">
+                    <div className="text-3 text-secondary/60">
                       {formatCurrency(bundle.price)} · {bundle.components?.length || 0} {bundle.components?.length === 1 ? 'item' : 'items'}
                     </div>
                   </div>
@@ -197,7 +197,7 @@ export default function BundlesView() {
                 {/* Edit Button (mobile) */}
                 <button
                   onClick={() => handleEditBundle(bundle)}
-                  className="md:hidden w-full mt-1.5 py-1 text-[12px] font-bold bg-amber-500 text-white rounded-lg transition-all active:scale-95"
+                  className="md:hidden w-full mt-1.5 py-1 text-3 font-bold bg-amber-500 text-white rounded-lg transition-all active:scale-95"
                 >
                   Edit
                 </button>

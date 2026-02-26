@@ -93,8 +93,8 @@ export default function Drawer({
 						${isOwnerPage ? "hidden" : ""} 
 						${
 							isDrawerOpen
-								? "translate-x-0 w-[271px] xl:w-[271px]"
-								: "-translate-x-full xl:translate-x-0 w-[271px] xl:w-0"
+								? "translate-x-0 w-67.75 xl:w-67.75"
+								: "-translate-x-full xl:translate-x-0 w-67.75 xl:w-0"
 						}
 						fixed xl:relative z-50 xl:z-auto h-full
 						transition-all duration-300 ease-in-out

@@ -151,7 +151,7 @@ export default function SignUpPage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-[16px] font-medium text-secondary">
+          <p className="text-center text-4 font-medium text-secondary">
             Create your account
           </p>
           <div className="p-8">
@@ -167,7 +167,7 @@ export default function SignUpPage() {
                     type="text"
                     value={formData.firstName}
                     onChange={handleInputChange("firstName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="First name"
                     disabled={isLoading}
                     autoComplete="given-name"
@@ -183,7 +183,7 @@ export default function SignUpPage() {
                     type="text"
                     value={formData.lastName}
                     onChange={handleInputChange("lastName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Last name"
                     disabled={isLoading}
                     autoComplete="family-name"
@@ -200,7 +200,7 @@ export default function SignUpPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange("email")}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                   placeholder="Enter your email"
                   disabled={isLoading}
                   autoComplete="email"
@@ -218,7 +218,7 @@ export default function SignUpPage() {
                     type="password"
                     value={formData.password}
                     onChange={handleInputChange("password")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Create password (min. 6 characters)"
                     disabled={isLoading}
                     autoComplete="new-password"
@@ -234,7 +234,7 @@ export default function SignUpPage() {
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange("confirmPassword")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Confirm your password"
                     disabled={isLoading}
                     autoComplete="new-password"

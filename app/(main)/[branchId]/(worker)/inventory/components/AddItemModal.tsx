@@ -108,7 +108,7 @@ export default function AddItemModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div 
@@ -118,13 +118,13 @@ export default function AddItemModal({
         {loading ? (
           /* Loading Screen */
           <div className="text-center py-8">
-            <div className="w-10 h-10 bg-[var(--light-accent)] rounded-xl mx-auto mb-3 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-[var(--accent)]"></div>
+            <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-accent"></div>
             </div>
-            <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
+            <h3 className="text-base font-bold text-secondary mb-1">
               Adding Item...
             </h3>
-            <p className="text-sm text-[var(--secondary)] opacity-70">
+            <p className="text-sm text-secondary opacity-70">
               Please wait
             </p>
           </div>
@@ -132,13 +132,13 @@ export default function AddItemModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-[var(--light-accent)] rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <PlusIcon className='size-5 text-[var(--accent)]'/>
+              <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <PlusIcon className='size-5 text-accent'/>
               </div>
-              <h3 className="text-base font-bold text-[var(--secondary)] mb-1">
+              <h3 className="text-base font-bold text-secondary mb-1">
                 Add New Item
               </h3>
-              <p className="text-sm text-[var(--secondary)] opacity-70">
+              <p className="text-sm text-secondary opacity-70">
                 Create a new item for your inventory
               </p>
             </div>
@@ -148,28 +148,28 @@ export default function AddItemModal({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Item Name <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Item Name <span className="text-(--error)">*</span>
                   </label>
                   <input
                     type="text"
                     value={newItem.name}
                     onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="Enter item name"
                   />
                 </div>
                 <div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Description
-                      <span className="text-xs text-[var(--secondary)]/50 ml-1">(Optional)</span>
+                      <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
                     </label>
                     <input
                       type="text"
                       value={newItem.description}
                       onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                      className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="Enter description"
                     />
                   </div>
@@ -178,8 +178,8 @@ export default function AddItemModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Selling Price <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Selling Price <span className="text-(--error)">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
@@ -215,15 +215,15 @@ export default function AddItemModal({
                           setPriceInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Cost Price <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Cost Price <span className="text-xs text-(--secondary)/50 ml-1">(Optional)</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
@@ -259,7 +259,7 @@ export default function AddItemModal({
                           setCostInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full pl-8 pr-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -269,8 +269,8 @@ export default function AddItemModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Initial Stock <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Initial Stock <span className="text-(--error)">*</span>
                   </label>
                   <input
                     type="text"
@@ -303,14 +303,14 @@ export default function AddItemModal({
                         setStockInput('');
                       }
                     }}
-                    className="w-full px-3 py-2 text-[14px] h-[38px] rounded-lg border-2 border-[var(--secondary)]/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full px-3 py-2 text-3.5 h-9.5 rounded-lg border-2 border-(--secondary)/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="0"
                     inputMode="numeric"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
-                    Category <span className="text-[var(--error)]">*</span>
+                  <label className="block text-sm font-medium text-secondary mb-2">
+                    Category <span className="text-(--error)">*</span>
                   </label>
                   <DropdownField
                     options={categories.map(cat => cat.name)}
@@ -324,7 +324,7 @@ export default function AddItemModal({
                       }
                     }}
                     height={38}
-                    roundness={"[8px]"}
+                    roundness={"lg"}
                     valueAlignment={'left'}
                     shadow={false}
                   />
@@ -334,9 +334,9 @@ export default function AddItemModal({
               {/* Preview Section */}
               {/* {(newItem.name || newItem.price || newItem.imgUrl) && (
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="text-sm text-[var(--secondary)] opacity-70 mb-2">Preview:</div>
+                  <div className="text-sm text-secondary opacity-70 mb-2">Preview:</div>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                       {newItem.imgUrl ? (
                         <Image
                           src={newItem.imgUrl}
@@ -353,11 +353,11 @@ export default function AddItemModal({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-1">
-                        <h4 className="font-semibold text-[var(--secondary)]">
+                        <h4 className="font-semibold text-secondary">
                           {newItem.name || 'Item Name'}
                         </h4>
                         <div className="flex items-center gap-2">
-                          <div className="font-semibold text-[var(--accent)]">
+                          <div className="font-semibold text-accent">
                             {formatCurrency(newItem.price || 0)}
                           </div>
                           {newItem.cost && newItem.cost > 0 && (
@@ -376,7 +376,7 @@ export default function AddItemModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <p className="text-sm text-[var(--secondary)] opacity-70 flex-1">
+                        <p className="text-sm text-secondary opacity-70 flex-1">
                           {newItem.description || 'No description'}
                         </p>
                         <div className="flex items-center gap-2">
@@ -384,15 +384,15 @@ export default function AddItemModal({
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: categories.find(cat => cat.id === newItem.categoryId)?.color || '#6B7280' }}
                           ></div>
-                          <span className="text-sm text-[var(--secondary)] opacity-70">
+                          <span className="text-sm text-secondary opacity-70">
                             {categories.find(cat => cat.id === newItem.categoryId)?.name || 'Unknown Category'}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm text-[var(--secondary)] opacity-70">Initial Stock</div>
-                      <div className="text-xl font-bold text-[var(--secondary)]">
+                      <div className="text-sm text-secondary opacity-70">Initial Stock</div>
+                      <div className="text-xl font-bold text-secondary">
                         {newItem.stock || 0}
                       </div>
                     </div>
@@ -414,7 +414,7 @@ export default function AddItemModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
@@ -433,8 +433,8 @@ export default function AddItemModal({
                   !isNaN(parseFloat(priceInput)) &&
                   parseFloat(priceInput) > 0 &&
                   (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
-                    ? 'bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-[var(--secondary)]/20 text-[var(--secondary)]/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
+                    : 'bg-(--secondary)/20 text-(--secondary)/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Add Item

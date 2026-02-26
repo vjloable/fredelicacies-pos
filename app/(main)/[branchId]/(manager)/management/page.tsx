@@ -415,8 +415,8 @@ export default function ManagementPage() {
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<h2 className='text-xl font-semibold text-[var(--error)] mb-2'>Error</h2>
-							<p className='text-[var(--error)]'>{error}</p>
+							<h2 className='text-xl font-semibold text-(--error) mb-2'>Error</h2>
+							<p className='text-(--error)'>{error}</p>
 						</div>
 					</div>
 				</div>
@@ -449,10 +449,10 @@ export default function ManagementPage() {
 
 				{/* Error Display */}
 				{error && (
-					<div className='mx-6 mb-4 p-2 bg-[var(--error)]/10 border border-[var(--error)]/40 rounded-lg'>
+					<div className='mx-6 mb-4 p-2 bg-(--error)/10 border border-(--error)/40 rounded-lg'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-[var(--error)]'
+								className='w-5 h-5 text-(--error)'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -461,12 +461,12 @@ export default function ManagementPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-[var(--error)] font-medium text-[12px]'>
+							<span className='text-(--error) font-medium text-3'>
 								{error}
 							</span>
 							<button
 								onClick={() => setError(null)}
-								className='ml-auto text-[var(--error)] hover:text-[var(--error)]/20'>
+								className='ml-auto text-(--error) hover:text-(--error)/20'>
 								✕
 							</button>
 						</div>
@@ -477,7 +477,7 @@ export default function ManagementPage() {
 				{loading && (
 					<div className='flex items-center justify-center py-8'>
 						<LoadingSpinner size='md' />
-						<span className='ml-3 text-[var(--secondary)]'>
+						<span className='ml-3 text-secondary'>
 							Loading workers...
 						</span>
 					</div>
@@ -489,9 +489,9 @@ export default function ManagementPage() {
 						{/* Control Bar */}
 						<div className='mb-6'>
 							<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4'>
-								<div className='flex items-center gap-4 text-sm text-[var(--secondary)]/70'>
+								<div className='flex items-center gap-4 text-sm text-(--secondary)/70'>
 									<span className='flex items-center gap-2'>
-										<span className='w-2 h-2 bg-[var(--accent)] rounded-full'></span>
+										<span className='w-2 h-2 bg-accent rounded-full'></span>
 										{branches.find((branch) => branch.id === branchId)?.name ||
 											"Loading..."}
 									</span>
@@ -499,13 +499,13 @@ export default function ManagementPage() {
 
 								<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
 									{/* View Toggle */}
-									<div className='flex bg-[var(--accent)]/20 rounded-lg p-1 border-[var(--accent)]/30 border w-full sm:w-auto'>
+									<div className='flex bg-(--accent)/20 rounded-lg p-1 border-(--accent)/30 border w-full sm:w-auto'>
 										<button
 											onClick={() => setViewMode("workers")}
 											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "workers"
-													? "bg-white text-[var(--secondary)] shadow-sm"
-													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
+													? "bg-white text-secondary shadow-sm"
+													: "text-(--secondary)/60 hover:text-secondary"
 											}`}>
 											Workers
 										</button>
@@ -513,8 +513,8 @@ export default function ManagementPage() {
 											onClick={() => setViewMode("attendance")}
 											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm font-medium transition-colors ${
 												viewMode === "attendance"
-													? "bg-white text-[var(--secondary)] shadow-sm"
-													: "text-[var(--secondary)]/60 hover:text-[var(--secondary)]"
+													? "bg-white text-secondary shadow-sm"
+													: "text-(--secondary)/60 hover:text-secondary"
 											}`}>
 											Attendance
 										</button>
@@ -524,12 +524,12 @@ export default function ManagementPage() {
 									{viewMode === "workers" && (
 										<button
 											onClick={handleCreateWorker}
-											className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-											<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-sm font-black text-[14px]'>
+											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3.5'>
 												<div className='w-4 h-4'>
 													<PlusIcon className='drop-shadow-sm' />
 												</div>
-												<span className='mt-[2px]'>ADD WORKER</span>
+												<span className='mt-0.5'>ADD WORKER</span>
 											</div>
 										</button>
 									)}
@@ -576,7 +576,7 @@ export default function ManagementPage() {
 										Showing {sortedWorkers.length} of {workers.length} worker
 										{workers.length !== 1 ? "s" : ""} for this branch
 										{sortedWorkers.length !== workers.length && (
-											<span className='ml-2 text-[var(--accent)]'>
+											<span className='ml-2 text-accent'>
 												(filtered)
 											</span>
 										)}

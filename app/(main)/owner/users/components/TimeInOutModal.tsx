@@ -147,10 +147,10 @@ export default function TimeInOutModal({
 									isTimeIn ? "border-green-500" : "border-orange-500"
 								}`}></div>
 						</div>
-						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+						<h3 className='text-xl font-bold text-secondary mb-2'>
 							{isTimeIn ? "Clocking In..." : "Clocking Out..."}
 						</h3>
-						<p className='text-[var(--secondary)] opacity-70'>
+						<p className='text-secondary opacity-70'>
 							{isTimeIn ? "Recording time in" : "Recording time out"}
 						</p>
 					</div>
@@ -175,10 +175,10 @@ export default function TimeInOutModal({
 									</svg>
 								</div>
 								<div>
-									<h3 className='text-xl font-bold text-[var(--secondary)]'>
+									<h3 className='text-xl font-bold text-secondary'>
 										{title}
 									</h3>
-									<p className='text-sm text-[var(--secondary)]/70'>
+									<p className='text-sm text-(--secondary)/70'>
 										{isTimeIn
 											? "Start work session"
 											: "End current work session"}
@@ -265,7 +265,7 @@ export default function TimeInOutModal({
 									<select
 										value={selectedBranchId}
 										onChange={(e) => setSelectedBranchId(e.target.value)}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										required>
 										<option value=''>Choose a branch...</option>
 										{workerBranches.map((branch) => (
@@ -285,7 +285,7 @@ export default function TimeInOutModal({
 								<textarea
 									value={notes}
 									onChange={(e) => setNotes(e.target.value)}
-									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 									rows={3}
 									placeholder={`Add any notes for this ${
 										isTimeIn ? "clock in" : "clock out"

@@ -88,9 +88,9 @@ export default function QuickTimeWidget({
 				<div className='flex items-center space-x-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1'>
 					<div
 						className={`w-2 h-2 rounded-full ${
-							isWorking ? "bg-[var(--success)] animate-pulse" : "bg-gray-300"
+							isWorking ? "bg-(--success) animate-pulse" : "bg-gray-300"
 						}`}></div>
-					<span className='text-xs font-medium -text[var(--secondary)]'>
+					<span className='text-xs font-medium text-secondary'>
 						{isWorking ? formatWorkingTime() : "Off"}
 					</span>
 				</div>
@@ -99,7 +99,7 @@ export default function QuickTimeWidget({
 				<button
 					onClick={handleQuickToggle}
 					disabled={loading || timeTracking.loading}
-					className={`flex items-center space-x-1 px-2 py-1 rounded-lg -text[var(--secondary)] transition-colors text-xs font-medium ${
+					className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-secondary transition-colors text-xs font-medium ${
 						isWorking
 							? "bg-orange-500/20 hover:bg-orange-500/30"
 							: "bg-green-500/20 hover:bg-green-500/30"

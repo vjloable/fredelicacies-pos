@@ -170,7 +170,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 const type = e === "PERCENTAGE" ? 'percentage' : 'fixed';
                 handleInputChange('type', type);
               }}
-              roundness={"[6px]"}
+              roundness={"md"}
               height={42}
               valueAlignment={"left"}
               padding=''
@@ -193,7 +193,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 const status = e === "ACTIVE" ? 'active' : 'inactive';
                 handleInputChange('status', status);
               }}
-              roundness={"[6px]"}
+              roundness={"md"}
               height={42}
               valueAlignment={"left"}
               padding=''

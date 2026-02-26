@@ -60,7 +60,7 @@ export default function AddCategoryModal({
         {loading ? (
           <div className="text-center py-8">
             <div className="w-10 h-10 bg-blue-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-dashed border-2 border-[--accent]"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-dashed border-2 border-accent"></div>
             </div>
             <h3 className="text-base font-bold text-secondary mb-1">
               Adding Category...
@@ -96,7 +96,7 @@ export default function AddCategoryModal({
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
                   onKeyDown={handleKeyDown}
-                  className="w-full px-3 py-2 h-9.5 text-[14px] border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 h-9.5 text-3.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Enter category name"
                   autoFocus
                 />

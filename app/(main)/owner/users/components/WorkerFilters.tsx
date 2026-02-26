@@ -70,16 +70,16 @@ export default function WorkerFilters({
 						value={localFilters.searchQuery || ""}
 						onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
 						placeholder='Search workers by name, email, or ID...'
-						className={`w-full text-[12px] px-4 py-3 pr-12 shadow-md bg-white rounded-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent ${
+						className={`w-full text-3 px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 							localFilters.searchQuery ? "animate-pulse transition-all" : ""
 						}`}
 					/>
 					<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
 						{localFilters.searchQuery ? (
-							<div className='size-[30px] border-[var(--accent)] border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
+							<div className='size-7.5 border-accent border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
 						) : (
-							<div className='size-[30px] bg-[var(--light-accent)] rounded-full flex items-center justify-center'>
-								<SearchIcon className='mr-[2px] mb-[2px] text-[var(--accent)]' />
+							<div className='size-7.5 bg-(--light-accent) rounded-full flex items-center justify-center'>
+								<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
 							</div>
 						)}
 					</div>
@@ -124,7 +124,7 @@ export default function WorkerFilters({
 									(e as UserRole) || undefined
 								)
 							}
-							roundness={"[12px]"}
+							roundness={"xl"}
 							height={42}
 							valueAlignment={"left"}
 							padding=''
@@ -144,7 +144,7 @@ export default function WorkerFilters({
 							onChange={(e) =>
 								handleFilterChange("status", e || undefined)
 							}
-							roundness={"[12px]"}
+							roundness={"xl"}
 							height={42}
 							valueAlignment={"left"}
 							padding=''
@@ -157,7 +157,7 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='w-full h-[42px] sm:w-auto shadow-md px-3 py-2 text-sm text-[var(--primary)] hover:text-[var(--primary)] bg-[var(--error)]/50 hover:bg-[var(--error)] rounded-lg transition-colors'>
+						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-sm text-primary hover:text-primary bg-(--error)/50 hover:bg-(--error) rounded-lg transition-colors'>
 						Clear
 					</button>
 				)}

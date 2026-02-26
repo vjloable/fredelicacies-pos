@@ -155,24 +155,24 @@ export default function SettingsScreen() {
 								{/* Left Column - Preferences */}
 								<div className='space-y-6'>
 									<div className='mb-6'>
-										<h2 className='text-2xl font-bold text-[var(--secondary)] mb-2'>
+										<h2 className='text-2xl font-bold text-secondary mb-2'>
 											Preferences
 										</h2>
-										<p className='text-[var(--secondary)] opacity-70'>
+										<p className='text-secondary opacity-70'>
 											Customize your app experience and display settings.
 										</p>
 									</div>
 
 									{/* Menu Display Setting */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-[var(--secondary)] mb-4'>
+										<h3 className='text-lg font-semibold text-secondary mb-4'>
 											Menu Display
 										</h3>
 										<div className='flex items-center justify-between'>
 											<div className='flex-1'>
 												<label
 													htmlFor='hide-out-of-stock'
-													className='block text-sm font-medium text-[var(--secondary)]'>
+													className='block text-sm font-medium text-secondary'>
 													Hide Out-of-Stock Items
 												</label>
 												<p className='text-xs text-gray-500 mt-1'>
@@ -182,9 +182,9 @@ export default function SettingsScreen() {
 											<div className='flex items-center'>
 												<button
 													type='button'
-													className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 ${
+													className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
 														settings.hideOutOfStock
-															? "bg-[var(--accent)]"
+															? "bg-accent"
 															: "bg-gray-200"
 													}`}
 													onClick={handleHideOutOfStockToggle}>
@@ -202,7 +202,7 @@ export default function SettingsScreen() {
 
 									{/* Save/Sync Actions */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-[var(--secondary)] mb-4'>
+										<h3 className='text-lg font-semibold text-secondary mb-4'>
 											Save & Sync
 										</h3>
 
@@ -215,7 +215,7 @@ export default function SettingsScreen() {
 													disabled={!hasChanges}
 													className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
 														hasChanges
-															? "bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90"
+															? "bg-accent text-white hover:bg-(--accent)/90"
 															: "bg-gray-100 text-gray-400 cursor-not-allowed"
 													}`}>
 													Save Locally
@@ -235,14 +235,14 @@ export default function SettingsScreen() {
 												disabled={isSyncing}
 												className={`w-full px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
 													syncStatus === "success"
-														? "bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]"
+														? "bg-(--success)/10 text-(--success) border border-(--success)"
 														: syncStatus === "created"
-														? "bg-[var(--secondary)]/10 text-[var(--secondary)] border border-[var(--secondary)]"
+														? "bg-(--secondary)/10 text-secondary border border-secondary"
 														: syncStatus === "error"
-														? "bg-[var(--error)]/10 text-[var(--error)] border border-[var(--error)]"
+														? "bg-(--error)/10 text-(--error) border border-(--error)"
 														: isSyncing
 														? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
-														: "bg-white text-[var(--secondary)] border border-gray-300 hover:bg-gray-50"
+														: "bg-white text-secondary border border-gray-300 hover:bg-gray-50"
 												}`}>
 												{isSyncing ? (
 													<>
@@ -274,11 +274,11 @@ export default function SettingsScreen() {
 											<div
 												className={`mt-2 p-2 rounded-md text-xs text-center transition-all duration-200 ${
 													syncStatus === "success"
-														? "bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]"
+														? "bg-(--success)/10 text-(--success) border border-(--success)"
 														: syncStatus === "created"
-														? "bg-[var(--secondary)]/10 text-[var(--secondary)] border border-[var(--secondary)]"
+														? "bg-(--secondary)/10 text-secondary border border-secondary"
 														: syncStatus === "error"
-														? "bg-[var(--error)]/10 text-[var(--error)] border border-[var(--error)]"
+														? "bg-(--error)/10 text-(--error) border border-(--error)"
 														: "bg-gray-50 text-gray-600 border border-gray-200"
 												}`}>
 												{syncMessage}
@@ -286,7 +286,7 @@ export default function SettingsScreen() {
 										)}
 
 										{hasChanges && (
-											<p className='text-xs text-[var(--secondary)] mt-2 text-center'>
+											<p className='text-xs text-secondary mt-2 text-center'>
 												Sync will save and upload your current changes to
 												cloud
 											</p>
@@ -297,21 +297,21 @@ export default function SettingsScreen() {
 								{/* Right Column - Utilities */}
 								<div className='space-y-6'>
 									<div className='mb-6'>
-										<h2 className='text-2xl font-bold text-[var(--secondary)] mb-2'>
+										<h2 className='text-2xl font-bold text-secondary mb-2'>
 											Utilities
 										</h2>
-										<p className='text-[var(--secondary)] opacity-70'>
+										<p className='text-secondary opacity-70'>
 											Hardware connections and system utilities.
 										</p>
 									</div>
 
 									{/* Bluetooth Printer Section */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
-										<h3 className='text-lg font-semibold text-[var(--secondary)] mb-4 flex items-center gap-2'>
+										<h3 className='text-lg font-semibold text-secondary mb-4 flex items-center gap-2'>
 											Bluetooth
 										</h3>
 
-										<p className='text-sm text-[var(--secondary)] opacity-70 mb-4'>
+										<p className='text-sm text-secondary opacity-70 mb-4'>
 											Connect to a thermal receipt printer. Once connected,
 											receipts will automatically print when orders are
 											confirmed.
@@ -320,7 +320,7 @@ export default function SettingsScreen() {
 										{/* Bluetooth Status Display */}
 										{bluetoothStatus && (
 											<div className='mb-4 p-3 bg-gray-50 rounded-lg border'>
-												<p className='text-sm text-[var(--secondary)]'>
+												<p className='text-sm text-secondary'>
 													{bluetoothStatus}
 												</p>
 											</div>
@@ -353,7 +353,7 @@ export default function SettingsScreen() {
 													className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
 														isConnecting
 															? "bg-gray-300 text-gray-500 cursor-not-allowed"
-															: "bg-[var(--accent)] hover:bg-[var(--secondary]/80 text-white hover:shadow-lg"
+															: "bg-accent hover:bg-secondary/80 text-white hover:shadow-lg"
 													}`}>
 													{isConnecting ? (
 														<div className='flex items-center justify-center'>
@@ -368,12 +368,12 @@ export default function SettingsScreen() {
 												<>
 													<button
 														onClick={testPrint}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-[var(--success)] hover:bg-[var(--success)]/50 text-[var(--secondary)] hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-(--success) hover:bg-(--success)/50 text-secondary hover:shadow-lg transition-all'>
 														Test Print
 													</button>
 													<button
 														onClick={disconnectPrinter}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-[var(--error)] hover:bg-[var(--error)]/50 text-[var(--primary)] hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-(--error) hover:bg-(--error)/50 text-primary hover:shadow-lg transition-all'>
 														Disconnect
 													</button>
 												</>
@@ -381,11 +381,11 @@ export default function SettingsScreen() {
 										</div>
 
 										{/* Instructions */}
-										<div className='mt-6 p-4 bg-[var(--secondary)]/5 rounded-lg border border-[var(--secondary)]/20'>
-											<h4 className='font-medium text-[var(--secondary)] mb-2 text-sm'>
+										<div className='mt-6 p-4 bg-(--secondary)/5 rounded-lg border border-(--secondary)/20'>
+											<h4 className='font-medium text-secondary mb-2 text-sm'>
 												How to use:
 											</h4>
-											<ul className='text-xs text-[var(--secondary)] opacity-70 space-y-1'>
+											<ul className='text-xs text-secondary opacity-70 space-y-1'>
 												<li>• Put your thermal printer in pairing mode</li>
 												<li>
 													• Click {"Connect Printer"} and select your device

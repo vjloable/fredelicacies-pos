@@ -48,7 +48,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			className={`bg-white rounded-2xl shadow border border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ${
 				styles.cartoonCard
 			} ${onClick ? "cursor-pointer" : ""}`}>
-			<div className='relative h-32 sm:h-40 w-full bg-[var(--accent)] flex items-center justify-center overflow-hidden'>
+			<div className='relative h-32 sm:h-40 w-full bg-accent flex items-center justify-center overflow-hidden'>
 				{branch.imgUrl ? (
 					<Image
 						src={branch.imgUrl}
@@ -77,14 +77,14 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			<div className='flex-1 flex flex-col justify-between px-4 sm:px-5 py-3 sm:py-4'>
 				<div className='space-y-2 sm:space-y-3'>
 					<div className='flex items-center gap-2'>
-						<h2 className='text-base sm:text-lg font-bold text-[var(--secondary)]'>
+						<h2 className='text-base sm:text-lg font-bold text-secondary'>
 							{branch.name}
 						</h2>
 					</div>
-					<div className='text-sm text-[var(--secondary)] opacity-80'>
+					<div className='text-sm text-secondary opacity-80'>
 						{branch.location}
 					</div>
-					<div className='flex flex-wrap gap-2 sm:gap-4 text-xs text-[var(--secondary)] opacity-70'>
+					<div className='flex flex-wrap gap-2 sm:gap-4 text-xs text-secondary opacity-70'>
 						<span>Created: {formatDate(branch.createdAt)}</span>
 						<span>Updated: {formatDate(branch.updatedAt)}</span>
 					</div>
@@ -100,9 +100,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onDelete(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--error)]/10 text-white font-semibold hover:bg-[var(--error)] transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--error)/10 text-white font-semibold hover:bg-(--error) transition-colors text-xs sm:text-sm flex items-center justify-center'
 								title='Delete Branch'>
-								<DeleteBranchIcon className='w-7 h-7 text-[var(--error)]/80 group-hover:text-[var(--primary)]' />
+								<DeleteBranchIcon className='w-7 h-7 text-(--error)/80 group-hover:text-primary' />
 							</button>
 						)}
 						{onView && (
@@ -110,9 +110,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onView(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--secondary)]/10 text-white font-semibold hover:bg-[var(--secondary)] transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--secondary)/10 text-white font-semibold hover:bg-secondary transition-colors text-xs sm:text-sm flex items-center justify-center gap-1'
 								title='View Branch Details'>
-								<ViewBranchIcon className='w-7 h-7 text-[var(--secondary)] group-hover:text-[var(--primary)]' />
+								<ViewBranchIcon className='w-7 h-7 text-secondary group-hover:text-primary' />
 							</button>
 						)}
 						{onEdit && (
@@ -120,9 +120,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onEdit(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-[var(--accent)]/20 text-white font-semibold hover:bg-[var(--accent)] transition-colors text-xs sm:text-sm flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--accent)/20 text-white font-semibold hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-center'
 								title='Edit Branch'>
-								<EditBranchIcon className='w-7 h-7 text-[var(--accent)] group-hover:text-[var(--primary)]' />
+								<EditBranchIcon className='w-7 h-7 text-accent group-hover:text-primary' />
 							</button>
 						)}
 					</div>

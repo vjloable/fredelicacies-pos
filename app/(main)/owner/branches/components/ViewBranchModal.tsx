@@ -29,7 +29,7 @@ export default function ViewBranchModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50 p-4 sm:p-6"
+      className="fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={onClose}
     >
       <div 
@@ -38,15 +38,15 @@ export default function ViewBranchModal({
       >
         {/* Modal Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-[var(--light-accent)] rounded-xl mx-auto mb-4 flex items-center justify-center">
-            <svg className="w-6 h-6 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
+            <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+          <h3 className="text-xl font-bold text-secondary mb-2">
             Branch Details
           </h3>
-          <p className="text-[var(--secondary)] opacity-70">
+          <p className="text-secondary opacity-70">
             Complete information about this branch
           </p>
         </div>
@@ -57,10 +57,10 @@ export default function ViewBranchModal({
           <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h4 className="text-xl font-bold text-[var(--secondary)] mb-2">
+                <h4 className="text-xl font-bold text-secondary mb-2">
                   {branch.name}
                 </h4>
-                <div className="flex items-center gap-2 text-[var(--secondary)] opacity-70 mb-3">
+                <div className="flex items-center gap-2 text-secondary opacity-70 mb-3">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -70,8 +70,8 @@ export default function ViewBranchModal({
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                 branch.status === 'active' 
-                  ? 'bg-[var(--success)]/80 text-[var(--primary)]' 
-                  : 'bg-[var(--error)]/80 text-[var(--primary)]'
+                  ? 'bg-(--success)/80 text-primary' 
+                  : 'bg-(--error)/80 text-primary'
               }`}>
                 {branch.status === 'active' ? 'Active' : 'Inactive'}
               </div>
@@ -79,7 +79,7 @@ export default function ViewBranchModal({
 
             {/* Status Description */}
             <div className="border-t border-gray-200 pt-4">
-              <p className="text-sm text-[var(--secondary)] opacity-70">
+              <p className="text-sm text-secondary opacity-70">
                 {branch.status === 'active' 
                   ? 'This branch is currently operational and accessible to users for transactions and management.'
                   : 'This branch is currently disabled and will not appear in user selections or operations.'
@@ -93,14 +93,14 @@ export default function ViewBranchModal({
             {/* Branch ID */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[var(--secondary)]">Branch ID</p>
-                  <p className="text-xs text-[var(--secondary)] opacity-70">
+                  <p className="text-sm font-medium text-secondary">Branch ID</p>
+                  <p className="text-xs text-secondary opacity-70">
                     {branch.id}
                   </p>
                 </div>
@@ -110,14 +110,14 @@ export default function ViewBranchModal({
             {/* Creation Date */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[var(--secondary)]">Created</p>
-                  <p className="text-xs text-[var(--secondary)] opacity-70">
+                  <p className="text-sm font-medium text-secondary">Created</p>
+                  <p className="text-xs text-secondary opacity-70">
                     {formatDate(createdAt)}
                   </p>
                 </div>
@@ -127,19 +127,19 @@ export default function ViewBranchModal({
             {/* Last Updated */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[var(--secondary)]">Last Updated</p>
+                    <p className="text-sm font-medium text-secondary">Last Updated</p>
                     {isRecent && (
-                      <span className="bg-[var(--secondary)]/10 text-[var(--secondary)]/80 text-[10px] px-2 py-0.2 rounded-full">Recent</span>
+                      <span className="bg-(--secondary)/10 text-(--secondary)/80 text-2.5 px-2 py-0.2 rounded-full">Recent</span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--secondary)] opacity-70">
+                  <p className="text-xs text-secondary opacity-70">
                     {formatDate(updatedAt)}
                   </p>
                 </div>
@@ -149,14 +149,14 @@ export default function ViewBranchModal({
             {/* Quick Stats */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--light-accent)] rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                <p className="text-sm font-medium text-[var(--secondary)]">Branch Operations</p>
-                <p className="text-xs text-[var(--secondary)] opacity-70">
+                <p className="text-sm font-medium text-secondary">Branch Operations</p>
+                <p className="text-xs text-secondary opacity-70">
                   {branch.status === 'active' 
                     ? 'Ready for business operations, inventory management, and sales tracking'
                     : 'Operations suspended - branch requires activation to resume business activities'
@@ -172,13 +172,13 @@ export default function ViewBranchModal({
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 sm:mt-8">
           <button
             onClick={onClose}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
           >
             Close
           </button>
           <button
             onClick={onEdit}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-accent hover:bg-accent text-primary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -187,7 +187,7 @@ export default function ViewBranchModal({
           </button>
           <button
             onClick={onDelete}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-[var(--error)] hover:bg-[var(--error)] text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-(--error) hover:bg-(--error) text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

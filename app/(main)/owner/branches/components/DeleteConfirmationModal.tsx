@@ -64,7 +64,7 @@ export default function DeleteConfirmationModal({
 
 	return (
 		<div
-			className='fixed inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-50 p-4 sm:p-6'
+			className='fixed inset-0 bg-(--primary)/80 flex items-center justify-center z-50 p-4 sm:p-6'
 			onClick={handleClose}>
 			<div
 				className='bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto'
@@ -75,12 +75,12 @@ export default function DeleteConfirmationModal({
 						<div className='w-16 h-16 bg-red-100 rounded-xl mx-auto mb-4 flex items-center justify-center'>
 							<div className='animate-spin rounded-full h-8 w-8 border-2 border-dashed border-red-500'></div>
 						</div>
-						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+						<h3 className='text-xl font-bold text-secondary mb-2'>
 							{deleteOption === "soft"
 								? "Deactivating Branch..."
 								: "Deleting Branch..."}
 						</h3>
-						<p className='text-[var(--secondary)] opacity-70'>
+						<p className='text-secondary opacity-70'>
 							{deleteOption === "soft"
 								? "Please wait while we deactivate this branch"
 								: "Please wait while we permanently delete this branch"}
@@ -104,12 +104,12 @@ export default function DeleteConfirmationModal({
 									/>
 								</svg>
 							</div>
-							<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+							<h3 className='text-xl font-bold text-secondary mb-2'>
 								{deleteOption === "soft"
 									? "Deactivate Branch"
 									: "Delete Branch"}
 							</h3>
-							<p className='text-[var(--secondary)] opacity-70'>
+							<p className='text-secondary opacity-70'>
 								{deleteOption === "soft"
 									? "This action will disable the branch but keep all data"
 									: "This action cannot be undone and will permanently remove all branch data"}
@@ -119,7 +119,7 @@ export default function DeleteConfirmationModal({
 						{/* Branch Info */}
 						<div className='bg-red-50 border border-red-200 rounded-xl p-4 mb-6'>
 							<div className='flex items-center gap-3'>
-								<div className='w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0'>
+								<div className='w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center shrink-0'>
 									<svg
 										className='w-5 h-5 text-red-600'
 										fill='none'
@@ -152,7 +152,7 @@ export default function DeleteConfirmationModal({
 
 						{/* Delete Options */}
 						<div className='space-y-3 sm:space-y-4 mb-4 sm:mb-6'>
-							<div className='text-sm font-medium text-[var(--secondary)] mb-2 sm:mb-3'>
+							<div className='text-sm font-medium text-secondary mb-2 sm:mb-3'>
 								Choose deletion type:
 							</div>
 
@@ -167,10 +167,10 @@ export default function DeleteConfirmationModal({
 									className='mt-1'
 								/>
 								<div className='flex-1'>
-									<div className='font-medium text-[var(--secondary)] mb-1 text-sm sm:text-base'>
+									<div className='font-medium text-secondary mb-1 text-sm sm:text-base'>
 										Deactivate (Recommended)
 									</div>
-									<div className='text-xs sm:text-sm text-[var(--secondary)] opacity-70'>
+									<div className='text-xs sm:text-sm text-secondary opacity-70'>
 										Hide branch from users but preserve all data. Can be
 										reactivated later.
 									</div>
@@ -201,7 +201,7 @@ export default function DeleteConfirmationModal({
 
 						{/* Confirmation Input */}
 						<div className='mb-6'>
-							<label className='block text-sm font-medium text-[var(--secondary)] mb-2'>
+							<label className='block text-sm font-medium text-secondary mb-2'>
 								Type the branch name to confirm:{" "}
 								<span className='font-mono bg-gray-100 px-1 rounded'>
 									{branch.name}
@@ -211,7 +211,7 @@ export default function DeleteConfirmationModal({
 								type='text'
 								value={confirmationText}
 								onChange={(e) => setConfirmationText(e.target.value)}
-								className='w-full px-3 py-2 text-[14px] h-[44px] rounded-lg border-2 border-red-200 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100'
+								className='w-full px-3 py-2 text-3.5 h-11 rounded-lg border-2 border-red-200 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100'
 								placeholder={`Type "${branch.name}" to confirm`}
 								autoComplete='off'
 							/>
@@ -227,7 +227,7 @@ export default function DeleteConfirmationModal({
 						<div className='bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6'>
 							<div className='flex items-start gap-2'>
 								<svg
-									className='w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0'
+									className='w-4 h-4 text-orange-600 mt-0.5 shrink-0'
 									fill='currentColor'
 									viewBox='0 0 20 20'>
 									<path
@@ -248,7 +248,7 @@ export default function DeleteConfirmationModal({
 						<div className='flex flex-col sm:flex-row gap-3 sm:gap-4'>
 							<button
 								onClick={handleClose}
-								className='w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base'>
+								className='w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-sm sm:text-base'>
 								Cancel
 							</button>
 							<button

@@ -15,11 +15,11 @@ export default function GlobalNotFound() {
 						{/* 404 Header */}
 						<div className='mb-8'>
 							<div className='relative'>
-								<div className='text-9xl font-bold text-[var(--accent)]/20 mb-4'>404</div>
+								<div className='text-9xl font-bold text-(--accent)/20 mb-4'>404</div>
 								<div className='absolute inset-0 flex items-center justify-center'>
-									<div className='w-32 h-32 bg-[var(--accent)]/10 rounded-full flex items-center justify-center animate-pulse'>
+									<div className='w-32 h-32 bg-(--accent)/10 rounded-full flex items-center justify-center animate-pulse'>
 										<svg 
-											className='w-16 h-16 text-[var(--accent)]' 
+											className='w-16 h-16 text-accent' 
 											fill='none' 
 											stroke='currentColor' 
 											viewBox='0 0 24 24'
@@ -38,13 +38,13 @@ export default function GlobalNotFound() {
 
 						{/* Error Message */}
 						<div className='mb-10'>
-							<h1 className='text-4xl font-bold text-[var(--secondary)] mb-4'>
+							<h1 className='text-4xl font-bold text-secondary mb-4'>
 								Page Not Found
 							</h1>
-							<p className='text-xl text-[var(--secondary)]/70 mb-4'>
+							<p className='text-xl text-(--secondary)/70 mb-4'>
 								Sorry, we couldn&apos;t find the page you&apos;re looking for.
 							</p>
-							<p className='text-base text-[var(--secondary)]/50'>
+							<p className='text-base text-(--secondary)/50'>
 								The page may have been moved, deleted, or you may have mistyped the URL.
 							</p>
 						</div>
@@ -54,7 +54,7 @@ export default function GlobalNotFound() {
 							<div className='flex flex-col sm:flex-row gap-4 justify-center'>
 								<Link
 									href='/'
-									className='flex items-center justify-center gap-2 bg-[var(--accent)] text-[var(--primary)] px-8 py-4 rounded-lg hover:bg-[var(--accent)]/90 transition-colors font-medium shadow-lg hover:shadow-xl text-lg'>
+									className='flex items-center justify-center gap-2 bg-accent text-primary px-8 py-4 rounded-lg hover:bg-(--accent)/90 transition-colors font-medium shadow-lg hover:shadow-xl text-lg'>
 									<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />
 									</svg>
@@ -63,7 +63,7 @@ export default function GlobalNotFound() {
 								
 								<Link
 									href='/login'
-									className='flex items-center justify-center gap-2 bg-[var(--secondary)]/10 text-[var(--secondary)] px-8 py-4 rounded-lg hover:bg-[var(--secondary)]/20 transition-colors font-medium border border-[var(--secondary)]/20 text-lg'>
+									className='flex items-center justify-center gap-2 bg-(--secondary)/10 text-secondary px-8 py-4 rounded-lg hover:bg-(--secondary)/20 transition-colors font-medium border border-(--secondary)/20 text-lg'>
 									<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1' />
 									</svg>
@@ -72,22 +72,22 @@ export default function GlobalNotFound() {
 							</div>
 
 							{/* Help Links */}
-							<div className='pt-6 border-t border-[var(--secondary)]/10'>
-								<p className='text-sm text-[var(--secondary)]/50 mb-4'>Common pages you might be looking for:</p>
+							<div className='pt-6 border-t border-(--secondary)/10'>
+								<p className='text-sm text-(--secondary)/50 mb-4'>Common pages you might be looking for:</p>
 								<div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
 									<Link
 										href='/owner'
-										className='text-sm text-[var(--accent)] hover:text-[var(--accent)]/80 py-2 px-4 rounded-md hover:bg-[var(--accent)]/10 transition-colors border border-[var(--accent)]/20'>
+										className='text-sm text-accent hover:text-(--accent)/80 py-2 px-4 rounded-md hover:bg-(--accent)/10 transition-colors border border-(--accent)/20'>
 										Dashboard
 									</Link>
 									<Link
 										href='/owner/branches'
-										className='text-sm text-[var(--accent)] hover:text-[var(--accent)]/80 py-2 px-4 rounded-md hover:bg-[var(--accent)]/10 transition-colors border border-[var(--accent)]/20'>
+										className='text-sm text-accent hover:text-(--accent)/80 py-2 px-4 rounded-md hover:bg-(--accent)/10 transition-colors border border-(--accent)/20'>
 										Branches
 									</Link>
 									<Link
 										href='/owner/users'
-										className='text-sm text-[var(--accent)] hover:text-[var(--accent)]/80 py-2 px-4 rounded-md hover:bg-[var(--accent)]/10 transition-colors border border-[var(--accent)]/20'>
+										className='text-sm text-accent hover:text-(--accent)/80 py-2 px-4 rounded-md hover:bg-(--accent)/10 transition-colors border border-(--accent)/20'>
 										Users
 									</Link>
 								</div>
@@ -95,8 +95,8 @@ export default function GlobalNotFound() {
 						</div>
 
 						{/* Branding */}
-						<div className='mt-12 pt-8 border-t border-[var(--secondary)]/10'>
-							<p className='text-xs text-[var(--secondary)]/40'>
+						<div className='mt-12 pt-8 border-t border-(--secondary)/10'>
+							<p className='text-xs text-(--secondary)/40'>
 								© 2025 Fredelicacies POS System
 							</p>
 						</div>
@@ -104,9 +104,9 @@ export default function GlobalNotFound() {
 						{/* Decorative Animation */}
 						<div className='mt-8 flex justify-center'>
 							<div className='flex space-x-2'>
-								<div className='w-2 h-2 bg-[var(--accent)]/30 rounded-full animate-bounce [animation-delay:-0.3s]'></div>
-								<div className='w-2 h-2 bg-[var(--accent)]/50 rounded-full animate-bounce [animation-delay:-0.15s]'></div>
-								<div className='w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce'></div>
+								<div className='w-2 h-2 bg-(--accent)/30 rounded-full animate-bounce [animation-delay:-0.3s]'></div>
+								<div className='w-2 h-2 bg-(--accent)/50 rounded-full animate-bounce [animation-delay:-0.15s]'></div>
+								<div className='w-2 h-2 bg-accent rounded-full animate-bounce'></div>
 							</div>
 						</div>
 					</div>

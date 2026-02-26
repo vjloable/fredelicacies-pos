@@ -35,7 +35,7 @@ export default function VersionDisplay({
             {showEnvironment && (
               <div className="opacity-50">{VERSION_INFO.env}</div>
             )}
-            <div className="opacity-50 text-[10px]">
+            <div className="opacity-50 text-2.5">
               Built: {new Date(VERSION_INFO.buildTime).toLocaleString()}
             </div>
           </div>

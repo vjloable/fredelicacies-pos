@@ -74,7 +74,7 @@ function ConfirmEmailContent() {
         <div className="mt-8 space-y-6">
           <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-5 w-5 text-blue-400"
                   xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +108,7 @@ function ConfirmEmailContent() {
 
           <div className="rounded-md bg-yellow-50 p-4 border border-yellow-200">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-5 w-5 text-yellow-400"
                   xmlns="http://www.w3.org/2000/svg"

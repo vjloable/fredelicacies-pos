@@ -142,19 +142,19 @@ export default function TopBar({
 				/>
 			)}
 
-			<div className='flex-shrink-0'>
-			<div className='flex items-center justify-between h-[90px] w-full'>
+			<div className='shrink-0'>
+			<div className='flex items-center justify-between h-22.5 w-full'>
 				<div className='flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto'>
 					<button
 						onClick={toggleDrawer}
-						className='ml-6 my-[17px] h-14 w-14 min-w-14 bg-[var(--primary)] rounded-xl flex justify-center items-center hover:scale-105 hover:shadow-md transition-all cursor-pointer flex-shrink-0'>
-						<MenuBurgerIcon className="text-[var(--secondary)]" />
+						className='ml-6 my-4.25 h-14 w-14 min-w-14 bg-primary rounded-xl flex justify-center items-center hover:scale-105 hover:shadow-md transition-all cursor-pointer shrink-0'>
+						<MenuBurgerIcon className="text-secondary" />
 					</button>
 
 					{/* User Info*/}
 					<div className='relative group'>
-						<div className='flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
-							<span className='my-6 w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]'>
+						<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
+							<span className='my-6 w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary'>
 								<UserIcon />
 							</span>
 							<span>{userDisplayName}</span>
@@ -163,12 +163,12 @@ export default function TopBar({
 
 					{/* Owner Badge */}
 					{isUserOwner() && (
-						<div className='flex-shrink-0'>
-							<div className='h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-2 items-center font-medium text-[12px] lg:text-[14px] '>
-								<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] text-lg font-bold'>
+						<div className='shrink-0'>
+							<div className='h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-3 lg:text-3.5 '>
+								<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary text-lg font-bold'>
 									O
 								</span>
-								<span className='text-[var(--secondary)] font-medium'>
+								<span className='text-secondary font-medium'>
 									Owner
 								</span>
 							</div>
@@ -179,14 +179,14 @@ export default function TopBar({
 					{showTimeTracking &&
 						timeTracking.worker &&
 						!timeTracking.worker.isOwner && (
-							<div className='flex-shrink-0'>
+							<div className='shrink-0'>
 								<button
 									onClick={handleTimeTrackingClick}
 									disabled={isTimeTracking}
-									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-[12px] lg:text-[14px] cursor-pointer group transition-all duration-200 ${
+									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-3 lg:text-3.5 cursor-pointer group transition-all duration-200 ${
 										timeTracking.isWorking
-											? "bg-[var(--success)]/10 text-[var(--success)] border-2 border-[var(--success)] hover:border-[var(--secondary)] hover:bg-[var(--secondary)]/20 hover:shadow-lg"
-											: "bg-[var(--secondary)]/10 text-[var(--secondary)] border-2 border-[var(--secondary)] hover:border-[var(--success)] hover:bg-[var(--success)]/20 hover:shadow-lg"
+											? "bg-(--success)/10 text-(--success) border-2 border-(--success) hover:border-secondary hover:bg-secondary/20 hover:shadow-lg"
+											: "bg-secondary/10 text-secondary border-2 border-secondary hover:border-(--success) hover:bg-(--success)/20 hover:shadow-lg"
 									} ${
 										isTimeTracking
 											? "opacity-50 cursor-not-allowed"
@@ -202,8 +202,8 @@ export default function TopBar({
 										<div
 											className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 ${
 												timeTracking.isWorking
-													? "bg-[var(--secondary)]/10"
-													: "bg-[var(--success)]/10"
+													? "bg-secondary/10"
+													: "bg-(--success)/10"
 											}`}
 										/>
 									)}
@@ -211,27 +211,27 @@ export default function TopBar({
 									<span
 										className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
 											timeTracking.isWorking
-												? "bg-[var(--success)]/10 text-[var(--success)] group-hover:bg-[var(--secondary)]/10 group-hover:text-[var(--secondary)]"
-												: "bg-[var(--secondary)]/10 text-[var(--secondary)] group-hover:bg-[var(--success)]/10 group-hover:text-[var(--success)]"
+												? "bg-(--success)/10 text-(--success) group-hover:bg-secondary/10 group-hover:text-secondary"
+												: "bg-secondary/10 text-secondary group-hover:bg-(--success)/10 group-hover:text-(--success)"
 										}`}>
 										{isTimeTracking ? (
 											<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent' />
 										) : timeTracking.isWorking ? (
-											<div className="animate-spin border-2 border-[var(--success)] group-hover:border-[var(--secondary)] border-dashed rounded-full h-3 w-3"/>
+											<div className="animate-spin border-2 border-(--success) group-hover:border-secondary border-dashed rounded-full h-3 w-3"/>
 										) : (
-											<div className="border-2 border-[var(--secondary)] group-hover:border-[var(--success)] rounded-full h-3 w-3"/>
+											<div className="border-2 border-secondary group-hover:border-(--success) rounded-full h-3 w-3"/>
 										)}
 									</span>
 									<div className={`relative z-10 flex flex-col items-start]
 											${timeTracking.isWorking 
-												? "text-[var(--success)]" 
-												: "text-[var(--secondary)]"
+												? "text-(--success)" 
+												: "text-secondary"
 											}
 										`}>
 										<span className={`font-semibold 
 												${timeTracking.isWorking 
-													? "group-hover:text-[var(--secondary)]" 
-													: "group-hover:text-[var(--success)]"
+													? "group-hover:text-secondary" 
+													: "group-hover:text-(--success)"
 												}
 											`}>
 											{isTimeTracking
@@ -246,8 +246,8 @@ export default function TopBar({
 											<span
 												className={`text-xs ${
 													timeTracking.isWorking
-														? "opacity-70 group-hover:text-[var(--secondary)]"
-														: "opacity-70 group-hover:text-[var(--success)]"
+														? "opacity-70 group-hover:text-secondary"
+														: "opacity-70 group-hover:text-(--success)"
 												}`}>
 												{timeTracking.isWorking
 													? timeTracking.workingDuration > 0
@@ -265,9 +265,9 @@ export default function TopBar({
 							</div>
 						)}
 
-					<div className='flex-shrink-0 min-w-[30px] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
-						<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)]'>
-							<CalendarIcon className="text-[var(--secondary)]" />
+					<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
+						<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary'>
+							<CalendarIcon className="text-secondary" />
 						</span>
 						<div className='flex flex-col items-start'>
 							{isLoading && !date ? (
@@ -283,9 +283,9 @@ export default function TopBar({
 						</div>
 					</div>
 					<span className='hidden sm:inline'>-</span>
-					<div className='flex-shrink-0 min-w-[8rem] h-14 px-3 py-3 text-center flex bg-[var(--primary)] rounded-xl text-[var(--secondary)] gap-3 items-center font-medium text-[12px] lg:text-[14px]'>
-						<span className='w-8 h-8 bg-[var(--light-accent)] rounded-full flex items-center justify-center text-[var(--secondary)] font-bold text-sm'>
-							<ClockIcon className="text-[var(--secondary)]"/>
+					<div className='shrink-0 min-w-32 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3.5'>
+						<span className='w-8 h-8 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary font-bold text-sm'>
+							<ClockIcon className="text-secondary"/>
 						</span>
 						<div className='flex flex-row items-center gap-2'>
 							{isLoading && !time ? (
@@ -293,9 +293,9 @@ export default function TopBar({
 							) : (
 								<>
 									{!isInternetTime && time ? (
-										<span className='bg-[var(--error)]/20 size-3 border-2 border-[var(--error)] border-dashed rounded-full shadow-sm animate-spin' />
+										<span className='bg-(--error)/20 size-3 border-2 border-(--error) border-dashed rounded-full shadow-sm animate-spin' />
 									) : (
-										<span className='bg-[var(--success)]/20 size-3 border-2 border-[var(--success)] border-dashed rounded-full shadow-sm animate-spin' />
+										<span className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
 									)}
 									<span className='animate-pulse '>{time}</span>
 								</>
@@ -304,12 +304,12 @@ export default function TopBar({
 						<button
 							onClick={handleRefresh}
 							disabled={isRefreshing}
-							className='ml-2 p-1 hover:bg-[var(--light-accent)] rounded-full transition-colors disabled:opacity-50 flex-shrink-0'
+							className='ml-2 p-1 hover:bg-(--light-accent) rounded-full transition-colors disabled:opacity-50 shrink-0'
 							title={`${
 								isInternetTime ? "Internet time" : "Local time"
 							} - Click to sync`}>
 							<RefreshIcon
-								className='w-4 h-4 text-[var(--secondary)]'
+								className='w-4 h-4 text-secondary'
 								isSpinning={isRefreshing}
 							/>
 						</button>
@@ -319,9 +319,9 @@ export default function TopBar({
 
 			{/* Page Title */}
 			{title && (
-				<div className='flex items-center justify-start ml-6 py-[4px]'>
+				<div className='flex items-center justify-start ml-6 py-1'>
 					{icon}
-					<h1 className='text-[var(--secondary)] text-2xl font-bold'>
+					<h1 className='text-secondary text-2xl font-bold'>
 						{title}
 					</h1>
 				</div>
