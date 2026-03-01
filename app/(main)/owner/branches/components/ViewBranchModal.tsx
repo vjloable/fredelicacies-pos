@@ -38,7 +38,7 @@ export default function ViewBranchModal({
       >
         {/* Modal Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
             <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -70,8 +70,8 @@ export default function ViewBranchModal({
               </div>
               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                 branch.status === 'active' 
-                  ? 'bg-(--success)/80 text-primary' 
-                  : 'bg-(--error)/80 text-primary'
+                  ? 'bg-success/80 text-primary' 
+                  : 'bg-error/80 text-primary'
               }`}>
                 {branch.status === 'active' ? 'Active' : 'Inactive'}
               </div>
@@ -93,7 +93,7 @@ export default function ViewBranchModal({
             {/* Branch ID */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-light-accent rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                   </svg>
@@ -110,7 +110,7 @@ export default function ViewBranchModal({
             {/* Creation Date */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-light-accent rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -127,7 +127,7 @@ export default function ViewBranchModal({
             {/* Last Updated */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-light-accent rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -149,7 +149,7 @@ export default function ViewBranchModal({
             {/* Quick Stats */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-(--light-accent) rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-light-accent rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
@@ -187,7 +187,7 @@ export default function ViewBranchModal({
           </button>
           <button
             onClick={onDelete}
-            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-(--error) hover:bg-(--error) text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
+            className="w-full sm:flex-1 py-2.5 sm:py-3 bg-error hover:bg-error text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

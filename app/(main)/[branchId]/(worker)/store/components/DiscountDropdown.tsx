@@ -120,7 +120,7 @@ export default function DiscountDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex flex-row border border-accent rounded-md bg-(--light-accent)/40">
+      <div className="flex flex-row border border-accent rounded-md bg-light-accent/40">
         <input
           ref={inputRef}
           type="text"
@@ -177,7 +177,7 @@ export default function DiscountDropdown({
                         : `₱${discount.value} off`
                       }
                       {previewAmount > 0 && (
-                        <span className="text-(--success) font-medium ml-2">
+                        <span className="text-success font-medium ml-2">
                           (-{formatCurrency(previewAmount)})
                         </span>
                       )}
@@ -185,7 +185,7 @@ export default function DiscountDropdown({
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-500">Savings</div>
-                    <div className="font-semibold text-(--success)">
+                    <div className="font-semibold text-success">
                       {formatCurrency(previewAmount)}
                     </div>
                   </div>

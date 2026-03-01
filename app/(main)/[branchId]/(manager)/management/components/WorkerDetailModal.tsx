@@ -5,7 +5,7 @@ import { Worker } from "@/services/workerService";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { branchService } from "@/services/branchService";
 
-import LoadingSpinner from "../../../../../../components/LoadingSpinner";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AttendanceWithMetadata extends Omit<Attendance, 'id'> {
 	id?: string;
@@ -170,9 +170,9 @@ export default function WorkerDetailModal({
 		const baseClasses = "px-2 py-1 text-xs rounded-full font-medium";
 		switch (status) {
 			case "clocked_in":
-				return `${baseClasses} bg-(--success)/10 text-(--success)`;
+				return `${baseClasses} bg-success/10 text-success`;
 			case "clocked_out":
-				return `${baseClasses} bg-(--error)/10 text-(--error)`;
+				return `${baseClasses} bg-error/10 text-error`;
 			default:
 				return `${baseClasses} bg-secondary/10 text-secondary`;
 		}
@@ -324,8 +324,8 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															assignment.isActive
-																? "bg-(--success)/10 text-(--success)"
-																: "bg-(--error)/10 text-(--error)"
+																? "bg-success/10 text-success"
+																: "bg-error/10 text-error"
 														}`}>
 														{assignment.isActive ? "Active" : "Inactive"}
 													</span>
@@ -362,7 +362,7 @@ export default function WorkerDetailModal({
 													<span
 														className={`px-2 py-1 text-xs rounded-full font-medium ${
 															attendance.status === "active"
-																? "bg-(--success)/80 text-primary"
+																? "bg-success/80 text-primary"
 																: "bg-secondary/10 text-secondary/80"
 														}`}> 
 														{attendance.status === "active"
@@ -396,7 +396,7 @@ export default function WorkerDetailModal({
 													</span>
 												) : (
 													<div className='flex flex-row items-center gap-2'>
-														<div className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
+														<LoadingSpinner className="w-3! h-3! border-success bg-success/20 shadow-sm" />
 														<span className='text-gray-500 text-xs'>
 															Working
 														</span>

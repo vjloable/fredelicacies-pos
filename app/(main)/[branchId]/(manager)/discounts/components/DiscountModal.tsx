@@ -128,7 +128,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         <h2 className="text-lg font-semibold mb-4">
         </h2>
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-(--light-accent) rounded-xl mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
             <DiscountsIcon className='text-accent'/>
           </div>
           <h3 className="text-lg font-bold text-secondary mb-2">
@@ -143,7 +143,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           {/* Discount Name */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-1">
-              Discount Name <span className="text-(--error)">*</span>
+              Discount Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -158,7 +158,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           {/* Type */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-1">
-              Discount Type <span className="text-(--error)">*</span>
+              Discount Type <span className="text-error">*</span>
             </label>
             <DropdownField
               options={["FIXED AMOUNT", "PERCENTAGE"]}
@@ -181,7 +181,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           {/* Status */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-1">
-              Status <span className="text-(--error)">*</span>
+              Status <span className="text-error">*</span>
             </label>
             <DropdownField
               options={["ACTIVE", "INACTIVE"]}
@@ -207,7 +207,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           {/* Value */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-1">
-              Discount Value <span className="text-(--error)">*</span>
+              Discount Value <span className="text-error">*</span>
             </label>
             <div className="relative">
               <input

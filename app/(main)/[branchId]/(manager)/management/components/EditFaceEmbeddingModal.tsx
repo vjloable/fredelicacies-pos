@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Worker } from "@/services/workerService";
 import { faceRecognitionService, FaceRecognitionResult } from "@/services/faceRecognitionService";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface EditFaceEmbeddingModalProps {
 	isOpen: boolean;
@@ -296,7 +297,7 @@ export default function EditFaceEmbeddingModal({
                     {checkingEmbedding ? (
                         <div className="text-center py-12">
                             <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent"></div>
+                                <LoadingSpinner size="lg" />
                             </div>
                             <h3 className="text-lg font-bold text-secondary mb-2">
                                 Checking Status...
@@ -348,7 +349,7 @@ export default function EditFaceEmbeddingModal({
                             <div className="text-center py-2">
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">
-                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-accent border-t-transparent" />
+                                        <LoadingSpinner />
                                         <span className="text-xs font-medium text-secondary">{status}</span>
                                     </div>
                                 ) : cameraError ? (
@@ -380,13 +381,13 @@ export default function EditFaceEmbeddingModal({
                         /* Status and Actions View */
                         <>
                             {/* Status Display */}
-                            <div className="mb-6 p-5 bg-(--success)/10 rounded-xl border border-(--success)">
+                            <div className="mb-6 p-5 bg-success/10 rounded-xl border border-success">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div
                                             className={`w-4 h-4 rounded-full ${
                                                 hasExistingEmbedding
-                                                    ? "bg-(--success) shadow-lg shadow-(--success)/50 animate-pulse"
+                                                    ? "bg-success shadow-lg shadow-success/50 animate-pulse"
                                                     : "bg-gray-300"
                                             }`}
                                         />
@@ -403,7 +404,7 @@ export default function EditFaceEmbeddingModal({
                                     </div>
                                     {hasExistingEmbedding && (
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs px-3 py-1.5 bg-(--success) text-white rounded-full font-semibold shadow-sm">
+                                            <span className="text-xs px-3 py-1.5 bg-success text-white rounded-full font-semibold shadow-sm">
                                                 Active
                                             </span>
                                         </div>
@@ -506,7 +507,7 @@ export default function EditFaceEmbeddingModal({
                                         <button
                                             onClick={handleDeleteEmbedding}
                                             disabled={isLoading}
-                                            className="w-full bg-(--error)/10 text-3 text-(--error) px-4 py-3.5 rounded-xl hover:bg-(--error)/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-(--error) hover:border-(--error)">
+                                            className="w-full bg-error/10 text-3 text-error px-4 py-3.5 rounded-xl hover:bg-error/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-2 border-error hover:border-error">
                                             <svg
                                                 className="w-5 h-5"
                                                 fill="none"

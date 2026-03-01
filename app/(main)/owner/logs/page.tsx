@@ -134,7 +134,7 @@ export default function LogsScreen() {
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>
 						<div className='flex items-center justify-center h-full'>
 							<div className='text-center max-w-md w-full'>
-								<div className='w-24 h-24 bg-(--light-accent) rounded-full mx-auto mb-4 flex items-center justify-center'>
+								<div className='w-24 h-24 bg-light-accent rounded-full mx-auto mb-4 flex items-center justify-center'>
 									<svg
 										className='w-12 h-12 text-accent'
 										fill='currentColor'

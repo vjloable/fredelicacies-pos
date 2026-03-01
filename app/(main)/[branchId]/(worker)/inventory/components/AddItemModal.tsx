@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { createInventoryItem } from '@/services/inventoryService';
 import type { Category, CreateInventoryItemData } from '@/types/domain';
@@ -116,23 +117,18 @@ export default function AddItemModal({
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
-          /* Loading Screen */
-          <div className="text-center py-8">
-            <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-dashed border-accent"></div>
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <LoadingSpinner size="lg" />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-secondary">"Adding Item..."</p>
+              <p className="text-xs text-secondary/50">Please wait</p>
             </div>
-            <h3 className="text-sm font-bold text-secondary mb-1">
-              Adding Item...
-            </h3>
-            <p className="text-xs text-secondary opacity-70">
-              Please wait
-            </p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
             <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-(--light-accent) rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <div className="w-10 h-10 bg-light-accent rounded-xl mx-auto mb-3 flex items-center justify-center">
                 <PlusIcon className='size-5 text-accent'/>
               </div>
               <h3 className="text-sm font-bold text-secondary mb-1">
@@ -149,7 +145,7 @@ export default function AddItemModal({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Item Name <span className="text-(--error)">*</span>
+                    Item Name <span className="text-error">*</span>
                   </label>
                   <input
                     type="text"
@@ -179,7 +175,7 @@ export default function AddItemModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Selling Price <span className="text-(--error)">*</span>
+                    Selling Price <span className="text-error">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
@@ -270,7 +266,7 @@ export default function AddItemModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Initial Stock <span className="text-(--error)">*</span>
+                    Initial Stock <span className="text-error">*</span>
                   </label>
                   <input
                     type="text"
@@ -310,7 +306,7 @@ export default function AddItemModal({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Category <span className="text-(--error)">*</span>
+                    Category <span className="text-error">*</span>
                   </label>
                   <DropdownField
                     options={categories.map(cat => cat.name)}
@@ -414,7 +410,7 @@ export default function AddItemModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
               >
                 Cancel
               </button>
@@ -434,7 +430,7 @@ export default function AddItemModal({
                   parseFloat(priceInput) > 0 &&
                   (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    : 'bg-gray-100 text-secondary/50 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
                 Add Item

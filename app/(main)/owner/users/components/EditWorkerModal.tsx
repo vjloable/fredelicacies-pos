@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Branch } from "@/services/branchService";
 import { workerService, Worker } from "@/services/workerService";
 import DropdownField from "@/components/DropdownField";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface EditWorkerModalProps {
 	isOpen: boolean;
@@ -356,7 +357,7 @@ export default function EditWorkerModal({
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
+							<LoadingSpinner size="lg" />
 						</div>
 						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Updating Worker...
@@ -397,10 +398,10 @@ export default function EditWorkerModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-r(--error)/5 border border-(--error)/20 rounded-lg'>
+							<div className='mb-6 p-4 bg-error/5 border border-error/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-(--error)/40 mr-2'
+										className='w-5 h-5 text-error/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -409,7 +410,7 @@ export default function EditWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--error) text-xs'>{error}</span>
+									<span className='text-error text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -420,7 +421,7 @@ export default function EditWorkerModal({
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
 									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Full Name <span className="text-(--error)">*</span>
+										Full Name <span className="text-error">*</span>
 									</label>
 									<input
 										type='text'
@@ -434,7 +435,7 @@ export default function EditWorkerModal({
 								</div>
 								<div>
 									<label className='block text-xs font-medium text-gray-700 mb-2'>
-										Email Address <span className="text-(--error)">*</span>
+										Email Address <span className="text-error">*</span>
 									</label>
 									<input
 										type='email'
@@ -498,7 +499,7 @@ export default function EditWorkerModal({
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
 										<label className='block text-xs font-medium text-gray-700 mb-2'>
-											Assign to Branch <span className="text-(--error)">*</span>
+											Assign to Branch <span className="text-error">*</span>
 										</label>
 										{!isOwner || availableBranches.length === 1 ? (
 											// For managers - show readonly branch name (no changes allowed)
@@ -545,7 +546,7 @@ export default function EditWorkerModal({
 									</div>
 									<div>
 										<label className='block text-xs font-medium text-gray-700 mb-2'>
-											Role <span className="text-(--error)">*</span>
+											Role <span className="text-error">*</span>
 										</label>
 										{isOwner && canDemoteWorker(worker) ? (
 											<DropdownField

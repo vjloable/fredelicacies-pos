@@ -3,6 +3,7 @@ import Image from "next/image";
 import { workerService, Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import DropdownField from "@/components/DropdownField";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AssignBranchModalProps {
 	isOpen: boolean;
@@ -123,7 +124,7 @@ export default function AssignBranchModal({
 			<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl'>
 					<div className='text-center py-8'>
-						<div className='w-16 h-16 mx-auto mb-4 bg-(--light-accent) rounded-full flex items-center justify-center'>
+						<div className='w-16 h-16 mx-auto mb-4 bg-light-accent rounded-full flex items-center justify-center'>
 							<svg
 								className='w-8 h-8 text-accent'
 								fill='none'
@@ -162,7 +163,7 @@ export default function AssignBranchModal({
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
+							<LoadingSpinner size="lg" />
 						</div>
 						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Updating Assignments...
@@ -176,7 +177,7 @@ export default function AssignBranchModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div className='flex items-center'>
-								<div className='w-12 h-12 bg-(--light-accent) rounded-full flex items-center justify-center mr-4'>
+								<div className='w-12 h-12 bg-light-accent rounded-full flex items-center justify-center mr-4'>
 									<svg
 										className='w-6 h-6 text-accent'
 										fill='none'
@@ -247,10 +248,10 @@ export default function AssignBranchModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-(--error)/5 border border-(--error)/20 rounded-lg'>
+							<div className='mb-6 p-4 bg-error/5 border border-error/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-(--error)/40 mr-2'
+										className='w-5 h-5 text-error/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -259,7 +260,7 @@ export default function AssignBranchModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--error) text-xs'>{error}</span>
+									<span className='text-error text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -271,7 +272,7 @@ export default function AssignBranchModal({
 									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Assign to Branch
 										{!worker.isOwner && (
-											<span className='text-(--error)/50 ml-1'>*</span>
+											<span className='text-error/50 ml-1'>*</span>
 										)}
 									</label>
 									{availableBranches.length === 0 ? (
@@ -317,7 +318,7 @@ export default function AssignBranchModal({
 									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Role
 										{!worker.isOwner && (
-											<span className='text-(--error)/50 ml-1'>*</span>
+											<span className='text-error/50 ml-1'>*</span>
 										)}
 									</label>
 									<DropdownField

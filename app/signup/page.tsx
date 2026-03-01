@@ -6,6 +6,7 @@ import { authService } from "@/services/authService";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface SignUpFormData {
   firstName: string;
@@ -278,7 +279,7 @@ export default function SignUpPage() {
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    <LoadingSpinner className="border-secondary/30" />
                     Creating account...
                   </div>
                 ) : (

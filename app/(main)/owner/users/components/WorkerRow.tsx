@@ -266,7 +266,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeIn(worker);
 								}}
-								className='text-(--success) hover:text-(--success)/60 p-1 rounded hover:bg-(--success)/10'
+								className='text-success hover:text-success/60 p-1 rounded hover:bg-success/10'
 								title='Time In'>
 								<TimeInIcon />
 							</button>
@@ -279,7 +279,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeOut(worker);
 								}}
-								className='text-(--error) hover:text-(--error)/60 p-1 rounded hover:bg-(--error)/10'
+								className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
 								title='Time Out'>
 								<TimeOutIcon />
 							</button>
@@ -331,7 +331,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onDelete(worker);
 							}}
-							className='text-(--error) hover:text-(--error)/60 p-1 rounded hover:bg-(--error)/10'
+							className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
 							title='Delete Worker'>
 							<DeleteIcon />
 						</button>

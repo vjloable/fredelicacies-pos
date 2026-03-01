@@ -7,6 +7,8 @@ export const calculateBundleAvailability = (
   bundle: BundleWithComponents,
   inventory: InventoryItem[]
 ): number => {
+  // Custom bundles: availability depends on what the customer picks, not pre-defined components
+  if (bundle.is_custom) return 999;
   if (!bundle.components || bundle.components.length === 0) return 0;
 
   const stockById = new Map(inventory.map((item) => [item.id, item.stock]));
@@ -32,13 +34,15 @@ export const createBundle = async (
     return { id: null, error };
   }
 
-  // Add components
-  const { error: componentsError } = await bundleRepository.addComponents(bundle.id, components);
+  // Custom bundles have no fixed components
+  if (!bundleData.is_custom && components.length > 0) {
+    const { error: componentsError } = await bundleRepository.addComponents(bundle.id, components);
 
-  if (componentsError) {
-    // Rollback: delete the bundle if components fail
-    await bundleRepository.delete(bundle.id);
-    return { id: null, error: componentsError };
+    if (componentsError) {
+      // Rollback: delete the bundle if components fail
+      await bundleRepository.delete(bundle.id);
+      return { id: null, error: componentsError };
+    }
   }
 
   await bundleRepository.triggerRefresh(branchId);

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 function LoginContent() {
 	const [credentials, setCredentials] = useState({
@@ -209,7 +210,7 @@ function LoginContent() {
 								<div className='bg-red-50 border border-red-200 rounded-xl p-3'>
 									<div className='flex items-center gap-2'>
 										<svg
-											className='w-5 h-5 text-(--error)'
+											className='w-5 h-5 text-error'
 											fill='currentColor'
 											viewBox='0 0 20 20'>
 											<path
@@ -218,7 +219,7 @@ function LoginContent() {
 												clipRule='evenodd'
 											/>
 										</svg>
-										<span className='text-xs text-(--error)'>{error}</span>
+										<span className='text-xs text-error'>{error}</span>
 									</div>
 								</div>
 							)}
@@ -234,7 +235,7 @@ function LoginContent() {
 								}`}>
 								{isLoading ? (
 									<div className='flex items-center justify-center gap-2'>
-										<div className='w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin'></div>
+										<LoadingSpinner className="border-secondary/30" />
 										Signing in...
 									</div>
 								) : (
@@ -272,7 +273,7 @@ export default function LoginPage() {
 	return (
 		<Suspense fallback={
 			<div className="min-h-screen flex items-center justify-center">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+				<LoadingSpinner size="lg" />
 			</div>
 		}>
 			<LoginContent />

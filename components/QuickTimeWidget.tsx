@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface QuickTimeWidgetProps {
 	currentBranchId?: string;
@@ -88,7 +89,7 @@ export default function QuickTimeWidget({
 				<div className='flex items-center space-x-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1'>
 					<div
 						className={`w-2 h-2 rounded-full ${
-							isWorking ? "bg-(--success) animate-pulse" : "bg-gray-300"
+							isWorking ? "bg-success animate-pulse" : "bg-gray-300"
 						}`}></div>
 					<span className='text-xs font-medium text-secondary'>
 						{isWorking ? formatWorkingTime() : "Off"}
@@ -111,7 +112,7 @@ export default function QuickTimeWidget({
 					title={isWorking ? "Clock Out" : "Clock In"}>
 					{loading || timeTracking.loading ? (
 						<>
-							<div className='animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent'></div>
+							<LoadingSpinner className="w-3! h-3! border-white" />
 							<span>{isWorking ? "Clocking Out..." : "Clocking In..."}</span>
 						</>
 					) : (
@@ -185,7 +186,7 @@ export default function QuickTimeWidget({
 					}`}>
 					{loading || timeTracking.loading ? (
 						<div className='flex items-center'>
-							<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent mr-2'></div>
+							<LoadingSpinner className="w-3! h-3! border-current mr-2" />
 							{isWorking ? "Clocking out..." : "Clocking in..."}
 						</div>
 					) : (

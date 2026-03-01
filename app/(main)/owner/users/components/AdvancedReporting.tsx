@@ -4,6 +4,7 @@ import { attendanceService, Attendance } from "@/services/attendanceService";
 import { useBranch } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
 import type { Branch } from "@/types/domain";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface ReportFilters {
 	dateRange: {
@@ -462,7 +463,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 					{loading ? (
 						<div className='bg-white rounded-lg shadow p-6'>
 							<div className='text-center py-8'>
-								<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+								<LoadingSpinner size="lg" className="mx-auto" />
 								<p className='text-gray-600 text-xs mt-2'>
 									Generating report...
 								</p>

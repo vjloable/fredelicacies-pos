@@ -40,7 +40,7 @@ export default function BranchSelector({
 				{showLabel && (
 					<span className='text-xs text-secondary/70'>Branch:</span>
 				)}
-				<span className='text-xs text-(--error)'>
+				<span className='text-xs text-error'>
 					No branches available
 				</span>
 			</div>

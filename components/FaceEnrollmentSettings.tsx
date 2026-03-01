@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { faceRecognitionService } from '@/services/faceRecognitionService';
 import FaceRecognitionCamera from '@/components/FaceRecognitionCamera';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function FaceEnrollmentSettings() {
 	const { user } = useAuth();
@@ -55,7 +56,7 @@ export default function FaceEnrollmentSettings() {
 		return (
 			<div className="bg-white rounded-lg border border-gray-200 p-6">
 				<div className="flex items-center justify-center py-8">
-					<div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+					<LoadingSpinner size="lg" />
 				</div>
 			</div>
 		);

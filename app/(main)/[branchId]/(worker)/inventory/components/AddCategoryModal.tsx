@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { createCategory } from '@/services/categoryService';
 
 interface AddCategoryModalProps {
@@ -58,16 +59,12 @@ export default function AddCategoryModal({
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
-          <div className="text-center py-8">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-dashed border-2 border-accent"></div>
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <LoadingSpinner size="lg" />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-secondary">Adding Category...</p>
+              <p className="text-xs text-secondary/50">Please wait</p>
             </div>
-            <h3 className="text-sm font-bold text-secondary mb-1">
-              Adding Category...
-            </h3>
-            <p className="text-xs text-secondary opacity-70">
-              Please wait
-            </p>
           </div>
         ) : (
           <>
@@ -89,14 +86,14 @@ export default function AddCategoryModal({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-secondary mb-2">
-                  Category Name <span className="text-(--error)">*</span>
+                  Category Name <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
                   onKeyDown={handleKeyDown}
-                  className="w-full px-3 py-2 h-9.5 text-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Enter category name"
                   autoFocus
                 />
@@ -111,14 +108,14 @@ export default function AddCategoryModal({
                     type="color"
                     value={newCategory.color}
                     onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                    className="w-12 h-9.5 border-2 p-1 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer"
+                    className="w-12 h-9.5 border-2 p-1 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer"
                   />
                   <div className="flex-1">
                     <input
                       type="text"
                       value={newCategory.color}
                       onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                      className="w-full px-3 py-2 h-9.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-xs"
+                      className="w-full px-3 py-2 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-xs"
                       placeholder="#3B82F6"
                     />
                   </div>
@@ -129,7 +126,7 @@ export default function AddCategoryModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
               >
                 Cancel
               </button>
@@ -147,7 +144,7 @@ export default function AddCategoryModal({
             </div>
           </>
         )}
-      </div>
+    </div>
     </div>
   );
 }

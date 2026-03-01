@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import { attendanceService } from "@/services/attendanceService";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface TimeInOutModalProps {
 	isOpen: boolean;
@@ -142,10 +143,7 @@ export default function TimeInOutModal({
 				{loading ? (
 					<div className='text-center py-8'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div
-								className={`animate-spin rounded-full h-10 w-10 border-4 border-dashed ${
-									isTimeIn ? "border-green-500" : "border-orange-500"
-								}`}></div>
+							<LoadingSpinner size="lg" className={isTimeIn ? "border-success" : "border-accent"} />
 						</div>
 						<h3 className='text-lg font-bold text-secondary mb-2'>
 							{isTimeIn ? "Clocking In..." : "Clocking Out..."}

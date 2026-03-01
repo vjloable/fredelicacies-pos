@@ -3,6 +3,7 @@ import { Branch } from "@/services/branchService";
 import { workerService } from "@/services/workerService";
 import { CreateWorkerRequest } from "@/types/WorkerTypes";
 import DropdownField from "@/components/DropdownField";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface CreateWorkerModalProps {
 	isOpen: boolean;
@@ -202,7 +203,7 @@ export default function CreateWorkerModal({
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-accent'></div>
+							<LoadingSpinner size="lg" />
 						</div>
 						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Creating Worker...
@@ -243,10 +244,10 @@ export default function CreateWorkerModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-(--error) border border-(--error)/20 rounded-lg'>
+							<div className='mb-6 p-4 bg-error border border-error/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-(--error)/40 mr-2'
+										className='w-5 h-5 text-error/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -266,7 +267,7 @@ export default function CreateWorkerModal({
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
 									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Full Name <span className="text-(--error)">*</span>
+										Full Name <span className="text-error">*</span>
 									</label>
 									<input
 										type='text'
@@ -280,7 +281,7 @@ export default function CreateWorkerModal({
 								</div>
 								<div>
 									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Email Address <span className="text-(--error)">*</span>
+										Email Address <span className="text-error">*</span>
 									</label>
 									<input
 										type='email'
@@ -297,7 +298,7 @@ export default function CreateWorkerModal({
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
 									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Password <span className="text-(--error)">*</span>
+										Password <span className="text-error">*</span>
 									</label>
 									<input
 										type='password'
@@ -360,7 +361,7 @@ export default function CreateWorkerModal({
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
 										<label className='block text-xs font-medium text-secondary/70 mb-2'>
-											Assign to Branch <span className="text-(--error)">*</span>
+											Assign to Branch <span className="text-error">*</span>
 										</label>
 										{availableBranches.length === 1 ? (
 											// For managers - show readonly branch name
@@ -405,7 +406,7 @@ export default function CreateWorkerModal({
 									</div>
 									<div>
 										<label className='block text-xs font-medium text-secondary/70 mb-2'>
-											Role <span className="text-(--error)">*</span>
+											Role <span className="text-error">*</span>
 										</label>
 										<DropdownField
 											options={["Worker", "Manager"]}

@@ -4,6 +4,7 @@ import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { branchService, Branch } from "@/services/branchService";
 import { workerService } from "@/services/workerService";
 import PinEntryModal from "@/components/PinEntryModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface POSTimeTrackingProps {
 	currentBranchId: string;
@@ -297,7 +298,7 @@ export default function POSTimeTracking({
 						className='w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
 						{loading || timeTracking.loading ? (
 							<div className='flex items-center'>
-								<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+								<LoadingSpinner className="border-white mr-2" />
 								Clocking In...
 								</div>
 							) : (
@@ -325,7 +326,7 @@ export default function POSTimeTracking({
 							className='w-full flex items-center justify-center px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
 							{loading || timeTracking.loading ? (
 								<div className='flex items-center'>
-									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+									<LoadingSpinner className="border-white mr-2" />
 									Clocking Out...
 								</div>
 							) : (

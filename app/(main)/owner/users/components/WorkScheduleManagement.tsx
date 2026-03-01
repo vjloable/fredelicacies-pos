@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Worker } from "@/services/workerService";
 import { attendanceService } from "@/services/attendanceService";
 import { useBranch } from "@/contexts/BranchContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface WorkScheduleTarget {
 	workerId: string;
@@ -252,7 +253,7 @@ export default function WorkScheduleManagement({
 
 				{loading ? (
 					<div className='p-8 text-center'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+						<LoadingSpinner size="lg" className="mx-auto" />
 						<p className='text-gray-600 text-xs mt-2'>
 							Loading schedule targets...
 						</p>

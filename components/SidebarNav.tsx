@@ -272,10 +272,10 @@ export default function SidebarNav() {
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
-								className='group flex w-full h-10 items-center text-3 text-(--error) hover:text-primary font-semibold bg-primary hover:bg-(--error) cursor-pointer transition-colors duration-100'>
+								className='group flex w-full h-10 items-center text-3 text-error hover:text-primary font-semibold bg-primary hover:bg-error cursor-pointer transition-colors duration-100'>
 								<div className='w-full flex items-center justify-start transition-all duration-100'>
 									<span className='size-8 mx-3'>
-										<LogoutIcon className='gap-3 text-(--error) group-hover:text-primary' />
+										<LogoutIcon className='gap-3 text-error group-hover:text-primary' />
 									</span>
 									<span className='w-0 visible lg:w-auto opacity-100 transition-all duration-100 '>
 										{"Logout"}

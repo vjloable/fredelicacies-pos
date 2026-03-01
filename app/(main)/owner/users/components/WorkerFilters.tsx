@@ -6,6 +6,7 @@ import {
 } from "@/types/WorkerTypes";
 import SearchIcon from "@/app/(main)/[branchId]/(worker)/store/icons/SearchIcon";
 import DropdownField from "@/components/DropdownField";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface WorkerFiltersProps {
 	filters: WorkerFiltersType;
@@ -76,9 +77,9 @@ export default function WorkerFilters({
 					/>
 					<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
 						{localFilters.searchQuery ? (
-							<div className='size-7.5 border-accent border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
+							<LoadingSpinner size="lg" />
 						) : (
-							<div className='size-7.5 bg-(--light-accent) rounded-full flex items-center justify-center'>
+							<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
 								<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
 							</div>
 						)}
@@ -157,7 +158,7 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-xs text-primary hover:text-primary bg-(--error)/50 hover:bg-(--error) rounded-lg transition-colors'>
+						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-xs text-primary hover:text-primary bg-error/50 hover:bg-error rounded-lg transition-colors'>
 						Clear
 					</button>
 				)}

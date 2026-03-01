@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
 import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
@@ -133,18 +134,14 @@ export default function EditItemModal({
         className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Loading Screen */}
         {loading ? (
-          /* Loading Screen */
-          <div className="text-center py-8">
-            <div className="w-10 h-10 bg-transparent rounded-xl mx-auto mb-3 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-3 border-dashed border-accent"></div>
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <LoadingSpinner size="lg" />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-secondary">{showDeleteConfirm ? 'Removing Item...' : 'Updating Item...'}</p>
+              <p className="text-xs text-secondary/50">Please wait</p>
             </div>
-            <h3 className="text-sm font-bold text-secondary mb-1">
-              {showDeleteConfirm ? 'Removing Item...' : 'Updating Item...'}
-            </h3>
-            <p className="text-xs text-secondary opacity-70">
-              Please wait
-            </p>
           </div>
         ) : (
           <>
@@ -178,7 +175,7 @@ export default function EditItemModal({
           {/* Item Name */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
-              Item Name <span className='text-(--error)'>*</span>
+              Item Name <span className='text-error'>*</span>
             </label>
             <input
               type="text"
@@ -192,7 +189,7 @@ export default function EditItemModal({
           {/* Category */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
-              Category <span className='text-(--error)'>*</span>
+              Category <span className='text-error'>*</span>
             </label>
             <DropdownField
               options={categories.map((category) => category.name)}
@@ -228,7 +225,7 @@ export default function EditItemModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-secondary mb-2">
-                Selling Price <span className='text-(--error)'>*</span>
+                Selling Price <span className='text-error'>*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
@@ -331,7 +328,7 @@ export default function EditItemModal({
                     <button
                       key={`remove-${amount}`}
                       onClick={() => setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)})}
-                      className="py-1 px-2 bg-(--error)/10 hover:bg-(--error)/20 border border-(--error) text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
+                      className="py-1 px-2 bg-error/10 hover:bg-error/20 border border-error text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
                     >
                       -{amount}
                     </button>
@@ -354,7 +351,7 @@ export default function EditItemModal({
                     <button
                       key={`add-${amount}`}
                       onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
-                      className="py-1 px-2 bg-(--success)/10 border border-(--success) hover:bg-(--success)/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
+                      className="py-1 px-2 bg-success/10 border border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
                     >
                       +{amount}
                     </button>
@@ -417,7 +414,7 @@ export default function EditItemModal({
                       if (input) input.value = '';
                     }
                   }}
-                  className="flex-1 py-1.5 h-9.5 bg-(--success)/10 border border-(--success) hover:bg-(--success)/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
+                  className="flex-1 py-1.5 h-9.5 bg-success/10 border border-success hover:bg-success/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
                 >
                   Add
                 </button>
@@ -430,7 +427,7 @@ export default function EditItemModal({
                       if (input) input.value = '';
                     }
                   }}
-                  className="flex-1 py-1.5 h-9.5 bg-(--error)/10 border border-(--error) hover:bg-(--error)/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
+                  className="flex-1 py-1.5 h-9.5 bg-error/10 border border-error hover:bg-error/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
                 >
                   Remove
                 </button>
@@ -444,13 +441,13 @@ export default function EditItemModal({
         <div className="flex gap-3 mt-5">
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="flex-1 py-2 bg-(--error)/10 hover:bg-(--error)/40 text-(--error) rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             Remove
           </button>
           <button
             onClick={closeModal}
-            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
           >
             Cancel
           </button>
@@ -470,7 +467,7 @@ export default function EditItemModal({
               parseFloat(priceInput) > 0 &&
               (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
                 ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                : 'bg-secondary/20 text-secondary/40 hover:scale-100 cursor-not-allowed'
+                : 'bg-gray-100 text-secondary/50 hover:scale-100 cursor-not-allowed'
             }`}
           >
             Save
@@ -480,10 +477,10 @@ export default function EditItemModal({
         {/* Delete Confirmation Dialog */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center">
-                <div className="w-16 h-16 bg-(--error)/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-(--error)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-error/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </div>
@@ -502,7 +499,7 @@ export default function EditItemModal({
                   </button>
                   <button
                     onClick={() => handleDeleteItem(localEditingItem.id)}
-                    className="flex-1 py-3 bg-(--error) hover:bg-(--error)/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
                   >
                     Remove
                   </button>

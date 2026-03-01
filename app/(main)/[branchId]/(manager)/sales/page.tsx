@@ -387,9 +387,9 @@ export default function SalesScreen() {
 													/>
 													<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
 														{searchTerm ? (
-															<div className='size-7.5 border-accent border-y-2 rounded-full flex items-center justify-center animate-spin'></div>
+															<LoadingSpinner size="lg" />
 														) : (
-															<div className='size-7.5 bg-(--light-accent) rounded-full flex items-center justify-center'>
+															<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
 																<SearchIcon className='mr-0.5 mb-0.5' />
 															</div>
 														)}
@@ -513,7 +513,7 @@ export default function SalesScreen() {
 
 								{currentOrders.length === 0 && (
 									<div className='text-center py-12'>
-										<div className='w-16 h-16 mx-auto mb-4 bg-(--light-accent) text-accent rounded-full flex items-center justify-center'>
+										<div className='w-16 h-16 mx-auto mb-4 bg-light-accent text-accent rounded-full flex items-center justify-center'>
 											<svg width="27" height="25" viewBox="0 0 27 25" fill="none">
 												<path d="M20.0458 4.43883V4.82573L23.9231 2.58713C23.8343 2.28661 23.6997 2.00575 23.5273 1.75262C22.9874 0.959672 22.0773 0.438915 21.0458 0.438831H5.65318C3.99633 0.438831 2.65318 1.78198 2.65318 3.43883V13.8043V14.8673L6.65318 12.5579V4.43883H10.6661V4.98809C10.6661 5.54038 11.1138 5.98809 11.6661 5.98809H15.0329C15.5852 5.98809 16.0329 5.54038 16.0329 4.98809V4.43883H20.0458Z" fill="currentColor"/>
 												<path d="M13.6701 8.5067H8.06559V9.54685H11.8685L13.6701 8.5067Z" fill="currentColor"/>
@@ -642,8 +642,8 @@ export default function SalesScreen() {
                     <div className='text-left lg:text-right'>
                       <p className='text-xs text-gray-400'>Live Data</p>
                       <span className='flex items-center lg:justify-end'>
-                        <div className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
-                        <p className='ml-2 text-xs text-(--success) drop-shadow-md'>
+                        <LoadingSpinner className="w-3! h-3! border-success bg-success/20 shadow-sm" />
+                        <p className='ml-2 text-xs text-success drop-shadow-md'>
                           Real-time ({allOrders.length} orders)
                         </p>
                       </span>
@@ -669,7 +669,7 @@ export default function SalesScreen() {
                           <span className='font-semibold'>{formatCurrency(currentPeriodStats.totalRevenue).slice(1)}</span>
                         </p>
                       </div>
-                      <div className='w-12 h-12 bg-(--light-accent) rounded-lg flex items-center justify-center'>
+                      <div className='w-12 h-12 bg-light-accent rounded-lg flex items-center justify-center'>
                         <svg
                           className='w-6 h-6 text-accent'
                           fill='currentColor'
@@ -698,7 +698,7 @@ export default function SalesScreen() {
                           {currentPeriodStats.totalOrders}
                         </p>
                       </div>
-                      <div className='w-12 h-12 bg-(--light-accent) rounded-lg flex items-center justify-center'>
+                      <div className='w-12 h-12 bg-light-accent rounded-lg flex items-center justify-center'>
                         <svg
                           className='w-6 h-6 text-accent'
                           fill='currentColor'
@@ -734,7 +734,7 @@ export default function SalesScreen() {
                             : "--"}
                         </p>
                       </div>
-                      <div className='w-12 h-12 bg-(--light-accent) rounded-lg flex items-center justify-center'>
+                      <div className='w-12 h-12 bg-light-accent rounded-lg flex items-center justify-center'>
                         <svg
                           className='w-6 h-6 text-accent'
                           fill='currentColor'

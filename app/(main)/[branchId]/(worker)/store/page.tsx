@@ -30,6 +30,7 @@ import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingContext";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 
 // Toast notification component
 const SuccessToast = ({
@@ -55,7 +56,7 @@ const SuccessToast = ({
 
 	return (
 		<div className='fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300'>
-			<div className='bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-75'>
+			<div className='bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 min-w-75'>
 				{/* Success Icon */}
 				<div className='shrink-0'>
 					<svg
@@ -81,7 +82,7 @@ const SuccessToast = ({
 				{/* Close Button */}
 				<button
 					onClick={onClose}
-					className='shrink-0 text-white hover:text-gray-200 transition-colors'>
+					className='shrink-0 text-white hover:text-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 					<svg
 						className='w-5 h-5'
 						fill='none'
@@ -127,10 +128,11 @@ export default function StoreScreen() {
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
-	const [isCustomBundleModalOpen, setIsCustomBundleModalOpen] = useState(false);
+	const [customBundleTarget, setCustomBundleTarget] = useState<BundleWithComponents | null>(null);
 	const [cart, setCart] = useState<
 		Array<{
 			id: string;
+			bundleId?: string;
 			name: string;
 			price: number;
 			cost?: number;
@@ -139,9 +141,16 @@ export default function StoreScreen() {
 			imgUrl?: string | null;
 			categoryId: number | string;
 			type?: 'item' | 'bundle';
+			is_custom?: boolean;
 			components?: BundleComponent[];
 		}>
 	>([]);
+	const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
+	const toggleBundle = (id: string) => setExpandedBundles(prev => {
+		const next = new Set(prev);
+		next.has(id) ? next.delete(id) : next.add(id);
+		return next;
+	});
 
 	// Ensure we're on the client before running data subscriptions
 	useEffect(() => {
@@ -297,6 +306,8 @@ export default function StoreScreen() {
 		components?: BundleComponent[];
 		category_id?: string | number;
 		description?: string | null;
+		is_custom?: boolean;
+		max_pieces?: number | null;
 	};
 
 	const displayItems: DisplayItem[] = useMemo(() => {
@@ -316,7 +327,9 @@ export default function StoreScreen() {
 				description: bundle.description,
 				type: 'bundle' as const,
 				availability: bundleAvailability.get(bundle.id) || 0,
-				components: bundle.components
+				components: bundle.components,
+				is_custom: bundle.is_custom,
+				max_pieces: bundle.max_pieces,
 			}))
 			.filter(bundle => {
 				// Apply search filter
@@ -334,6 +347,28 @@ export default function StoreScreen() {
 		return [...items, ...bundleItems];
 	}, [filteredItems, bundles, bundleAvailability, searchQuery, hideOutOfStock]);
 
+	// Group displayItems by category for sectioned rendering
+	const groupedItems = useMemo(() => {
+		const categoryMap = new Map<string, DisplayItem[]>();
+		displayItems.forEach(item => {
+			const key = item.type === 'bundle'
+				? '__bundles__'
+				: (item.category_id ? String(item.category_id) : '__uncategorized__');
+			if (!categoryMap.has(key)) categoryMap.set(key, []);
+			categoryMap.get(key)!.push(item);
+		});
+		const groups: { id: string; name: string; color: string; items: DisplayItem[] }[] = [];
+		categories.forEach(cat => {
+			const items = categoryMap.get(String(cat.id)) || [];
+			if (items.length > 0) groups.push({ id: String(cat.id), name: cat.name, color: cat.color?.trim() || '#9CA3AF', items });
+		});
+		const uncategorized = categoryMap.get('__uncategorized__') || [];
+		if (uncategorized.length > 0) groups.push({ id: '__uncategorized__', name: 'Uncategorized', color: '#9CA3AF', items: uncategorized });
+		const bundleItems = categoryMap.get('__bundles__') || [];
+		if (bundleItems.length > 0) groups.push({ id: '__bundles__', name: 'Bundles', color: '#F59E0B', items: bundleItems });
+		return groups;
+	}, [displayItems, categories]);
+
 	// Determine if we're showing search results
 	const isSearching = searchQuery.trim() !== "";
 
@@ -349,7 +384,7 @@ export default function StoreScreen() {
 
 		return parts.map((part, index) =>
 			regex.test(part) ? (
-				<span key={index} className='bg-(--light-accent) font-semibold'>
+				<span key={index} className='bg-light-accent font-semibold'>
 					{part}
 				</span>
 			) : (
@@ -373,6 +408,14 @@ export default function StoreScreen() {
 
 	const addToCart = (item: DisplayItem) => {
 		const isBundle = item.type === 'bundle';
+
+		// Custom bundles: always open the picker modal, never add directly
+		if (isBundle && item.is_custom) {
+			const fullBundle = bundles.find(b => b.id === item.id);
+			if (fullBundle) setCustomBundleTarget(fullBundle);
+			return;
+		}
+
 		const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
 
 		if (availableStock <= 0) return;
@@ -424,6 +467,33 @@ export default function StoreScreen() {
 				]);
 			}
 		}
+	};
+
+	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[]) => {
+		const cost = selections.reduce((s, p) => s + p.cost, 0);
+		const components: BundleComponent[] = selections.map(p => ({
+			id: '',
+			bundle_id: bundle.id,
+			inventory_item_id: p.inventoryItemId,
+			quantity: p.quantity,
+			created_at: '',
+			inventory_item: p.item,
+		}));
+		setCart(prev => [...prev, {
+			id: `${bundle.id}_custom_${Date.now()}`,
+			bundleId: bundle.id,
+			name: bundle.name,
+			price: bundle.price,
+			cost,
+			quantity: 1,
+			originalStock: 999,
+			imgUrl: bundle.img_url ?? undefined,
+			categoryId: 0,
+			type: 'bundle',
+			is_custom: true,
+			components,
+		}]);
+		setCustomBundleTarget(null);
 	};
 
 	const subtotal = cart.reduce(
@@ -514,6 +584,7 @@ export default function StoreScreen() {
 				user.id,
 				cart.map((item) => ({
 					id: item.id,
+					bundleId: item.bundleId,
 					name: item.name,
 					price: item.price,
 					cost: item.cost || 0,
@@ -626,22 +697,22 @@ export default function StoreScreen() {
 				</div>{" "}
 
 				{/* Search Section - Fixed */}
-				<div className={`px-6 py-4 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='relative'>
 						<input
 							type='text'
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder='Search items, categories, or descriptions...'
-							className={`w-full text-3 px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+							className={`w-full text-3 px-4 py-3 pr-12 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 								searchQuery ? "animate-pulse transition-all" : ""
 							}`}
 						/>
 						<div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
 							{searchQuery ? (
-								<div className='size-7.5 border-accent border-2 border-dashed rounded-full flex items-center justify-center animate-spin'></div>
+								<LoadingSpinner size="lg" />
 							) : (
-								<div className='size-7.5 bg-(--light-accent) rounded-full flex items-center justify-center'>
+								<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
 									<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
 								</div>
 							)}
@@ -650,7 +721,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Results Header - Fixed */}
-				<div className={`flex items-center justify-between px-6 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='flex flex-col'>
 						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
@@ -664,31 +735,24 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Category Selector - Fixed */}
-				<div className={`px-6 py-2 flex gap-2 overflow-x-auto flex-wrap ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					{displayCategories.map((category) => (
 						<button
 							key={category.id}
 							onClick={() => toggleCategory(category.name)}
-							className={`px-4 py-2 rounded-lg font-medium text-3 whitespace-nowrap transition-all ${
+							className={`px-3 py-1 rounded-lg font-medium text-3 whitespace-nowrap transition-all ${
 								isCategorySelected(category.name)
-									? `${
-											!category.isSpecial
-												? "bg-secondary/20"
-												: "bg-accent"
-										} text-secondary shadow-none`
-									: "bg-white text-secondary hover:bg-gray-200 shadow-md"
+									? !category.isSpecial
+										? "bg-secondary/20 text-secondary shadow-none"
+										: "bg-accent text-primary shadow-none"
+									: "bg-white text-secondary hover:bg-gray-200"
 							}`}>
-							<div>
-								{!category.isSpecial && <span className="h-1 w-1 px-2 rounded-full mr-2" style={{backgroundColor: getCategoryColor(category.id)}}/>}
+							<div className="flex items-center">
+								{!category.isSpecial && <span className="w-2 h-2 rounded-full shrink-0 mr-1.5" style={{backgroundColor: getCategoryColor(category.id)}}/>}
 								{category.name}
 								{!category.isSpecial && (
-									<span className='ml-2 text-xs px-2 py-1 h-1 w-1 rounded-full bg-secondary/10 text-secondary/50'>
-										{
-											inventoryItems.filter(
-												(item) =>
-													getCategoryName(item.category_id) === category.name
-											).length
-										}
+									<span className='ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-secondary/10 text-secondary/50 text-[9px] font-medium'>
+										{inventoryItems.filter((item) => getCategoryName(item.category_id) === category.name).length}
 									</span>
 								)}
 							</div>
@@ -697,7 +761,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Menu Items - Scrollable */}
-				<div className={`flex-1 overflow-y-auto px-6 py-6 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 					{loading ? (
 						<div className='flex flex-col items-center justify-center py-8 gap-4'>
 							<LoadingSpinner size="lg"/>
@@ -708,20 +772,20 @@ export default function StoreScreen() {
 					) : inventoryItems.length === 0 ? (
 						// Empty Inventory Collection State
 						<div className='flex flex-col items-center justify-center py-12'>
-							<div className='w-90 mb-6 pr-12.5 mx-auto opacity-50 flex items-center justify-center'>
+							<div className='w-90 mb-4 pr-12.5 mx-auto opacity-50 flex items-center justify-center'>
 								<EmptyStoreIllustration />
 							</div>
 							<h3 className='text-lg font-semibold text-secondary mb-3'>
 								The store front is empty
 							</h3>
-							<p className='text-secondary opacity-70 text-center max-w-md mb-6 leading-relaxed'>
+							<p className='text-secondary opacity-70 text-center max-w-md mb-4 leading-relaxed'>
 								The inventory is empty. You need to add items to your
 								inventory before they can appear in the store.
 							</p>
 							<div className='flex flex-col sm:flex-row gap-3 mb-25'>
 								<button
 									onClick={() => (window.location.href = "/inventory")}
-									className='px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-all font-medium shadow-md'>
+									className='px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-all font-medium'>
 									Go to Inventory
 								</button>
 							</div>
@@ -729,7 +793,7 @@ export default function StoreScreen() {
 					) : displayItems.length === 0 ? (
 						// Filtered Results Empty State
 						<div className='flex flex-col items-center justify-center py-12'>
-							<div className='w-16 h-16 bg-(--light-accent) rounded-full flex items-center justify-center mb-4'>
+							<div className='w-16 h-16 bg-light-accent rounded-full flex items-center justify-center mb-4'>
 								{isSearching ? (
 									<svg
 										className='w-8 h-8 text-accent'
@@ -775,115 +839,99 @@ export default function StoreScreen() {
 							)}
 						</div>
 					) : (
-						<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 justify-center gap-6'>
-							{displayItems.map((item, index) => {
-								const isBundle = item.type === 'bundle';
-								const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
-								const isOutOfStock = availableStock <= 0;
-								const cartItem = cart.find(
-									(cartItem) => cartItem.id === item.id && (cartItem.type || 'item') === item.type
-								);
-								const inCartQuantity = cartItem ? cartItem.quantity : 0;
+					<div className='space-y-4'>
+						{groupedItems.map(group => (
+							<div key={group.id}>
+								<div className='flex items-center gap-2 mb-2'>
+									<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
+									<span className='text-2.5 font-bold text-secondary/60 uppercase tracking-widest'>{group.name}</span>
+									<span className='inline-flex items-center justify-center w-4 h-4 rounded-full bg-secondary/10 text-secondary/40 text-[9px] font-medium'>{group.items.length}</span>
+								</div>
+								<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
+									{group.items.map((item, index) => {
+										const isBundle = item.type === 'bundle';
+										const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
+										const isOutOfStock = availableStock <= 0;
+										const cartItem = cart.find(
+											(cartItem) => cartItem.id === item.id && (cartItem.type || 'item') === item.type
+										);
+										const inCartQuantity = cartItem ? cartItem.quantity : 0;
+										const stockColor = availableStock > 10
+											? 'bg-green-50 text-green-600'
+											: availableStock > 5
+											? 'bg-bundle/10 text-bundle'
+											: 'bg-orange-50 text-orange-600';
 
-								return (
-									<div
-										key={item.id || index}
-										onClick={() => !isOutOfStock && addToCart(item)}
-										className={`
-										group bg-primary rounded-lg cursor-pointer shadow-md min-w-50
-										hover:shadow-none hover:bg-accent/10 border-primary border-2 hover:border-accent transition-all duration-300
-										${
-											isOutOfStock
-												? "opacity-50 cursor-not-allowed"
-												: "border-gray-200 hover:border-accent"
-										}
-									`}>
-										{/* Item Image Placeholder */}
-										<div className='w-full h-36 bg-[#F7F7F7] rounded-t-lg mb-2 relative overflow-hidden group-hover:bg-accent/40 transition-all duration-300'>
-											{item.img_url ? (
-												<SafeImage
-													src={item.img_url}
-													alt={item.name}
-													className=''
-												/>
-											) : (
-												<div className='w-full h-full flex items-center justify-center'>
-													<LogoIcon className='w-12 h-16 opacity-25' />
-												</div>
-											)}
+										return (
+											<div
+												key={item.id || index}
+												onClick={() => !isOutOfStock && addToCart(item)}
+												className={`group bg-primary rounded-xl border-2 overflow-hidden transition-all duration-200
+													${isOutOfStock
+														? 'opacity-50 cursor-not-allowed border-gray-100'
+														: 'cursor-pointer border-gray-200 hover:border-accent hover:shadow-md active:scale-95'
+													}`}>
 
-											{/* Bundle Badge */}
-											{isBundle && (
-												<div className='absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium select-none'>
-													Bundle
-												</div>
-											)}
+												{/* Image */}
+												<div className='relative w-full h-24 bg-gray-50 overflow-hidden group-hover:bg-accent/10 transition-all duration-200'>
+													{item.img_url ? (
+														<SafeImage src={item.img_url} alt={item.name} className='' />
+													) : (
+														<div className='w-full h-full flex items-center justify-center'>
+															<LogoIcon className='w-8 h-10 opacity-20' />
+														</div>
+													)}
 
-											{/* Stock indicator badges */}
-											{isOutOfStock && (
-												<div className='absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg'>
-													<span className='text-white text-xs sm:text-xs font-semibold select-none'>
-														{isBundle ? 'UNAVAILABLE' : 'OUT OF STOCK'}
-													</span>
-												</div>
-											)}
-											{!isOutOfStock && !isBundle && availableStock <= 5 && (
-												<div className='absolute top-2 right-2 bg-accent/50 text-secondary/50 text-xs px-2 py-1 rounded select-none'>
-													Low Stock
-												</div>
-											)}
-											{inCartQuantity > 0 && (
-												<div className='absolute top-2 left-2 bg-accent/50 text-secondary/50 text-xs px-2 py-1 rounded flex items-center gap-1'>
-													<svg
-														className='w-3 h-3'
-														fill='currentColor'
-														viewBox='0 0 20 20'>
-														<path d='M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' />
-													</svg>
-													{inCartQuantity}
-												</div>
-											)}
-											{!isBundle && (
-												<div className='absolute bottom-2 left-2 rounded select-none'>
-													<span
-														className={`text-2.25 sm:text-2.5 text-primary bg-white px-2 py-1 rounded-full truncate max-w-[60%]`}
-														style={{
-															backgroundColor: getCategoryColor(item.category_id),
-														}}>
-														{isSearching
-															? highlightSearchTerm(
-																	getCategoryName(item.category_id),
-																	searchQuery
-															)
-															: getCategoryName(item.category_id)}
-													</span>
-												</div>
-											)}
-											{isBundle && (
-												<div className='absolute bottom-2 left-2 rounded select-none'>
-													<span className='text-2.25 sm:text-2.5 text-white bg-amber-500 px-2 py-1 rounded-full'>
-														Available: {availableStock}
-													</span>
-												</div>
-											)}
-										</div>
+													{/* Cart quantity bubble */}
+													{inCartQuantity > 0 && (
+														<div className='absolute top-1.5 right-1.5 bg-accent text-primary text-2.5 min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-bold select-none'>
+															{inCartQuantity}
+														</div>
+													)}
 
-										{/* Item Details */}
-										<div className='flex items-center justify-between mb-1 gap-2 pb-2 px-2'>
-											<h3 className='font-semibold text-secondary truncate text-xs sm:text-xs'>
-												{isSearching
-													? highlightSearchTerm(item.name, searchQuery)
-													: item.name}
-											</h3>
+													{/* Out of stock overlay */}
+													{isOutOfStock && (
+														<div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
+															<span className='text-white text-2.5 font-bold select-none tracking-wide uppercase'>
+																{isBundle ? 'Unavailable' : 'Out of Stock'}
+															</span>
+														</div>
+													)}
+												</div>
 
-											<span className='font-regular text-secondary text-xs sm:text-xs whitespace-nowrap'>
-												{formatCurrency(item.price)}
-											</span>
-										</div>
-									</div>
-								);
-							})}
-						</div>
+												{/* Info */}
+												<div className='px-1.5 py-1'>
+													<p className='font-semibold text-secondary text-xs leading-snug line-clamp-2'>
+														{isSearching ? highlightSearchTerm(item.name, searchQuery) : item.name}
+													</p>
+													{!isBundle && item.category_id && (
+														<div className='flex items-center gap-1 mt-0.5'>
+															<span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: getCategoryColor(item.category_id) }} />
+															<span className='text-xs text-secondary/30 truncate select-none'>{getCategoryName(item.category_id)}</span>
+														</div>
+													)}
+													<div className='flex items-center justify-between gap-1 mt-1'>
+														<span className='text-accent font-bold text-xs'>
+															{formatCurrency(item.price)}
+														</span>
+														{isBundle && item.is_custom ? (
+															<span className='text-xs font-medium px-1.5 py-0.5 rounded select-none bg-bundle/10 text-bundle'>
+																Mix & Match
+															</span>
+														) : !isOutOfStock && (
+															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${stockColor}`}>
+																{availableStock} left
+															</span>
+														)}
+													</div>
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						))}
+					</div>
 					)}
 				</div>
 			</div>
@@ -908,7 +956,7 @@ export default function StoreScreen() {
 							animate={{ x: 0 }}
 							exit={{ x: "100%" }}
 							transition={{ type: "spring", damping: 50, stiffness: 300 }}
-							className='absolute top-0 right-0 bottom-0 w-full bg-primary flex flex-col shadow-2xl'>
+							className='absolute top-0 right-0 bottom-0 w-full bg-primary flex flex-col border-l border-gray-200'>
 							{/* Header with Close Button */}
 							<div className='shrink-0 flex items-center justify-between p-4 border-b-2 border-accent'>
 								<h2 className='text-lg font-bold text-secondary'>
@@ -916,7 +964,7 @@ export default function StoreScreen() {
 								</h2>
 								<button
 									onClick={() => setShowOrderMenu(false)}
-									className='w-10 h-10 flex items-center justify-center bg-(--light-accent) rounded-full hover:bg-accent transition-all'>
+									className='w-10 h-10 flex items-center justify-center bg-light-accent rounded-full hover:bg-accent transition-all'>
 									<svg
 										className='w-6 h-6 text-secondary'
 										fill='none'
@@ -933,7 +981,7 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Type Dropdown */}
-							<div className='shrink-0 h-16 p-3 border-b-2 border-accent'>
+							<div className='shrink-0 h-12 p-2 border-b border-gray-100'>
 								<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
 									<DropdownField
 										options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
@@ -955,13 +1003,13 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Cart Items - Scrollable */}
-							<div className='flex-1 overflow-y-auto px-3 p-6'>
+							<div className='flex-1 overflow-y-auto px-3 py-3'>
 								{cart.length === 0 ? (
-									<div className='flex flex-col items-center justify-center h-full py-12'>
-										<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
+									<div className='flex flex-col items-center justify-center h-full py-6'>
+										<div className='w-24 h-20 flex items-center justify-center mb-3 opacity-40'>
 											<EmptyOrderIllustration />
 										</div>
-										<h3 className='text-base font-medium text-secondary mb-2 select-none'>
+										<h3 className='text-sm font-medium text-secondary mb-1 select-none'>
 											Order List is Empty
 										</h3>
 										<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-xs leading-relaxed select-none'>
@@ -992,9 +1040,9 @@ export default function StoreScreen() {
 													}}
 													layout
 													layoutId={`mobile-cart-item-${item.id}`}
-													className='flex flex-col items-center justify-around w-full h-32 bg-white overflow-hidden'>
-													<div className='flex flex-row items-center gap-3 w-full h-25'>
-														<div className='flex-none w-25.5 h-25 bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+													className='flex flex-col w-full bg-white py-1.5'>
+													<div className='flex flex-row items-start gap-3 w-full'>
+														<div className='flex-none w-14 h-14 bg-gray-100 rounded-md relative overflow-hidden'>
 															{item.imgUrl ? (
 																<SafeImage
 																	src={item.imgUrl}
@@ -1008,27 +1056,32 @@ export default function StoreScreen() {
 															)}
 														</div>
 
-														<div className='flex flex-col items-start gap-3 w-full h-25 grow'>
-															<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
-																<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
-																	<span className="font-normal text-sm leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
+														<div className='flex flex-col items-start gap-1 w-full grow'>
+															<div className='flex flex-col items-start gap-1 w-full grow'>
+																<div className='flex flex-row items-center justify-between gap-2 w-full'>
+																	<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
 																		{item.name}
 																	</span>
+																	{item.is_custom && (
+																		<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
+																	)}
 																</div>
-																<div className='flex flex-row items-center justify-between w-full h-5.25'>
+																<div className='flex flex-row items-center justify-between w-full'>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
 																			{formatCurrency(item.price)}
 																		</span>
-																		<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
+																		{!item.is_custom && (
+																		<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-poppins bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
 																			×{item.quantity}
 																		</span>
+																		)}
 																	</span>
 																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
 																			=
 																		</span>
-																		<span className="font-bold text-xs leading-5.25 text-secondary font-['Poppins']">
+																		<span className="font-bold text-xs leading-5.25 text-secondary font-poppins">
 																			{formatCurrency(
 																				item.price * item.quantity
 																			)}
@@ -1038,26 +1091,30 @@ export default function StoreScreen() {
 
 																{/* Bundle Component Details */}
 																{item.type === 'bundle' && item.components && (
-																	<div className='mt-1 p-2 bg-amber-50 rounded-lg border border-amber-200'>
-																		<div className='text-xs font-medium text-amber-800 mb-1'>Bundle includes:</div>
-																		<div className='space-y-0.5'>
-																			{item.components.map((comp) => (
-																				<div key={comp.id} className='flex justify-between text-xs text-gray-600'>
-																					<span className='truncate flex-1'>
-																						{comp.inventory_item?.name || 'Item'}
+																	<div className='mt-1'>
+																		<button
+																			onClick={(e) => { e.stopPropagation(); toggleBundle(item.id); }}
+																			className='flex items-center gap-1 text-xs text-bundle font-medium hover:text-bundle transition-colors'>
+																				<span>{item.components.length} item{item.components.length !== 1 ? 's' : ''}</span>
+																				<svg className={`w-3 h-3 transition-transform ${expandedBundles.has(item.id) ? 'rotate-180' : ''}`} viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5'><path d='M2 4l4 4 4-4'/></svg>
+																		</button>
+																		{expandedBundles.has(item.id) && (
+																			<div className='flex flex-wrap gap-1 mt-1'>
+																				{item.components.map((comp) => (
+																					<span key={comp.id || comp.inventory_item_id} className='inline-flex items-center gap-0.5 bg-bundle/10 border border-bundle/40 text-bundle text-xs font-medium px-1 py-0.5 rounded'>
+																						<span>{comp.inventory_item?.name || 'Item'}</span>
+																						<span className='shrink-0 opacity-60'>×{comp.quantity}</span>
 																					</span>
-																					<span className='text-amber-600 font-medium ml-2'>
-																						×{comp.quantity}
-																					</span>
-																				</div>
-																			))}
-																		</div>
+																				))}
+																			</div>
+																		)}
 																	</div>
 																)}
 															</div>
 
+															{!item.is_custom && (
 															<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
-																<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-(--light-accent) rounded-3xl'>
+																<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-light-accent rounded-3xl'>
 																	<button
 																		onClick={() =>
 																			updateQuantity(item.id, -1, item.type || 'item')
@@ -1066,7 +1123,7 @@ export default function StoreScreen() {
 																		<MinusIcon />
 																	</button>
 
-																	<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
+																	<span className="font-bold text-sm leading-5.25 text-secondary font-poppins">
 																		{item.quantity}
 																	</span>
 
@@ -1077,6 +1134,7 @@ export default function StoreScreen() {
 																	</button>
 																</div>
 															</div>
+															)}
 														</div>
 													</div>
 													<AnimatePresence>
@@ -1114,7 +1172,7 @@ export default function StoreScreen() {
 									<span>-{formatCurrency(discountAmount)}</span>
 								</div>
 
-								<div className='gap-2 p-3'>
+								<div className='gap-2 p-2'>
 									<DiscountDropdown
 										value={discountCode}
 										onChange={setDiscountCode}
@@ -1124,7 +1182,7 @@ export default function StoreScreen() {
 								</div>
 
 								<div className='border-t border-dashed border-accent'>
-									<div className='flex justify-between font-semibold text-base h-15.5 p-3 items-center'>
+									<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
 										<span>Total</span>
 										<span>{formatCurrency(total)}</span>
 									</div>
@@ -1133,14 +1191,14 @@ export default function StoreScreen() {
 										{cart.length > 0 && (
 											<button
 												onClick={clearCart}
-												className='flex-1 py-4 font-black text-3 text-(--error) bg-white border-2 border-(--error) rounded-lg hover:bg-(--error) hover:text-white transition-all'>
+												className='flex-1 py-3 font-black text-3 text-error bg-white border-2 border-error rounded-lg hover:bg-error hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 												CLEAR CART
 											</button>
 										)}
 										<button
 											onClick={handlePlaceOrder}
 											disabled={cart.length === 0 || isPlacingOrder || !user}
-											className={`flex-1 py-4 font-black text-3 rounded-lg transition-all ${
+											className={`flex-1 py-3 font-black text-3 rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
 													? "bg-gray-300 text-primary cursor-not-allowed"
 													: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
@@ -1164,13 +1222,13 @@ export default function StoreScreen() {
 			</AnimatePresence>
 
 			{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
-			<div className='hidden xl:flex flex-col h-screen shadow-lg bg-primary overflow-hidden w-90 shrink-0'>
+			<div className='hidden xl:flex flex-col h-screen bg-primary border-l border-gray-200 overflow-hidden w-90 shrink-0'>
 				{/* Header Section - Fixed at top (154px total) */}
 				<div className='shrink-0'>
 					<div className='w-full h-22.5 bg-primary border-b border-secondary/20 border-dashed'>
 						{/* Order Header */}
-						<div className='flex items-center gap-3 p-3'>
-							<div className='bg-(--light-accent) w-16 h-16 rounded-full items-center justify-center flex relative'>
+						<div className='flex items-center gap-2 p-2'>
+							<div className='bg-light-accent w-10 h-10 rounded-full items-center justify-center flex relative'>
 								<OrderCartIcon className="w-6 h-6"/>
 								{cart.length > 0 && (
 									<div className='absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1'>
@@ -1191,16 +1249,16 @@ export default function StoreScreen() {
 							{cart.length > 0 && (
 								<button
 									onClick={clearCart}
-									className='text-(--error) border border-(--error) hover:text-white text-xs font-medium hover:bg-(--error)/50 px-2 py-1 rounded transition-all'
+									className='text-error border border-error hover:text-white text-xs font-medium hover:bg-error/50 px-2 py-1 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'
 									title='Clear all items'>
 									Clear
 								</button>
 							)}
-							<div className='hidden bg-(--light-accent) w-16 h-16 rounded-full'></div>
+							<div className='hidden bg-light-accent w-16 h-16 rounded-full'></div>
 						</div>
 					</div>
 
-					<div className='h-16 p-3 border-b-2 border-accent'>
+					<div className='h-12 p-2 border-b-2 border-accent'>
 						<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
 							<DropdownField
 								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
@@ -1221,13 +1279,13 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Cart Items - Scrollable middle section */}
-				<div className='flex-1 overflow-y-auto px-3 p-6'>
+				<div className='flex-1 overflow-y-auto px-3 py-3'>
 					{cart.length === 0 ? (
-						<div className='flex flex-col items-center justify-center h-full py-12'>
-							<div className='w-37.5 h-30 flex items-center justify-center mb-4 opacity-40'>
+						<div className='flex flex-col items-center justify-center h-full py-6'>
+							<div className='w-24 h-20 flex items-center justify-center mb-3 opacity-40'>
 								<EmptyOrderIllustration />
 							</div>
-							<h3 className='text-base font-medium text-secondary mb-2 select-none'>
+							<h3 className='text-sm font-medium text-secondary mb-1 select-none'>
 								Order List is Empty
 							</h3>
 							<p className='text-secondary w-75 opacity-70 text-center max-w-sm text-xs leading-relaxed select-none'>
@@ -1259,9 +1317,9 @@ export default function StoreScreen() {
 										}}
 										layout
 										layoutId={`cart-item-${item.id}`}
-										className='flex flex-col items-center justify-around w-full h-32 bg-white overflow-hidden'>
-										<div className='flex flex-row items-center gap-3 w-full h-25'>
-											<div className='flex-none w-25.5 h-25 bg-[#F7F7F7] rounded-md relative overflow-hidden'>
+										className='flex flex-col w-full bg-white py-1.5'>
+										<div className='flex flex-row items-start gap-3 w-full'>
+											<div className='flex-none w-14 h-14 bg-gray-100 rounded-md relative overflow-hidden'>
 												{item.imgUrl ? (
 													<SafeImage src={item.imgUrl} alt={item.name} />
 												) : null}
@@ -1272,30 +1330,35 @@ export default function StoreScreen() {
 												)}
 											</div>
 
-											<div className='flex flex-col items-start gap-3 w-69.5 h-25 grow'>
+											<div className='flex flex-col items-start gap-1 w-full grow'>
 												{/* Item Info Section */}
-												<div className='flex flex-col items-start gap-2 w-full h-13.25 grow'>
+												<div className='flex flex-col items-start gap-1 w-full grow'>
 													{/* Title and Quantity Row */}
-													<div className='flex flex-row items-center justify-between gap-2 w-full h-5.25'>
-														<span className="font-normal text-sm leading-5.25 text-[#4C2E24] font-['Poppins'] truncate">
+													<div className='flex flex-row items-center justify-between gap-2 w-full'>
+														<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
 															{item.name}
 														</span>
+														{item.is_custom && (
+															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
+														)}
 													</div>
 													{/* Price and Subtotal Row */}
-													<div className='flex flex-row items-center justify-between w-full h-5.25'>
+													<div className='flex flex-row items-center justify-between w-full'>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-normal text-xs text-secondary font-poppins">
 																{formatCurrency(item.price)}
 															</span>
-															<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-['Poppins'] bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
-																×{item.quantity}
-															</span>
+															{!item.is_custom && (
+																<span className="font-bold text-xs text-primary font-poppins bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
+																	×{item.quantity}
+																</span>
+															)}
 														</span>
 														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-xs leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
 																=
 															</span>
-															<span className="font-bold text-xs leading-5.25 text-secondary font-['Poppins']">
+															<span className="font-bold text-xs leading-5.25 text-secondary font-poppins">
 																{formatCurrency(item.price * item.quantity)}
 															</span>
 														</span>
@@ -1303,35 +1366,39 @@ export default function StoreScreen() {
 
 													{/* Bundle Component Details */}
 													{item.type === 'bundle' && item.components && (
-														<div className='mt-1 p-2 bg-amber-50 rounded-lg border border-amber-200'>
-															<div className='text-xs font-medium text-amber-800 mb-1'>Bundle includes:</div>
-															<div className='space-y-0.5'>
-																{item.components.map((comp) => (
-																	<div key={comp.id} className='flex justify-between text-xs text-gray-600'>
-																		<span className='truncate flex-1'>
-																			{comp.inventory_item?.name || 'Item'}
+														<div className='mt-1'>
+															<button
+																onClick={(e) => { e.stopPropagation(); toggleBundle(item.id); }}
+																className='flex items-center gap-1 text-xs text-bundle font-medium hover:text-bundle transition-colors'>
+																	<span>{item.components.length} item{item.components.length !== 1 ? 's' : ''}</span>
+																	<svg className={`w-3 h-3 transition-transform ${expandedBundles.has(item.id) ? 'rotate-180' : ''}`} viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5'><path d='M2 4l4 4 4-4'/></svg>
+															</button>
+															{expandedBundles.has(item.id) && (
+																<div className='flex flex-wrap gap-1 mt-1'>
+																	{item.components.map((comp) => (
+																		<span key={comp.id || comp.inventory_item_id} className='inline-flex items-center gap-0.5 bg-bundle/10 border border-bundle/40 text-bundle text-xs font-medium px-1 py-0.5 rounded'>
+																			<span>{comp.inventory_item?.name || 'Item'}</span>
+																			<span className='shrink-0 opacity-60'>×{comp.quantity}</span>
 																		</span>
-																		<span className='text-amber-600 font-medium ml-2'>
-																			×{comp.quantity}
-																		</span>
-																	</div>
-																))}
-															</div>
+																	))}
+																</div>
+															)}
 														</div>
 													)}
 												</div>
 
 												{/* Controls Section */}
+												{!item.is_custom && (
 												<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
 													{/* Quantity Controls */}
-													<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-(--light-accent) rounded-3xl'>
+													<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-light-accent rounded-3xl'>
 														<button
 															onClick={() => updateQuantity(item.id, -1, item.type || 'item')}
 															className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
 															<MinusIcon />
 														</button>
 
-														<span className="font-bold text-sm leading-5.25 text-secondary font-['Poppins']">
+														<span className="font-bold text-sm leading-5.25 text-secondary font-poppins">
 															{item.quantity}
 														</span>
 
@@ -1342,6 +1409,7 @@ export default function StoreScreen() {
 														</button>
 													</div>
 												</div>
+												)}
 											</div>
 										</div>
 										<AnimatePresence>
@@ -1369,7 +1437,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Order Summary */}
-				<div className='shrink mb-10 border-t-2 border-accent'>
+				<div className='shrink border-t-2 border-accent'>
 					<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>
@@ -1379,7 +1447,7 @@ export default function StoreScreen() {
 						<span>-{formatCurrency(discountAmount)}</span>
 					</div>
 
-					<div className='gap-2 p-3'>
+					<div className='gap-2 p-2'>
 						<DiscountDropdown
 							value={discountCode}
 							onChange={setDiscountCode}
@@ -1388,8 +1456,8 @@ export default function StoreScreen() {
 						/>
 					</div>
 
-					<div className='border-t border-dashed border-accent h-31'>
-						<div className='flex justify-between font-semibold text-base h-15.5 p-3 items-center'>
+					<div className='border-t border-dashed border-accent'>
+						<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
 							<span>Total</span>
 							<span>{formatCurrency(total)}</span>
 						</div>
@@ -1398,10 +1466,10 @@ export default function StoreScreen() {
 						<button
 							onClick={handlePlaceOrder}
 							disabled={cart.length === 0 || isPlacingOrder || !user}
-							className={`w-full py-4 font-black text-4 transition-all ${
+							className={`w-full py-3 font-black text-3.5 transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
 									? "bg-gray-300 text-primary cursor-not-allowed"
-									: "bg-accent text-primary hover:bg-accent/80 hover:text-shadow-none hover:shadow-lg cursor-pointer text-shadow-lg"
+									: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
 							}`}>
 							<span>
 								{!user
@@ -1422,7 +1490,7 @@ export default function StoreScreen() {
 				<div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4'>
 					<div className='bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col'>
 						{/* Modal Header */}
-						<div className='p-6 border-b border-gray-200'>
+						<div className='p-4 border-b border-gray-200'>
 							<div className='flex items-center justify-between'>
 								<h2 className='text-lg font-semibold text-secondary'>
 									Confirm Order
@@ -1439,9 +1507,9 @@ export default function StoreScreen() {
 						</div>
 
 						{/* Order Details */}
-						<div className='flex-1 overflow-y-auto p-6'>
+						<div className='flex-1 overflow-y-auto p-4'>
 							{/* Order Type */}
-							<div className='mb-4 flex justify-between text-3'>
+							<div className='mb-3 flex justify-between text-3'>
 								<span className='text-secondary font-medium'>
 									Order Type:
 								</span>
@@ -1449,17 +1517,17 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Items List */}
-							<div className='mb-4'>
-								<h3 className='text-3 font-medium text-secondary mb-3'>
+							<div className='mb-3'>
+								<h3 className='text-3 font-medium text-secondary mb-2'>
 									Items ({cart.length})
 								</h3>
-								<div className='space-y-3'>
+								<div className='space-y-2'>
 									{cart.map((item) => (
 										<div
 											key={item.id}
-											className='flex items-center gap-3 p-3 bg-gray-50 rounded-lg'>
+											className='flex items-center gap-2 p-2 bg-gray-50 rounded-lg'>
 											{/* Item Image */}
-											<div className='w-12 h-12 bg-gray-200 rounded-lg shrink-0 overflow-hidden relative'>
+											<div className='w-10 h-10 bg-gray-200 rounded-lg shrink-0 overflow-hidden relative'>
 												{item.imgUrl ? (
 													<SafeImage
 														src={item.imgUrl}
@@ -1468,16 +1536,7 @@ export default function StoreScreen() {
 													/>
 												) : (
 													<div className='w-full h-full flex items-center justify-center'>
-														<svg
-															className='w-6 h-6 text-gray-400'
-															fill='currentColor'
-															viewBox='0 0 20 20'>
-															<path
-																fillRule='evenodd'
-																d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
-																clipRule='evenodd'
-															/>
-														</svg>
+														<LogoIcon className='w-6 h-7 opacity-20' />
 													</div>
 												)}
 											</div>
@@ -1546,7 +1605,7 @@ export default function StoreScreen() {
 						</div>
 
 						{/* Modal Footer */}
-						<div className='p-6 border-t border-gray-200 bg-gray-50'>
+						<div className='p-4 border-t border-gray-200 bg-gray-50'>
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
@@ -1558,8 +1617,8 @@ export default function StoreScreen() {
 									disabled={isPlacingOrder}
 									className={`flex-1 px-4 py-3 rounded-lg text-xs font-black transition-all ${
 										isPlacingOrder
-											? "bg-secondary/50 text-primary cursor-not-allowed"
-											: "bg-accent text-shadow-md text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
+											? "bg-gray-100 text-secondary/50 cursor-not-allowed"
+											: "bg-accent text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
 									}`}>
 									{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
 								</button>
@@ -1567,6 +1626,16 @@ export default function StoreScreen() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Custom Bundle Picker Modal */}
+			{customBundleTarget && (
+				<CustomBundlePickerModal
+					bundle={customBundleTarget}
+					inventory={inventoryItems}
+					onConfirm={(selections) => handleCustomBundleConfirm(customBundleTarget, selections)}
+					onClose={() => setCustomBundleTarget(null)}
+				/>
 			)}
 
 			{/* Success Toast Notification */}

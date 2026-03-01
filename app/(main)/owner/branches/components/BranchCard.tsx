@@ -100,9 +100,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 								onClick={(e) =>
 									handleActionClick(e, () => onDelete(branch.branchId))
 								}
-								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-(--error)/10 text-white font-semibold hover:bg-(--error) transition-colors text-xs sm:text-xs flex items-center justify-center'
+								className='group flex-1 sm:flex-initial w-10 h-10 rounded-lg bg-error/10 text-white font-semibold hover:bg-error transition-colors text-xs sm:text-xs flex items-center justify-center'
 								title='Delete Branch'>
-								<DeleteBranchIcon className='w-7 h-7 text-(--error)/80 group-hover:text-primary' />
+								<DeleteBranchIcon className='w-7 h-7 text-error/80 group-hover:text-primary' />
 							</button>
 						)}
 						{onView && (

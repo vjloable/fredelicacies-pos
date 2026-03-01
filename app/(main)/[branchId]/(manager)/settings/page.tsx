@@ -235,18 +235,18 @@ export default function SettingsScreen() {
 												disabled={isSyncing}
 												className={`w-full px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
 													syncStatus === "success"
-														? "bg-(--success)/10 text-(--success) border border-(--success)"
+														? "bg-success/10 text-success border border-success"
 														: syncStatus === "created"
 														? "bg-secondary/10 text-secondary border border-secondary"
 														: syncStatus === "error"
-														? "bg-(--error)/10 text-(--error) border border-(--error)"
+														? "bg-error/10 text-error border border-error"
 														: isSyncing
 														? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
 														: "bg-white text-secondary border border-gray-300 hover:bg-gray-50"
 												}`}>
 												{isSyncing ? (
 													<>
-														<div className='w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin'></div>
+														<LoadingSpinner className="border-secondary/30" />
 														Syncing...
 													</>
 												) : syncStatus === "success" ? (
@@ -274,11 +274,11 @@ export default function SettingsScreen() {
 											<div
 												className={`mt-2 p-2 rounded-md text-xs text-center transition-all duration-200 ${
 													syncStatus === "success"
-														? "bg-(--success)/10 text-(--success) border border-(--success)"
+														? "bg-success/10 text-success border border-success"
 														: syncStatus === "created"
 														? "bg-secondary/10 text-secondary border border-secondary"
 														: syncStatus === "error"
-														? "bg-(--error)/10 text-(--error) border border-(--error)"
+														? "bg-error/10 text-error border border-error"
 														: "bg-gray-50 text-gray-600 border border-gray-200"
 												}`}>
 												{syncMessage}
@@ -357,7 +357,7 @@ export default function SettingsScreen() {
 													}`}>
 													{isConnecting ? (
 														<div className='flex items-center justify-center'>
-															<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+															<LoadingSpinner className="border-white mr-2" />
 															Connecting...
 														</div>
 													) : (
@@ -368,12 +368,12 @@ export default function SettingsScreen() {
 												<>
 													<button
 														onClick={testPrint}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-(--success) hover:bg-(--success)/50 text-secondary hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-success hover:bg-success/50 text-secondary hover:shadow-lg transition-all'>
 														Test Print
 													</button>
 													<button
 														onClick={disconnectPrinter}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-(--error) hover:bg-(--error)/50 text-primary hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-error hover:bg-error/50 text-primary hover:shadow-lg transition-all'>
 														Disconnect
 													</button>
 												</>

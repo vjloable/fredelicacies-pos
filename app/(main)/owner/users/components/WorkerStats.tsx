@@ -3,6 +3,7 @@ import { WorkerStats } from "@/types/WorkerTypes";
 import { attendanceService, Attendance } from "@/services/attendanceService";
 import { Worker } from "@/services/workerService";
 import { useBranch } from "@/contexts/BranchContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface WorkerStatsProps {
 	worker: Worker;
@@ -347,7 +348,7 @@ export default function WorkerStatsComponent({
 					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
 					</h3>
-					<div className='animate-spin rounded-full h-6 w-6 border-2 border-dashed border-blue-500'></div>
+					<LoadingSpinner size="md" />
 				</div>
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
 					{[...Array(8)].map((_, i) => (

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { workerService } from "@/services/workerService";
 import { validatePin } from "@/lib/pin";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PinEntryModalProps {
 	userId: string;
@@ -187,7 +188,7 @@ export default function PinEntryModal({
 								className={`w-4 h-4 rounded-full transition-all duration-200 ${
 									i < currentPin.length
 										? "bg-accent scale-110"
-										: "bg-(--light-accent) border-2 border-accent/30"
+										: "bg-light-accent border-2 border-accent/30"
 								}`}
 							/>
 						))}
@@ -195,8 +196,8 @@ export default function PinEntryModal({
 
 					{/* Error Message */}
 					{error && (
-						<div className="mt-3 px-3 py-2 bg-(--error)/10 border border-(--error)/20 rounded-lg">
-							<p className="text-(--error) text-xs text-center font-medium">
+						<div className="mt-3 px-3 py-2 bg-error/10 border border-error/20 rounded-lg">
+							<p className="text-error text-xs text-center font-medium">
 								{error}
 							</p>
 						</div>
@@ -211,26 +212,26 @@ export default function PinEntryModal({
 								key={digit}
 								onClick={() => handleKeyPress(digit)}
 								disabled={loading || currentPin.length >= 4}
-								className="h-16 rounded-xl bg-(--background) text-secondary text-xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+								className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 								{digit}
 							</button>
 						))}
 						<button
 							onClick={handleClear}
 							disabled={loading}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-xs font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer">
+							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:scale-95 transition-all duration-150 cursor-pointer">
 							Clear
 						</button>
 						<button
 							onClick={() => handleKeyPress("0")}
 							disabled={loading || currentPin.length >= 4}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-xl font-semibold hover:bg-(--light-accent) active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+							className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
 							0
 						</button>
 						<button
 							onClick={handleBackspace}
 							disabled={loading}
-							className="h-16 rounded-xl bg-(--background) text-secondary text-xs font-medium hover:bg-(--light-accent) active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
+							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
 							<svg
 								className="w-6 h-6"
 								fill="none"
@@ -252,7 +253,7 @@ export default function PinEntryModal({
 					<button
 						onClick={onCancel}
 						disabled={loading}
-						className="flex-1 h-12 rounded-xl border-2 border-secondary/20 text-secondary font-semibold hover:bg-(--background) transition-all cursor-pointer disabled:opacity-50">
+						className="flex-1 h-12 rounded-xl border-2 border-secondary/20 text-secondary font-semibold hover:bg-background transition-all cursor-pointer disabled:opacity-50">
 						Cancel
 					</button>
 					<button
@@ -260,7 +261,7 @@ export default function PinEntryModal({
 						disabled={loading || currentPin.length < 4}
 						className="flex-1 h-12 rounded-xl bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center">
 						{loading ? (
-							<div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+							<LoadingSpinner className="border-white" />
 						) : mode === "setup" && step === "enter" ? (
 							"Next"
 						) : (

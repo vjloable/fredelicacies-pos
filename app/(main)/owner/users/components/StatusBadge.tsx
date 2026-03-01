@@ -24,20 +24,20 @@ export default function StatusBadge({
 			case "clocked_in":
 				return {
 					label: "Clocked In",
-					className: "bg-(--success)/10 text-(--success)",
-					dotClassName: "bg-(--success)",
+					className: "bg-success/10 text-success",
+					dotClassName: "bg-success",
 				};
 			case "clocked_out":
 				return {
 					label: "Clocked Out",
-					className: "bg-(--error)/10 text-(--error)",
-					dotClassName: "bg-(--error)",
+					className: "bg-error/10 text-error",
+					dotClassName: "bg-error",
 				};
 			default:
 				return {
 					label: "Clocked Out",
-					className: "bg-(--error)/10 text-(--error)",
-					dotClassName: "bg-(--error)",
+					className: "bg-error/10 text-error",
+					dotClassName: "bg-error",
 				};
 		}
 	};

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { authService } from "@/services/authService";
 import type { UserWithRoles, RoleAssignment } from "@/types/domain";
 
@@ -61,11 +61,16 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialCheckDone = useRef(false);
 
   useEffect(() => {
     // Subscribe to auth state changes
     const unsubscribe = authService.onAuthStateChange(async (session) => {
-      setLoading(true);
+      // Only show the loading screen on first check — subsequent token
+      // refreshes (e.g. on tab refocus) should update silently
+      if (!initialCheckDone.current) {
+        setLoading(true);
+      }
 
       if (session) {
         try {
@@ -99,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
       }
 
+      initialCheckDone.current = true;
       setLoading(false);
     });
 

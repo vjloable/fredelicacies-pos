@@ -3,6 +3,7 @@ import { attendanceService, Attendance } from "@/services/attendanceService";
 import { workerService, Worker } from "@/services/workerService";
 import { branchService, Branch } from "@/services/branchService";
 import Image from "next/image";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AttendanceTrackerProps {
 	branchId?: string;
@@ -96,7 +97,7 @@ export default function AttendanceTracker({
 					<h3 className='text-base font-semibold text-gray-900'>
 						Active Work Sessions
 					</h3>
-					<div className='animate-spin rounded-full h-6 w-6 border-2 border-dashed border-blue-500'></div>
+					<LoadingSpinner size="md" />
 				</div>
 				<div className='space-y-3'>
 					{[...Array(3)].map((_, i) => (

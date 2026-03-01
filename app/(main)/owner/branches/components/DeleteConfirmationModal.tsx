@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { branchService, Branch } from "@/services/branchService";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface DeleteConfirmationModalProps {
 	isOpen: boolean;
@@ -73,7 +74,7 @@ export default function DeleteConfirmationModal({
 					/* Loading Screen */
 					<div className='text-center py-12'>
 						<div className='w-16 h-16 bg-red-100 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-8 w-8 border-2 border-dashed border-red-500'></div>
+							<LoadingSpinner size="lg" className="border-error" />
 						</div>
 						<h3 className='text-lg font-bold text-secondary mb-2'>
 							{deleteOption === "soft"

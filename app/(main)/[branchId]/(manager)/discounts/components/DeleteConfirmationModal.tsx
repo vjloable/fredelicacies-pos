@@ -60,7 +60,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-(--error) text-white rounded-md hover:bg-(--error)/70 focus:outline-none focus:ring-2 focus:ring-(--error)/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-error text-white rounded-md hover:bg-error/70 focus:outline-none focus:ring-2 focus:ring-error/50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Deleting...' : confirmText}

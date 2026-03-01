@@ -415,8 +415,8 @@ export default function ManagementPage() {
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<div className='text-center'>
-							<h2 className='text-lg font-semibold text-(--error) mb-2'>Error</h2>
-							<p className='text-(--error)'>{error}</p>
+							<h2 className='text-lg font-semibold text-error mb-2'>Error</h2>
+							<p className='text-error'>{error}</p>
 						</div>
 					</div>
 				</div>
@@ -449,10 +449,10 @@ export default function ManagementPage() {
 
 				{/* Error Display */}
 				{error && (
-					<div className='mx-6 mb-4 p-2 bg-(--error)/10 border border-(--error)/40 rounded-lg'>
+					<div className='mx-6 mb-4 p-2 bg-error/10 border border-error/40 rounded-lg'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-(--error)'
+								className='w-5 h-5 text-error'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -461,12 +461,12 @@ export default function ManagementPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-(--error) font-medium text-3'>
+							<span className='text-error font-medium text-3'>
 								{error}
 							</span>
 							<button
 								onClick={() => setError(null)}
-								className='ml-auto text-(--error) hover:text-(--error)/20'>
+								className='ml-auto text-error hover:text-error/20'>
 								✕
 							</button>
 						</div>

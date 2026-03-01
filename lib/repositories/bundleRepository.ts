@@ -23,6 +23,8 @@ export const bundleRepository = {
         description: data.description || null,
         img_url: data.img_url || null,
         is_predefined: data.is_predefined || false,
+        is_custom: data.is_custom || false,
+        max_pieces: data.is_custom ? (data.max_pieces ?? null) : null,
         status: data.status || 'active',
       })
       .select()

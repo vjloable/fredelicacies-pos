@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import VersionDisplay from "@/components/VersionDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function WaitingRoomPage() {
   const { user, logout, refreshUserData } = useAuth();
@@ -115,7 +116,7 @@ export default function WaitingRoomPage() {
           <div className="p-8 text-center">
             {/* Waiting Icon with Animation */}
             <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-(--light-accent) rounded-full flex items-center justify-center relative">
+              <div className="mx-auto w-16 h-16 bg-light-accent rounded-full flex items-center justify-center relative">
                 <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -134,7 +135,7 @@ export default function WaitingRoomPage() {
               <p className="text-secondary mb-3">
                 Your account has been created successfully.
               </p>
-              <div className="bg-(--light-accent) border border-accent rounded-lg p-4 text-left">
+              <div className="bg-light-accent border border-accent rounded-lg p-4 text-left">
                 <div className="flex items-start">
                   <svg className="w-5 h-5 text-accent mt-0.5 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -176,7 +177,7 @@ export default function WaitingRoomPage() {
               >
                 {isCheckingAccess ? (
                   <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <LoadingSpinner className="border-white mr-2" />
                     Checking Access...
                   </div>
                 ) : (

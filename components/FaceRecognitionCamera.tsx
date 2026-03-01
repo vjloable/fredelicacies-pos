@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { faceRecognitionService, FaceRecognitionResult } from '@/services/faceRecognitionService';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface FaceRecognitionCameraProps {
 	userId: string;
@@ -158,8 +158,8 @@ export default function FaceRecognitionCamera({
 			<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
 				<div className="bg-primary rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
 					<div className="text-center">
-						<div className="w-16 h-16 bg-(--error)/10 rounded-full flex items-center justify-center mx-auto mb-4">
-							<svg className="w-8 h-8 text-(--error)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</div>
@@ -259,7 +259,7 @@ export default function FaceRecognitionCamera({
 					{isLoading && (
 						<div className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-sm flex items-center justify-center">
 							<div className="text-center">
-								<div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4" />
+								<LoadingSpinner size="lg" className="border-primary mx-auto mb-4" />
 								<p className="text-primary text-base font-medium">Loading...</p>
 							</div>
 						</div>
@@ -272,9 +272,9 @@ export default function FaceRecognitionCamera({
 						isProcessing 
 							? 'bg-accent/10 border-accent/20' 
 							: status.includes('success') || status.includes('Verified') 
-								? 'bg-(--success)/10 border-(--success)/20' 
+								? 'bg-success/10 border-success/20' 
 								: status.includes('failed') || status.includes('Error') 
-									? 'bg-(--error)/10 border-(--error)/20' 
+									? 'bg-error/10 border-error/20' 
 									: 'bg-secondary/10 border-secondary/20'
 					}`}>
 						{isProcessing && (
@@ -284,9 +284,9 @@ export default function FaceRecognitionCamera({
 							isProcessing 
 								? 'text-accent/60' 
 								: status.includes('success') || status.includes('Verified') 
-									? 'text-(--success)/60' 
+									? 'text-success/60' 
 									: status.includes('failed') || status.includes('Error') 
-										? 'text-(--error)/60' 
+										? 'text-error/60' 
 										: 'text-secondary/60'
 						}`}>
 							{status}

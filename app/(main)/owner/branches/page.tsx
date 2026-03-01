@@ -234,10 +234,10 @@ export default function BranchesPage() {
 				)}
 
 				{error && (
-					<div className='bg-(--error)/10 border border-(--error)/40 rounded-lg p-4 mb-4'>
+					<div className='bg-error/10 border border-error/40 rounded-lg p-4 mb-4'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-(--error)'
+								className='w-5 h-5 text-error'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -246,16 +246,16 @@ export default function BranchesPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-(--error) font-medium'>{error}</span>
+							<span className='text-error font-medium'>{error}</span>
 						</div>
 					</div>
 				)}
 
 				{modalError && (
-					<div className='bg-(--error)/10 border border-(--error)/40 rounded-lg p-4 mb-4'>
+					<div className='bg-error/10 border border-error/40 rounded-lg p-4 mb-4'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-(--error)'
+								className='w-5 h-5 text-error'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -264,7 +264,7 @@ export default function BranchesPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-(--error) font-medium'>
+							<span className='text-error font-medium'>
 								{modalError}
 							</span>
 						</div>
@@ -273,7 +273,7 @@ export default function BranchesPage() {
 
 				{!loading && !error && branches.length === 0 && (
 					<div className='text-center py-12'>
-						<div className='w-16 h-16 bg-(--light-accent) rounded-full flex items-center justify-center mx-auto mb-4'>
+						<div className='w-16 h-16 bg-light-accent rounded-full flex items-center justify-center mx-auto mb-4'>
 							<BranchesIcon className="text-accent" />
 						</div>
 						<h3 className='text-base font-medium text-secondary mb-2'>

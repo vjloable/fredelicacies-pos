@@ -14,6 +14,7 @@ import DeleteIcon from "./icons/DeleteIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import DiscountsIcon from "@/components/icons/SidebarNav/DiscountsIcon";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function DiscountsScreen() {
 	const { user, isAuthenticated } = useAuth();
@@ -114,7 +115,7 @@ export default function DiscountsScreen() {
 						<TopBar title='Discounts' icon={<DiscountsIcon />} />
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+						<LoadingSpinner size="lg" />
 					</div>
 				</div>
 			</div>
@@ -321,7 +322,7 @@ export default function DiscountsScreen() {
 																	onClick={() =>
 																		handleDeleteDiscount(discount)
 																	}
-																	className='text-(--error) p-1 rounded hover:bg-(--error)/10'
+																	className='text-error p-1 rounded hover:bg-error/10'
 																	title='Delete discount'>
 																	<DeleteIcon />
 																</button>
