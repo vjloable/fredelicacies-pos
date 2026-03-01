@@ -120,22 +120,22 @@ export default function DiscountDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex flex-row border border-[var(--accent)] rounded-[6px] bg-[var(--light-accent)]/40">
+      <div className="flex flex-row border border-accent rounded-md bg-light-accent/40">
         <input
           ref={inputRef}
           type="text"
           value={value}
           onChange={handleInputChange}
           onFocus={() => value && filteredDiscounts.length > 0 && setShowSuggestions(true)}
-          className="flex-grow py-2 px-4 text-[12px] border-none rounded-l-[6px] focus:outline-none bg-transparent"
+          className="grow py-2 px-4 text-3 border-none rounded-l-md focus:outline-none bg-transparent"
           placeholder="Enter discount coupon code"
         />
         <button
           onClick={handleApplyDiscount}
-          className={`flex-shrink py-2 px-4 font-bold text-sm rounded-e-[6px] transition-all ${
+          className={`shrink py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
             isValidCode 
-              ? 'bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]/80' 
-              : 'bg-[var(--accent)]/50 text-[var(--primary)] text-shadow-lg cursor-not-allowed'
+              ? 'bg-accent text-primary hover:bg-accent/80' 
+              : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
           }`}
           disabled={!isValidCode}
         >
@@ -167,17 +167,17 @@ export default function DiscountDropdown({
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--secondary)] text-sm">
+                      <span className="font-semibold text-secondary text-xs">
                         {discount.name}
                       </span>
                     </div>
-                    <div className="text-xs text-[var(--secondary)] opacity-70 mt-1">
+                    <div className="text-xs text-secondary opacity-70 mt-1">
                       {discount.type === 'percentage' 
                         ? `${discount.value}% off`
                         : `₱${discount.value} off`
                       }
                       {previewAmount > 0 && (
-                        <span className="text-[var(--success)] font-medium ml-2">
+                        <span className="text-success font-medium ml-2">
                           (-{formatCurrency(previewAmount)})
                         </span>
                       )}
@@ -185,7 +185,7 @@ export default function DiscountDropdown({
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-500">Savings</div>
-                    <div className="font-semibold text-[var(--success)]">
+                    <div className="font-semibold text-success">
                       {formatCurrency(previewAmount)}
                     </div>
                   </div>
@@ -194,7 +194,7 @@ export default function DiscountDropdown({
             );
           })}
           {filteredDiscounts.length === 0 && value && (
-            <div className="p-3 text-center text-gray-500 text-sm">
+            <div className="p-3 text-center text-gray-500 text-xs">
               No discount codes found matching &quot;{value}&quot;
             </div>
           )}
@@ -203,13 +203,13 @@ export default function DiscountDropdown({
 
       {/* Current Discount Info */}
       {appliedDiscount && isValidCode && (
-        <div className="mt-2 px-4 py-2 bg-[var(--accent)]/10 border border-dashed border-[var(--accent)] rounded-lg">
-          <div className="flex items-center justify-between text-[14px]">
+        <div className="mt-2 px-4 py-2 bg-accent/10 border border-dashed border-accent rounded-lg">
+          <div className="flex items-center justify-between text-3">
             <div>
-              <span className="font-semibold text-[var(--secondary)]">
+              <span className="font-semibold text-secondary">
                 {appliedDiscount.name}
               </span>
-              <span className="text-[var(--secondary)] ml-2">
+              <span className="text-secondary ml-2">
                 ({appliedDiscount.type === 'percentage' 
                   ? `${appliedDiscount.value}% off`
                   : `₱${appliedDiscount.value} off`
@@ -217,7 +217,7 @@ export default function DiscountDropdown({
               </span>
             </div>
             <div className="text-right">
-              <div className="font-semibold text-[var(--secondary)]">
+              <div className="font-semibold text-secondary">
                 -{formatCurrency(getDiscountPreview(appliedDiscount))}
               </div>
             </div>

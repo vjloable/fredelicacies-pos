@@ -161,7 +161,7 @@ export default function WorkerRow({
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}
-			className={`hover:bg-[var(--accent)]/10 cursor-pointer ${
+			className={`hover:bg-accent/10 cursor-pointer ${
 				!worker.isOwner && worker.currentStatus === "clocked_in"
 					? "bg-green-50"
 					: ""
@@ -176,18 +176,18 @@ export default function WorkerRow({
 							className='w-10 h-10 rounded-full mr-4'
 						/>
 					) : (
-						<div className='w-10 h-10 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center mr-4'>
-							<span className='text-sm font-medium text-[var(--secondary)]'>
+						<div className='w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
+							<span className='text-xs font-medium text-secondary'>
 								{worker.name.charAt(0).toUpperCase()}
 							</span>
 						</div>
 					)}
 					<div>
-						<div className='text-sm font-medium text-[var(--secondary)]'>
+						<div className='text-xs font-medium text-secondary'>
 							{worker.name}
 						</div>
 						{worker.employeeId && (
-							<div className='text-sm text-[var(--secondary)]/50'>
+							<div className='text-xs text-secondary/50'>
 								ID: {worker.employeeId}
 							</div>
 						)}
@@ -196,7 +196,7 @@ export default function WorkerRow({
 			</td>
 
 			{/* Email */}
-			<td className='px-6 py-4 whitespace-nowrap text-sm text-[var(--secondary) font-light'>
+			<td className='px-6 py-4 whitespace-nowrap text-xs text-secondary font-light'>
 				{worker.email}
 			</td>
 
@@ -204,7 +204,7 @@ export default function WorkerRow({
 			<td className='px-6 py-4'>
 				<div className='flex gap-1'>
 					{worker.isOwner && (
-						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-[var(--accent)] text-[var(--primary)] min-w-[100px] text-shadow-md'>
+						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-accent text-primary min-w-25 text-shadow-md'>
 							Owner
 						</span>
 					)}
@@ -213,16 +213,16 @@ export default function WorkerRow({
 						.map((assignment) => (
 							<span
 								key={assignment.branchId}
-								className={`inline-flex justify-center items-center px-3 py-1 text-xs font-semibold min-w-[100px] text-center ${
+								className={`inline-flex justify-center items-center px-3 py-1 text-xs font-semibold min-w-25 text-center ${
 									assignment.role === "manager"
-										? "bg-[var(--accent)] text-[var(--primary)] text-shadow-md"
-										: "bg-[var(--accent)] text-[var(--primary)] text-shadow-md rounded-full"
+										? "bg-accent text-primary text-shadow-md"
+										: "bg-accent text-primary text-shadow-md rounded-full"
 								}`}>
 								{String(assignment.role).charAt(0).toUpperCase() + String(assignment.role).slice(1)}
 							</span>
 						))}
 					{!worker.isOwner && (!worker.roleAssignments || worker.roleAssignments.length === 0) && (
-						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-orange-100 text-orange-800 min-w-[100px] text-center'>
+						<span className='inline-flex justify-center items-center text-xs px-2 py-1 font-semibold bg-orange-100 text-orange-800 min-w-25 text-center'>
 							Pending Approval
 						</span>
 					)}
@@ -237,7 +237,7 @@ export default function WorkerRow({
 						.map((assignment) => (
 							<span
 								key={assignment.branchId}
-								className='inline-flex items-center px-2 py-1 rounded text-xs bg-[var(--secondary)]/10 text-[var(--secondary)]'>
+								className='inline-flex items-center px-2 py-1 rounded text-xs bg-secondary/10 text-secondary'>
 								{getBranchName(assignment.branchId)}
 							</span>
 						))}
@@ -250,12 +250,12 @@ export default function WorkerRow({
 			</td>
 
 			{/* Last Active */}
-			{/* <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+			{/* <td className='px-6 py-4 whitespace-nowrap text-xs text-gray-500'>
 				{formatDate(worker.lastLoginAt)}
 			</td> */}
 
 			{/* Actions */}
-			<td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+			<td className='px-6 py-4 whitespace-nowrap text-right text-xs font-medium'>
 				<div className='flex items-center gap-2'>
 					{/* Time In/Out buttons */}
 					{canTimeInOut &&
@@ -266,7 +266,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeIn(worker);
 								}}
-								className='text-[var(--success)] hover:text-[var(--success)]/60 p-1 rounded hover:bg-[var(--success)]/10'
+								className='text-success hover:text-success/60 p-1 rounded hover:bg-success/10'
 								title='Time In'>
 								<TimeInIcon />
 							</button>
@@ -279,7 +279,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onTimeOut(worker);
 								}}
-								className='text-[var(--error)] hover:text-[var(--error)]/60 p-1 rounded hover:bg-[var(--error)]/10'
+								className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
 								title='Time Out'>
 								<TimeOutIcon />
 							</button>
@@ -292,7 +292,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onEdit(worker);
 							}}
-							className='text-[var(--secondary)] hover:text-[var(--secondary)]/60 p-1 rounded hover:bg-[var(--secondary)]/10'
+							className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'
 							title='Edit Worker'>
 							<EditIcon />
 						</button>
@@ -305,7 +305,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onAssignBranch(worker);
 							}}
-							className='text-[var(--secondary)] hover:text-[var(--secondary)] p-1 rounded hover:bg-[var(--secondary)]/10'
+							className='text-secondary hover:text-secondary p-1 rounded hover:bg-secondary/10'
 							title='Manage Branches'>
 							<BranchIcon />
 						</button>
@@ -318,7 +318,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onEditFaceEmbedding(worker);
 							}}
-							className='text-[var(--accent)] hover:text-[var(--accent)]/60 p-1 rounded hover:bg-[var(--accent)]/10'
+							className='text-accent hover:text-accent/60 p-1 rounded hover:bg-accent/10'
 							title='Edit Face Enrollment'>
 							<FaceIcon />
 						</button>
@@ -331,7 +331,7 @@ export default function WorkerRow({
 								e.stopPropagation();
 								onDelete(worker);
 							}}
-							className='text-[var(--error)] hover:text-[var(--error)]/60 p-1 rounded hover:bg-[var(--error)]/10'
+							className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
 							title='Delete Worker'>
 							<DeleteIcon />
 						</button>

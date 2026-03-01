@@ -4,6 +4,7 @@ import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { branchService, Branch } from "@/services/branchService";
 import { workerService } from "@/services/workerService";
 import PinEntryModal from "@/components/PinEntryModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface POSTimeTrackingProps {
 	currentBranchId: string;
@@ -182,7 +183,7 @@ export default function POSTimeTracking({
 							clipRule='evenodd'
 						/>
 					</svg>
-					<p className='text-yellow-800 text-sm'>
+					<p className='text-yellow-800 text-xs'>
 						You don&apos;t have access to clock in/out at this branch location.
 					</p>
 				</div>
@@ -209,7 +210,7 @@ export default function POSTimeTracking({
 			<div className='px-4 py-3 border-b border-gray-200 bg-gray-50'>
 				<div className='flex items-center justify-between'>
 					<div>
-						<h3 className='text-sm font-semibold text-gray-900'>
+						<h3 className='text-xs font-semibold text-gray-900'>
 							Time Tracking
 						</h3>
 						<p className='text-xs text-gray-600'>
@@ -227,7 +228,7 @@ export default function POSTimeTracking({
 			<div className='p-4'>
 				{timeTracking.error && (
 					<div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-						<p className='text-red-700 text-sm'>{timeTracking.error}</p>
+						<p className='text-red-700 text-xs'>{timeTracking.error}</p>
 					</div>
 				)}
 
@@ -235,7 +236,7 @@ export default function POSTimeTracking({
 				<div className='mb-4'>
 					<div className='flex items-center justify-between'>
 						<div>
-							<span className='text-sm text-gray-600'>Current Status:</span>
+							<span className='text-xs text-gray-600'>Current Status:</span>
 							<div
 								className={`inline-flex items-center mt-1 px-2 py-1 rounded-full text-xs font-medium ${
 									isWorking
@@ -254,8 +255,8 @@ export default function POSTimeTracking({
 						{/* Duration if working */}
 						{isWorking && timeTracking.currentAttendance && (
 							<div className='text-right'>
-								<span className='text-sm text-gray-600'>Working for:</span>
-								<div className='text-lg font-semibold text-gray-900'>
+								<span className='text-xs text-gray-600'>Working for:</span>
+								<div className='text-base font-semibold text-gray-900'>
 									{Math.floor(timeTracking.workingDuration / 60)}h{" "}
 									{timeTracking.workingDuration % 60}m
 								</div>
@@ -267,7 +268,7 @@ export default function POSTimeTracking({
 				{/* Session Details */}
 				{isWorking && timeTracking.currentAttendance && (
 					<div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-						<div className='text-sm'>
+						<div className='text-xs'>
 							<div className='flex justify-between items-center mb-1'>
 								<span className='text-blue-700 font-medium'>Started at:</span>
 								<span className='text-blue-900'>
@@ -297,7 +298,7 @@ export default function POSTimeTracking({
 						className='w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
 						{loading || timeTracking.loading ? (
 							<div className='flex items-center'>
-								<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+								<LoadingSpinner className="border-white mr-2" />
 								Clocking In...
 								</div>
 							) : (
@@ -325,7 +326,7 @@ export default function POSTimeTracking({
 							className='w-full flex items-center justify-center px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'>
 							{loading || timeTracking.loading ? (
 								<div className='flex items-center'>
-									<div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2'></div>
+									<LoadingSpinner className="border-white mr-2" />
 									Clocking Out...
 								</div>
 							) : (

@@ -11,9 +11,10 @@ function generateOrderNumber(): string {
 // Create order with items
 export const createOrder = async (
   branchId: string,
-  workerId: string,
+  userId: string,
   items: Array<{
     id: string;
+    bundleId?: string;
     name: string;
     price: number;
     cost?: number;
@@ -39,7 +40,7 @@ export const createOrder = async (
   // Prepare order items
   const orderItems = items.map(item => ({
     item_id: (!item.type || item.type === 'item') ? item.id : null,
-    bundle_id: item.type === 'bundle' ? item.id : null,
+    bundle_id: item.type === 'bundle' ? (item.bundleId ?? item.id) : null,
     name: item.name,
     price: item.price,
     cost: item.cost || 0,
@@ -51,7 +52,7 @@ export const createOrder = async (
   // Create order with items
   const { order, error } = await orderRepository.create(
     branchId,
-    workerId,
+    userId,
     {
       order_number: orderNumber,
       subtotal,
@@ -111,12 +112,12 @@ export const getOrdersByBranch = async (
   });
 };
 
-// Get orders by worker
-export const getOrdersByWorker = async (
-  workerId: string,
+// Get orders by user
+export const getOrdersByUser = async (
+  userId: string,
   limit?: number
 ): Promise<{ orders: OrderWithItems[]; error: any }> => {
-  return await orderRepository.getByWorker(workerId, { limit });
+  return await orderRepository.getByUser(userId, { limit });
 };
 
 // Subscribe to orders

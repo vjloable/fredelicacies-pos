@@ -90,7 +90,7 @@ export default function DropdownField({
 			? "" // We'll use inline styles for precise control
 			: "max-h-60";
 
-		const baseClasses = `absolute z-50 bg-white border border-[var(--accent)] rounded-sm shadow-lg min-w-full overflow-y-auto ${maxHeightClass}`;
+		const baseClasses = `absolute z-50 bg-white border border-accent rounded-sm shadow-lg min-w-full overflow-y-auto ${maxHeightClass}`;
 
 		const positionClasses = {
 			bottom: "top-full left-0",
@@ -134,11 +134,11 @@ export default function DropdownField({
 				<button
 					type='button'
 					onClick={() => setIsOpen(!isOpen)}
-					className={`py-[${padding}] bg-[var(--primary)] col-start-1 row-start-1 w-full appearance-none 
-								text-[${fontSize}] text-[var(--secondary)] font-regular focus:outline-none
-								rounded-${roundness} focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
-								hover:bg-[var(--accent)]/50 transition-colors 
-            					${shadow ? "shadow-md border-none" : "shadow-none border-2 border-[var(--secondary)]/20"
+					className={`py-[${padding}] bg-primary col-start-1 row-start-1 w-full appearance-none 
+								text-[${fontSize}] text-secondary font-regular focus:outline-none
+								rounded-${roundness} focus:ring-2 focus:ring-accent focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
+								hover:bg-accent/50 transition-colors 
+            					${shadow ? "shadow-md border-none" : "shadow-none border-2 border-secondary/20"
 							}`}
 					style={height ? { height: `${height}px` } : {}}>
 					{selectedValue}
@@ -171,10 +171,10 @@ export default function DropdownField({
 										key={index}
 										type='button'
 										onClick={() => handleSelect(option)}
-										className={`w-full text-${valueAlignment} px-4 py-2 text-sm hover:bg-[var(--accent)]/50 hover:text-[var(--secondary)] transition-colors ${
+										className={`w-full text-${valueAlignment} px-4 py-2 text-xs hover:bg-accent/50 hover:text-secondary transition-colors ${
 											selectedValue === option
-												? "bg-[var(--accent)] text-[var(--primary)] font-medium"
-												: "text-[var(--secondary)]"
+												? "bg-accent text-primary font-medium"
+												: "text-secondary"
 										} ${
 											isAllOption 
 												? "font-semibold border-b border-gray-200 mb-1" 

@@ -251,7 +251,7 @@ export default function WorkersPage() {
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
 					<LoadingSpinner size="md" />
-					<p className='text-[var(--secondary)]'>Loading...</p>
+					<p className='text-secondary'>Loading...</p>
 				</div>
 			</div>
 		);
@@ -262,7 +262,7 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<h2 className='text-xl font-semibold text-gray-700 mb-2'>
+					<h2 className='text-lg font-semibold text-gray-700 mb-2'>
 						Access Denied
 					</h2>
 					<p className='text-gray-500'>
@@ -277,8 +277,8 @@ export default function WorkersPage() {
 		return (
 			<div className='flex items-center justify-center h-full'>
 				<div className='text-center'>
-					<h2 className='text-xl font-semibold text-[var(--error)] mb-2'>Error</h2>
-					<p className='text-[var(--error)]'>{error}</p>
+					<h2 className='text-lg font-semibold text-error mb-2'>Error</h2>
+					<p className='text-error'>{error}</p>
 				</div>
 			</div>
 		);
@@ -305,7 +305,7 @@ export default function WorkersPage() {
 			</div>
 
 			{/* Mobile Header with Controls */}
-			<div className='px-6 py-4 border-b border-[var(--secondary)]/20 sm:hidden'>
+			<div className='px-6 py-4 border-b border-secondary/20 sm:hidden'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
 						{/* Branch Selector - Only show for owners */}
@@ -324,7 +324,7 @@ export default function WorkersPage() {
 										);
 										handleBranchChange(selectedBranch?.id || "");
 									}}
-									roundness={"[12px]"}
+									roundness={"xl"}
 									height={42}
 									valueAlignment={"left"}
 									padding=''
@@ -337,12 +337,12 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
 									</div>
-									<span className='mt-[2px]'>ADD WORKER</span>
+									<span className='mt-0.5'>ADD WORKER</span>
 								</div>
 							</button>
 						)}
@@ -351,10 +351,10 @@ export default function WorkersPage() {
 			</div>
 
 			{/* Desktop Header with Controls */}
-			<div className='hidden sm:block px-6 py-4 border-b border-[var(--secondary)]/20'>
+			<div className='hidden sm:block px-6 py-4 border-b border-secondary/20'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div>
-						<p className='text-sm text-[var(--secondary)]/70'>
+						<p className='text-xs text-secondary/70'>
 							Manage users, track time, and assign roles across branches
 						</p>
 					</div>
@@ -376,7 +376,7 @@ export default function WorkersPage() {
 										);
 										handleBranchChange(selectedBranch?.id || "");
 									}}
-									roundness={"[12px]"}
+									roundness={"xl"}
 									height={42}
 									valueAlignment={"left"}
 									padding=''
@@ -389,12 +389,12 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 									<div className='size-4'>
 										<PlusIcon className='drop-shadow-lg' />
 									</div>
-									<span className='mt-[2px]'>ADD WORKER</span>
+									<span className='mt-0.5'>ADD WORKER</span>
 								</div>
 							</button>
 						)}
@@ -404,7 +404,7 @@ export default function WorkersPage() {
 
 			{/* Filters - only show in workers view */}
 			{viewMode === "workers" && (
-				<div className='px-6 py-4 border-b border-[var(--secondary)]/20 bg-[var(--secondary)]/5'>
+				<div className='px-6 py-4 border-b border-secondary/20 bg-secondary/5'>
 					<WorkerFiltersComponent
 						filters={filters}
 						branches={branches}
@@ -421,19 +421,19 @@ export default function WorkersPage() {
 				{loading ? (
 					<div className='flex items-center justify-center h-64'>
 						<LoadingSpinner size='md' />
-						<span className='ml-3 text-[var(--secondary)]'>
+						<span className='ml-3 text-secondary'>
 							Loading workers...
 						</span>
 					</div>
 				) : error ? (
 					<div className='text-center py-12'>
-						<h3 className='text-lg font-semibold text-gray-700 mb-2'>
+						<h3 className='text-base font-semibold text-gray-700 mb-2'>
 							Error Loading Workers
 						</h3>
 						<p className='text-gray-500'>{error}</p>
 						<button
 							onClick={loadWorkers}
-							className='mt-4 px-4 py-2 bg-[var(--accent)] text-[var(--primary)] rounded-lg hover:bg-[var(--accent)]/90'>
+							className='mt-4 px-4 py-2 bg-accent text-primary rounded-lg hover:bg-accent/90'>
 							Retry
 						</button>
 					</div>
@@ -455,7 +455,7 @@ export default function WorkersPage() {
 						/>
 
 						{/* Stats */}
-						<div className='mt-6 text-sm text-gray-500'>
+						<div className='mt-6 text-xs text-gray-500'>
 							Showing {sortedWorkers.length} worker
 							{sortedWorkers.length !== 1 ? "s" : ""}
 						</div>

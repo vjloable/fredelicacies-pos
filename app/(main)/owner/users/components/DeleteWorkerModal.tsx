@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { workerService, Worker } from "@/services/workerService";
 import Image from "next/image";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface DeleteWorkerModalProps {
 	isOpen: boolean;
@@ -60,12 +61,12 @@ export default function DeleteWorkerModal({
 				{loading ? (
 					<div className='text-center py-8'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-[var(--error)]'></div>
+							<LoadingSpinner size="lg" className="border-error" />
 						</div>
-						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Deleting Worker...
 						</h3>
-						<p className='text-[var(--secondary)] opacity-70'>
+						<p className='text-secondary opacity-70'>
 							Removing worker account and all associated data
 						</p>
 					</div>
@@ -73,9 +74,9 @@ export default function DeleteWorkerModal({
 					<>
 						{/* Header */}
 						<div className='flex items-center justify-center mb-6'>
-							<div className='w-16 h-16 bg-[var(--error)]/20 rounded-full flex items-center justify-center'>
+							<div className='w-16 h-16 bg-error/20 rounded-full flex items-center justify-center'>
 								<svg
-									className='w-8 h-8 text-[var(--error)]'
+									className='w-8 h-8 text-error'
 									fill='none'
 									stroke='currentColor'
 									viewBox='0 0 24 24'>
@@ -90,17 +91,17 @@ export default function DeleteWorkerModal({
 						</div>
 
 						<div className='text-center mb-6'>
-							<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+							<h3 className='text-lg font-bold text-secondary mb-2'>
 								Delete Worker Account
 							</h3>
-							<p className='text-[var(--secondary)] opacity-70'>
+							<p className='text-secondary opacity-70'>
 								This action cannot be undone. All worker data and work history
 								will be permanently deleted.
 							</p>
 						</div>
 
 						{/* Worker Info */}
-						<div className='bg-[var(--secondary)]/5 rounded-lg p-4 mb-6'>
+						<div className='bg-secondary/5 rounded-lg p-4 mb-6'>
 							<div className='flex items-center'>
 								{worker.profilePicture ? (
 									<Image
@@ -109,17 +110,17 @@ export default function DeleteWorkerModal({
 										className='w-12 h-12 rounded-full mr-4'
 									/>
 								) : (
-									<div className='w-12 h-12 bg-[var(--secondary)]/10 rounded-full flex items-center justify-center mr-4'>
-										<span className='text-lg font-medium text-gray-700'>
+									<div className='w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-4'>
+										<span className='text-base font-medium text-gray-700'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<div>
-									<div className='font-medium text-[var(--secondary)]'>{worker.name}</div>
-									<div className='text-sm text-[var(--secondary)]/70'>{worker.email}</div>
+									<div className='font-medium text-secondary'>{worker.name}</div>
+									<div className='text-xs text-secondary/70'>{worker.email}</div>
 									{worker.employeeId && (
-										<div className='text-sm text-[var(--secondary)]/70'>
+										<div className='text-xs text-secondary/70'>
 											ID: {worker.employeeId}
 										</div>
 									)}
@@ -129,9 +130,9 @@ export default function DeleteWorkerModal({
 
 						{/* Confirmation Input */}
 						<div className='mb-6'>
-							<label className='block text-sm font-medium text-[var(--secondary)] mb-2'>
+							<label className='block text-xs font-medium text-secondary mb-2'>
 								Type{" "}
-								<span className='font-mono bg-[var(--secondary)]/10 px-1 rounded'>
+								<span className='font-mono bg-secondary/10 px-1 rounded'>
 									{worker.name}
 								</span>{" "}
 								to confirm deletion:
@@ -159,7 +160,7 @@ export default function DeleteWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-red-700 text-xs'>{error}</span>
 								</div>
 							</div>
 						)}

@@ -6,6 +6,7 @@ import { authService } from "@/services/authService";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface SignUpFormData {
   firstName: string;
@@ -142,16 +143,16 @@ export default function SignUpPage() {
     >
       <div className="w-full max-w-md">
         {/* Sign Up Form */}
-        <div className="bg-white rounded-[12px] shadow-xl">
+        <div className="bg-white rounded-xl shadow-xl">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-[var(--primary)] py-6 shadow-md rounded-t-[12px]">
-              <div className="w-[165px] h-[120px]">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl">
+              <div className="w-41.25 h-30">
                 <LogoVerticalIcon />
               </div>
             </div>
           </div>
-          <p className="text-center text-[16px] font-medium text-[var(--secondary)]">
+          <p className="text-center text-3.5 font-medium text-secondary">
             Create your account
           </p>
           <div className="p-8">
@@ -160,14 +161,14 @@ export default function SignUpPage() {
               <div className="grid grid-cols-2 gap-4">
                 {/* First Name Field */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     First Name
                   </label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={handleInputChange("firstName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="First name"
                     disabled={isLoading}
                     autoComplete="given-name"
@@ -176,14 +177,14 @@ export default function SignUpPage() {
 
                 {/* Last Name Field */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Last Name
                   </label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={handleInputChange("lastName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Last name"
                     disabled={isLoading}
                     autoComplete="family-name"
@@ -193,14 +194,14 @@ export default function SignUpPage() {
 
               {/* Email Field */}
               <div>
-                <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Email
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange("email")}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                   placeholder="Enter your email"
                   disabled={isLoading}
                   autoComplete="email"
@@ -211,14 +212,14 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 gap-4">
                 {/* Password Field */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Password
                   </label>
                   <input
                     type="password"
                     value={formData.password}
                     onChange={handleInputChange("password")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Create password (min. 6 characters)"
                     disabled={isLoading}
                     autoComplete="new-password"
@@ -227,14 +228,14 @@ export default function SignUpPage() {
 
                 {/* Confirm Password Field */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--secondary)] mb-2">
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Confirm Password
                   </label>
                   <input
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange("confirmPassword")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-[6px] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Confirm your password"
                     disabled={isLoading}
                     autoComplete="new-password"
@@ -257,7 +258,7 @@ export default function SignUpPage() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="text-sm text-red-700">{error}</span>
+                    <span className="text-xs text-red-700">{error}</span>
                   </div>
                 </div>
               )}
@@ -269,16 +270,16 @@ export default function SignUpPage() {
                   isLoading || 
                   validationErrors.emailTaken
                 }
-                className={`w-full py-3 rounded-[6px] font-semibold transition-all shadow-lg ${
+                className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
                   isLoading || 
                   validationErrors.emailTaken
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white hover:scale-105 active:scale-95"
+                    : "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
                 }`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    <LoadingSpinner className="border-secondary/30" />
                     Creating account...
                   </div>
                 ) : (
@@ -289,11 +290,11 @@ export default function SignUpPage() {
 
             {/* Login Link */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-[var(--secondary)]">
+              <p className="text-xs text-secondary">
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="font-medium text-[var(--accent)] hover:text-[var(--accent)]/80 transition-colors"
+                  className="font-medium text-accent hover:text-accent/80 transition-colors"
                 >
                   Sign in here
                 </Link>
@@ -302,7 +303,7 @@ export default function SignUpPage() {
 
             {/* Footer */}
             <div className="mt-6 text-center">
-              <p className="text-xs text-[var(--secondary)] opacity-50">
+              <p className="text-xs text-secondary opacity-50">
                 Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
               </p>
             </div>

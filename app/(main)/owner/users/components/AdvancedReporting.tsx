@@ -4,6 +4,7 @@ import { attendanceService, Attendance } from "@/services/attendanceService";
 import { useBranch } from "@/contexts/BranchContext";
 import WorkerPerformanceAnalytics from "./WorkerPerformanceAnalytics";
 import type { Branch } from "@/types/domain";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface ReportFilters {
 	dateRange: {
@@ -367,14 +368,14 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 		<div className='space-y-6'>
 			{/* Filter Panel */}
 			<div className='bg-white rounded-lg shadow p-6'>
-				<h3 className='text-lg font-semibold text-gray-900 mb-4'>
+				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Report Filters
 				</h3>
 
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
 					{/* Date Range */}
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>
+						<label className='block text-xs font-medium text-gray-700 mb-1'>
 							Start Date
 						</label>
 						<input
@@ -388,7 +389,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 					</div>
 
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>
+						<label className='block text-xs font-medium text-gray-700 mb-1'>
 							End Date
 						</label>
 						<input
@@ -401,7 +402,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 					{/* Report Type */}
 					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-1'>
+						<label className='block text-xs font-medium text-gray-700 mb-1'>
 							Report Type
 						</label>
 						<select
@@ -434,7 +435,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 				{/* Branch Filters */}
 				{allBranches.length > 0 && (
 					<div className='mt-4'>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>
+						<label className='block text-xs font-medium text-gray-700 mb-2'>
 							Filter by Branches
 						</label>
 						<div className='flex flex-wrap gap-2'>
@@ -446,7 +447,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 										onChange={() => handleBranchFilterChange(branch.id)}
 										className='rounded border-gray-300 text-blue-600 focus:ring-blue-500'
 									/>
-									<span className='ml-2 text-sm text-gray-700'>
+									<span className='ml-2 text-xs text-gray-700'>
 										{branch.name}
 									</span>
 								</label>
@@ -462,8 +463,8 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 					{loading ? (
 						<div className='bg-white rounded-lg shadow p-6'>
 							<div className='text-center py-8'>
-								<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
-								<p className='text-gray-600 text-sm mt-2'>
+								<LoadingSpinner size="lg" className="mx-auto" />
+								<p className='text-gray-600 text-xs mt-2'>
 									Generating report...
 								</p>
 							</div>
@@ -485,10 +486,10 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 										/>
 									</svg>
 								</div>
-								<p className='text-gray-600 text-sm'>{error}</p>
+								<p className='text-gray-600 text-xs'>{error}</p>
 								<button
 									onClick={generateSummaryReport}
-									className='mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium'>
+									className='mt-3 text-blue-600 hover:text-blue-800 text-xs font-medium'>
 									Retry
 								</button>
 							</div>
@@ -499,41 +500,41 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								{/* Summary Cards */}
 								<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 									<div className='bg-white rounded-lg shadow p-6'>
-										<h4 className='text-sm font-medium text-gray-600'>
+										<h4 className='text-xs font-medium text-gray-600'>
 											Total Workers
 										</h4>
-										<p className='text-3xl font-bold text-gray-900'>
+										<p className='text-2xl font-bold text-gray-900'>
 											{summaryMetrics.totalWorkers}
 										</p>
-										<p className='text-sm text-green-600'>
+										<p className='text-xs text-green-600'>
 											{summaryMetrics.activeWorkers} active
 										</p>
 									</div>
 									<div className='bg-white rounded-lg shadow p-6'>
-										<h4 className='text-sm font-medium text-gray-600'>
+										<h4 className='text-xs font-medium text-gray-600'>
 											Total Hours
 										</h4>
-										<p className='text-3xl font-bold text-gray-900'>
+										<p className='text-2xl font-bold text-gray-900'>
 											{formatHours(summaryMetrics.totalHours)}
 										</p>
 									</div>
 									<div className='bg-white rounded-lg shadow p-6'>
-										<h4 className='text-sm font-medium text-gray-600'>
+										<h4 className='text-xs font-medium text-gray-600'>
 											Average Hours
 										</h4>
-										<p className='text-3xl font-bold text-gray-900'>
+										<p className='text-2xl font-bold text-gray-900'>
 											{formatHours(summaryMetrics.averageHoursPerWorker)}
 										</p>
-										<p className='text-sm text-gray-600'>per worker</p>
+										<p className='text-xs text-gray-600'>per worker</p>
 									</div>
 									<div className='bg-white rounded-lg shadow p-6'>
-										<h4 className='text-sm font-medium text-gray-600'>
+										<h4 className='text-xs font-medium text-gray-600'>
 											Branch Coverage
 										</h4>
-										<p className='text-3xl font-bold text-gray-900'>
+										<p className='text-2xl font-bold text-gray-900'>
 											{summaryMetrics.branchCoverage.length}
 										</p>
-										<p className='text-sm text-gray-600'>branches active</p>
+										<p className='text-xs text-gray-600'>branches active</p>
 									</div>
 								</div>
 
@@ -541,7 +542,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								{summaryMetrics.topPerformers.length > 0 && (
 									<div className='bg-white rounded-lg shadow'>
 										<div className='p-6 border-b border-gray-200'>
-											<h4 className='text-lg font-semibold text-gray-900'>
+											<h4 className='text-base font-semibold text-gray-900'>
 												Top Performers
 											</h4>
 										</div>
@@ -554,7 +555,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 															className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
 															<div className='flex items-center'>
 																<div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3'>
-																	<span className='text-sm font-bold text-blue-600'>
+																	<span className='text-xs font-bold text-blue-600'>
 																		#{index + 1}
 																	</span>
 																</div>
@@ -562,7 +563,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 																	<div className='font-medium text-gray-900'>
 																		{performer.workerName}
 																	</div>
-																	<div className='text-sm text-gray-600'>
+																	<div className='text-xs text-gray-600'>
 																		{performer.attendancesCount} attendances •{" "}
 																		{performer.punctualityScore}% punctuality
 																	</div>
@@ -579,7 +580,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 																		);
 																		if (worker) setSelectedWorker(worker);
 																	}}
-																	className='text-sm text-blue-600 hover:text-blue-800'>
+																	className='text-xs text-blue-600 hover:text-blue-800'>
 																	View Details
 																</button>
 															</div>
@@ -595,7 +596,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								{summaryMetrics.branchCoverage.length > 0 && (
 									<div className='bg-white rounded-lg shadow'>
 										<div className='p-6 border-b border-gray-200'>
-											<h4 className='text-lg font-semibold text-gray-900'>
+											<h4 className='text-base font-semibold text-gray-900'>
 												Branch Performance
 											</h4>
 										</div>
@@ -609,7 +610,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 															<div className='font-medium text-gray-900'>
 																{branch.branchName}
 															</div>
-															<div className='text-sm text-gray-600'>
+															<div className='text-xs text-gray-600'>
 																{branch.workerCount} workers •{" "}
 																{formatHours(branch.averageHours)} avg per
 																worker
@@ -630,7 +631,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								{/* Time Distribution Chart */}
 								<div className='bg-white rounded-lg shadow'>
 									<div className='p-6 border-b border-gray-200'>
-										<h4 className='text-lg font-semibold text-gray-900'>
+										<h4 className='text-base font-semibold text-gray-900'>
 											Hourly Activity Distribution
 										</h4>
 									</div>
@@ -688,7 +689,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 					<div className='bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex justify-between items-center'>
-								<h3 className='text-lg font-semibold text-gray-900'>
+								<h3 className='text-base font-semibold text-gray-900'>
 									Performance Details: {selectedWorker.name}
 								</h3>
 								<button

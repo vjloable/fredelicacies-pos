@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Branch } from "@/services/branchService";
 import { workerService, Worker } from "@/services/workerService";
 import DropdownField from "@/components/DropdownField";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface EditWorkerModalProps {
 	isOpen: boolean;
@@ -356,12 +357,12 @@ export default function EditWorkerModal({
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div className='animate-spin rounded-full h-10 w-10 border-4 border-dashed border-[var(--accent)]'></div>
+							<LoadingSpinner size="lg" />
 						</div>
-						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							Updating Worker...
 						</h3>
-						<p className='text-[var(--secondary)] opacity-70'>
+						<p className='text-secondary opacity-70'>
 							Saving changes to worker account
 						</p>
 					</div>
@@ -370,16 +371,16 @@ export default function EditWorkerModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div>
-								<h2 className='text-2xl font-bold text-[var(--secondary)]'>
+								<h2 className='text-xl font-bold text-secondary'>
 									Edit Worker
 								</h2>
-								<p className='text-sm text-[var(--secondary)]/70 mt-1'>
+								<p className='text-xs text-secondary/70 mt-1'>
 									Update worker information and role assignments
 								</p>
 							</div>
 							<button
 								onClick={handleClose}
-								className='text-[var(--secondary)]/40 hover:text-[var(--secondary)]/60 p-2'>
+								className='text-secondary/40 hover:text-secondary/60 p-2'>
 								<svg
 									className='w-6 h-6'
 									fill='none'
@@ -397,10 +398,10 @@ export default function EditWorkerModal({
 
 						{/* Error Display */}
 						{error && (
-							<div className='mb-6 p-4 bg-r[var(--error)]/5 border border-[var(--error)]/20 rounded-lg'>
+							<div className='mb-6 p-4 bg-error/5 border border-error/20 rounded-lg'>
 								<div className='flex items-center'>
 									<svg
-										className='w-5 h-5 text-[var(--error)]/40 mr-2'
+										className='w-5 h-5 text-error/40 mr-2'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -409,7 +410,7 @@ export default function EditWorkerModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-[var(--error)] text-sm'>{error}</span>
+									<span className='text-error text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -419,29 +420,29 @@ export default function EditWorkerModal({
 							{/* Basic Information */}
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-[var(--secondary)]/70 mb-2'>
-										Full Name <span className="text-[var(--error)]">*</span>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
+										Full Name <span className="text-error">*</span>
 									</label>
 									<input
 										type='text'
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
-										Email Address <span className="text-[var(--error)]">*</span>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
+										Email Address <span className="text-error">*</span>
 									</label>
 									<input
 										type='email'
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -450,7 +451,7 @@ export default function EditWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -458,12 +459,12 @@ export default function EditWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Employee ID
 									</label>
 									<input
@@ -471,7 +472,7 @@ export default function EditWorkerModal({
 										name='employeeId'
 										value={formData.employeeId}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter employee ID (optional)'
 									/>
 								</div>
@@ -485,9 +486,9 @@ export default function EditWorkerModal({
 										name='isOwner'
 										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='h-5 w-5 text-[var(--primary)] focus:ring-[var(--accent)] border-[var(--secondary)]/30 rounded'
+										className='h-5 w-5 text-primary focus:ring-accent border-secondary/30 rounded'
 									/>
-									<label className='ml-2 block text-sm text-[var(--secondary)] p-1'>
+									<label className='ml-2 block text-xs text-secondary p-1'>
 										Grant admin privileges
 									</label>
 								</div>
@@ -497,8 +498,8 @@ export default function EditWorkerModal({
 							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Assign to Branch <span className="text-[var(--error)]">*</span>
+										<label className='block text-xs font-medium text-gray-700 mb-2'>
+											Assign to Branch <span className="text-error">*</span>
 										</label>
 										{!isOwner || availableBranches.length === 1 ? (
 											// For managers - show readonly branch name (no changes allowed)
@@ -544,8 +545,8 @@ export default function EditWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-sm font-medium text-gray-700 mb-2'>
-											Role <span className="text-[var(--error)]">*</span>
+										<label className='block text-xs font-medium text-gray-700 mb-2'>
+											Role <span className="text-error">*</span>
 										</label>
 										{isOwner && canDemoteWorker(worker) ? (
 											<DropdownField
@@ -585,17 +586,17 @@ export default function EditWorkerModal({
 							)}
 
 							{/* Form Actions */}
-							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--secondary)]/20'>
+							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-secondary/20'>
 								<button
 									type='button'
 									onClick={handleClose}
-									className='flex-1 py-3 px-4 border border-[var(--secondary)]/30 rounded-lg text-[var(--secondary)]/70 font-medium hover:bg-[var(--secondary)]/20 transition-colors'>
+									className='flex-1 py-3 px-4 border border-secondary/30 rounded-lg text-secondary/70 font-medium hover:bg-secondary/20 transition-colors'>
 									Cancel
 								</button>
 								<button
 									type='submit'
 									disabled={loading}
-									className='flex-1 py-3 px-4 bg-[var(--accent)] text-[var(--primary)] rounded-lg font-medium hover:bg-[var(--accent)]/90 transition-colors disabled:opacity-50'>
+									className='flex-1 py-3 px-4 bg-accent text-primary rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50'>
 									Update Worker
 								</button>
 							</div>

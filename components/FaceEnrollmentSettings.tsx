@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { faceRecognitionService } from '@/services/faceRecognitionService';
 import FaceRecognitionCamera from '@/components/FaceRecognitionCamera';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function FaceEnrollmentSettings() {
 	const { user } = useAuth();
@@ -55,7 +56,7 @@ export default function FaceEnrollmentSettings() {
 		return (
 			<div className="bg-white rounded-lg border border-gray-200 p-6">
 				<div className="flex items-center justify-center py-8">
-					<div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+					<LoadingSpinner size="lg" />
 				</div>
 			</div>
 		);
@@ -75,8 +76,8 @@ export default function FaceEnrollmentSettings() {
 
 			<div className="bg-white rounded-lg border border-gray-200">
 				<div className="px-6 py-4 border-b border-gray-200">
-					<h3 className="text-lg font-semibold text-gray-900">Face Recognition</h3>
-					<p className="text-sm text-gray-600 mt-1">
+					<h3 className="text-base font-semibold text-gray-900">Face Recognition</h3>
+					<p className="text-xs text-gray-600 mt-1">
 						Manage your face enrollment for clock in/out verification
 					</p>
 				</div>
@@ -104,7 +105,7 @@ export default function FaceEnrollmentSettings() {
 									</div>
 									<div>
 										<h4 className="font-medium text-green-900">Face Enrolled</h4>
-										<p className="text-sm text-green-700">
+										<p className="text-xs text-green-700">
 											Your face is enrolled for clock in/out verification
 										</p>
 										{enrollmentDate && (
@@ -146,7 +147,7 @@ export default function FaceEnrollmentSettings() {
 
 							{/* Information */}
 							<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-								<h5 className="text-sm font-semibold text-blue-900 mb-2">
+								<h5 className="text-xs font-semibold text-blue-900 mb-2">
 									How Face Recognition Works
 								</h5>
 								<ul className="text-xs text-blue-700 space-y-1">
@@ -180,7 +181,7 @@ export default function FaceEnrollmentSettings() {
 									</div>
 									<div>
 										<h4 className="font-medium text-yellow-900">Not Enrolled</h4>
-										<p className="text-sm text-yellow-700">
+										<p className="text-xs text-yellow-700">
 											You need to enroll your face to use clock in/out
 										</p>
 									</div>
@@ -216,7 +217,7 @@ export default function FaceEnrollmentSettings() {
 
 							{/* Instructions */}
 							<div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-								<h5 className="text-sm font-semibold text-gray-900 mb-2">
+								<h5 className="text-xs font-semibold text-gray-900 mb-2">
 									Before You Start
 								</h5>
 								<ul className="text-xs text-gray-700 space-y-1">

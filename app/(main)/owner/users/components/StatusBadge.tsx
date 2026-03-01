@@ -12,8 +12,8 @@ export default function StatusBadge({
 	// Owners don't have status tracking
 	if (isOwner) {
 		return (
-			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]'>
-				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-[var(--accent)]' />
+			<span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent'>
+				<div className='w-1.5 h-1.5 rounded-full mr-1.5 bg-accent' />
 				Owner
 			</span>
 		);
@@ -24,20 +24,20 @@ export default function StatusBadge({
 			case "clocked_in":
 				return {
 					label: "Clocked In",
-					className: "bg-[var(--success)]/10 text-[var(--success)]",
-					dotClassName: "bg-[var(--success)]",
+					className: "bg-success/10 text-success",
+					dotClassName: "bg-success",
 				};
 			case "clocked_out":
 				return {
 					label: "Clocked Out",
-					className: "bg-[var(--error)]/10 text-[var(--error)]",
-					dotClassName: "bg-[var(--error)]",
+					className: "bg-error/10 text-error",
+					dotClassName: "bg-error",
 				};
 			default:
 				return {
 					label: "Clocked Out",
-					className: "bg-[var(--error)]/10 text-[var(--error)]",
-					dotClassName: "bg-[var(--error)]",
+					className: "bg-error/10 text-error",
+					dotClassName: "bg-error",
 				};
 		}
 	};

@@ -12,7 +12,7 @@ export default function LoadingSpinner({ size = 'sm', className = '' }: LoadingS
 
   return (
     <div 
-      className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-[var(--accent)] border-dashed ${className}`}
+      className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-accent border-dashed ${className}`}
       role="status"
       aria-label="Loading"
     >

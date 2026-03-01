@@ -134,9 +134,9 @@ export default function LogsScreen() {
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>
 						<div className='flex items-center justify-center h-full'>
 							<div className='text-center max-w-md w-full'>
-								<div className='w-24 h-24 bg-[var(--light-accent)] rounded-full mx-auto mb-4 flex items-center justify-center'>
+								<div className='w-24 h-24 bg-light-accent rounded-full mx-auto mb-4 flex items-center justify-center'>
 									<svg
-										className='w-12 h-12 text-[var(--accent)]'
+										className='w-12 h-12 text-accent'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -146,10 +146,10 @@ export default function LogsScreen() {
 										/>
 									</svg>
 								</div>
-								<h2 className='text-xl font-semibold text-[var(--secondary)] mb-2'>
+								<h2 className='text-lg font-semibold text-secondary mb-2'>
 									Logs Page
 								</h2>
-								<p className='text-[var(--secondary)] opacity-70 mb-8'>
+								<p className='text-secondary opacity-70 mb-8'>
 									This page is ready for system logs and activity tracking.
 								</p>
 							</div>

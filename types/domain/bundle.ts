@@ -6,6 +6,8 @@ export interface Bundle {
   description: string | null;
   price: number;
   img_url: string | null;
+  is_custom: boolean;
+  max_pieces: number | null;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -30,6 +32,8 @@ export interface CreateBundleData {
   description?: string;
   img_url?: string;
   is_predefined?: boolean;
+  is_custom?: boolean;
+  max_pieces?: number | null;
   status?: 'active' | 'inactive';
 }
 
@@ -38,5 +42,7 @@ export interface UpdateBundleData {
   description?: string;
   price?: number;
   img_url?: string;
+  is_custom?: boolean;
+  max_pieces?: number | null;
   status?: 'active' | 'inactive';
 }

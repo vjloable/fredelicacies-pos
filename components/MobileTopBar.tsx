@@ -152,7 +152,7 @@ export default function MobileTopBar({
 					<MenuBurger className="text-primary"/>
 				</button>
 				<div className='flex-1 flex justify-center'>
-					<div className='flex items-center justify-center rounded-[100px] bg-accent h-12 px-6'>
+					<div className='flex items-center justify-center rounded-25 bg-accent h-12 px-6'>
 						<TextLogo className='h-5' />
 					</div>
 				</div>{" "}
@@ -168,7 +168,7 @@ export default function MobileTopBar({
 			</div>
 			<div className='flex items-center gap-3 px-4 py-2 overflow-x-auto'>
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary'>
+					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center text-secondary'>
 						<UserIcon />
 					</span>
 					<span>{userDisplayName}</span>
@@ -176,7 +176,7 @@ export default function MobileTopBar({
 
 				{isUserOwner() && (
 					<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-						<span className='w-7 h-7 bg-(--light-accent) rounded-full flex items-center justify-center text-secondary text-xs font-bold'>
+						<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center text-secondary text-xs font-bold'>
 							O
 						</span>
 						<span>Owner</span>
@@ -190,27 +190,27 @@ export default function MobileTopBar({
 							disabled={isTimeTracking}
 							className={`flex-1 h-12 px-3 py-2 flex rounded-xl gap-2 items-center font-medium text-xs transition-all duration-200 cursor-pointer group ${
 								timeTracking.isWorking
-									? "bg-(--success)/10 text-(--success) border-2 border-(--success) hover:bg-(--secondary)/10 hover:border-secondary"
-									: "bg-(--secondary)/10 text-secondary border-2 border-secondary hover:bg-(--success)/10 hover:border-(--success)"
+									? "bg-success/10 text-success border-2 border-success hover:bg-secondary/10 hover:border-secondary"
+									: "bg-secondary/10 text-secondary border-2 border-secondary hover:bg-success/10 hover:border-success"
 							} ${isTimeTracking ? "opacity-50" : "hover:scale-105"}`}>
 							<span
 								className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
 									timeTracking.isWorking
-										? "bg-(--success)/10 text-(--success) group-hover:bg-(--secondary)/10"
-										: "bg-(--secondary)/10 text-secondary group-hover:bg-(--success)/10"
-								}`}>
+										? "bg-success/10 text-success group-hover:bg-secondary/10"
+										: "bg-secondary/10 text-secondary group-hover:bg-success/10"
+								}`}> 
 								{isTimeTracking ? (
-									<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent' />
+									<LoadingSpinner className="w-3! h-3! border-current" />
 								) : timeTracking.isWorking ? (
-									<div className="h-3 w-3 border-2 border-dashed border-(--success) animate-spin rounded-full group-hover:border-secondary"/>
+									<LoadingSpinner className="w-3! h-3! border-success group-hover:border-secondary" />
 								) : (
-									<div className="h-3 w-3 border-2 border-secondary rounded-full group-hover:border-(--success)"/>
+									<div className="h-3 w-3 border-2 border-secondary rounded-full group-hover:border-success"/>
 								)}
 							</span>
 							<span className={`font-bold 
 								${timeTracking.isWorking
 									? "opacity-70 group-hover:text-secondary"
-									: "opacity-70 group-hover:text-(--success)"
+									: "opacity-70 group-hover:text-success"
 								}`
 							}> 
 							{timeTracking.isWorking ? "Working" : "Off Duty"}
@@ -220,7 +220,7 @@ export default function MobileTopBar({
 									className={`text-xs truncate ${
 										timeTracking.isWorking
 											? "opacity-70 group-hover:text-secondary"
-											: "opacity-70 group-hover:text-(--success)"
+											: "opacity-70 group-hover:text-success"
 									}`}>
 									{timeTracking.isWorking
 										? timeTracking.workingDuration > 0
@@ -237,7 +237,7 @@ export default function MobileTopBar({
 					)}
 
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-(--light-accent) rounded-full flex items-center justify-center'>
+					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center'>
 						<CalendarIcon />
 					</span>
 					<div className='flex flex-col items-start'>
@@ -247,7 +247,7 @@ export default function MobileTopBar({
 							<>
 								<span className="truncate">{date}</span>
 								{!isInternetTime && date && (
-									<span className='text-[10px] opacity-70'>(Local)</span>
+									<span className='text-2.5 opacity-70'>(Local)</span>
 								)}
 							</>
 						)}
@@ -255,7 +255,7 @@ export default function MobileTopBar({
 				</div>
 
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-(--light-accent) rounded-full flex items-center justify-center shrink-0'>
+					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center shrink-0'>
 						<ClockIcon />
 					</span>
 					<div className='flex flex-row items-center gap-2'>
@@ -264,9 +264,9 @@ export default function MobileTopBar({
 						) : (
 							<>
 								{!isInternetTime && time ? (
-									<span className='bg-(--error)/20 size-3 border-2 border-(--error) border-dashed rounded-full shadow-sm animate-spin' />
+									<LoadingSpinner className="w-3! h-3! border-error bg-error/20 shadow-sm" />
 								) : (
-									<span className='bg-(--success)/20 size-3 border-2 border-(--success) border-dashed rounded-full shadow-sm animate-spin' />
+									<LoadingSpinner className="w-3! h-3! border-success bg-success/20 shadow-sm" />
 								)}
 								<span className='truncate animate-pulse'>{time}</span>
 							</>
@@ -275,7 +275,7 @@ export default function MobileTopBar({
 					<button
 						onClick={handleRefresh}
 						disabled={isRefreshing}
-						className='ml-auto p-1 hover:bg-(--light-accent) rounded-full transition-colors disabled:opacity-50 shrink-0'>
+						className='ml-auto p-1 hover:bg-light-accent rounded-full transition-colors disabled:opacity-50 shrink-0'>
 						<RefreshIcon
 							className='w-3 h-3 text-secondary'
 							isSpinning={isRefreshing}
@@ -286,7 +286,7 @@ export default function MobileTopBar({
 			{title && (
 				<div className='flex items-center justify-start px-4 py-2'>
 					{icon && <div className='mr-2'>{icon}</div>}
-					<h1 className='text-secondary text-xl font-bold'>{title}</h1>
+					<h1 className='text-secondary text-lg font-bold'>{title}</h1>
 				</div>
 			)}
 			</div>

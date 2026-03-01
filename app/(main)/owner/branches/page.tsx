@@ -87,7 +87,7 @@ export default function BranchesPage() {
 			<div className='flex items-center justify-center h-full'>
 				
 				<LoadingSpinner size="md"></LoadingSpinner>
-				<span className='ml-3 text-[var(--secondary)]'>Redirecting...</span>
+				<span className='ml-3 text-secondary'>Redirecting...</span>
 			</div>
 		);
 	}
@@ -191,12 +191,12 @@ export default function BranchesPage() {
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-						<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
 							</div>
-							<span className='mt-[2px]'>ADD BRANCH</span>
+							<span className='mt-0.5'>ADD BRANCH</span>
 						</div>
 					</button>
 				</div>
@@ -206,18 +206,18 @@ export default function BranchesPage() {
 			<div className='hidden sm:block px-6 py-4 border-b border-gray-200'>
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<div className="flex-col">
-						<p className='text-sm text-[var(--secondary)]/70'>
+						<p className='text-xs text-secondary/70'>
 							Manage your business locations and settings
 						</p>
 					</div>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-						<div className='flex flex-row items-center justify-center gap-2 text-[var(--primary)] text-shadow-md font-black text-[14px]'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
 							</div>
-							<span className='mt-[2px]'>ADD BRANCH</span>
+							<span className='mt-0.5'>ADD BRANCH</span>
 						</div>
 					</button>
 				</div>
@@ -227,17 +227,17 @@ export default function BranchesPage() {
 				{loading && (
 					<div className='flex items-center justify-center py-8'>
 						<LoadingSpinner size="md"/>
-						<span className='ml-3 text-[var(--secondary)]'>
+						<span className='ml-3 text-secondary'>
 							Loading branches...
 						</span>
 					</div>
 				)}
 
 				{error && (
-					<div className='bg-[var(--error)]/10 border border-[var(--error)]/40 rounded-lg p-4 mb-4'>
+					<div className='bg-error/10 border border-error/40 rounded-lg p-4 mb-4'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-[var(--error)]'
+								className='w-5 h-5 text-error'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -246,16 +246,16 @@ export default function BranchesPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-[var(--error)] font-medium'>{error}</span>
+							<span className='text-error font-medium'>{error}</span>
 						</div>
 					</div>
 				)}
 
 				{modalError && (
-					<div className='bg-[var(--error)]/10 border border-[var(--error)]/40 rounded-lg p-4 mb-4'>
+					<div className='bg-error/10 border border-error/40 rounded-lg p-4 mb-4'>
 						<div className='flex items-center gap-3'>
 							<svg
-								className='w-5 h-5 text-[var(--error)]'
+								className='w-5 h-5 text-error'
 								fill='currentColor'
 								viewBox='0 0 20 20'>
 								<path
@@ -264,7 +264,7 @@ export default function BranchesPage() {
 									clipRule='evenodd'
 								/>
 							</svg>
-							<span className='text-[var(--error)] font-medium'>
+							<span className='text-error font-medium'>
 								{modalError}
 							</span>
 						</div>
@@ -273,13 +273,13 @@ export default function BranchesPage() {
 
 				{!loading && !error && branches.length === 0 && (
 					<div className='text-center py-12'>
-						<div className='w-16 h-16 bg-[var(--light-accent)] rounded-full flex items-center justify-center mx-auto mb-4'>
-							<BranchesIcon className="text-[var(--accent)]" />
+						<div className='w-16 h-16 bg-light-accent rounded-full flex items-center justify-center mx-auto mb-4'>
+							<BranchesIcon className="text-accent" />
 						</div>
-						<h3 className='text-lg font-medium text-[var(--secondary)] mb-2'>
+						<h3 className='text-base font-medium text-secondary mb-2'>
 							No Branches Found
 						</h3>
-						<p className='text-[var(--secondary)]/70'>
+						<p className='text-secondary/70'>
 							No branches have been created yet.
 						</p>
 					</div>
@@ -289,10 +289,10 @@ export default function BranchesPage() {
 					<>
 						<div className='mb-4 flex items-center justify-between'>
 							<div>
-								<h3 className='text-lg font-semibold text-[var(--secondary)]'>
-									All Branches <span className='ml-2 text-[var(--primary)] text-xs bg-[var(--accent)] w-1 h-1 rounded-full px-2 py-0.5'>{branches.length}</span>
+								<h3 className='text-base font-semibold text-secondary'>
+									All Branches <span className='ml-2 text-primary text-xs bg-accent w-1 h-1 rounded-full px-2 py-0.5'>{branches.length}</span>
 								</h3>
-								<p className='text-sm text-[var(--secondary)]/70'>
+								<p className='text-xs text-secondary/70'>
 									Click on a branch to navigate to its management interface
 								</p>
 							</div>

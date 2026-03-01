@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface QuickTimeWidgetProps {
 	currentBranchId?: string;
@@ -88,9 +89,9 @@ export default function QuickTimeWidget({
 				<div className='flex items-center space-x-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1'>
 					<div
 						className={`w-2 h-2 rounded-full ${
-							isWorking ? "bg-[var(--success)] animate-pulse" : "bg-gray-300"
+							isWorking ? "bg-success animate-pulse" : "bg-gray-300"
 						}`}></div>
-					<span className='text-xs font-medium -text[var(--secondary)]'>
+					<span className='text-xs font-medium text-secondary'>
 						{isWorking ? formatWorkingTime() : "Off"}
 					</span>
 				</div>
@@ -99,7 +100,7 @@ export default function QuickTimeWidget({
 				<button
 					onClick={handleQuickToggle}
 					disabled={loading || timeTracking.loading}
-					className={`flex items-center space-x-1 px-2 py-1 rounded-lg -text[var(--secondary)] transition-colors text-xs font-medium ${
+					className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-secondary transition-colors text-xs font-medium ${
 						isWorking
 							? "bg-orange-500/20 hover:bg-orange-500/30"
 							: "bg-green-500/20 hover:bg-green-500/30"
@@ -111,7 +112,7 @@ export default function QuickTimeWidget({
 					title={isWorking ? "Clock Out" : "Clock In"}>
 					{loading || timeTracking.loading ? (
 						<>
-							<div className='animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent'></div>
+							<LoadingSpinner className="w-3! h-3! border-white" />
 							<span>{isWorking ? "Clocking Out..." : "Clocking In..."}</span>
 						</>
 					) : (
@@ -148,7 +149,7 @@ export default function QuickTimeWidget({
 							className={`w-2 h-2 rounded-full ${
 								isWorking ? "bg-green-400 animate-pulse" : "bg-gray-300"
 							}`}></div>
-						<span className='text-sm font-medium text-gray-700'>
+						<span className='text-xs font-medium text-gray-700'>
 							{isWorking ? "Working" : "Not Working"}
 						</span>
 					</div>
@@ -164,7 +165,7 @@ export default function QuickTimeWidget({
 				{isWorking && (
 					<div className='mb-3'>
 						<div className='text-xs text-gray-500 mb-1'>Working for:</div>
-						<div className='text-lg font-semibold text-blue-600'>
+						<div className='text-base font-semibold text-blue-600'>
 							{formatWorkingTime()}
 						</div>
 					</div>
@@ -174,7 +175,7 @@ export default function QuickTimeWidget({
 				<button
 					onClick={handleQuickToggle}
 					disabled={loading || timeTracking.loading}
-					className={`w-full flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+					className={`w-full flex items-center justify-center px-3 py-2 rounded-md text-xs font-medium transition-colors ${
 						isWorking
 							? "bg-orange-100 hover:bg-orange-200 text-orange-700"
 							: "bg-green-100 hover:bg-green-200 text-green-700"
@@ -185,7 +186,7 @@ export default function QuickTimeWidget({
 					}`}>
 					{loading || timeTracking.loading ? (
 						<div className='flex items-center'>
-							<div className='animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent mr-2'></div>
+							<LoadingSpinner className="w-3! h-3! border-current mr-2" />
 							{isWorking ? "Clocking out..." : "Clocking in..."}
 						</div>
 					) : (

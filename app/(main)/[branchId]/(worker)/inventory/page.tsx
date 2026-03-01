@@ -46,6 +46,7 @@ export default function InventoryScreen() {
 		null
 	);
 	const [editingItem, setEditingItem] = useState<Item | null>(null);
+	const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 	const [newItem, setNewItem] = useState({
 		name: "",
 		price: "",
@@ -180,6 +181,14 @@ export default function InventoryScreen() {
 		setCategoryToDelete(null);
 	};
 
+	const toggleExpandItem = (id: string) => {
+		setExpandedItems(prev => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id); else next.add(id);
+			return next;
+		});
+	};
+
 	return (
 		<div className='flex h-full overflow-hidden'>
 			{/* Main Content Area */}
@@ -207,10 +216,10 @@ export default function InventoryScreen() {
 					<>
 						{/* Error Display */}
 						{error && (
-							<div className='mx-6 mb-4 p-2 bg-(--error)/10 border border-(--error)/40 rounded-lg'>
+							<div className='mx-6 mb-4 p-2 bg-error/10 border border-error/40 rounded-lg'>
 								<div className='flex items-center gap-3'>
 									<svg
-										className='w-5 h-5 text-(--error)'
+										className='w-5 h-5 text-error'
 										fill='currentColor'
 										viewBox='0 0 20 20'>
 										<path
@@ -219,12 +228,12 @@ export default function InventoryScreen() {
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-(--error) font-medium text-[12px]'>
+									<span className='text-error font-medium text-3'>
 										{error}
 									</span>
 									<button
 										onClick={() => setError(null)}
-										className='ml-auto text-(--error) hover:text-(--error)/20'>
+										className='ml-auto text-error hover:text-error/20'>
 										<DeleteIcon />
 									</button>
 								</div>
@@ -274,20 +283,20 @@ export default function InventoryScreen() {
 										{/* Categories Section */}
 										<div className='mb-4'>
 									<div className='flex items-center justify-between mb-3'>
-										<h2 className='text-lg font-semibold text-[var(--secondary)]'>
+										<h2 className='text-base font-semibold text-secondary'>
 											Categories
 										</h2>
 										<button
 											onClick={() => setShowCategoryForm(true)}
-											className={`bg-[var(--accent)] text-[var(--secondary)] text-[12px] px-4 py-2 rounded-lg 
-														hover:bg-[var(--accent)]/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95
+											className={`bg-accent text-secondary text-3 px-4 py-2 rounded-lg 
+														hover:bg-accent/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
-											<div className='flex flex-row items-center gap-2 text-[var(--primary)] text-shadow-lg font-black text-[14px]'>
+											<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3'>
 												<div className='w-4 h-4'>
 													<PlusIcon className='drop-shadow-lg' />
 												</div>
-												<span className='mt-[2px]'>ADD CATEGORY</span>
+												<span className='mt-0.5'>ADD CATEGORY</span>
 											</div>
 										</button>
 									</div>
@@ -304,12 +313,12 @@ export default function InventoryScreen() {
 														backgroundColor: category.color,
 													}}
 												/>
-												<span className='text-sm font-medium text-secondary'>
+												<span className='text-xs font-medium text-secondary'>
 													{category.name}
 												</span>
 												<button
 													onClick={() => handleDeleteCategory(category)}
-													className='w-0 opacity-0 group-hover:w-4.5 group-hover:opacity-100 bg-transparent text-transparent group-hover:text-(--error) group-hover:bg-(--error)/40 rounded-md border transition-all duration-200'
+													className='w-0 opacity-0 group-hover:w-4.5 group-hover:opacity-100 bg-transparent text-transparent group-hover:text-error group-hover:bg-error/40 rounded-md border transition-all duration-200'
 													title='Delete category'>
 													<DeleteIcon className='w-4 h-4' />
 												</button>
@@ -321,17 +330,17 @@ export default function InventoryScreen() {
 								{/* Items Section */}
 								<div>
 									<div className='flex items-center justify-between mb-3'>
-										<h2 className='text-xl font-semibold text-secondary'>
+										<h2 className='text-lg font-semibold text-secondary'>
 											Items
 										</h2>
 										<button
 											onClick={() => setShowItemForm(true)}
-											className={`bg-accent text-secondary text-[12px] px-4 py-2 
-														rounded-lg hover:bg-(--accent)/90 shadow-sm transition-all 
+											className={`bg-accent text-secondary text-3 px-4 py-2 
+														rounded-lg hover:bg-accent/90 shadow-sm transition-all 
 														font-semibold hover:scale-105 active:scale-95
 														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
 													}>
-											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-[14px]'>
+											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
 												<div className='size-4'>
 													<PlusIcon className='drop-shadow-lg' />
 												</div>
@@ -341,35 +350,35 @@ export default function InventoryScreen() {
 									</div>
 
 									{/* Items List */}
-									<div className={`space-y-3 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+									<div className={`space-y-1 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 										{items.length === 0 ? (
 											/* Empty State */
 											<div className='text-center py-16 px-4'>
-												<div className='w-[360px] mb-4 mx-auto opacity-50 flex items-center justify-center'>
+												<div className='w-90 mb-4 mx-auto opacity-50 flex items-center justify-center'>
 													<EmptyInventory />
 												</div>
-												<h3 className='text-[18px] font-semibold text-[var(--secondary)] mb-3'>
+												<h3 className='text-4 font-semibold text-secondary mb-3'>
 													No Items in Inventory
 												</h3>
-												<p className='w-[300px] text-[12px] text-[var(--secondary)] opacity-70 mb-6 max-w-md mx-auto'>
+												<p className='w-75 text-3 text-secondary opacity-70 mb-6 max-w-md mx-auto'>
 													Start by adding your first item to begin managing
 													your products and stock levels.
 												</p>
 												<button
 													onClick={() => setShowItemForm(true)}
-													className='text-[14px] inline-flex items-center gap-2 bg-[var(--accent)] text-white px-6 py-3 rounded-[8px] hover:bg-[var(--accent)]/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+													className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
 													<PlusIcon className='w-4 h-4 drop-shadow-md' />
-													<span className='mt-[2px]'>
+													<span className='mt-0.5'>
 														ADD YOUR FIRST ITEM
 													</span>
 												</button>
 
 												{/* Quick Setup Guide */}
-												<div className='mt-[60px] max-w-2xl mx-auto'>
-													<div className='bg-[var(--secondary)]/5 border border-[var(--secondary)]/10 rounded-xl p-6'>
-														<h4 className='text-lg font-semibold text-[var(--secondary)]/50 mb-4 flex items-center gap-2'>
+												<div className='mt-15 max-w-2xl mx-auto'>
+													<div className='bg-secondary/5 border border-secondary/10 rounded-xl p-6'>
+														<h4 className='text-base font-semibold text-secondary/50 mb-4 flex items-center gap-2'>
 															<svg
-																className='w-5 h-5 text-[var(--secondary)]/50'
+																className='w-5 h-5 text-secondary/50'
 																fill='none'
 																stroke='currentColor'
 																viewBox='0 0 24 24'>
@@ -384,41 +393,41 @@ export default function InventoryScreen() {
 														</h4>
 														<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
-																	<span className='text-[var(--secondary)] font-bold'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																	<span className='text-secondary font-bold'>
 																		1
 																	</span>
 																</div>
-																<h5 className='text-[14px] font-medium text-[var(--secondary)]/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Create Categories
 																</h5>
-																<p className='text-[12px] text-[var(--secondary)] opacity-80'>
+																<p className='text-3 text-secondary opacity-80'>
 																	Organize your products by type
 																</p>
 															</div>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
-																	<span className='text-[var(--secondary)] font-bold'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																	<span className='text-secondary font-bold'>
 																		2
 																	</span>
 																</div>
-																<h5 className='text-[14px] font-medium text-[var(--secondary)]/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Add Items
 																</h5>
-																<p className='text-[12px] text-[var(--secondary)]] opacity-80'>
+																<p className='text-3 text-secondary] opacity-80'>
 																	Set prices and stock levels
 																</p>
 															</div>
 															<div className='text-center'>
-																<div className='w-10 h-10 bg-[var(--secondary)]/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
-																	<span className='text-[var(--secondary)] font-bold'>
+																<div className='w-10 h-10 bg-secondary/10 rounded-lg mx-auto mb-3 flex items-center justify-center'>
+																	<span className='text-secondary font-bold'>
 																		3
 																	</span>
 																</div>
-																<h5 className='text-[14px] font-medium text-[var(--secondary)]/80 mb-1'>
+																<h5 className='text-3 font-medium text-secondary/80 mb-1'>
 																	Manage Stock
 																</h5>
-																<p className='text-[12px] text-[var(--secondary)] opacity-80'>
+																<p className='text-3 text-secondary opacity-80'>
 																	Track and update inventory
 																</p>
 															</div>
@@ -428,160 +437,62 @@ export default function InventoryScreen() {
 											</div>
 										) : (
 											/* Items List */
-											items.map((item) => (
-												<div
-													key={item.id}
-													className='bg-[var(--primary)] p-2 rounded-lg border border-gray-200'>
-													<div className='flex items-center justify-between w-full'>
-														<div className='flex items-center gap-2 flex-1 min-w-0 flex-row'>
-															<div
-																className='w-1 h-[56px] rounded-full'
-																style={{
-																	backgroundColor: getCategoryColor(
-																		categories,
-																	item.category_id || ''
-																	),
-																}}
-															/>
-															<div className='w-[120px] h-[120px] md:w-[56px] md:h-[56px] bg-gray-100 rounded-[3px] flex items-center justify-center flex-shrink-0 overflow-hidden relative'>
+											items.map((item) => {
+												const isExpanded = expandedItems.has(item.id);
+												return (
+													<div key={item.id} className='bg-primary rounded-lg border border-gray-100 overflow-hidden'>
+														{/* Main row */}
+														<div className='flex items-center gap-2 px-2 py-1.5'>
+															<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: getCategoryColor(categories, item.category_id || '') }} />
+															<div className='w-8 h-8 rounded bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center'>
 																{item.img_url ? (
-																	<Image
-																		src={item.img_url}
-																		alt={item.name}
-																		width={48}
-																		height={48}
-																		className='w-full h-full object-cover'
-																	/>
+																	<Image src={item.img_url} alt={item.name} width={32} height={32} className='w-full h-full object-cover' />
 																) : (
-																	<svg
-																		className='w-6 h-6 text-gray-400'
-																		fill='currentColor'
-																		viewBox='0 0 20 20'>
-																		<path
-																			fillRule='evenodd'
-																			d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
-																			clipRule='evenodd'
-																		/>
+																	<svg className='w-4 h-4 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+																		<path fillRule='evenodd' d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z' clipRule='evenodd' />
 																	</svg>
 																)}
 															</div>
-															<div className='flex flex-1 gap-4 h-[100px] md:h-12 flex-shrink truncate'>
-																<div className='flex flex-grow md:flex-grow-0 flex-col items-start justify-center w-auto xl:w-[400px] line-clamp-2'>
-																	<h3 className='leading-tight font-semibold text-[var(--secondary)] text-[14px] text-wrap line-clamp-2 md:truncate text-left w-full'>
-																		{item.name}
-																	</h3>
-																	<div className='flex items-center w-full'>
-																		<div className='font-regular text-[var(--secondary)] w-[100px] text-[12px]'>
-																			Price: {formatCurrency(item.price)}
-																		</div>
-																		{item.cost && item.cost > 0 && (
-																			<div className='items-center justify-start gap-1 w-0 md:w-[180px] hidden md:flex'>
-																				<div className='text-xs text-[var(--secondary)]'>
-																					Cost: {formatCurrency(item.cost)}
-																				</div>
-																				<div className='text-[12px] text-green-600 bg-green-50 px-1 py-0.5 rounded'>
-																					{(
-																						((item.price - item.cost) /
-																							item.price) *
-																						100
-																					).toFixed(0)}
-																					%
-																				</div>
-																			</div>
-																		)}
-																	</div>
-																	<div className='text-xs text-[var(--secondary)] flex md:hidden'>
-																		Stock: {item.stock}
-																	</div>
-																	{/* Small Screen Edit Button */}
-																	<div className='flex md:hidden justify-center mt-2'>
-																		<button
-																			onClick={() => openEditModal(item)}
-																			className='w-full px-2 py-1 text-[12px] font-bold bg-[var(--accent)] shadow-none hover:shadow-md hover:bg-[var(--accent)]/80 rounded-[4px] transition-all hover:scale-105 active:scale-95'>
-																			EDIT
-																		</button>
-																	</div>
-																</div>
-																<div className='flex-1 flex-grow flex-row items-left w-0 hidden xl:w-[300px] xl:flex'>
-																	<div className='border-s-2 border-[var(--secondary)]/10 pl-4 h-12 text-left text-sm text-[var(--secondary)] opacity-70 items-center flex flex-1 truncate'>
-																		{item.description ? (
-																			item.description
-																		) : (
-																			<span className='text-gray-400'>
-																				No item description
-																			</span>
-																		)}
-																	</div>
-																	<div className='flex-col items-center justify-center hidden xl:flex'>
-																		{/* Low Stock Warning */}
-																		{item.stock <= 5 && (
-																			<div
-																				className={`p-3 ${
-																					item.stock !== 0
-																						? "bg-[var(--accent)]/10"
-																						: "bg-[var(--error)]/10"
-																				} border ${
-																					item.stock !== 0
-																						? "border-[var(--accent)]"
-																						: "border-[var(--error)]"
-																				} rounded-lg`}>
-																				<div className='flex items-center gap-3'>
-																					<svg
-																						className={`w-4 h-4 ${
-																							item.stock !== 0
-																								? "text-[var(--accent)]"
-																								: "text-[var(--error)]"
-																						}`}
-																						fill='currentColor'
-																						viewBox='0 0 20 20'>
-																						<path
-																							fillRule='evenodd'
-																							d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
-																							clipRule='evenodd'
-																						/>
-																					</svg>
-																					<span
-																						className={`text-[10px] ${
-																							item.stock !== 0
-																								? "text-[var(--secondary)]"
-																								: "text-[var(--secondary)]"
-																						} font-medium hidden w-0 2xl:inline 2xl:w-auto transition-all duration-400`}>
-																						{item.stock !== 0
-																							? `Only ${item.stock} stocks left`
-																							: "No stocks left "}
-																					</span>
-																				</div>
-																			</div>
-																		)}
-																	</div>
-																</div>
-															</div>
+															<span className='text-xs font-semibold text-secondary truncate flex-1 min-w-0'>{item.name}</span>
+															<span className='text-xs text-secondary/60 shrink-0 tabular-nums'>{formatCurrency(item.price)}</span>
+															<span className={`text-xs font-bold shrink-0 w-8 text-center tabular-nums ${
+																item.stock === 0 ? 'text-error' : item.stock <= 5 ? 'text-accent' : 'text-secondary/50'
+															}`}>{item.stock}</span>
+															<button onClick={() => openEditModal(item)} className='shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																<EditIcon className='w-4 h-4' />
+															</button>
+															<button onClick={() => toggleExpandItem(item.id)} className='shrink-0 p-1.5 hover:bg-gray-100 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																<svg className={`w-3 h-3 text-secondary/50 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+																</svg>
+															</button>
 														</div>
-
-														{/* Stock Display and Controls */}
-														<div className='items-center gap-6 flex-shrink-0 ml-4 hidden md:flex'>
-															{/* Current Stock Display */}
-															<div className='text-center'>
-																<div className='text-sm text-[var(--secondary)] opacity-70 mb-1'>
-																	Stock
-																</div>
-																<div className='text-2xl font-bold text-[var(--secondary)]'>
-																	{item.stock}
-																</div>
+														{/* Retractable details */}
+														{isExpanded && (
+															<div className='px-3 pb-2 pt-2 border-t border-gray-100 ml-11 flex flex-wrap gap-x-4 gap-y-1'>
+																{item.description ? (
+																	<p className='text-xs text-secondary/60 w-full'>{item.description}</p>
+																) : (
+																	<p className='text-xs text-secondary/30 italic w-full'>No description</p>
+																)}
+																{item.cost && item.cost > 0 && (
+																	<span className='text-xs text-secondary/60'>Cost: {formatCurrency(item.cost)}</span>
+																)}
+																{item.cost && item.cost > 0 && (
+																	<span className='text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded'>
+																		{(((item.price - item.cost) / item.price) * 100).toFixed(0)}% margin
+																	</span>
+																)}
+																{item.stock <= 5 && (
+																	<span className={`text-xs font-medium ${item.stock === 0 ? 'text-error' : 'text-accent'}`}>
+																		{item.stock === 0 ? 'Out of stock' : `Only ${item.stock} left`}
+																	</span>
+																)}
 															</div>
-
-															{/* Edit Button */}
-															<div>
-																<button
-																	onClick={() => openEditModal(item)}
-																	className='px-4 py-4 bg-[var(--light-accent)] shadow-none hover:shadow-md hover:bg-[var(--accent)]/80 rounded-[4px] transition-all hover:scale-105 active:scale-95'>
-																	<EditIcon />
-																</button>
-															</div>
-														</div>
+														)}
 													</div>
-												</div>
-											))
+												);
+											})
 										)}
 									</div>
 								</div>
@@ -623,9 +534,9 @@ export default function InventoryScreen() {
 						{showDeleteConfirm && categoryToDelete && (
 							<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
 								<div className='bg-white rounded-lg max-w-md w-full p-6'>
-									<div className='w-16 h-16 bg-[var(--error)]/20 rounded-xl mx-auto mb-4 flex items-center justify-center'>
+									<div className='w-16 h-16 bg-error/20 rounded-xl mx-auto mb-4 flex items-center justify-center'>
 										<svg
-											className='w-8 h-8 text-[var(--error)]'
+											className='w-8 h-8 text-error'
 											fill='none'
 											stroke='currentColor'
 											viewBox='0 0 24 24'>
@@ -637,13 +548,13 @@ export default function InventoryScreen() {
 											/>
 										</svg>
 									</div>
-									<h3 className='text-xl text-center font-bold text-[var(--secondary)] mb-2'>
+									<h3 className='text-lg text-center font-bold text-secondary mb-2'>
 										Delete Category
 									</h3>
-									<p className='text-[var(--secondary)] opacity-70 mb-6'>
+									<p className='text-secondary opacity-70 mb-6'>
 										Are you sure you want to delete the category{" "}
 										<span
-											className='px-2 text-[var(--primary)] rounded-full'
+											className='px-2 text-primary rounded-full'
 											style={{
 												backgroundColor: `${categoryToDelete.color}`,
 											}}>
@@ -654,12 +565,12 @@ export default function InventoryScreen() {
 									<div className='flex gap-3'>
 										<button
 											onClick={cancelDeleteCategory}
-											className='flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-[var(--secondary)] rounded-xl font-semibold transition-all hover:scale-105 active:scale-95'>
+											className='flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 											Cancel
 										</button>
 										<button
 											onClick={confirmDeleteCategory}
-											className='flex-1 py-3 bg-[var(--error)] hover:bg-[var(--error)]/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95'>
+											className='flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 											Delete
 										</button>
 									</div>

@@ -89,10 +89,10 @@ export default function AuthGuard({
 	// Show loading spinner while checking authentication
 	if (loading) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center flex flex-col items-center justify-center'>
 					<LoadingSpinner size="lg" />
-					<p className='text-[var(--secondary)] mt-4'>
+					<p className='text-secondary mt-4'>
 						Checking authentication...
 					</p>
 				</div>
@@ -108,9 +108,9 @@ export default function AuthGuard({
 	// Check if user has no role assignments (should be handled by redirect, but just in case)
 	if (!isUserOwner() && user.roleAssignments.length === 0) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center'>
-					<p className='text-[var(--secondary)]'>
+					<p className='text-secondary'>
 						Your account is pending approval. Please wait for an administrator or owner to assign you to a branch.
 					</p>
 				</div>
@@ -121,9 +121,9 @@ export default function AuthGuard({
 	// Check owner-only access after authentication
 	if (adminOnly && !isUserOwner()) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center'>
-					<p className='text-[var(--secondary)]'>
+					<p className='text-secondary'>
 						Access denied. Owner privileges required.
 					</p>
 				</div>
@@ -134,9 +134,9 @@ export default function AuthGuard({
 	// Check owner-only access after authentication
 	if (ownerOnly && !isUserOwner()) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center'>
-					<p className='text-[var(--secondary)]'>
+					<p className='text-secondary'>
 						Access denied. Owner privileges required.
 					</p>
 				</div>
@@ -147,9 +147,9 @@ export default function AuthGuard({
 	// Check branch access
 	if (requiredBranch && !canAccessBranch(requiredBranch)) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center'>
-					<p className='text-[var(--secondary)]'>
+					<p className='text-secondary'>
 						Access denied. You don&apos;t have access to this branch.
 					</p>
 				</div>
@@ -162,9 +162,9 @@ export default function AuthGuard({
 		const userRole = getUserRoleForBranch(requiredBranch);
 		if (!userRole || (requiredRole === "manager" && userRole !== "manager")) {
 			return (
-				<div className='flex items-center justify-center h-screen bg-[var(--background)]'>
+				<div className='flex items-center justify-center h-screen bg-background'>
 					<div className='text-center'>
-						<p className='text-[var(--secondary)]'>
+						<p className='text-secondary'>
 							Access denied. {requiredRole} role required for this branch.
 						</p>
 					</div>

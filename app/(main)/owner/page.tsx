@@ -15,7 +15,7 @@ export default function OwnerPage() {
 	return (
 		<div className='flex items-center justify-center h-full'>
 			<LoadingSpinner size='lg' />
-			<span className='ml-3 text-[var(--secondary)]'>Loading owner...</span>
+			<span className='ml-3 text-secondary'>Loading owner...</span>
 		</div>
 	);
 }

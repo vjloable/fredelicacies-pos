@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Worker } from "@/services/workerService";
 import { Branch } from "@/services/branchService";
 import { attendanceService } from "@/services/attendanceService";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface TimeInOutModalProps {
 	isOpen: boolean;
@@ -142,15 +143,12 @@ export default function TimeInOutModal({
 				{loading ? (
 					<div className='text-center py-8'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<div
-								className={`animate-spin rounded-full h-10 w-10 border-4 border-dashed ${
-									isTimeIn ? "border-green-500" : "border-orange-500"
-								}`}></div>
+							<LoadingSpinner size="lg" className={isTimeIn ? "border-success" : "border-accent"} />
 						</div>
-						<h3 className='text-xl font-bold text-[var(--secondary)] mb-2'>
+						<h3 className='text-lg font-bold text-secondary mb-2'>
 							{isTimeIn ? "Clocking In..." : "Clocking Out..."}
 						</h3>
-						<p className='text-[var(--secondary)] opacity-70'>
+						<p className='text-secondary opacity-70'>
 							{isTimeIn ? "Recording time in" : "Recording time out"}
 						</p>
 					</div>
@@ -175,10 +173,10 @@ export default function TimeInOutModal({
 									</svg>
 								</div>
 								<div>
-									<h3 className='text-xl font-bold text-[var(--secondary)]'>
+									<h3 className='text-lg font-bold text-secondary'>
 										{title}
 									</h3>
-									<p className='text-sm text-[var(--secondary)]/70'>
+									<p className='text-xs text-secondary/70'>
 										{isTimeIn
 											? "Start work session"
 											: "End current work session"}
@@ -216,14 +214,14 @@ export default function TimeInOutModal({
 									/>
 								) : (
 									<div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3'>
-										<span className='text-sm font-medium text-gray-700'>
+										<span className='text-xs font-medium text-gray-700'>
 											{worker.name.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<div>
 									<div className='font-medium text-gray-900'>{worker.name}</div>
-									<div className='text-sm text-gray-500'>
+									<div className='text-xs text-gray-500'>
 										{isTimeIn
 											? "Ready to clock in"
 											: `Currently at: ${
@@ -249,7 +247,7 @@ export default function TimeInOutModal({
 											clipRule='evenodd'
 										/>
 									</svg>
-									<span className='text-red-700 text-sm'>{error}</span>
+									<span className='text-red-700 text-xs'>{error}</span>
 								</div>
 							</div>
 						)}
@@ -259,13 +257,13 @@ export default function TimeInOutModal({
 							{/* Branch Selection (for time in only) */}
 							{isTimeIn && (
 								<div>
-									<label className='block text-sm font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-gray-700 mb-2'>
 										Select Branch *
 									</label>
 									<select
 										value={selectedBranchId}
 										onChange={(e) => setSelectedBranchId(e.target.value)}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 										required>
 										<option value=''>Choose a branch...</option>
 										{workerBranches.map((branch) => (
@@ -279,13 +277,13 @@ export default function TimeInOutModal({
 
 							{/* Notes */}
 							<div>
-								<label className='block text-sm font-medium text-gray-700 mb-2'>
+								<label className='block text-xs font-medium text-gray-700 mb-2'>
 									Notes (Optional)
 								</label>
 								<textarea
 									value={notes}
 									onChange={(e) => setNotes(e.target.value)}
-									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent'
+									className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
 									rows={3}
 									placeholder={`Add any notes for this ${
 										isTimeIn ? "clock in" : "clock out"
@@ -295,7 +293,7 @@ export default function TimeInOutModal({
 
 							{/* Current Time Display */}
 							<div className='bg-blue-50 border border-blue-200 rounded-lg p-3'>
-								<div className='text-sm text-blue-800'>
+								<div className='text-xs text-blue-800'>
 									<strong>Current Time:</strong> {new Date().toLocaleString()}
 								</div>
 							</div>

@@ -40,11 +40,11 @@ export default function DeleteConfirmationModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
-        <h2 className="text-lg font-semibold text-[var(--secondary)] mb-2">
+        <h2 className="text-base font-semibold text-secondary mb-2">
           {title}
         </h2>
         
-        <p className="text-[var(--secondary)]/60 mb-6">
+        <p className="text-secondary/60 mb-6">
           {message}
         </p>
 
@@ -52,7 +52,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[var(--secondary)]/30 text-[var(--secondary)]/70 rounded-md hover:bg-[var(--secondary)]/5 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="flex-1 px-4 py-2 border border-secondary/30 text-secondary/70 rounded-md hover:bg-secondary/5 focus:outline-none focus:ring-2 focus:ring-accent"
             disabled={loading}
           >
             {cancelText}
@@ -60,7 +60,7 @@ export default function DeleteConfirmationModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-[var(--error)] text-white rounded-md hover:bg-[var(--error)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--error)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-error text-white rounded-md hover:bg-error/70 focus:outline-none focus:ring-2 focus:ring-error/50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Deleting...' : confirmText}

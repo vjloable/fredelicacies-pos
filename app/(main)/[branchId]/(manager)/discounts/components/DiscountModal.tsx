@@ -125,16 +125,16 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-lg font-semibold mb-4">
         </h2>
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-[var(--light-accent)] rounded-xl mx-auto mb-4 flex items-center justify-center">
-            <DiscountsIcon className='text-[var(--accent)]'/>
+          <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
+            <DiscountsIcon className='text-accent'/>
           </div>
-          <h3 className="text-xl font-bold text-[var(--secondary)] mb-2">
+          <h3 className="text-lg font-bold text-secondary mb-2">
             {discount ? 'Edit Discount' : 'Create New Discount'}
           </h3>
-          <p className="text-[var(--secondary)] opacity-70">
+          <p className="text-secondary opacity-70">
             {discount ? 'Edit the details of the discount' : 'Create a new discount code'}
           </p>
         </div>
@@ -142,14 +142,14 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Discount Name */}
           <div>
-            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Discount Name <span className="text-[var(--error)]">*</span>
+            <label className="block text-xs font-medium text-secondary mb-1">
+              Discount Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full px-3 py-2 border border-secondary/30 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
               placeholder="e.g., SAVE20, WELCOME10"
               required
             />
@@ -157,8 +157,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Discount Type <span className="text-[var(--error)]">*</span>
+            <label className="block text-xs font-medium text-secondary mb-1">
+              Discount Type <span className="text-error">*</span>
             </label>
             <DropdownField
               options={["FIXED AMOUNT", "PERCENTAGE"]}
@@ -170,7 +170,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 const type = e === "PERCENTAGE" ? 'percentage' : 'fixed';
                 handleInputChange('type', type);
               }}
-              roundness={"[6px]"}
+              roundness={"md"}
               height={42}
               valueAlignment={"left"}
               padding=''
@@ -180,8 +180,8 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Status <span className="text-[var(--error)]">*</span>
+            <label className="block text-xs font-medium text-secondary mb-1">
+              Status <span className="text-error">*</span>
             </label>
             <DropdownField
               options={["ACTIVE", "INACTIVE"]}
@@ -193,21 +193,21 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                 const status = e === "ACTIVE" ? 'active' : 'inactive';
                 handleInputChange('status', status);
               }}
-              roundness={"[6px]"}
+              roundness={"md"}
               height={42}
               valueAlignment={"left"}
               padding=''
               shadow={false}
             />
-            <p className="text-sm text-[var(--secondary)]/50 mt-1">
+            <p className="text-xs text-secondary/50 mt-1">
               Active discounts are available for use at checkout
             </p>
           </div>
 
           {/* Value */}
           <div>
-            <label className="block text-sm font-medium text-[var(--secondary)] mb-1">
-              Discount Value <span className="text-[var(--error)]">*</span>
+            <label className="block text-xs font-medium text-secondary mb-1">
+              Discount Value <span className="text-error">*</span>
             </label>
             <div className="relative">
               <input
@@ -249,12 +249,12 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
                     setValueInput('');
                   }
                 }}
-                className="w-full px-3 py-2 border border-[var(--secondary)]/30 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-secondary/30 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder={formData.type === 'percentage' ? '10' : '100'}
                 inputMode="decimal"
                 required
               />
-              <span className="absolute right-3 top-2 text-[var(--secondary)]/50">
+              <span className="absolute right-3 top-2 text-secondary/50">
                 {formData.type === 'percentage' ? '%' : '₱'}
               </span>
             </div>
@@ -265,15 +265,15 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-[var(--secondary)]/30 text-[var(--secondary)] rounded-md hover:bg-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="flex-1 px-4 py-2 border border-secondary/30 text-secondary rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-accent"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              className="flex-1 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading} 
             >
               {loading ? 'Saving...' : (discount ? 'Update' : 'Create')}
             </button>

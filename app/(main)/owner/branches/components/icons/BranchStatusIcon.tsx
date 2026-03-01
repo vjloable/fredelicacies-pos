@@ -6,9 +6,9 @@ interface BranchStatusIconProps {
 
 const BranchStatusIcon: React.FC<BranchStatusIconProps> = ({ isActive }) => {
 	return isActive ? (
-		<span className='inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--success)]/60 text-[var(--primary)] text-xs font-semibold shadow border border-[var(--success)]'>
+		<span className='inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/60 text-primary text-xs font-semibold shadow border border-success'>
 			<svg
-				className='w-4 h-4 text-[var(--primary)]'
+				className='w-4 h-4 text-primary'
 				fill='currentColor'
 				viewBox='0 0 20 20'>
 				<path
@@ -20,9 +20,9 @@ const BranchStatusIcon: React.FC<BranchStatusIconProps> = ({ isActive }) => {
 			Active
 		</span>
 	) : (
-		<span className='inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--error)]/60 text-[var(--primary)] text-xs font-semibold shadow border border-[var(--error)]'>
+		<span className='inline-flex items-center gap-1 px-3 py-1 rounded-full bg-error/60 text-primary text-xs font-semibold shadow border border-error'>
 			<svg
-				className='w-4 h-4 text-[var(--primary)]'
+				className='w-4 h-4 text-primary'
 				fill='currentColor'
 				viewBox='0 0 20 20'>
 				<path

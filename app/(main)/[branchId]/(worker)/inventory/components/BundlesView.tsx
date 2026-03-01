@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/SafeImage';
+import LogoIcon from '../../store/icons/LogoIcon';
 import type { BundleWithComponents, InventoryItem } from '@/types/domain';
 import { subscribeToBundles } from '@/services/bundleService';
 import { subscribeToInventoryItems } from '@/services/inventoryService';
@@ -81,7 +82,7 @@ export default function BundlesView() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
+      <div className="flex items-center justify-center h-100">
         <LoadingSpinner />
       </div>
     );
@@ -99,7 +100,7 @@ export default function BundlesView() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-sm font-bold text-secondary uppercase tracking-wide">
+        <h2 className="text-xs font-bold text-secondary uppercase tracking-wide">
           Bundles
           <span className="ml-2 text-xs font-normal text-secondary/50 normal-case tracking-normal">
             {bundles.length} {bundles.length === 1 ? 'bundle' : 'bundles'}
@@ -107,7 +108,7 @@ export default function BundlesView() {
         </h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+          className="px-3 py-1.5 bg-bundle hover:bg-bundle/90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Add Bundle
@@ -117,18 +118,18 @@ export default function BundlesView() {
       {/* Bundles List */}
       {bundles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10">
-          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 bg-bundle/20 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-10 h-10 text-bundle/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-secondary mb-1">No Bundles Yet</h3>
-          <p className="text-secondary/60 text-sm text-center max-w-xs mb-4">
+          <h3 className="text-lg font-bold text-secondary mb-1">No Bundles Yet</h3>
+          <p className="text-secondary/60 text-xs text-center max-w-xs mb-4">
             Combine multiple items into special offers or combo deals
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            className="px-4 py-2 bg-bundle hover:bg-bundle/90 text-white rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
           >
             <PlusIcon className="w-4 h-4" />
             Create First Bundle
@@ -147,57 +148,63 @@ export default function BundlesView() {
             return (
               <div
                 key={bundle.id}
-                className="bg-(--primary) p-2 rounded-lg border border-gray-200"
+                className="bg-primary p-2 rounded-lg border border-gray-200"
               >
                 <div className="flex items-center gap-2">
                   {/* Amber left bar */}
-                  <div className="w-1 h-[56px] rounded-full bg-amber-400 flex-shrink-0" />
+                  <div className="w-1 h-14 rounded-full bg-bundle/80 shrink-0" />
 
                   {/* Bundle Image */}
-                  <div className="w-[56px] h-[56px] bg-amber-50 rounded-[3px] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  <div className="relative w-14 h-14 bg-bundle/10 rounded-0.75 shrink-0 overflow-hidden flex items-center justify-center">
                     {bundle.img_url ? (
-                      <Image
-                        src={bundle.img_url}
-                        alt={bundle.name}
-                        width={56}
-                        height={56}
-                        className="w-full h-full object-cover"
-                      />
+                      <SafeImage src={bundle.img_url} alt={bundle.name} />
                     ) : (
-                      <svg className="w-6 h-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
+                      <LogoIcon className="w-7 h-8 opacity-20" />
                     )}
                   </div>
 
                   {/* Bundle Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="text-[14px] font-semibold text-secondary truncate">
-                      {bundle.name}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-3 font-semibold text-secondary truncate">
+                        {bundle.name}
+                      </span>
+                      {bundle.is_custom && (
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded">
+                          Custom
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[12px] text-secondary/60">
-                      {formatCurrency(bundle.price)} · {bundle.components?.length || 0} {bundle.components?.length === 1 ? 'item' : 'items'}
+                    <div className="text-3 text-secondary/60">
+                      {bundle.is_custom
+                        ? `${formatCurrency(bundle.price)} · Up to ${bundle.max_pieces} pieces`
+                        : `${formatCurrency(bundle.price)} · ${bundle.components?.length || 0} ${bundle.components?.length === 1 ? 'item' : 'items'}`
+                      }
                     </div>
                   </div>
 
                   {/* Availability Badge (desktop) */}
-                  <span className={`hidden md:inline text-xs px-2 py-1 rounded-full font-medium ${availabilityColor}`}>
-                    {availability > 0 ? `${availability} avail.` : 'Out of stock'}
+                  <span className={`hidden md:inline text-xs px-2 py-1 rounded-full font-medium ${
+                    bundle.is_custom
+                      ? 'bg-bundle/10 text-bundle'
+                      : availabilityColor
+                  }`}>
+                    {bundle.is_custom ? 'Mix & Match' : (availability > 0 ? `${availability} avail.` : 'Out of stock')}
                   </span>
 
                   {/* Edit Button (desktop) */}
                   <button
                     onClick={() => handleEditBundle(bundle)}
-                    className="hidden md:flex items-center justify-center w-9 h-9 bg-amber-50 hover:bg-amber-100 rounded-lg transition-all hover:scale-105 active:scale-95 ml-1"
+                    className="hidden md:flex items-center justify-center w-9 h-9 bg-bundle/10 hover:bg-bundle/20 rounded-lg transition-all hover:scale-105 active:scale-95 ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
                   >
-                    <EditIcon className="w-4 h-4 text-amber-600" />
+                    <EditIcon className="w-4 h-4 text-bundle" />
                   </button>
                 </div>
 
                 {/* Edit Button (mobile) */}
                 <button
                   onClick={() => handleEditBundle(bundle)}
-                  className="md:hidden w-full mt-1.5 py-1 text-[12px] font-bold bg-amber-500 text-white rounded-lg transition-all active:scale-95"
+                  className="md:hidden w-full mt-1.5 py-1 text-3 font-bold bg-bundle text-white rounded-lg transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
                 >
                   Edit
                 </button>

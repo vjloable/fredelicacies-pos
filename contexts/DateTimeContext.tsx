@@ -64,18 +64,26 @@ class TimeService {
   private setupTimeJumpDetection() {
     if (typeof window !== 'undefined') {
       let lastCheck = Date.now();
-      
+
+      // Reset baseline when tab regains focus so browser throttling
+      // doesn't look like a system clock jump
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          lastCheck = Date.now();
+        }
+      });
+
       setInterval(() => {
         const now = Date.now();
         const expectedTime = lastCheck + 10000; // 10 seconds
         const timeDrift = Math.abs(now - expectedTime);
-        
+
         // If time drifted more than 5 seconds, system clock might have changed
         if (timeDrift > 5000) {
           console.log('Time jump detected, forcing sync...');
           this.forceSync();
         }
-        
+
         lastCheck = now;
       }, 10000);
     }
@@ -83,11 +91,12 @@ class TimeService {
 
   private handleVisibilityChange() {
     const timeSinceLastSync = Date.now() - this.lastSyncCheck;
-    
-    // If more than 1 minute since last sync, refresh time
+
+    // If more than 1 minute since last sync, quietly update in the background
+    // without triggering isLoading — we already have cached data to show
     if (timeSinceLastSync > 60000) {
       console.log('Page visible after extended time, syncing...');
-      this.forceSync();
+      this.syncTime(); // silent: fetchTime(false) — no loading flash
     }
   }
 
