@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { DateTimeProvider } from "@/contexts/DateTimeContext";
@@ -15,6 +15,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
 	title: "Fredelicacies POS",
 	description: "",
+};
+
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
 };
 
 export default function RootLayout({
