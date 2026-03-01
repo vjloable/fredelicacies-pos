@@ -424,9 +424,6 @@ export default function StoreScreen() {
 		const existingItem = cart.find((cartItem) => cartItem.id === itemId && (cartItem.type || 'item') === item.type);
 
 		if (existingItem) {
-			const currentInCart = existingItem.quantity;
-			if (currentInCart >= availableStock) return; // Can't add more
-
 			setCart(
 				cart.map((cartItem) =>
 					cartItem.id === itemId && (cartItem.type || 'item') === item.type
@@ -697,7 +694,7 @@ export default function StoreScreen() {
 				</div>{" "}
 
 				{/* Search Section - Fixed */}
-				<div className={`px-4 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-2 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='relative'>
 						<input
 							type='text'
@@ -721,7 +718,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Results Header - Fixed */}
-				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='flex flex-col'>
 						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
@@ -735,7 +732,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Category Selector - Fixed */}
-				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					{displayCategories.map((category) => (
 						<button
 							key={category.id}
@@ -761,7 +758,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Menu Items - Scrollable */}
-				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					{loading ? (
 						<div className='flex flex-col items-center justify-center py-8 gap-4'>
 							<LoadingSpinner size="lg"/>
@@ -884,7 +881,7 @@ export default function StoreScreen() {
 
 													{/* Cart quantity bubble */}
 													{inCartQuantity > 0 && (
-														<div className='absolute top-1.5 right-1.5 bg-accent text-primary text-2.5 min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-bold select-none'>
+														<div className='absolute top-1.5 right-1.5 bg-accent text-primary text-xs min-w-5 h-5 px-2 rounded-full flex items-center justify-center font-bold select-none'>
 															{inCartQuantity}
 														</div>
 													)}
@@ -919,7 +916,7 @@ export default function StoreScreen() {
 																Mix & Match
 															</span>
 														) : !isOutOfStock && (
-															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${stockColor}`}>
+															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${availableStock < 10 ? "bg-error/10 text-error" :stockColor}`}>
 																{availableStock} left
 															</span>
 														)}
@@ -1258,7 +1255,7 @@ export default function StoreScreen() {
 						</div>
 					</div>
 
-					<div className='h-12 p-2 border-b-2 border-accent'>
+					<div className='h-14 p-2 border-b-1 border-accent'>
 						<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
 							<DropdownField
 								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
@@ -1456,7 +1453,7 @@ export default function StoreScreen() {
 						/>
 					</div>
 
-					<div className='border-t border-dashed border-accent'>
+					<div className='border-t border-dashed border-accent mb-4'>
 						<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
 							<span>Total</span>
 							<span>{formatCurrency(total)}</span>
