@@ -1,5 +1,6 @@
 import { orderRepository, inventoryRepository } from '@/lib/repositories';
 import type { OrderWithItems, BundleComponent } from '@/types/domain';
+import { logActivity } from '@/services/activityLogService';
 
 // Generate order number (simple incrementing format)
 function generateOrderNumber(): string {
@@ -96,6 +97,15 @@ export const createOrder = async (
   if (allStockUpdates.length > 0) {
     await inventoryRepository.bulkUpdateStock(allStockUpdates);
   }
+
+  void logActivity({
+    branchId,
+    userId,
+    action: 'order_created',
+    entityType: 'order',
+    entityId: order.id,
+    details: { total, item_count: items.reduce((s, i) => s + i.quantity, 0) },
+  });
 
   return { id: order.id, error: null };
 };

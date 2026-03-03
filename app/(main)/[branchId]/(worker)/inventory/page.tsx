@@ -9,7 +9,9 @@ import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
 import BundlesView from "./components/BundlesView";
 import type { InventoryItem, Category } from "@/types/domain";
-import { subscribeToInventoryItems } from "@/services/inventoryService";
+import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
+import { logActivity } from "@/services/activityLogService";
+import { useAuth } from "@/contexts/AuthContext";
 import {
 	subscribeToCategories,
 	getCategoryColor,
@@ -31,6 +33,7 @@ interface Item extends InventoryItem {
 
 export default function InventoryScreen() {
 	const { currentBranch } = useBranch(); // Get current branch context
+	const { user } = useAuth();
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [items, setItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -47,6 +50,10 @@ export default function InventoryScreen() {
 	);
 	const [editingItem, setEditingItem] = useState<Item | null>(null);
 	const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+	const [destockMode, setDestockMode] = useState(false);
+	const [selectedForDestock, setSelectedForDestock] = useState<Set<string>>(new Set());
+	const [showDestockConfirm, setShowDestockConfirm] = useState(false);
+	const [destocking, setDestocking] = useState(false);
 	const [newItem, setNewItem] = useState({
 		name: "",
 		price: "",
@@ -187,6 +194,38 @@ export default function InventoryScreen() {
 			if (next.has(id)) next.delete(id); else next.add(id);
 			return next;
 		});
+	};
+
+	const toggleDestockSelection = (id: string) => {
+		setSelectedForDestock(prev => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id); else next.add(id);
+			return next;
+		});
+	};
+
+	const confirmDestock = async () => {
+		if (!currentBranch || selectedForDestock.size === 0) return;
+		setDestocking(true);
+		const selectedItems = items.filter(item => selectedForDestock.has(item.id));
+		for (const item of selectedItems) {
+			const oldStock = item.stock;
+			const { error: updateError } = await updateInventoryItem(item.id, { stock: 0 });
+			if (!updateError && oldStock > 0) {
+				void logActivity({
+					branchId: currentBranch.id,
+					userId: user?.id ?? null,
+					action: 'stock_removed',
+					entityType: 'inventory',
+					entityId: item.id,
+					details: { item_name: item.name, old_stock: oldStock, new_stock: 0, delta: oldStock },
+				});
+			}
+		}
+		setDestocking(false);
+		setShowDestockConfirm(false);
+		setSelectedForDestock(new Set());
+		setDestockMode(false);
 	};
 
 	return (
@@ -333,20 +372,66 @@ export default function InventoryScreen() {
 										<h2 className='text-lg font-semibold text-secondary'>
 											Items
 										</h2>
-										<button
-											onClick={() => setShowItemForm(true)}
-											className={`bg-accent text-secondary text-3 px-4 py-2 
-														rounded-lg hover:bg-accent/90 shadow-sm transition-all 
-														font-semibold hover:scale-105 active:scale-95
-														${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
-													}>
-											<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
-												<div className='size-4'>
-													<PlusIcon className='drop-shadow-lg' />
+										<div className='flex items-center gap-2'>
+											{destockMode && selectedForDestock.size > 0 && (
+												<button
+													onClick={() => setShowDestockConfirm(true)}
+													className={`px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 bg-error text-white ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}
+												>
+													<div className='flex flex-row items-center gap-2 font-black text-3'>
+														<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
+															<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' />
+														</svg>
+														<span className='mt-0.5'>DESTOCK {selectedForDestock.size}</span>
+													</div>
+												</button>
+											)}
+											<button
+												onClick={() => { setDestockMode(prev => !prev); setSelectedForDestock(new Set()); }}
+												className={`px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95
+													${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}
+													${destockMode
+														? "bg-error text-white"
+														: "bg-error/10 text-error hover:bg-error/20"
+													}`}
+											>
+												<div className='flex flex-row items-center gap-2 font-black text-3'>
+													<div className='size-4'>
+														{destockMode ? (
+															<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
+																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
+															</svg>
+														) : (
+															<div className='relative w-4 h-4'>
+																<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
+																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' />
+																</svg>
+																<div className='absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-error flex items-center justify-center'>
+																	<svg viewBox='0 0 24 24' fill='white' className='w-2 h-2'>
+																		<path d='M7 10l5 5 5-5z' />
+																	</svg>
+																</div>
+															</div>
+														)}
+													</div>
+													<span className='mt-0.5'>{destockMode ? 'DONE' : 'DESTOCK'}</span>
 												</div>
-												<span className='mt-0.5'>ADD ITEM</span>
-											</div>
-										</button>
+											</button>
+											<button
+												onClick={() => setShowItemForm(true)}
+												className={`bg-accent text-secondary text-3 px-4 py-2
+															rounded-lg hover:bg-accent/90 shadow-sm transition-all
+															font-semibold hover:scale-105 active:scale-95
+															${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`
+														}>
+												<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
+													<div className='size-4'>
+														<PlusIcon className='drop-shadow-lg' />
+													</div>
+													<span className='mt-0.5'>ADD ITEM</span>
+												</div>
+											</button>
+										</div>
 									</div>
 
 									{/* Items List */}
@@ -440,9 +525,26 @@ export default function InventoryScreen() {
 											items.map((item) => {
 												const isExpanded = expandedItems.has(item.id);
 												return (
-													<div key={item.id} className='bg-primary rounded-lg border border-gray-100 overflow-hidden'>
+													<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ? 'border-error/30' : 'border-gray-100'}`}>
 														{/* Main row */}
 														<div className='flex items-center gap-2 px-2 py-1.5'>
+															{/* Destock checkbox selector */}
+															{destockMode && (
+																<button
+																	onClick={() => toggleDestockSelection(item.id)}
+																	className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${
+																		selectedForDestock.has(item.id)
+																			? 'bg-error border-error text-white'
+																			: 'border-error/40 bg-transparent hover:border-error'
+																	}`}
+																>
+																	{selectedForDestock.has(item.id) && (
+																		<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M5 13l4 4L19 7' />
+																		</svg>
+																	)}
+																</button>
+															)}
 															<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: getCategoryColor(categories, item.category_id || '') }} />
 															<div className='w-8 h-8 rounded bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center'>
 																{item.img_url ? (
@@ -572,6 +674,46 @@ export default function InventoryScreen() {
 											onClick={confirmDeleteCategory}
 											className='flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 											Delete
+										</button>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Destock Confirmation Modal */}
+						{showDestockConfirm && (
+							<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
+								<div className='bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl'>
+									<div className='w-14 h-14 bg-error/10 rounded-xl mx-auto mb-4 flex items-center justify-center'>
+										<svg className='w-7 h-7 text-error' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+											<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' />
+										</svg>
+									</div>
+									<h3 className='text-base text-center font-bold text-secondary mb-1'>
+										Zero out stock for {selectedForDestock.size} item{selectedForDestock.size !== 1 ? 's' : ''}?
+									</h3>
+									<div className='mt-3 mb-5 max-h-36 overflow-y-auto space-y-1'>
+										{items.filter(i => selectedForDestock.has(i.id)).map(i => (
+											<div key={i.id} className='flex items-center justify-between px-3 py-1.5 bg-gray-50 rounded-lg'>
+												<span className='text-xs font-medium text-secondary truncate'>{i.name}</span>
+												<span className='text-xs text-error font-bold ml-2 shrink-0'>{i.stock} → 0</span>
+											</div>
+										))}
+									</div>
+									<div className='flex gap-3'>
+										<button
+											onClick={() => setShowDestockConfirm(false)}
+											disabled={destocking}
+											className='flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50'
+										>
+											Cancel
+										</button>
+										<button
+											onClick={confirmDestock}
+											disabled={destocking}
+											className='flex-1 py-2.5 bg-error hover:bg-error/80 text-white rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50'
+										>
+											{destocking ? 'Destocking…' : 'Destock'}
 										</button>
 									</div>
 								</div>

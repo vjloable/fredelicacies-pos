@@ -65,3 +65,5 @@ export type {
   RoleAssignment,
   UserWithRoles,
 } from './userProfile';
+
+export type { ActivityLog, LogAction } from './activityLog';

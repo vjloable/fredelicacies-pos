@@ -8,6 +8,8 @@ import type { Category, CreateInventoryItemData } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { logActivity } from '@/services/activityLogService';
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export default function AddItemModal({
   onError
 }: AddItemModalProps) {
   const { currentBranch } = useBranch();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [newItem, setNewItem] = useState({ 
     name: "", 
@@ -84,7 +87,8 @@ export default function AddItemModal({
       };
       
       await createInventoryItem(currentBranch!.id, itemData);
-      
+      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'item_created', entityType: 'inventory', details: { name: newItem.name, price: finalPrice } });
+
       // Reset form
       setNewItem({ 
         name: "", 

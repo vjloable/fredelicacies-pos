@@ -7,6 +7,8 @@ import { updateInventoryItem, deleteInventoryItem } from '@/services/inventorySe
 import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { logActivity } from '@/services/activityLogService';
 
 interface Item extends InventoryItem {
   id: string;
@@ -29,6 +31,7 @@ export default function EditItemModal({
   onError
 }: EditItemModalProps) {
   const { currentBranch } = useBranch();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -96,7 +99,25 @@ export default function EditItemModal({
       };
       
       await updateInventoryItem(localEditingItem.id, updates);
-      
+
+      if (editingItem && currentBranch) {
+        const branchId = currentBranch.id;
+        const userId = user?.id ?? null;
+        const newName = updates.name ?? editingItem.name;
+        if (updates.name !== undefined && updates.name !== editingItem.name)
+          void logActivity({ branchId, userId, action: 'item_renamed', entityType: 'inventory', entityId: localEditingItem.id, details: { old_name: editingItem.name, new_name: updates.name } });
+        if (updates.price !== undefined && updates.price !== editingItem.price)
+          void logActivity({ branchId, userId, action: 'item_price_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_price: editingItem.price, new_price: updates.price } });
+        if (updates.img_url !== undefined && (updates.img_url || null) !== editingItem.img_url)
+          void logActivity({ branchId, userId, action: 'item_photo_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName } });
+        if (updates.category_id !== undefined && updates.category_id !== editingItem.category_id)
+          void logActivity({ branchId, userId, action: 'item_category_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName } });
+        if (updates.stock !== undefined && updates.stock !== editingItem.stock) {
+          const delta = updates.stock - editingItem.stock;
+          void logActivity({ branchId, userId, action: delta > 0 ? 'stock_added' : 'stock_removed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_stock: editingItem.stock, new_stock: updates.stock, delta: Math.abs(delta) } });
+        }
+      }
+
       onClose();
     } catch (error) {
       console.error('Error updating item:', error);
@@ -110,6 +131,8 @@ export default function EditItemModal({
     setLoading(true);
     try {
       await deleteInventoryItem(itemId);
+      if (currentBranch)
+        void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'item_deleted', entityType: 'inventory', entityId: itemId, details: { name: localEditingItem?.name } });
       setShowDeleteConfirm(false); // Reset delete confirmation first
       onClose(); // Then close the modal
     } catch (error) {

@@ -27,6 +27,8 @@ export default function EditWorkerModal({
 }: EditWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [pinResetLoading, setPinResetLoading] = useState(false);
+	const [pinResetDone, setPinResetDone] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -200,6 +202,20 @@ export default function EditWorkerModal({
 			});
 		} else {
 			console.log("⚠️ No branch selected, cannot update role");
+		}
+	};
+
+	const handlePinReset = async () => {
+		if (!worker) return;
+		setPinResetLoading(true);
+		try {
+			await workerService.resetWorkerPin(worker.id);
+			setPinResetDone(true);
+			setTimeout(() => setPinResetDone(false), 3000);
+		} catch {
+			setError('Failed to reset PIN. Please try again.');
+		} finally {
+			setPinResetLoading(false);
 		}
 	};
 
@@ -581,6 +597,33 @@ export default function EditWorkerModal({
 												)}
 											</div>
 										)}
+									</div>
+								</div>
+							)}
+
+							{/* PIN Reset — owner only, not for self, not for other owners */}
+							{isOwner && worker?.id !== currentUserId && !worker?.isOwner && (
+								<div className='pt-4 border-t border-secondary/10'>
+									<div className='flex items-center justify-between'>
+										<div>
+										<p className='text-xs font-medium text-secondary'>Worker PIN</p>
+										<p className='text-xs text-secondary/50 mt-0.5'>
+											{pinResetDone
+											? 'PIN cleared — worker will set a new one on next clock-in'
+											: 'Clear the PIN so the worker must create a new one'}
+										</p>
+										</div>
+										<button
+											type='button'
+											onClick={handlePinReset}
+											disabled={pinResetLoading || pinResetDone}
+											className={`ml-4 shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 ${
+											pinResetDone
+											? 'bg-success/10 text-success'
+											: 'bg-error/10 text-error hover:bg-error/20'
+											}`}>
+											{pinResetLoading ? 'Resetting…' : pinResetDone ? 'PIN Reset ✓' : 'Reset PIN'}
+										</button>
 									</div>
 								</div>
 							)}

@@ -21,7 +21,7 @@ export interface CreateWorkerData {
 
 export interface UpdateWorkerData {
   role?: 'owner' | 'manager' | 'worker';
-  pin?: string;
+  pin?: string | null;
   face_descriptor?: string;
   status?: 'active' | 'inactive';
 }
