@@ -9,6 +9,7 @@ export interface Order {
   discount_amount: number;
   total: number;
   status: 'completed' | 'cancelled' | 'refunded';
+  payment_method: 'cash' | 'gcash' | 'grab';
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +39,7 @@ export interface CreateOrderData {
   discount_id?: string;
   discount_amount?: number;
   total: number;
+  payment_method?: 'cash' | 'gcash' | 'grab';
   items: Array<{
     item_id?: string;
     bundle_id?: string;

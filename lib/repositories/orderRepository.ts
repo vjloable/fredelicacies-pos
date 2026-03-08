@@ -13,6 +13,7 @@ export const orderRepository = {
       subtotal: number;
       discount_id?: string | null;
       discount_amount?: number;
+      payment_method?: 'cash' | 'gcash' | 'grab';
       items: Array<{
         item_id?: string | null;
         bundle_id?: string | null;
@@ -36,6 +37,7 @@ export const orderRepository = {
         subtotal: orderData.subtotal,
         discount_id: orderData.discount_id || null,
         discount_amount: orderData.discount_amount || 0,
+        payment_method: orderData.payment_method ?? 'cash',
         status: 'completed',
       })
       .select()
@@ -115,6 +117,7 @@ export const orderRepository = {
       subtotal: order.subtotal,
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
+      payment_method: order.payment_method ?? 'cash',
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -148,6 +151,7 @@ export const orderRepository = {
       subtotal: data.subtotal,
       discount_id: data.discount_id,
       discount_amount: data.discount_amount,
+      payment_method: data.payment_method ?? 'cash',
       status: data.status,
       created_at: data.created_at,
       updated_at: data.updated_at,
@@ -187,6 +191,7 @@ export const orderRepository = {
       subtotal: order.subtotal,
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
+      payment_method: order.payment_method ?? 'cash',
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,

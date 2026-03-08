@@ -30,7 +30,8 @@ export const createOrder = async (
   subtotal: number,
   total: number,
   discountId?: string,
-  discountAmount?: number
+  discountAmount?: number,
+  paymentMethod?: 'cash' | 'gcash' | 'grab'
 ): Promise<{ id: string | null; error: any }> => {
   const orderNumber = generateOrderNumber();
 
@@ -60,6 +61,7 @@ export const createOrder = async (
       total,
       discount_id: discountId || null,
       discount_amount: discountAmount || 0,
+      payment_method: paymentMethod ?? 'cash',
       items: orderItems,
     }
   );

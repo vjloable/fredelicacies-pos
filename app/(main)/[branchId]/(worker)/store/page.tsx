@@ -116,6 +116,8 @@ export default function StoreScreen() {
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
+	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab'>('cash');
+	const [grabFeePercent, setGrabFeePercent] = useState(0);
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
@@ -224,6 +226,7 @@ export default function StoreScreen() {
 	useEffect(() => {
 		const settings = loadSettingsFromLocal();
 		setHideOutOfStock(settings.hideOutOfStock);
+		setGrabFeePercent(settings.grabFeePercent ?? 0);
 	}, []);
 
 	// Helper function to get category name from real categories data
@@ -593,9 +596,10 @@ export default function StoreScreen() {
 					components: item.components,
 				})),
 				subtotal,
-				total,
+				total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0),
 				appliedDiscount?.id,
-				discountAmount
+				discountAmount,
+				paymentMethod
 			);
 
 			if (orderError) {
@@ -656,6 +660,7 @@ export default function StoreScreen() {
 			setDiscountCode("");
 			setDiscountAmount(0);
 			setAppliedDiscount(null);
+			setPaymentMethod('cash');
 			setShowOrderConfirmation(false);
 		} catch (error) {
 			console.error("Error placing order:", error);
@@ -978,8 +983,8 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Type Dropdown */}
-							<div className='shrink-0 h-12 p-2 border-b border-gray-100'>
-								<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
+							<div className='shrink-0 p-2 border-b border-gray-100'>
+								<div className='flex items-center justify-between bg-background rounded-3xl gap-3'>
 									<DropdownField
 										options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 										defaultValue='TAKE OUT'
@@ -1255,8 +1260,8 @@ export default function StoreScreen() {
 						</div>
 					</div>
 
-					<div className='h-14 p-2 border-b-1 border-accent'>
-						<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
+					<div className='p-2 border-b border-accent'>
+						<div className='flex items-center justify-between bg-background rounded-3xl gap-3'>
 							<DropdownField
 								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 								defaultValue='TAKE OUT'
@@ -1266,8 +1271,8 @@ export default function StoreScreen() {
 									setOrderType(value as "DINE-IN" | "TAKE OUT" | "DELIVERY")
 								}
 								roundness={"full"}
-								height={42}
 								valueAlignment={"left"}
+                height={32}
 								padding=''
 								shadow={false}
 							/>
@@ -1513,6 +1518,27 @@ export default function StoreScreen() {
 								<span className='font-medium'>{orderType}</span>
 							</div>
 
+							{/* Payment Method */}
+							<div className='mb-4'>
+								<span className='text-xs font-medium text-secondary block mb-2'>
+									Payment Method:
+								</span>
+								<div className='flex gap-2'>
+									{(['cash', 'gcash', 'grab'] as const).map((method) => (
+										<button
+											key={method}
+											onClick={() => setPaymentMethod(method)}
+											className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+												paymentMethod === method
+													? 'bg-accent text-primary border-accent'
+													: 'bg-white text-secondary border-gray-200 hover:border-secondary/40'
+											}`}>
+											{method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : 'Grab'}
+										</button>
+									))}
+								</div>
+							</div>
+
 							{/* Items List */}
 							<div className='mb-3'>
 								<h3 className='text-3 font-medium text-secondary mb-2'>
@@ -1591,10 +1617,20 @@ export default function StoreScreen() {
 											</span>
 										</div>
 									)}
+									{paymentMethod === 'grab' && grabFeePercent > 0 && (
+										<div className='flex justify-between text-xs'>
+											<span className='text-secondary'>
+												Grab Fee ({grabFeePercent}%):
+											</span>
+											<span className='font-medium text-amber-600'>
+												+{formatCurrency(Math.round(subtotal * (grabFeePercent / 100) * 100) / 100)}
+											</span>
+										</div>
+									)}
 									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
 										<span className='text-secondary'>
-											{formatCurrency(total)}
+											{formatCurrency(total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0))}
 										</span>
 									</div>
 								</div>
