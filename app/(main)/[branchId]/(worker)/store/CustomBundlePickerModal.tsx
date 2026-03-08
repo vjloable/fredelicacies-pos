@@ -30,7 +30,7 @@ export default function CustomBundlePickerModal({
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
 
-  const maxPieces = bundle.max_pieces ?? 1;
+  const maxPieces = bundle.max_pieces ?? 0;
 
   const totalPicked = useMemo(
     () => Object.values(picks).reduce((s, q) => s + q, 0),
@@ -47,7 +47,6 @@ export default function CustomBundlePickerModal({
 
   const increment = (item: InventoryItem) => {
     if (totalPicked >= maxPieces) return;
-    if ((picks[item.id!] ?? 0) >= item.stock) return;
     setPicks(prev => ({ ...prev, [item.id!]: (prev[item.id!] ?? 0) + 1 }));
   };
 
@@ -79,6 +78,18 @@ export default function CustomBundlePickerModal({
 
   // Progress bar fill percentage
   const progressPercent = Math.min((totalPicked / maxPieces) * 100, 100);
+
+  if (!maxPieces || maxPieces <= 0) {
+    return (
+      <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50" onClick={onClose}>
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={(e) => e.stopPropagation()}>
+          <p className="text-sm font-semibold text-secondary mb-1">Bundle not configured</p>
+          <p className="text-xs text-secondary/50 mb-4">This custom bundle has no max pieces set. Edit the bundle in Inventory to fix this.</p>
+          <button onClick={onClose} className="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all">Close</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -156,9 +167,7 @@ export default function CustomBundlePickerModal({
             <div className="grid grid-cols-2 gap-2">
               {filteredInventory.map((item) => {
                 const qty = picks[item.id!] ?? 0;
-                const atStockLimit = qty >= item.stock;
-                const atPickLimit = totalPicked >= maxPieces;
-                const canAdd = !atStockLimit && !atPickLimit;
+                const canAdd = totalPicked < maxPieces;
 
                 return (
                   <div

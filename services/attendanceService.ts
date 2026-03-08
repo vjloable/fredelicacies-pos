@@ -1,5 +1,6 @@
 import { attendanceRepository } from '@/lib/repositories';
 import type { Attendance } from '@/types/domain';
+import { logActivity } from '@/services/activityLogService';
 
 export type { Attendance };
 
@@ -15,11 +16,18 @@ export interface AttendanceService {
 export const attendanceService: AttendanceService = {
   clockIn: async (branchId: string, workerId: string): Promise<{ id: string | null; error: any }> => {
     const { attendance, error } = await attendanceRepository.clockIn(branchId, workerId);
+    if (!error && attendance?.id) {
+      void logActivity({ branchId, userId: workerId, action: 'time_in', entityType: 'attendance', entityId: attendance.id });
+    }
     return { id: attendance?.id || null, error };
   },
 
   clockOut: async (attendanceId: string): Promise<{ attendance: Attendance | null; error: any }> => {
-    return await attendanceRepository.clockOut(attendanceId);
+    const result = await attendanceRepository.clockOut(attendanceId);
+    if (!result.error && result.attendance) {
+      void logActivity({ branchId: result.attendance.branch_id, userId: result.attendance.worker_id, action: 'time_out', entityType: 'attendance', entityId: attendanceId });
+    }
+    return result;
   },
 
   getActiveAttendance: async (workerId: string): Promise<{ attendance: Attendance | null; error: any }> => {

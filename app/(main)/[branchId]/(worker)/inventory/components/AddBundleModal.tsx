@@ -8,6 +8,8 @@ import type { InventoryItem } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { logActivity } from '@/services/activityLogService';
 import { formatCurrency } from '@/lib/currency_formatter';
 import Image from 'next/image';
 
@@ -31,6 +33,7 @@ export default function AddBundleModal({
   onError
 }: AddBundleModalProps) {
   const { currentBranch } = useBranch();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -120,6 +123,7 @@ export default function AddBundleModal({
         onError('Failed to create bundle. Please try again.');
         return;
       }
+      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'bundle_created', entityType: 'bundle', entityId: id ?? undefined, details: { name: bundleData.name, price: bundleData.price, is_custom: bundleData.is_custom } });
 
       // Reset form
       setName('');

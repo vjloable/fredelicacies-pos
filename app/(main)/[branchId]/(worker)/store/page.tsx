@@ -116,6 +116,8 @@ export default function StoreScreen() {
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
+	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab'>('cash');
+	const [grabFeePercent, setGrabFeePercent] = useState(0);
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
@@ -224,6 +226,7 @@ export default function StoreScreen() {
 	useEffect(() => {
 		const settings = loadSettingsFromLocal();
 		setHideOutOfStock(settings.hideOutOfStock);
+		setGrabFeePercent(settings.grabFeePercent ?? 0);
 	}, []);
 
 	// Helper function to get category name from real categories data
@@ -424,9 +427,6 @@ export default function StoreScreen() {
 		const existingItem = cart.find((cartItem) => cartItem.id === itemId && (cartItem.type || 'item') === item.type);
 
 		if (existingItem) {
-			const currentInCart = existingItem.quantity;
-			if (currentInCart >= availableStock) return; // Can't add more
-
 			setCart(
 				cart.map((cartItem) =>
 					cartItem.id === itemId && (cartItem.type || 'item') === item.type
@@ -596,9 +596,10 @@ export default function StoreScreen() {
 					components: item.components,
 				})),
 				subtotal,
-				total,
+				total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0),
 				appliedDiscount?.id,
-				discountAmount
+				discountAmount,
+				paymentMethod
 			);
 
 			if (orderError) {
@@ -659,6 +660,7 @@ export default function StoreScreen() {
 			setDiscountCode("");
 			setDiscountAmount(0);
 			setAppliedDiscount(null);
+			setPaymentMethod('cash');
 			setShowOrderConfirmation(false);
 		} catch (error) {
 			console.error("Error placing order:", error);
@@ -697,7 +699,7 @@ export default function StoreScreen() {
 				</div>{" "}
 
 				{/* Search Section - Fixed */}
-				<div className={`px-4 py-2 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-2 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='relative'>
 						<input
 							type='text'
@@ -721,7 +723,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Results Header - Fixed */}
-				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					<div className='flex flex-col'>
 						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
@@ -735,7 +737,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Category Selector - Fixed */}
-				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					{displayCategories.map((category) => (
 						<button
 							key={category.id}
@@ -761,7 +763,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Menu Items - Scrollable */}
-				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
+				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					{loading ? (
 						<div className='flex flex-col items-center justify-center py-8 gap-4'>
 							<LoadingSpinner size="lg"/>
@@ -884,7 +886,7 @@ export default function StoreScreen() {
 
 													{/* Cart quantity bubble */}
 													{inCartQuantity > 0 && (
-														<div className='absolute top-1.5 right-1.5 bg-accent text-primary text-2.5 min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-bold select-none'>
+														<div className='absolute top-1.5 right-1.5 bg-accent text-primary text-xs min-w-5 h-5 px-2 rounded-full flex items-center justify-center font-bold select-none'>
 															{inCartQuantity}
 														</div>
 													)}
@@ -919,7 +921,7 @@ export default function StoreScreen() {
 																Mix & Match
 															</span>
 														) : !isOutOfStock && (
-															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${stockColor}`}>
+															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${availableStock < 10 ? "bg-error/10 text-error" :stockColor}`}>
 																{availableStock} left
 															</span>
 														)}
@@ -981,8 +983,8 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Type Dropdown */}
-							<div className='shrink-0 h-12 p-2 border-b border-gray-100'>
-								<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
+							<div className='shrink-0 p-2 border-b border-gray-100'>
+								<div className='flex items-center justify-between bg-background rounded-3xl gap-3'>
 									<DropdownField
 										options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 										defaultValue='TAKE OUT'
@@ -1258,8 +1260,8 @@ export default function StoreScreen() {
 						</div>
 					</div>
 
-					<div className='h-12 p-2 border-b-2 border-accent'>
-						<div className='flex h-10.5 items-center justify-between bg-background rounded-3xl gap-3'>
+					<div className='p-2 border-b border-accent'>
+						<div className='flex items-center justify-between bg-background rounded-3xl gap-3'>
 							<DropdownField
 								options={["DINE-IN", "TAKE OUT", "DELIVERY"]}
 								defaultValue='TAKE OUT'
@@ -1269,8 +1271,8 @@ export default function StoreScreen() {
 									setOrderType(value as "DINE-IN" | "TAKE OUT" | "DELIVERY")
 								}
 								roundness={"full"}
-								height={42}
 								valueAlignment={"left"}
+                height={32}
 								padding=''
 								shadow={false}
 							/>
@@ -1456,7 +1458,7 @@ export default function StoreScreen() {
 						/>
 					</div>
 
-					<div className='border-t border-dashed border-accent'>
+					<div className='border-t border-dashed border-accent mb-4'>
 						<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
 							<span>Total</span>
 							<span>{formatCurrency(total)}</span>
@@ -1514,6 +1516,27 @@ export default function StoreScreen() {
 									Order Type:
 								</span>
 								<span className='font-medium'>{orderType}</span>
+							</div>
+
+							{/* Payment Method */}
+							<div className='mb-4'>
+								<span className='text-xs font-medium text-secondary block mb-2'>
+									Payment Method:
+								</span>
+								<div className='flex gap-2'>
+									{(['cash', 'gcash', 'grab'] as const).map((method) => (
+										<button
+											key={method}
+											onClick={() => setPaymentMethod(method)}
+											className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+												paymentMethod === method
+													? 'bg-accent text-primary border-accent'
+													: 'bg-white text-secondary border-gray-200 hover:border-secondary/40'
+											}`}>
+											{method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : 'Grab'}
+										</button>
+									))}
+								</div>
 							</div>
 
 							{/* Items List */}
@@ -1594,10 +1617,20 @@ export default function StoreScreen() {
 											</span>
 										</div>
 									)}
+									{paymentMethod === 'grab' && grabFeePercent > 0 && (
+										<div className='flex justify-between text-xs'>
+											<span className='text-secondary'>
+												Grab Fee ({grabFeePercent}%):
+											</span>
+											<span className='font-medium text-amber-600'>
+												+{formatCurrency(Math.round(subtotal * (grabFeePercent / 100) * 100) / 100)}
+											</span>
+										</div>
+									)}
 									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
 										<span className='text-secondary'>
-											{formatCurrency(total)}
+											{formatCurrency(total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0))}
 										</span>
 									</div>
 								</div>

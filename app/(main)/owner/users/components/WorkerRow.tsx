@@ -120,6 +120,17 @@ function FaceIcon() {
 	);
 }
 
+function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
+	return (
+		<div className='relative group/tip'>
+			{children}
+			<span className='pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs text-white bg-secondary rounded whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50'>
+				{label}
+			</span>
+		</div>
+	);
+}
+
 export default function WorkerRow({
 	worker,
 	currentUser,
@@ -261,80 +272,86 @@ export default function WorkerRow({
 					{canTimeInOut &&
 						worker.currentStatus === "clocked_out" &&
 						onTimeIn && (
-							<button
-								onClick={(e) => {
-									e.stopPropagation();
-									onTimeIn(worker);
-								}}
-								className='text-success hover:text-success/60 p-1 rounded hover:bg-success/10'
-								title='Time In'>
-								<TimeInIcon />
-							</button>
+							<Tooltip label="Clock In">
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										onTimeIn(worker);
+									}}
+									className='text-success hover:text-success/60 p-1 rounded hover:bg-success/10'>
+									<TimeInIcon />
+								</button>
+							</Tooltip>
 						)}
 					{canTimeInOut &&
 						worker.currentStatus === "clocked_in" &&
 						onTimeOut && (
-							<button
-								onClick={(e) => {
-									e.stopPropagation();
-									onTimeOut(worker);
-								}}
-								className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
-								title='Time Out'>
-								<TimeOutIcon />
-							</button>
+							<Tooltip label="Clock Out">
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										onTimeOut(worker);
+									}}
+									className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'>
+									<TimeOutIcon />
+								</button>
+							</Tooltip>
 						)}
 
 					{/* Edit button */}
 					{canEdit && onEdit && (
-						<button
-							onClick={(e) => {
-								e.stopPropagation();
-								onEdit(worker);
-							}}
-							className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'
-							title='Edit Worker'>
-							<EditIcon />
-						</button>
+						<Tooltip label="Edit Worker">
+							<button
+								onClick={(e) => {
+									e.stopPropagation();
+									onEdit(worker);
+								}}
+								className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'>
+								<EditIcon />
+							</button>
+						</Tooltip>
 					)}
 
 					{/* Branch management button */}
 					{canEdit && onAssignBranch && (
-						<button
-							onClick={(e) => {
-								e.stopPropagation();
-								onAssignBranch(worker);
-							}}
-							className='text-secondary hover:text-secondary p-1 rounded hover:bg-secondary/10'
-							title='Manage Branches'>
-							<BranchIcon />
-						</button>
+						<Tooltip label="Manage Branches">
+							<button
+								onClick={(e) => {
+									e.stopPropagation();
+									onAssignBranch(worker);
+								}}
+								className='text-secondary hover:text-secondary p-1 rounded hover:bg-secondary/10'>
+								<BranchIcon />
+							</button>
+						</Tooltip>
 					)}
 
 					{/* Face enrollment button */}
 					{canEdit && onEditFaceEmbedding && (
-						<button
-							onClick={(e) => {
-								e.stopPropagation();
-								onEditFaceEmbedding(worker);
-							}}
-							className='text-accent hover:text-accent/60 p-1 rounded hover:bg-accent/10'
-							title='Edit Face Enrollment'>
-							<FaceIcon />
-						</button>
+						<Tooltip label="Face Enrollment">
+							<button
+								onClick={(e) => {
+									e.stopPropagation();
+									onEditFaceEmbedding(worker);
+								}}
+								className='text-accent hover:text-accent/60 p-1 rounded hover:bg-accent/10'>
+								<FaceIcon />
+							</button>
+						</Tooltip>
 					)}
 
 					{/* Delete button */}
 					{canDelete && onDelete && (
-						<button
-							onClick={(e) => {
-								e.stopPropagation();
-								onDelete(worker);
-							}}
-							className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'
-							title='Delete Worker'>
-							<DeleteIcon />
-						</button>
+						<Tooltip label="Delete Worker">
+							<button
+								onClick={(e) => {
+									e.stopPropagation();
+									onDelete(worker);
+								}}
+								className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'>
+								<DeleteIcon />
+							</button>
+						</Tooltip>
 					)}
 				</div>
 			</td>

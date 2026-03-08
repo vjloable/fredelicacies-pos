@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  font-size: 12px;
+}
+
 :root {
   --primary: #ffffff;
   --secondary: #4C2E24;

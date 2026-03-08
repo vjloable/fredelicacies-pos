@@ -5,6 +5,7 @@ import { Discount } from '@/services/discountService';
 import { createDiscount, updateDiscount } from '@/services/discountService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranch } from '@/contexts/BranchContext';
+import { logActivity } from '@/services/activityLogService';
 import DiscountsIcon from '@/components/icons/SidebarNav/DiscountsIcon';
 import DropdownField from '@/components/DropdownField';
 
@@ -95,15 +96,17 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess }: 
           status: formData.status
         });
         if (error) throw error;
+        void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'discount_updated', entityType: 'discount', entityId: discount.id, details: { name: formData.name.trim(), type: formData.type, value: formData.value } });
       } else {
         // Create new discount
-        const { error } = await createDiscount(currentBranch.id, {
+        const { id, error } = await createDiscount(currentBranch.id, {
           name: formData.name.trim(),
           type: formData.type,
           value: formData.value,
           status: formData.status
         });
         if (error) throw error;
+        void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'discount_created', entityType: 'discount', entityId: id ?? undefined, details: { name: formData.name.trim(), type: formData.type, value: formData.value } });
       }
 
       onSuccess?.();

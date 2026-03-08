@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import { Discount, deleteDiscount, subscribeToDiscounts } from "@/services/discountService";
+import { logActivity } from "@/services/activityLogService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import DiscountModal from "./components/DiscountModal";
@@ -72,6 +73,7 @@ export default function DiscountsScreen() {
 		try {
 			const { error } = await deleteDiscount(deleteConfirmation.discount.id);
 			if (error) throw error;
+			void logActivity({ branchId: currentBranch?.id ?? null, userId: user?.id ?? null, action: "discount_deleted", entityType: "discount", entityId: deleteConfirmation.discount.id, details: { name: deleteConfirmation.discount.name } });
 			setDeleteConfirmation({ isOpen: false, discount: null });
 		} catch (error) {
 			console.error("Error deleting discount:", error);

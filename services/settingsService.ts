@@ -1,17 +1,24 @@
-// Settings service - Supabase backend
-// TODO: Implement Supabase version of settings management
+import { supabase } from '@/lib/supabase';
 
 export interface AppSettings {
   hideOutOfStock: boolean;
+  grabFeePercent: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   hideOutOfStock: false,
+  grabFeePercent: 0,
 };
 
 const SETTINGS_KEY = 'app_settings';
 const SETTINGS_TIMESTAMP_KEY = 'app_settings_timestamp';
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
+// Map DB row → AppSettings
+const rowToSettings = (row: Record<string, unknown>): AppSettings => ({
+  hideOutOfStock: Boolean(row.hide_out_of_stock ?? false),
+  grabFeePercent: Number(row.grab_fee_percent ?? 0),
+});
 
 // Load settings from localStorage
 export const loadSettingsFromLocal = (): AppSettings => {
@@ -41,7 +48,6 @@ const isCacheValid = (): boolean => {
   try {
     const timestamp = localStorage.getItem(SETTINGS_TIMESTAMP_KEY);
     if (!timestamp) return false;
-    
     const cacheAge = Date.now() - parseInt(timestamp);
     return cacheAge < CACHE_DURATION;
   } catch (error) {
@@ -52,66 +58,51 @@ const isCacheValid = (): boolean => {
 
 // Load settings with caching logic
 export const loadSettings = async (forceRefresh: boolean = false): Promise<AppSettings> => {
-  // If not forcing refresh and cache is valid, use local settings
   if (!forceRefresh && isCacheValid()) {
-    console.log('🔄 Using cached settings (less than 1 hour old)');
     return loadSettingsFromLocal();
   }
 
-  // Cache is invalid or refresh forced, load from Supabase
   try {
-    console.log('🔍 Loading settings from Supabase...');
-    // TODO: Implement Supabase version
-    // const { data, error } = await supabase
-    //   .from('settings')
-    //   .select('*')
-    //   .eq('id', 'global')
-    //   .single();
-    
-    // For now, use local storage
-    const settings = loadSettingsFromLocal();
-    console.log('✅ Settings loaded from localStorage:', settings);
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('id', 'global')
+      .single();
+
+    if (error || !data) {
+      throw error;
+    }
+
+    const settings = rowToSettings(data);
+    saveSettingsToLocal(settings);
     return settings;
   } catch (error) {
-    console.error('❌ Error loading settings:', error);
-    
-    // Fallback to localStorage if Supabase fails
-    console.log('⚠️ Falling back to cached localStorage settings');
+    console.error('❌ Error loading settings from Supabase:', error);
     return loadSettingsFromLocal();
   }
 };
 
 // Load settings from backend (force refresh)
 export const loadSettingsFromBackend = async (): Promise<AppSettings> => {
-  return loadSettings(true); // Force refresh when called directly
+  return loadSettings(true);
 };
 
 // Sync settings to backend (manual sync)
-// TODO: Implement Supabase version
 export const syncSettingsToBackend = async (settings: AppSettings): Promise<{ isNew: boolean }> => {
-  try {
-    console.log('🔄 Syncing settings...');
-    console.log('⚙️ Settings to sync:', settings);
-    
-    // TODO: Implement Supabase version
-    // const { data, error } = await supabase
-    //   .from('settings')
-    //   .upsert({ id: 'global', ...settings })
-    //   .select()
-    //   .single();
-    
-    // For now, just save to localStorage
-    saveSettingsToLocal(settings);
-    console.log('💾 Settings cached locally with updated timestamp');
-    
-    return { isNew: false };
-  } catch (error) {
+  const { error } = await supabase
+    .from('settings')
+    .update({
+      hide_out_of_stock: settings.hideOutOfStock,
+      grab_fee_percent: settings.grabFeePercent,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', 'global');
+
+  if (error) {
     console.error('❌ Error syncing settings:', error);
-    console.error('📊 Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      code: (error as any)?.code || 'Unknown code',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
-    });
     throw error;
   }
+
+  saveSettingsToLocal(settings);
+  return { isNew: false };
 };

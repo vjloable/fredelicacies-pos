@@ -6,6 +6,9 @@ import ImageUpload from '@/components/ImageUpload';
 import { updateBundle, deleteBundle, calculateBundleAvailability } from '@/services/bundleService';
 import type { BundleWithComponents, InventoryItem } from '@/types/domain';
 import DropdownField from '@/components/DropdownField';
+import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { logActivity } from '@/services/activityLogService';
 import { formatCurrency } from '@/lib/currency_formatter';
 import Image from 'next/image';
 
@@ -30,6 +33,8 @@ export default function EditBundleModal({
   onClose,
   onError
 }: EditBundleModalProps) {
+  const { currentBranch } = useBranch();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [name, setName] = useState('');
@@ -161,6 +166,8 @@ export default function EditBundleModal({
         onError('Failed to update bundle. Please try again.');
         return;
       }
+      if (currentBranch)
+        void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_updated', entityType: 'bundle', entityId: bundle.id, details: { name: updates.name } });
 
       onClose();
     } catch (error) {
@@ -180,6 +187,8 @@ export default function EditBundleModal({
         onError('Failed to delete bundle. Please try again.');
         return;
       }
+      if (currentBranch)
+        void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_deleted', entityType: 'bundle', entityId: bundle.id, details: { name: bundle.name } });
 
       setShowDeleteConfirm(false);
       onClose();

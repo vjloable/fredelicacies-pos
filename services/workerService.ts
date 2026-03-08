@@ -435,17 +435,15 @@ export const workerService = {
 
   resetWorkerPin: async (userId: string): Promise<void> => {
     try {
-      // Clear PIN from all worker records
+      // Clear PIN from all worker records for this user
       const { user } = await userProfileRepository.getWithRoles(userId);
-      
+
       if (user) {
         for (const ra of user.roleAssignments) {
           const { workers } = await workerRepository.getByBranch(ra.branchId);
           const worker = workers.find(w => w.user_id === userId);
           if (worker) {
-            await workerRepository.update(worker.id, {
-              pin: undefined,
-            });
+            await workerRepository.update(worker.id, { pin: null });
           }
         }
       }

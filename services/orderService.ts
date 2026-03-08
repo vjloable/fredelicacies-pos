@@ -1,5 +1,6 @@
 import { orderRepository, inventoryRepository } from '@/lib/repositories';
 import type { OrderWithItems, BundleComponent } from '@/types/domain';
+import { logActivity } from '@/services/activityLogService';
 
 // Generate order number (simple incrementing format)
 function generateOrderNumber(): string {
@@ -29,7 +30,8 @@ export const createOrder = async (
   subtotal: number,
   total: number,
   discountId?: string,
-  discountAmount?: number
+  discountAmount?: number,
+  paymentMethod?: 'cash' | 'gcash' | 'grab'
 ): Promise<{ id: string | null; error: any }> => {
   const orderNumber = generateOrderNumber();
 
@@ -59,6 +61,7 @@ export const createOrder = async (
       total,
       discount_id: discountId || null,
       discount_amount: discountAmount || 0,
+      payment_method: paymentMethod ?? 'cash',
       items: orderItems,
     }
   );
@@ -97,6 +100,15 @@ export const createOrder = async (
     await inventoryRepository.bulkUpdateStock(allStockUpdates);
   }
 
+  void logActivity({
+    branchId,
+    userId,
+    action: 'order_created',
+    entityType: 'order',
+    entityId: order.id,
+    details: { total, item_count: items.reduce((s, i) => s + i.quantity, 0) },
+  });
+
   return { id: order.id, error: null };
 };
 
@@ -118,6 +130,24 @@ export const getOrdersByUser = async (
   limit?: number
 ): Promise<{ orders: OrderWithItems[]; error: any }> => {
   return await orderRepository.getByUser(userId, { limit });
+};
+
+// Get a single paginated page of orders for table display
+export const getOrdersPage = async (
+  branchId: string,
+  page: number,
+  pageSize: number,
+  search?: string
+): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> => {
+  return orderRepository.getByBranchPaginated(branchId, { page, pageSize, search });
+};
+
+// Lightweight realtime subscription — notifies on new inserts without fetching all orders
+export const subscribeToOrderInserts = (
+  branchId: string,
+  callback: () => void
+): (() => void) => {
+  return orderRepository.subscribeOnly(branchId, callback);
 };
 
 // Subscribe to orders

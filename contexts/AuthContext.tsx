@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { authService } from "@/services/authService";
 import type { UserWithRoles, RoleAssignment } from "@/types/domain";
+import { logActivity } from "@/services/activityLogService";
 
 export interface User extends UserWithRoles {
   uid: string; // Alias for backward compatibility
@@ -114,10 +115,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await authService.signIn(email, password);
+      const { session, error } = await authService.signIn(email, password);
       if (error) {
         setLoading(false);
         throw error;
+      }
+      // Fire-and-forget login log — fetch user data to know which branches to tag
+      if (session?.user?.id) {
+        void (async () => {
+          const userData = await authService.getUserData(session.user.id);
+          if (userData?.roleAssignments) {
+            for (const ra of userData.roleAssignments) {
+              void logActivity({ branchId: ra.branchId, userId: session.user.id, action: 'login', details: { name: userData.name } });
+            }
+          }
+        })();
       }
       // Auth state change will trigger user load
     } catch (error) {
@@ -129,6 +141,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     setLoading(true);
     try {
+      // Log logout before session clears — user state still has branch info
+      if (user) {
+        for (const ra of user.roleAssignments) {
+          void logActivity({ branchId: ra.branchId, userId: user.id, action: 'logout', details: { name: user.name } });
+        }
+      }
       await authService.signOut();
     } catch (error) {
       setLoading(false);

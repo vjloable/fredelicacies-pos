@@ -13,6 +13,7 @@ export const orderRepository = {
       subtotal: number;
       discount_id?: string | null;
       discount_amount?: number;
+      payment_method?: 'cash' | 'gcash' | 'grab';
       items: Array<{
         item_id?: string | null;
         bundle_id?: string | null;
@@ -36,6 +37,7 @@ export const orderRepository = {
         subtotal: orderData.subtotal,
         discount_id: orderData.discount_id || null,
         discount_amount: orderData.discount_amount || 0,
+        payment_method: orderData.payment_method ?? 'cash',
         status: 'completed',
       })
       .select()
@@ -115,6 +117,7 @@ export const orderRepository = {
       subtotal: order.subtotal,
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
+      payment_method: order.payment_method ?? 'cash',
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -148,6 +151,7 @@ export const orderRepository = {
       subtotal: data.subtotal,
       discount_id: data.discount_id,
       discount_amount: data.discount_amount,
+      payment_method: data.payment_method ?? 'cash',
       status: data.status,
       created_at: data.created_at,
       updated_at: data.updated_at,
@@ -187,6 +191,7 @@ export const orderRepository = {
       subtotal: order.subtotal,
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
+      payment_method: order.payment_method ?? 'cash',
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -194,6 +199,71 @@ export const orderRepository = {
     }));
 
     return { orders, error: null };
+  },
+
+  // Get paginated orders for table display with total count
+  async getByBranchPaginated(
+    branchId: string,
+    options: { page: number; pageSize: number; search?: string }
+  ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> {
+    const { page, pageSize, search } = options;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('orders')
+      .select('*, order_items (*)', { count: 'exact' })
+      .eq('branch_id', branchId)
+      .order('created_at', { ascending: false });
+
+    if (search) {
+      query = query.or(`id.ilike.%${search}%,order_number.ilike.%${search}%`);
+    }
+
+    const { data, error, count } = await query.range(from, to);
+
+    if (error || !data) {
+      return { orders: [], totalCount: 0, error };
+    }
+
+    const orders: OrderWithItems[] = data.map(order => ({
+      id: order.id,
+      branch_id: order.branch_id,
+      user_id: order.user_id,
+      order_number: order.order_number,
+      total: order.total,
+      subtotal: order.subtotal,
+      discount_id: order.discount_id,
+      discount_amount: order.discount_amount,
+      payment_method: order.payment_method ?? 'cash',
+      status: order.status,
+      created_at: order.created_at,
+      updated_at: order.updated_at,
+      items: order.order_items || [],
+    }));
+
+    return { orders, totalCount: count ?? 0, error: null };
+  },
+
+  // Lightweight subscription — fires callback on new inserts without fetching all orders
+  subscribeOnly(branchId: string, callback: () => void) {
+    const channel = supabase
+      .channel(`orders-notify-${branchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `branch_id=eq.${branchId}`,
+        },
+        callback
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   },
 
   // Subscribe to order changes for a branch

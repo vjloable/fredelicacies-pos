@@ -499,7 +499,7 @@ export default function ManagementPage() {
 
 								<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
 									{/* View Toggle */}
-									<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto'>
+									<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto h-10.5'>
 										<button
 											onClick={() => setViewMode("workers")}
 											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
@@ -524,7 +524,7 @@ export default function ManagementPage() {
 									{viewMode === "workers" && (
 										<button
 											onClick={handleCreateWorker}
-											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
+											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 active:scale-95'>
 											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3'>
 												<div className='w-4 h-4'> 
 													<PlusIcon className='drop-shadow-sm' />
