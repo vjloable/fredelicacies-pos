@@ -65,13 +65,13 @@ export default function WorkerFilters({
 		<div className='flex flex-col lg:flex-row lg:items-center gap-4'>
 			{/* Search Bar - Full width on mobile/tablet, flex-1 on PC */}
 			<div className='w-full lg:flex-1 lg:min-w-64'>
-				<div className='relative'>
+				<div className='relative' style={{ height: '42px' }}>
 					<input
 						type='text'
 						value={localFilters.searchQuery || ""}
 						onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
 						placeholder='Search workers by name, email, or ID...'
-						className={`w-full text-3 px-4 py-3 pr-12 shadow-md bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+						className={`w-full h-full text-3 px-4 pr-12 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 							localFilters.searchQuery ? "animate-pulse transition-all" : ""
 						}`}
 					/>
@@ -125,11 +125,11 @@ export default function WorkerFilters({
 									(e as UserRole) || undefined
 								)
 							}
-							roundness={"xl"}
+							roundness={"12"}
 							height={42}
 							valueAlignment={"left"}
 							padding=''
-							shadow={true}
+							shadow={false}
 						/>
 					</div>
 
@@ -145,11 +145,11 @@ export default function WorkerFilters({
 							onChange={(e) =>
 								handleFilterChange("status", e || undefined)
 							}
-							roundness={"xl"}
+							roundness={"12"}
 							height={42}
 							valueAlignment={"left"}
 							padding=''
-							shadow={true}
+							shadow={false}
 						/>
 					</div>
 				</div>
@@ -158,8 +158,9 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='w-full h-10.5 sm:w-auto shadow-md px-3 py-2 text-xs text-primary hover:text-primary bg-error/50 hover:bg-error rounded-lg transition-colors'>
-						Clear
+						style={{ height: '42px' }}
+						className='hover:cursor-pointer sm:w-auto px-4 text-xs text-error bg-error/10 border border-error/20 hover:bg-error/50 hover:border-error hover:text-white rounded-xl transition-colors'>
+						CLEAR
 					</button>
 				)}
 			</div>

@@ -11,6 +11,7 @@ import BundlesView from "./components/BundlesView";
 import type { InventoryItem, Category } from "@/types/domain";
 import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
 import { logActivity } from "@/services/activityLogService";
+import { recordWastage } from "@/services/wastageService";
 import { useAuth } from "@/contexts/AuthContext";
 import {
 	subscribeToCategories,
@@ -208,6 +209,7 @@ export default function InventoryScreen() {
 		if (!currentBranch || selectedForDestock.size === 0) return;
 		setDestocking(true);
 		const selectedItems = items.filter(item => selectedForDestock.has(item.id));
+		const wastageItems: { item_id: string; item_name: string; quantity_wasted: number; cost_per_unit: number }[] = [];
 		for (const item of selectedItems) {
 			const oldStock = item.stock;
 			const { error: updateError } = await updateInventoryItem(item.id, { stock: 0 });
@@ -220,7 +222,16 @@ export default function InventoryScreen() {
 					entityId: item.id,
 					details: { item_name: item.name, old_stock: oldStock, new_stock: 0, delta: oldStock },
 				});
+				wastageItems.push({
+					item_id: item.id,
+					item_name: item.name,
+					quantity_wasted: oldStock,
+					cost_per_unit: item.price,
+				});
 			}
+		}
+		if (wastageItems.length > 0) {
+			void recordWastage(currentBranch.id, user?.id ?? null, wastageItems);
 		}
 		setDestocking(false);
 		setShowDestockConfirm(false);
@@ -379,17 +390,17 @@ export default function InventoryScreen() {
 													className={`px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 bg-error text-white ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}
 												>
 													<div className='flex flex-row items-center gap-2 font-black text-3'>
-														<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
-															<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' />
+														<svg fill='currentColor' stroke='currentColor' viewBox='0 0 15 15' className='w-4 h-4'>
+															<path d='M0.89502 7.50028H14.3021' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
 														</svg>
-														<span className='mt-0.5'>DESTOCK {selectedForDestock.size}</span>
+														<span className='mt-0.5'>DESTOCKS {selectedForDestock.size}</span>
 													</div>
 												</button>
 											)}
 											<button
 												onClick={() => { setDestockMode(prev => !prev); setSelectedForDestock(new Set()); }}
 												className={`px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95
-													${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}
+													${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""} 
 													${destockMode
 														? "bg-error text-white"
 														: "bg-error/10 text-error hover:bg-error/20"
@@ -399,19 +410,12 @@ export default function InventoryScreen() {
 													<div className='size-4'>
 														{destockMode ? (
 															<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
-																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
+																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M5 13l4 4L19 7' />
 															</svg>
 														) : (
-															<div className='relative w-4 h-4'>
-																<svg fill='none' stroke='currentColor' viewBox='0 0 24 24' className='w-4 h-4'>
-																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' />
-																</svg>
-																<div className='absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-error flex items-center justify-center'>
-																	<svg viewBox='0 0 24 24' fill='white' className='w-2 h-2'>
-																		<path d='M7 10l5 5 5-5z' />
-																	</svg>
-																</div>
-															</div>
+															<svg fill='none' stroke='currentColor' viewBox='0 0 15 15' className='w-4 h-4'>
+																<path d='M0.89502 7.50028H14.3021' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
+															</svg>
 														)}
 													</div>
 													<span className='mt-0.5'>{destockMode ? 'DONE' : 'DESTOCK'}</span>
@@ -539,8 +543,8 @@ export default function InventoryScreen() {
 																	}`}
 																>
 																	{selectedForDestock.has(item.id) && (
-																		<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M5 13l4 4L19 7' />
+																		<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 15 15'>
+																			<path d='M0.89502 7.50028H14.3021' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
 																		</svg>
 																	)}
 																</button>

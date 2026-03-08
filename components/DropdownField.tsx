@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 interface DropdownFieldProps {
 	options?: string[];
@@ -36,43 +37,103 @@ export default function DropdownField({
 	dropdownOffset = { top: 1, left: 0 },
 	dropdownPosition = "bottom-left",
 	roundness = "none",
-	height = 42,
+	height = 32,
 	valueAlignment = "right",
 	shadow = true,
-	fontSize = "14px",
+	fontSize = "10px",
 	padding = "12px",
 	maxVisibleOptions,
 	hasAllOptionsVisible = false,
 	allSuffix = "",
 }: DropdownFieldProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	
-	// Set default value to "ALL" if hasAllOptionsVisible is true and no defaultValue is provided
-	const initialValue = defaultValue || (hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}` : undefined);
-	const [selectedValue, setSelectedValue] = useState(initialValue);
-	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// Close dropdown when clicking outside
+	const initialValue =
+		defaultValue ||
+		(hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}` : undefined);
+	const [selectedValue, setSelectedValue] = useState(initialValue);
+	const triggerRef = useRef<HTMLButtonElement>(null);
+	const listRef = useRef<HTMLDivElement>(null);
+	const [listStyle, setListStyle] = useState<React.CSSProperties>({});
+	const [mounted, setMounted] = useState(false);
+
 	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
+		setMounted(true);
+	}, []);
+
+	const calcPosition = useCallback(() => {
+		if (!triggerRef.current) return;
+		const rect = triggerRef.current.getBoundingClientRect();
+		const offsetTop = dropdownOffset.top ?? 1;
+		const offsetLeft = dropdownOffset.left ?? 0;
+		const offsetRight = dropdownOffset.right ?? 0;
+
+		const maxH = maxVisibleOptions
+			? (hasAllOptionsVisible ? maxVisibleOptions + 1 : maxVisibleOptions) *
+					40 +
+				8
+			: 240;
+
+		const style: React.CSSProperties = {
+			position: "fixed",
+			zIndex: 9999,
+			backgroundColor: "white",
+			border: "1px solid var(--accent)",
+			borderRadius: "2px",
+			boxShadow:
+				"0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1)",
+			overflowY: "auto",
+			minWidth: rect.width,
+			maxHeight: `${maxH}px`,
+		};
+
+		if (dropdownPosition.startsWith("bottom")) {
+			style.top = rect.bottom + offsetTop;
+		} else {
+			style.bottom = window.innerHeight - rect.top + offsetTop;
+		}
+
+		if (dropdownPosition.endsWith("right")) {
+			style.right = window.innerWidth - rect.right + offsetRight;
+		} else {
+			style.left = rect.left + offsetLeft;
+		}
+
+		setListStyle(style);
+	}, [dropdownOffset, dropdownPosition, maxVisibleOptions, hasAllOptionsVisible]);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		calcPosition();
+		window.addEventListener("scroll", calcPosition, true);
+		window.addEventListener("resize", calcPosition);
+		return () => {
+			window.removeEventListener("scroll", calcPosition, true);
+			window.removeEventListener("resize", calcPosition);
+		};
+	}, [isOpen, calcPosition]);
+
+	// Close on outside click
+	useEffect(() => {
+		if (!isOpen) return;
+		function handleDown(e: MouseEvent) {
 			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
+				!triggerRef.current?.contains(e.target as Node) &&
+				!listRef.current?.contains(e.target as Node)
 			) {
 				setIsOpen(false);
 			}
 		}
+		document.addEventListener("mousedown", handleDown);
+		return () => document.removeEventListener("mousedown", handleDown);
+	}, [isOpen]);
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
-
-	// Update selectedValue when defaultValue changes
+	// Sync selectedValue when defaultValue changes
 	useEffect(() => {
-		const newValue = defaultValue || (hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}`  : undefined);
-		setSelectedValue(newValue);
+		setSelectedValue(
+			defaultValue ||
+				(hasAllOptionsVisible ? `ALL ${allSuffix.toUpperCase()}` : undefined)
+		);
 	}, [defaultValue, hasAllOptionsVisible, allSuffix]);
 
 	const handleSelect = (value: string) => {
@@ -81,113 +142,98 @@ export default function DropdownField({
 		onChange?.(value);
 	};
 
-	// Create the final options array including "ALL" if needed
-	const finalOptions = hasAllOptionsVisible ? [`ALL ${allSuffix.toUpperCase()}` , ...options] : options;
+	const finalOptions = hasAllOptionsVisible
+		? [`ALL ${allSuffix.toUpperCase()}`, ...options]
+		: options;
 
-	const getDropdownClasses = () => {
-		// Calculate max height based on maxVisibleOptions if provided
-		const maxHeightClass = maxVisibleOptions
-			? "" // We'll use inline styles for precise control
-			: "max-h-60";
+	// Resolve border-radius from the roundness prop without dynamic Tailwind classes
+	const borderRadius =
+		roundness === "none"
+			? "0"
+			: roundness === "full"
+				? "9999px"
+				: /^\d+$/.test(roundness)
+					? `${roundness}px`
+					: roundness;
 
-		const baseClasses = `absolute z-50 bg-white border border-accent rounded-sm shadow-lg min-w-full overflow-y-auto ${maxHeightClass}`;
-
-		const positionClasses = {
-			bottom: "top-full left-0",
-			top: "bottom-full left-0",
-			"bottom-right": "top-full right-0",
-			"bottom-left": "top-full left-0",
-			"top-right": "bottom-full right-0",
-			"top-left": "bottom-full left-0",
-		};
-
-		return `${baseClasses} ${positionClasses[dropdownPosition]}`;
-	};
-
-	const getDropdownStyle = () => {
-		const style: React.CSSProperties = {
-			marginTop: dropdownOffset.top ? `${dropdownOffset.top}px` : undefined,
-			marginLeft: dropdownOffset.left ? `${dropdownOffset.left}px` : undefined,
-			marginRight: dropdownOffset.right
-				? `${dropdownOffset.right}px`
-				: undefined,
-		};
-
-		// Calculate max height based on maxVisibleOptions
-		if (maxVisibleOptions) {
-			// Approximate height per option (40px) + padding (8px)
-			const optionHeight = 40;
-			const padding = 8;
-			// Account for the ALL option if it's included
-			const totalOptions = hasAllOptionsVisible ? maxVisibleOptions + 1 : maxVisibleOptions;
-			style.maxHeight = `${totalOptions * optionHeight + padding}px`;
-		}
-
-		return style;
+	const triggerStyle: React.CSSProperties = {
+		height: `${height}px`,
+		fontSize,
+		textAlign: valueAlignment,
+		paddingLeft: padding || "16px",
+		paddingRight: "56px",
+		borderRadius,
 	};
 
 	return (
-		<div className={`h-[${height}px] w-full relative`} ref={dropdownRef}>
+		<div style={{ height: `${height}px` }} className='w-full relative'>
 			<div
-				className={`grid shrink-0 grid-cols-1 focus-within:relative h-[${height}px] w-full`}>
-				{/* Custom Dropdown Trigger */}
+				className='grid grid-cols-1 w-full'
+				style={{ height: `${height}px` }}>
+				{/* Trigger button */}
 				<button
+					ref={triggerRef}
 					type='button'
 					onClick={() => setIsOpen(!isOpen)}
-					className={`py-[${padding}] bg-primary col-start-1 row-start-1 w-full appearance-none 
-								text-[${fontSize}] text-secondary font-regular focus:outline-none
-								rounded-${roundness} focus:ring-2 focus:ring-accent focus:border-transparent text-${valueAlignment} pr-14 px-4 cursor-pointer 
-								hover:bg-accent/50 transition-colors 
-            					${shadow ? "shadow-md border-none" : "shadow-none border-2 border-secondary/20"
-							}`}
-					style={height ? { height: `${height}px` } : {}}>
+					className={`col-start-1 row-start-1 w-full appearance-none text-secondary font-regular focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer hover:bg-accent/50 transition-colors ${
+						shadow
+							? "shadow-md border-none"
+							: "shadow-none border border-gray-200"
+					}`}
+					style={triggerStyle}>
 					{selectedValue}
 				</button>
 
-				{/* Arrow Icon */}
-				<svg
-					width='43'
-					height='42'
-					viewBox='0 0 43 42'
-					fill='none'
-					className={`pointer-events-none col-start-1 row-start-1 self-center justify-self-end transition-transform duration-200 ${
-						isOpen ? "rotate-180" : ""
-					}`}>
-					<path
-						d='M21.0985 22.8117L17.4756 19.1888H24.7214L21.0985 22.8117Z'
-						stroke={"var(--secondary)"}
-						strokeWidth='3'
-					/>
-				</svg>
+				{/* Arrow icon */}
+        <div className="h-8 w-8 absolute top-1/2 right-2 -translate-y-1/2 pointer-events-none">
+          <svg
+            viewBox='0 0 43 42'
+            fill='none'
+            className={`pointer-events-none col-start-1 row-start-1 self-center justify-self-end transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}>
+            <path
+              d='M21.0985 22.8117L17.4756 19.1888H24.7214L21.0985 22.8117Z'
+              stroke={"var(--secondary)"}
+              strokeWidth='3'
+            />
+          </svg>
+        </div>
+			</div>
 
-				{/* Custom Dropdown Menu */}
-				{isOpen && (
-					<div className={getDropdownClasses()} style={getDropdownStyle()}>
+			{/* Dropdown list — rendered into document.body via portal to escape overflow clips */}
+			{isOpen &&
+				mounted &&
+				createPortal(
+					<div ref={listRef} style={listStyle}>
 						<div className='py-1'>
 							{finalOptions.map((option, index) => {
-								const isAllOption = hasAllOptionsVisible && option === `ALL ${allSuffix.toUpperCase()}` ;
+								const isAllOption =
+									hasAllOptionsVisible &&
+									option === `ALL ${allSuffix.toUpperCase()}`;
 								return (
 									<button
 										key={index}
 										type='button'
 										onClick={() => handleSelect(option)}
-										className={`w-full text-${valueAlignment} px-4 py-2 text-xs hover:bg-accent/50 hover:text-secondary transition-colors ${
+										className={`w-full px-4 py-2 text-xs hover:bg-accent/50 hover:text-secondary transition-colors ${
 											selectedValue === option
 												? "bg-accent text-primary font-medium"
 												: "text-secondary"
 										} ${
-											isAllOption 
-												? "font-semibold border-b border-gray-200 mb-1" 
+											isAllOption
+												? "font-semibold border-b border-gray-200 mb-1"
 												: ""
-										}`}>
+										}`}
+										style={{ textAlign: valueAlignment }}>
 										{option}
 									</button>
 								);
 							})}
 						</div>
-					</div>
+					</div>,
+					document.body
 				)}
-			</div>
 		</div>
 	);
 }
