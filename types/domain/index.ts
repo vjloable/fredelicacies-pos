@@ -67,3 +67,10 @@ export type {
 } from './userProfile';
 
 export type { ActivityLog, LogAction } from './activityLog';
+
+export type {
+  WastageLog,
+  CreateWastageData,
+  WastageDailySummary,
+  WastageItemSummary,
+} from './wastage';

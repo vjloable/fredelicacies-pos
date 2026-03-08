@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import {
 	LineChart,
 	Line,
+	BarChart,
+	Bar,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -14,11 +16,14 @@ import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { subscribeToOrders } from "@/services/orderService";
-import type { OrderWithItems, OrderItem } from "@/types/domain";
+import type { OrderWithItems, OrderItem, WastageItemSummary, InventoryItem } from "@/types/domain";
 import { formatCurrency } from "@/services/salesService";
+import { getWastageSummary, getTopWastedItems } from "@/services/wastageService";
+import { getInventoryItems } from "@/services/inventoryService";
 import { useBranch } from "@/contexts/BranchContext";
 import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
+import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 
 interface TimeSeriesData {
 	label: string;
@@ -51,8 +56,18 @@ export default function SalesScreen() {
 		profitMargin: 0,
 	});
 
+	// Wastage analytics state
+	const [wastageBarData, setWastageBarData] = useState<{ label: string; wastage: number }[]>([]);
+	const [topWastedItems, setTopWastedItems] = useState<WastageItemSummary[]>([]);
+	const [totalWastageCost, setTotalWastageCost] = useState(0);
+	const [prevWastageCost, setPrevWastageCost] = useState<number | null>(null);
+	const [carryOverItems, setCarryOverItems] = useState<InventoryItem[]>([]);
+
 	// View mode toggle (recent orders vs analytics/graphs)
 	const [viewMode, setViewMode] = useState<"orders" | "analytics">("orders");
+
+	// Selected order for receipt modal
+	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 
 	// Pagination state for orders table
 	const [currentPage, setCurrentPage] = useState(1);
@@ -255,6 +270,72 @@ export default function SalesScreen() {
 		});
 	}, [allOrders, viewPeriod, getFilteredOrders, generateTimeSeriesData]);
 
+	// Returns the date range for the period immediately prior to the current one
+	const getPriorDateRange = (period: ViewPeriod): { startStr: string; endStr: string } => {
+		const now = new Date();
+		const days = period === "day" ? 1 : period === "week" ? 7 : 30;
+		const priorEnd = new Date(now);
+		priorEnd.setDate(now.getDate() - days);
+		const priorStart = new Date(priorEnd);
+		priorStart.setDate(priorEnd.getDate() - days + 1);
+		return {
+			startStr: priorStart.toISOString().slice(0, 10),
+			endStr: priorEnd.toISOString().slice(0, 10),
+		};
+	};
+
+	// Fetch wastage data when analytics view is active
+	useEffect(() => {
+		if (!currentBranch || viewMode !== "analytics") return;
+
+		const { startDate } = getDateRange(viewPeriod);
+		const endDate = new Date();
+		endDate.setHours(23, 59, 59, 999);
+		const startStr = startDate.toISOString().slice(0, 10);
+		const endStr = endDate.toISOString().slice(0, 10);
+
+		getWastageSummary(currentBranch.id, startStr, endStr).then(({ data }) => {
+			setTotalWastageCost(data.reduce((sum, d) => sum + d.total_cost, 0));
+
+			if (viewPeriod === "day") {
+				// Day view: single bar for today
+				setWastageBarData([{
+					label: "Today",
+					wastage: data.reduce((sum, d) => sum + d.total_cost, 0),
+				}]);
+			} else {
+				// Week/month: daily bars
+				const days = viewPeriod === "week" ? 7 : 30;
+				const barData: { label: string; wastage: number }[] = [];
+				for (let i = 0; i < days; i++) {
+					const d = new Date(startDate);
+					d.setDate(d.getDate() + i);
+					const dateStr = d.toISOString().slice(0, 10);
+					const label = viewPeriod === "week"
+						? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+						: d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+					barData.push({ label, wastage: data.find(w => w.date === dateStr)?.total_cost ?? 0 });
+				}
+				setWastageBarData(barData);
+			}
+		});
+
+		getTopWastedItems(currentBranch.id, startStr, endStr).then(({ data }) => {
+			setTopWastedItems(data);
+		});
+
+		// Prior period wastage for comparison
+		const { startStr: prevStart, endStr: prevEnd } = getPriorDateRange(viewPeriod);
+		getWastageSummary(currentBranch.id, prevStart, prevEnd).then(({ data }) => {
+			setPrevWastageCost(data.reduce((sum, d) => sum + d.total_cost, 0));
+		});
+
+		// Current carry-over stock (items with stock > 0)
+		getInventoryItems(currentBranch.id).then(({ items }) => {
+			setCarryOverItems(items.filter(item => item.stock > 0 && item.status === "active"));
+		});
+	}, [currentBranch, viewPeriod, viewMode]);
+
 	// Custom tooltip formatter
 	const formatTooltipValue = (value: number | undefined, name: string | undefined) => {
 		if (value === undefined || name === undefined) return [0, ''];
@@ -381,7 +462,7 @@ export default function SalesScreen() {
 															setCurrentPage(1); // Reset to first page when searching
 														}}
 														placeholder='Search orders...'
-														className={`w-full text-3 px-4 py-3 pr-12 border-2 border-secondary/20 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+														className={`w-full text-3 px-4 py-3 pr-12 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 															searchTerm ? "animate-pulse transition-all" : ""
 														}`}
 													/>
@@ -390,7 +471,7 @@ export default function SalesScreen() {
 															<LoadingSpinner size="lg" />
 														) : (
 															<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
-																<SearchIcon className='mr-0.5 mb-0.5' />
+																<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
 															</div>
 														)}
 													</div>
@@ -425,7 +506,10 @@ export default function SalesScreen() {
 									</thead>
 									<tbody className='bg-primary divide-y divide-gray-200'>
 										{currentOrders.map((order) => (
-											<tr key={order.id} className='hover:bg-gray-50'>
+											<tr
+												key={order.id}
+												className='hover:bg-accent/5 cursor-pointer transition-colors'
+												onClick={() => setSelectedOrder(order)}>
 												<td className='px-6 py-1 whitespace-nowrap text-xs font-medium text-secondary'>
 													<div className='px-2 py-1 bg-secondary/10 max-w-30 text-center font-regular rounded-xl'>
 														#{order.id ? order.id.slice(-8) : "N/A"}
@@ -456,13 +540,13 @@ export default function SalesScreen() {
 																					className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-secondary/20 p-1 px-2 rounded-full'
 																					key={item.id}>
 																					{`${item.name || "Unknown"}`}
-																					<div className='size-5 bg-secondary/20 rounded-full text-center text-2.5 p-1'>
+																					<div className='min-w-5 h-5 px-1 bg-secondary/20 rounded-full flex items-center justify-center text-2.5 shrink-0'>
 																						{`${item.quantity || 0}`}
 																					</div>
 																				</div>
 																			);
 																		})}
-																		<div className='flex items-center justify-center h-6.25 w-15 bg-accent/50 rounded-full text-center text-2.5 p-1'>{`+${
+																		<div className='flex items-center justify-center h-6.25 w-15 bg-accent/50 rounded-full text-2.5'>{`+${
 																			order.items.length - 2
 																		} more`}</div>
 																	</>
@@ -473,7 +557,7 @@ export default function SalesScreen() {
 																				className='flex-row items-center inline-flex text-3 mr-1 gap-1 border border-secondary/20 p-1 px-2 rounded-full'
 																				key={item.id}>
 																				{`${item.name || "Unknown"}`}
-																				<div className='size-5 bg-secondary/20 rounded-full text-center text-2.5 p-1'>
+																				<div className='min-w-5 h-5 px-1 bg-secondary/20 rounded-full flex items-center justify-center text-2.5 shrink-0'>
 																					{`${item.quantity || 0}`}
 																				</div>
 																			</div>
@@ -652,7 +736,7 @@ export default function SalesScreen() {
                 </div>
 
                 {/* Summary Stats */}
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mx-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mx-6'>
                   <div className='bg-primary p-6 rounded-xl shadow-md'>
                     <div className='flex items-center justify-between'>
                       <div>
@@ -715,6 +799,43 @@ export default function SalesScreen() {
                               currentPeriodStats.totalOrders
                           : 0
                       )}
+                    </p>
+                  </div>
+
+                  {/* Wastage Cost stat card */}
+                  <div className='bg-primary p-6 rounded-xl shadow-md'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='text-xs font-medium text-secondary/40'>
+                          Wastage Cost
+                        </p>
+                        <p className='text-xl text-secondary'>
+                          <span className='font-regular text-lg mr-1'>₱</span>
+                          <span className='font-semibold'>{formatCurrency(totalWastageCost).slice(1)}</span>
+                        </p>
+                      </div>
+                      <div className='w-12 h-12 bg-light-accent rounded-lg flex items-center justify-center'>
+                        <svg className='w-6 h-6 text-accent' fill='currentColor' viewBox='0 0 20 20'>
+                          <path fillRule='evenodd' d='M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z' clipRule='evenodd' />
+                        </svg>
+                      </div>
+                    </div>
+                    <p className='text-xs text-secondary/50 mt-2'>
+                      {prevWastageCost === null ? (
+                        "Stock destocked this period"
+                      ) : prevWastageCost === 0 && totalWastageCost === 0 ? (
+                        "No wastage recorded"
+                      ) : prevWastageCost === 0 ? (
+                        `vs ${viewPeriod === "day" ? "yesterday" : viewPeriod === "week" ? "last 7d" : "last 30d"}: no prior data`
+                      ) : (() => {
+                        const pct = ((totalWastageCost - prevWastageCost) / prevWastageCost) * 100;
+                        const label = viewPeriod === "day" ? "vs yesterday" : viewPeriod === "week" ? "vs last 7d" : "vs last 30d";
+                        return pct > 0
+                          ? `↑ ${pct.toFixed(0)}% ${label}`
+                          : pct < 0
+                          ? `↓ ${Math.abs(pct).toFixed(0)}% ${label}`
+                          : `No change ${label}`;
+                      })()}
                     </p>
                   </div>
 
@@ -854,6 +975,140 @@ export default function SalesScreen() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+
+                {/* Wastage Bar Chart — only for week/month, day has no meaningful hourly breakdown */}
+                {viewPeriod !== "day" && (
+                  <div className='bg-primary p-6 rounded-xl shadow-md mx-6'>
+                    <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
+                      <div>
+                        <h3 className='text-base font-semibold text-secondary'>
+                          Daily Wastage Cost
+                        </h3>
+                        <p className='text-xs text-gray-400'>Stock destocked per day</p>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <div className='w-3 h-3 bg-red-400 rounded-full'></div>
+                        <span className='text-xs text-gray-400'>Wastage</span>
+                      </div>
+                    </div>
+                    <div className='h-48'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <BarChart data={wastageBarData} barSize={viewPeriod === "week" ? 20 : 10}>
+                          <CartesianGrid strokeDasharray='1 1' stroke='#374151' opacity={0.3} vertical={false} />
+                          <XAxis
+                            dataKey='label'
+                            stroke='#9CA3AF'
+                            fontSize={11}
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <YAxis
+                            stroke='#9CA3AF'
+                            fontSize={11}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(v) => `₱${v}`}
+                          />
+                          <Tooltip
+                            formatter={(value: number | undefined) => [formatCurrency(value ?? 0), "Wastage"]}
+                            contentStyle={{
+                              backgroundColor: "#FFFFFF",
+                              border: "1px solid #fee2e2",
+                              borderRadius: "8px",
+                              boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                            }}
+                          />
+                          <Bar dataKey='wastage' fill='#f87171' radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Wasted Items */}
+                {topWastedItems.length > 0 && (
+                  <div className='bg-primary p-6 rounded-xl shadow-md mx-6'>
+                    <div className='mb-4'>
+                      <h3 className='text-base font-semibold text-secondary'>Top Wasted Items</h3>
+                      <p className='text-xs text-gray-400'>Ranked by total wastage cost for this period</p>
+                    </div>
+                    <div className='space-y-3'>
+                      {topWastedItems.map((item, idx) => (
+                        <div key={item.item_name} className='flex items-center gap-3'>
+                          <span className='text-xs font-bold text-secondary/30 w-4 shrink-0'>{idx + 1}</span>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-xs font-medium text-secondary truncate'>{item.item_name}</p>
+                            <div className='mt-1 h-1.5 bg-red-100 rounded-full overflow-hidden'>
+                              <div
+                                className='h-full bg-red-400 rounded-full'
+                                style={{ width: `${Math.min(100, (item.total_cost / topWastedItems[0].total_cost) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className='text-right shrink-0'>
+                            <p className='text-xs font-semibold text-red-500'>{formatCurrency(item.total_cost)}</p>
+                            <p className='text-2.5 text-secondary/40'>{item.total_quantity} units</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Carry-Over Stock */}
+                {carryOverItems.length > 0 && (
+                  <div className='bg-primary p-6 rounded-xl shadow-md mx-6'>
+                    <div className='flex items-start justify-between mb-4'>
+                      <div>
+                        <h3 className='text-base font-semibold text-secondary'>Carry-Over Stock</h3>
+                        <p className='text-xs text-gray-400'>Items currently in stock — carried from prior day</p>
+                      </div>
+                      <div className='text-right shrink-0'>
+                        <p className='text-xs font-semibold text-secondary'>
+                          {carryOverItems.reduce((s, i) => s + i.stock, 0)} units
+                        </p>
+                        <p className='text-2.5 text-secondary/40'>
+                          {carryOverItems.length} item{carryOverItems.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className='space-y-3'>
+                      {(() => {
+                        const sorted = carryOverItems.slice().sort((a, b) => b.stock * b.price - a.stock * a.price).slice(0, 8);
+                        const maxValue = sorted.length > 0 ? sorted[0].stock * sorted[0].price : 0;
+                        return (
+                          <>
+                            {sorted.map((item) => {
+                              const pct = maxValue > 0 ? (item.stock * item.price / maxValue) * 100 : 0;
+                              return (
+                                <div key={item.id} className='flex items-center gap-3'>
+                                  <div className='flex-1 min-w-0'>
+                                    <p className='text-xs font-medium text-secondary truncate'>{item.name}</p>
+                                    <div className='mt-1 h-1.5 bg-accent/10 rounded-full overflow-hidden'>
+                                      <div
+                                        className='h-full bg-accent/40 rounded-full'
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className='text-right shrink-0'>
+                                    <p className='text-xs font-semibold text-secondary'>{formatCurrency(item.stock * item.price)}</p>
+                                    <p className='text-2.5 text-secondary/40'>{item.stock} units</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {carryOverItems.length > 8 && (
+                              <p className='text-2.5 text-secondary/30 text-center pt-1'>
+                                +{carryOverItems.length - 8} more items
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -861,6 +1116,181 @@ export default function SalesScreen() {
 				  </div>
 			  </div>
 		  </div>
+
+		{/* Order Receipt Modal */}
+		{selectedOrder && (
+			<div
+				className='fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4'
+				onClick={() => setSelectedOrder(null)}>
+				<div
+					className='bg-white rounded-2xl w-full max-w-xs max-h-[90vh] overflow-y-auto shadow-2xl'
+					onClick={(e) => e.stopPropagation()}>
+
+					{/* Branded header — padded content separate from full-bleed SVG */}
+					<div className='bg-white rounded-t-2xl pt-5 pb-0 text-center'>
+						{/* Padded content area */}
+						<div className='relative px-6'>
+							{/* Close button */}
+							<button
+								onClick={() => setSelectedOrder(null)}
+								className='absolute top-0 right-4 text-secondary/30 hover:text-secondary transition-colors text-xl leading-none'>
+								×
+							</button>
+
+							{/* Logo mark */}
+							<LogoIcon className='w-12 h-12 mx-auto' />
+
+							{/* Brand name */}
+							<p className='text-secondary font-sans font-bold text-xs tracking-widest uppercase mt-2'>
+								Fredelecacies
+							</p>
+
+							{/* Branch name */}
+							<p className='text-secondary/50 font-sans text-xs mt-1 mb-4'>
+								{currentBranch?.name}
+							</p>
+						</div>
+
+						{/* Scalloped arch divider — full bleed, unaffected by padding */}
+						<svg viewBox="0 0 320 16" xmlns="http://www.w3.org/2000/svg" className='w-full block'>
+							<path d="M0,16 Q8,2 16,16 Q24,2 32,16 Q40,2 48,16 Q56,2 64,16 Q72,2 80,16 Q88,2 96,16 Q104,2 112,16 Q120,2 128,16 Q136,2 144,16 Q152,2 160,16 Q168,2 176,16 Q184,2 192,16 Q200,2 208,16 Q216,2 224,16 Q232,2 240,16 Q248,2 256,16 Q264,2 272,16 Q280,2 288,16 Q296,2 304,16 Q312,2 320,16" fill="none" stroke="#e5e7eb" strokeWidth="1" />
+						</svg>
+					</div>
+
+					{/* Receipt body */}
+					<div className='px-5 pt-4 pb-5 font-mono text-secondary'>
+
+						{/* Order ID + date row */}
+						<div className='flex items-start justify-between gap-2'>
+							<div>
+								<p className='font-bold text-sm'>
+									#{selectedOrder.order_number
+										? selectedOrder.order_number.replace('ORD-', '')
+										: selectedOrder.id.slice(-8).toUpperCase()}
+								</p>
+								<p className='text-secondary/40 text-xs mt-0.5 font-sans'>
+									{new Date(selectedOrder.created_at).toLocaleDateString('en-US', {
+										month: 'short',
+										day: 'numeric',
+										year: 'numeric',
+									})}
+									{' · '}
+									{new Date(selectedOrder.created_at).toLocaleTimeString('en-US', {
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+								</p>
+							</div>
+
+							{/* Payment method badge */}
+							<span className={`shrink-0 mt-0.5 px-2.5 py-1 rounded-full text-xs font-sans font-semibold ${
+								selectedOrder.payment_method === 'gcash'
+									? 'bg-blue-100 text-blue-700'
+									: selectedOrder.payment_method === 'grab'
+									? 'bg-green-100 text-green-700'
+									: 'bg-secondary/10 text-secondary'
+							}`}>
+								{selectedOrder.payment_method === 'gcash'
+									? 'GCash'
+									: selectedOrder.payment_method === 'grab'
+									? 'Grab'
+									: 'Cash'}
+							</span>
+						</div>
+
+						{/* Dotted divider */}
+						<div className='border-t border-dashed border-secondary/20 my-4' />
+
+						{/* Items */}
+						<div className='space-y-2.5 text-xs'>
+							{selectedOrder.items.map((item: OrderItem) => (
+								<div key={item.id}>
+									<div className='flex justify-between gap-2'>
+										<span className='flex-1'>
+											{item.name}
+											<span className='text-secondary/40 ml-1'>×{item.quantity}</span>
+										</span>
+										<span className='shrink-0 tabular-nums'>
+											{formatCurrency(item.price * item.quantity)}
+										</span>
+									</div>
+									{item.is_bundle && Array.isArray(item.bundle_components) && item.bundle_components.length > 0 && (
+										<div className='ml-3 mt-1 space-y-1'>
+											{item.bundle_components.map((comp: any, idx: number) => (
+												<div key={idx} className='flex items-center gap-1 text-secondary/40'>
+													<span>↳</span>
+													<span>
+														{comp.inventory_item?.name || comp.name || 'Item'}
+														{comp.quantity > 1 && <span className='ml-1 opacity-60'>×{comp.quantity}</span>}
+													</span>
+												</div>
+											))}
+										</div>
+									)}
+								</div>
+							))}
+						</div>
+
+						{/* Dotted divider */}
+						<div className='border-t border-dashed border-secondary/20 my-4' />
+
+						{/* Summary */}
+						<div className='space-y-2 text-xs'>
+							<div className='flex justify-between'>
+								<span className='text-secondary/50'>Subtotal</span>
+								<span className='tabular-nums'>{formatCurrency(selectedOrder.subtotal)}</span>
+							</div>
+
+							{selectedOrder.discount_amount > 0 && (
+								<div className='flex justify-between'>
+									<span className='text-secondary/50'>Discount</span>
+									<span className='tabular-nums text-green-600'>
+										−{formatCurrency(selectedOrder.discount_amount)}
+									</span>
+								</div>
+							)}
+
+							{(() => {
+								const grabFee = selectedOrder.total - (selectedOrder.subtotal - selectedOrder.discount_amount);
+								return selectedOrder.payment_method === 'grab' && grabFee > 0.005 ? (
+									<div className='flex justify-between'>
+										<span className='text-secondary/50'>Grab Fee</span>
+										<span className='tabular-nums text-amber-600'>
+											+{formatCurrency(grabFee)}
+										</span>
+									</div>
+								) : null;
+							})()}
+						</div>
+
+						{/* Total — solid divider + larger */}
+						<div className='border-t-2 border-secondary/20 mt-4 pt-3 flex justify-between items-baseline'>
+							<span className='text-sm font-bold'>TOTAL</span>
+							<span className='text-base font-bold tabular-nums'>{formatCurrency(selectedOrder.total)}</span>
+						</div>
+
+						{/* Dotted divider */}
+						<div className='border-t border-dashed border-secondary/20 my-4' />
+
+						{/* Profit */}
+						<div className='flex justify-between text-xs font-sans'>
+							<span className='text-secondary/40 uppercase tracking-wide text-2.5'>Profit</span>
+							<span className='text-success font-semibold tabular-nums'>
+								{formatCurrency(calculateOrderProfit(selectedOrder))}
+							</span>
+						</div>
+
+						{/* Close button */}
+						<button
+							onClick={() => setSelectedOrder(null)}
+							className='w-full mt-5 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
+							Close
+						</button>
+
+					</div>
+				</div>
+			</div>
+		)}
 		</div>
 	);
 }
