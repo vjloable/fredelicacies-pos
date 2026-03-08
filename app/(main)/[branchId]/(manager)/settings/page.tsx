@@ -17,9 +17,11 @@ import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 export default function SettingsScreen() {
 	const [settings, setSettings] = useState<AppSettings>({
 		hideOutOfStock: false,
+		grabFeePercent: 0,
 	});
 	const [savedSettings, setSavedSettings] = useState<AppSettings>({
 		hideOutOfStock: false,
+		grabFeePercent: 0,
 	});
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSyncing, setIsSyncing] = useState(false);
@@ -66,6 +68,10 @@ export default function SettingsScreen() {
 
 	const handleHideOutOfStockToggle = () => {
 		setSettings((prev) => ({ ...prev, hideOutOfStock: !prev.hideOutOfStock }));
+	};
+
+	const handleGrabFeeChange = (value: number) => {
+		setSettings((prev) => ({ ...prev, grabFeePercent: value }));
 	};
 
 	const handleSave = () => {
@@ -200,7 +206,39 @@ export default function SettingsScreen() {
 										</div>
 									</div>
 
-									{/* Save/Sync Actions */}
+									{/* Ordering Setting */}
+								<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
+									<h3 className='text-base font-semibold text-secondary mb-4'>
+										Ordering
+									</h3>
+									<div className='flex items-start justify-between gap-4'>
+										<div className='flex-1'>
+											<label
+												htmlFor='grab-fee-percent'
+												className='block text-xs font-medium text-secondary'>
+												Grab Fee (%)
+											</label>
+											<p className='text-xs text-gray-500 mt-1'>
+												Added on top of the order total when Grab is selected as payment method
+											</p>
+										</div>
+										<div className='flex items-center gap-2 shrink-0'>
+											<input
+												id='grab-fee-percent'
+												type='number'
+												min='0'
+												max='100'
+												step='0.1'
+												value={settings.grabFeePercent}
+												onChange={(e) => handleGrabFeeChange(parseFloat(e.target.value) || 0)}
+												className='w-20 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-secondary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-right'
+											/>
+											<span className='text-xs text-secondary/60'>%</span>
+										</div>
+									</div>
+								</div>
+
+								{/* Save/Sync Actions */}
 									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
 										<h3 className='text-base font-semibold text-secondary mb-4'>
 											Save & Sync
