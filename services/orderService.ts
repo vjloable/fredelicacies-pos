@@ -132,6 +132,24 @@ export const getOrdersByUser = async (
   return await orderRepository.getByUser(userId, { limit });
 };
 
+// Get a single paginated page of orders for table display
+export const getOrdersPage = async (
+  branchId: string,
+  page: number,
+  pageSize: number,
+  search?: string
+): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> => {
+  return orderRepository.getByBranchPaginated(branchId, { page, pageSize, search });
+};
+
+// Lightweight realtime subscription — notifies on new inserts without fetching all orders
+export const subscribeToOrderInserts = (
+  branchId: string,
+  callback: () => void
+): (() => void) => {
+  return orderRepository.subscribeOnly(branchId, callback);
+};
+
 // Subscribe to orders
 export const subscribeToOrders = (
   branchId: string,
