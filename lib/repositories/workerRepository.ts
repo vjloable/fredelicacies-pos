@@ -5,7 +5,7 @@ import type { Worker, CreateWorkerData, UpdateWorkerData } from '@/types/domain/
 export const workerRepository = {
   // Create a new worker
   async create(branchId: string, data: CreateWorkerData): Promise<{ worker: Worker | null; error: any }> {
-    const { data: worker, error } = await supabase
+    const { error } = await supabase
       .from('workers')
       .insert({
         branch_id: branchId,
@@ -14,11 +14,18 @@ export const workerRepository = {
         role: data.role || 'worker',
         face_descriptor: data.face_descriptor || null,
         status: data.status || 'active',
-      })
-      .select()
-      .single();
+      });
 
-    return { worker, error };
+    if (error) return { worker: null, error };
+
+    const { data: worker } = await supabase
+      .from('workers')
+      .select('*')
+      .eq('user_id', data.user_id)
+      .eq('branch_id', branchId)
+      .maybeSingle();
+
+    return { worker, error: null };
   },
 
   // Get all workers for a branch
@@ -27,7 +34,7 @@ export const workerRepository = {
       .from('workers')
       .select('*')
       .eq('branch_id', branchId)
-      .order('first_name', { ascending: true });
+      .order('created_at', { ascending: true });
 
     return { workers: data || [], error };
   },
@@ -39,7 +46,7 @@ export const workerRepository = {
       .select('*')
       .eq('branch_id', branchId)
       .eq('status', 'active')
-      .order('first_name', { ascending: true });
+      .order('created_at', { ascending: true });
 
     return { workers: data || [], error };
   },
@@ -81,14 +88,22 @@ export const workerRepository = {
 
   // Update worker
   async update(id: string, data: UpdateWorkerData): Promise<{ worker: Worker | null; error: any }> {
-    const { data: worker, error } = await supabase
+    const { error } = await supabase
       .from('workers')
       .update(data)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
-    return { worker, error };
+    if (error) return { worker: null, error };
+
+    // Fetch the updated row separately — use maybeSingle so 0 rows (RLS
+    // visibility edge cases) returns null instead of throwing PGRST116
+    const { data: worker } = await supabase
+      .from('workers')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    return { worker, error: null };
   },
 
   // Delete worker
@@ -109,7 +124,7 @@ export const workerRepository = {
       .eq('branch_id', branchId)
       .eq('role', 'manager')
       .eq('status', 'active')
-      .order('first_name', { ascending: true });
+      .order('created_at', { ascending: true });
 
     return { workers: data || [], error };
   },

@@ -78,26 +78,28 @@ export default function AssignBranchModal({
 		setError(null);
 
 		try {
-			const currentAssignments = worker.roleAssignments.filter(
+			const currentAssignment = worker.roleAssignments.find(
 				(a) => a.isActive !== false
 			);
+			const currentBranchId = currentAssignment?.branchId;
+			const currentRole = currentAssignment?.role;
 
-			// Remove all old assignments first
-			for (const currentAssignment of currentAssignments) {
-				await workerService.removeWorkerFromBranch(
-					worker.id,
-					currentAssignment.branchId
-				);
-			}
+			const branchChanged = currentBranchId !== selectedBranchId;
+			const roleChanged = currentRole !== selectedRole;
 
-			// Add the new single assignment if selected
-			if (selectedBranchId) {
-				await workerService.assignWorkerToBranch(
-					worker.id,
-					selectedBranchId,
-					selectedRole
-				);
+			if (!branchChanged && roleChanged && selectedBranchId) {
+				// Only the role changed — update in place, no remove+re-add needed
+				await workerService.updateWorkerRole(worker.id, selectedBranchId, selectedRole);
+			} else if (branchChanged) {
+				// Branch changed — remove from old branch and assign to new one
+				if (currentBranchId) {
+					await workerService.removeWorkerFromBranch(worker.id, currentBranchId);
+				}
+				if (selectedBranchId) {
+					await workerService.assignWorkerToBranch(worker.id, selectedBranchId, selectedRole);
+				}
 			}
+			// If neither changed, nothing to do
 
 			onSuccess();
 			handleClose();

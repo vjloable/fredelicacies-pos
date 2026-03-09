@@ -68,14 +68,20 @@ export const userProfileRepository = {
 
   // Update profile
   async update(userId: string, data: UpdateUserProfileData): Promise<{ profile: UserProfile | null; error: any }> {
-    const { data: profile, error } = await supabase
+    const { error } = await supabase
       .from('user_profiles')
       .update(data)
-      .eq('id', userId)
-      .select()
-      .single();
+      .eq('id', userId);
 
-    return { profile, error };
+    if (error) return { profile: null, error };
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    return { profile, error: null };
   },
 
   // Delete profile
