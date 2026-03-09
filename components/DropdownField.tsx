@@ -23,6 +23,8 @@ interface DropdownFieldProps {
 	height?: number;
 	valueAlignment?: "left" | "center" | "right";
 	shadow?: boolean;
+	borderClassName?: string;
+	heightClassName?: string;
 	fontSize?: string;
 	padding?: string;
 	maxVisibleOptions?: number;
@@ -40,6 +42,8 @@ export default function DropdownField({
 	height = 32,
 	valueAlignment = "right",
 	shadow = true,
+	borderClassName,
+	heightClassName,
 	fontSize = "10px",
 	padding = "12px",
 	maxVisibleOptions,
@@ -157,26 +161,30 @@ export default function DropdownField({
 					: roundness;
 
 	const triggerStyle: React.CSSProperties = {
-		height: `${height}px`,
+		...(heightClassName ? {} : { height: `${height}px` }),
 		fontSize,
 		textAlign: valueAlignment,
 		paddingLeft: padding || "16px",
 		paddingRight: "56px",
 		borderRadius,
+		display: "flex",
+		alignItems: "center",
 	};
 
 	return (
-		<div style={{ height: `${height}px` }} className='w-full relative'>
+		<div style={heightClassName ? undefined : { height: `${height}px` }} className={`w-full relative ${heightClassName ?? ""}`}>
 			<div
-				className='grid grid-cols-1 w-full'
-				style={{ height: `${height}px` }}>
+				className={`grid grid-cols-1 w-full ${heightClassName ?? ""}`}
+				style={heightClassName ? undefined : { height: `${height}px` }}>
 				{/* Trigger button */}
 				<button
 					ref={triggerRef}
 					type='button'
 					onClick={() => setIsOpen(!isOpen)}
 					className={`col-start-1 row-start-1 w-full appearance-none text-secondary font-regular focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer hover:bg-accent/50 transition-colors ${
-						shadow
+						borderClassName
+							? borderClassName
+							: shadow
 							? "shadow-md border-none"
 							: "shadow-none border border-gray-200"
 					}`}

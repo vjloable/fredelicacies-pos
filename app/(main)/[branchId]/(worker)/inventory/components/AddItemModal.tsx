@@ -323,10 +323,13 @@ export default function AddItemModal({
                         setNewItem({...newItem, category_id: selectedCategory.id});
                       }
                     }}
-                    height={38}
-                    roundness={"lg"}
-                    valueAlignment={'left'}
+                    heightClassName="h-9.5"
+                    roundness="8"
+                    fontSize="12px"
+                    valueAlignment="left"
                     shadow={false}
+                    padding="12px"
+                    borderClassName="border-2 border-secondary/20 shadow-none bg-primary"
                   />
                 </div>
               </div>
