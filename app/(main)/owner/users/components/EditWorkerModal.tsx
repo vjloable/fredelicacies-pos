@@ -290,46 +290,28 @@ export default function EditWorkerModal({
 				}
 			}
 
-		// Update branch assignments if not admin (only for owners)
+		// Update branch/role assignment if not admin (only for owners)
 		if (isOwner && !formData.isOwner) {
-			const currentAssignments = worker.roleAssignments.filter(
+			const currentAssignment = worker.roleAssignments.find(
 				(a) => a.isActive !== false
 			);
+			const currentBranchId = currentAssignment?.branchId;
+			const currentRole = currentAssignment?.role;
 
-			// Check if role actually changed
-			const currentRole = currentAssignments.find(a => a.branchId === selectedBranchId)?.role;
+			const branchChanged = currentBranchId !== selectedBranchId;
 			const roleChanged = currentRole !== selectedRole;
 
-			console.log("🔄 Updating branch assignments:", {
-				workerId: worker.id,
-				currentAssignments,
-				currentRole,
-				newRole: selectedRole,
-				newBranch: selectedBranchId,
-				roleChanged
-			});
-
-			// Remove all old assignments first
-			for (const currentAssignment of currentAssignments) {
-				console.log("🗑️ Removing assignment:", currentAssignment);
-				await workerService.removeWorkerFromBranch(
-					worker.id,
-					currentAssignment.branchId
-				);
-			}
-
-			// Add the new single assignment if selected
-			if (selectedBranchId) {
-				console.log("➕ Adding new assignment:", { 
-					branchId: selectedBranchId, 
-					role: selectedRole,
-					changed: roleChanged
-				});
-				await workerService.assignWorkerToBranch(
-					worker.id,
-					selectedBranchId,
-					selectedRole
-				);
+			if (!branchChanged && roleChanged && selectedBranchId) {
+				// Only the role changed — update in place directly
+				await workerService.updateWorkerRole(worker.id, selectedBranchId, selectedRole);
+			} else if (branchChanged) {
+				// Branch changed — remove from old and assign to new
+				if (currentBranchId) {
+					await workerService.removeWorkerFromBranch(worker.id, currentBranchId);
+				}
+				if (selectedBranchId) {
+					await workerService.assignWorkerToBranch(worker.id, selectedBranchId, selectedRole);
+				}
 			}
 		}			
 			console.log("✅ Worker updated successfully!");
