@@ -160,8 +160,7 @@ export default function LogsScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [branchFilter, setBranchFilter] = useState<string>("all");
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const didInitialScroll = useRef(false);
+  const topRef = useRef<HTMLDivElement>(null);
   const newLogIds = useRef<Set<string>>(new Set());
 
   // Branch name lookup map
@@ -187,24 +186,15 @@ export default function LogsScreen() {
       if (error) setFetchError(String(error?.message ?? error));
       setLogs(fetched);
       setLoading(false);
-      didInitialScroll.current = false;
     });
   }, [dateFilter]);
-
-  // Scroll to bottom after first load
-  useEffect(() => {
-    if (!loading && logs.length > 0 && !didInitialScroll.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
-      didInitialScroll.current = true;
-    }
-  }, [loading, logs.length]);
 
   // Realtime subscription — all branches
   useEffect(() => {
     const unsub = subscribeToAllActivityLogs((newLog) => {
       newLogIds.current.add(newLog.id);
-      setLogs(prev => [...prev, newLog]);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      setLogs(prev => [newLog, ...prev]);
+      setTimeout(() => topRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     });
     return unsub;
   }, []);
@@ -230,7 +220,12 @@ export default function LogsScreen() {
       if (!map.has(dateKey)) map.set(dateKey, []);
       map.get(dateKey)!.push(log);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([dateKey, dayLogs]) => [
+        dateKey,
+        [...dayLogs].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+      ] as [string, ActivityLog[]]);
   }, [filtered]);
 
   // ---------------------------------------------------------------------------
@@ -329,18 +324,21 @@ export default function LogsScreen() {
               </div>
             ) : (
               <div>
-                {/* Oldest marker */}
+                {/* Scroll anchor (top) */}
+                <div ref={topRef} />
+
+                {/* Latest marker */}
                 <div className="flex items-center gap-2.5 pl-2 pb-2">
                   <div className="w-6 flex justify-center shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-secondary/25" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
-                  <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Oldest</span>
+                  <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Latest</span>
                 </div>
 
                 {groups.map(([dateKey, dayLogs]) => (
                   <div key={dateKey}>
                     {/* Date separator */}
-                    <div className="flex items-center gap-2 py-2 sticky top-0 bg-background z-10">
+                    <div className="flex items-center gap-2 py-2">
                       <div className="flex-1 h-px bg-secondary/10" />
                       <span className="text-[10px] font-semibold text-secondary/40 uppercase tracking-wide shrink-0">
                         {formatDateLabel(dateKey)}
@@ -404,16 +402,13 @@ export default function LogsScreen() {
                 ))}
 
 
-                {/* Latest marker */}
+                {/* Oldest marker */}
                 <div className="flex items-center gap-2.5 pl-2 pt-2">
                   <div className="w-6 flex justify-center shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-secondary/25" />
                   </div>
-                  <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Latest</span>
+                  <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Oldest</span>
                 </div>
-
-                {/* Scroll anchor */}
-                <div ref={bottomRef} />
               </div>
             )}
           </div>
