@@ -501,6 +501,7 @@ export default function StoreScreen() {
 		0
 	);
 	const total = subtotal - discountAmount;
+	const grabFee = paymentMethod === 'grab' ? Math.round(total * (grabFeePercent / 100)) : 0;
 
 	// Get unique category IDs from cart items
 	const getCartCategoryIds = (): string[] => {
@@ -596,7 +597,7 @@ export default function StoreScreen() {
 					components: item.components,
 				})),
 				subtotal,
-				total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0),
+				total + grabFee,
 				appliedDiscount?.id,
 				discountAmount,
 				paymentMethod
@@ -1623,14 +1624,14 @@ export default function StoreScreen() {
 												Grab Fee ({grabFeePercent}%):
 											</span>
 											<span className='font-medium text-amber-600'>
-												+{formatCurrency(Math.round(subtotal * (grabFeePercent / 100) * 100) / 100)}
+												+{formatCurrency(grabFee)}
 											</span>
 										</div>
 									)}
 									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
 										<span className='text-secondary'>
-											{formatCurrency(total + (paymentMethod === 'grab' ? Math.round(subtotal * (grabFeePercent / 100) * 100) / 100 : 0))}
+											{formatCurrency(total + grabFee)}
 										</span>
 									</div>
 								</div>
