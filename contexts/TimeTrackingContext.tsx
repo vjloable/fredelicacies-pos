@@ -125,7 +125,7 @@ export function TimeTrackingProvider({
 				if (isWorking && needsTimeTracking) {
 					try {
 						const result = await attendanceService.getActiveAttendance(
-							user.uid
+							workerData.id
 						);
 						if (result.attendance && !result.error) {
 							currentAttendance = result.attendance;
@@ -178,7 +178,7 @@ const refreshStatus = useCallback(async () => {
 
 		try {
 			const result = await attendanceService.getActiveAttendance(
-				user.uid
+				state.worker.id
 			);
 			if (result.attendance && !result.error) {
 				const workingDuration = calculateDuration(result.attendance);
@@ -212,7 +212,7 @@ const refreshStatus = useCallback(async () => {
 
 				const result = await attendanceService.clockIn(
 					branchId,
-					user.uid
+					state.worker.id
 				);
 
 				if (result.error) {
