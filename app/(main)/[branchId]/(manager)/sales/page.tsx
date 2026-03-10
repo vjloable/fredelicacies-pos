@@ -16,9 +16,9 @@ import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts } from "@/services/orderService";
-import type { OrderWithItems, OrderItem, WastageItemSummary } from "@/types/domain";
+import type { OrderWithItems, OrderItem, WastageItemSummary, WastageLog } from "@/types/domain";
 import { formatCurrency } from "@/services/salesService";
-import { getWastageSummary, getTopWastedItems } from "@/services/wastageService";
+import { getWastageSummary, getTopWastedItems, getWastageLogs } from "@/services/wastageService";
 import { useBranch } from "@/contexts/BranchContext";
 import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
@@ -260,6 +260,7 @@ export default function SalesScreen() {
 	});
 	const [wastageBarData, setWastageBarData] = useState<{ label: string; wastage: number }[]>([]);
 	const [topWastedItems, setTopWastedItems] = useState<WastageItemSummary[]>([]);
+	const [wastageLogs, setWastageLogs] = useState<WastageLog[]>([]);
 	const [totalWastageCost, setTotalWastageCost] = useState(0);
 	const [prevWastageCost, setPrevWastageCost] = useState<number | null>(null);
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
@@ -366,6 +367,10 @@ export default function SalesScreen() {
 
 		getTopWastedItems(currentBranch.id, startStr, endStr).then(({ data }) => {
 			setTopWastedItems(data);
+		});
+
+		getWastageLogs(currentBranch.id, startStr, endStr).then(({ data }) => {
+			setWastageLogs(data);
 		});
 
 		const prior = computePriorDateRange(viewMode, selDay, selWeek, selMonth, selYear);
@@ -786,31 +791,49 @@ export default function SalesScreen() {
 									</div>
 								)}
 
-								{topWastedItems.length > 0 && (
-									<div className='mt-3 space-y-2.5 border-t border-gray-100 pt-3'>
-										{topWastedItems.slice(0, 3).map((item, idx) => (
-											<div key={item.item_name} className='flex items-center gap-2'>
-												<span className='text-2.5 font-bold text-secondary/20 w-3 shrink-0'>
-													{idx + 1}
-												</span>
-												<div className='flex-1 min-w-0'>
-													<p className='text-2.5 text-secondary truncate'>{item.item_name}</p>
-													<div className='mt-0.5 h-1 bg-red-100 rounded-full overflow-hidden'>
-														<div
-															className='h-full bg-red-400 rounded-full'
-															style={{
-																width: `${Math.min(100, (item.total_cost / topWastedItems[0].total_cost) * 100)}%`,
-															}}
-														/>
+							{(topWastedItems.length > 0 || wastageLogs.length > 0) && (
+								<div className='mt-3 border-t border-secondary/10 pt-3'>
+									{topWastedItems.length > 0 && (
+										<div className='space-y-2.5 mb-3'>
+											{topWastedItems.slice(0, 3).map((item, idx) => (
+												<div key={item.item_name} className='flex items-center gap-2'>
+													<span className='text-2.5 font-bold text-secondary/20 w-3 shrink-0'>
+														{idx + 1}
+													</span>
+													<div className='flex-1 min-w-0'>
+														<p className='text-2.5 text-secondary truncate'>{item.item_name}</p>
+														<div className='mt-0.5 h-1 bg-red-100 rounded-full overflow-hidden'>
+															<div
+																className='h-full bg-red-400 rounded-full'
+																style={{
+																	width: `${Math.min(100, (item.total_cost / topWastedItems[0].total_cost) * 100)}%`,
+																}}
+															/>
+														</div>
 													</div>
+													<p className='text-2.5 font-semibold text-red-400 shrink-0'>
+														{formatCurrency(item.total_cost)}
+													</p>
 												</div>
-												<p className='text-2.5 font-semibold text-red-400 shrink-0'>
-													{formatCurrency(item.total_cost)}
-												</p>
+											))}
+										</div>
+									)}
+									{wastageLogs.length > 0 && (
+										<div className={topWastedItems.length > 0 ? 'border-t border-secondary/10 pt-2.5' : ''}>
+											<div className='grid grid-cols-2 gap-x-3 gap-y-1 max-h-28 overflow-y-auto'>
+												<span className='text-2.5 font-semibold text-secondary/30 uppercase tracking-wide'>Item</span>
+												<span className='text-2.5 font-semibold text-secondary/30 uppercase tracking-wide text-right'>Date · Pcs</span>
+												{wastageLogs.map((log) => (
+													<>
+														<span key={log.id + '-n'} className='text-2.5 text-secondary truncate'>{log.item_name}</span>
+														<span key={log.id + '-d'} className='text-2.5 text-secondary/50 text-right'>{new Date(log.wastage_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {log.quantity_wasted} pcs</span>
+													</>
+												))}
 											</div>
-										))}
-									</div>
-								)}
+										</div>
+									)}
+								</div>
+							)}
 							</div>
 						</div>
 

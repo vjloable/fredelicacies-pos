@@ -116,7 +116,7 @@ export const userProfileRepository = {
     // Get role assignments from workers table
     const { data: workers, error: workersError } = await supabase
       .from('workers')
-      .select('branch_id, role, status, created_at, updated_at')
+      .select('id, branch_id, role, status, created_at, updated_at')
       .eq('user_id', userId);
 
     if (workersError) {
@@ -127,6 +127,7 @@ export const userProfileRepository = {
     const roleAssignments: RoleAssignment[] = (workers || [])
       .filter(w => w.role !== 'owner') // Owners are global, not branch-specific
       .map(w => ({
+        workersTableId: w.id,
         branchId: w.branch_id,
         role: w.role as 'manager' | 'worker',
         assignedAt: w.created_at,

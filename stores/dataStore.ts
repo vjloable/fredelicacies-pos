@@ -296,23 +296,8 @@ class DataStore {
             }
           }
         )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'attendance',
-            filter: `user_id=eq.${userId}`,
-          },
-          async () => {
-            // Refetch worker data when attendance changes (clock in/out)
-            const worker = await workerService.getWorker(userId);
-            if (worker) {
-              this.workers[userId] = worker;
-              this.eventEmitter.emit(`workerChanged:${userId}`, worker);
-            }
-          }
-        )
+        // Note: attendance has no user_id column; clock in/out update state directly
+        // via TimeTrackingContext, so no attendance subscription needed here.
         .subscribe();
 
       this.workersUnsubscribes[userId] = () => {

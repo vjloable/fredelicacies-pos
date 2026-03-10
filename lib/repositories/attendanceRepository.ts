@@ -43,6 +43,27 @@ export const attendanceRepository = {
     return { attendance, error: null };
   },
 
+  // Get active attendance by auth UID (looks up workers.id first)
+  async getActiveByUserId(userId: string): Promise<{ attendance: Attendance | null; error: any }> {
+    const { data: workers } = await supabase
+      .from('workers')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (!workers || workers.length === 0) return { attendance: null, error: null };
+
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .in('worker_id', workers.map(w => w.id))
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return { attendance: data, error };
+  },
+
   // Get active attendance for a worker (not clocked out)
   async getActiveByWorker(workerId: string): Promise<{ attendance: Attendance | null; error: any }> {
     const { data, error } = await supabase

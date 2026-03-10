@@ -9,6 +9,7 @@ export interface AttendanceService {
   clockIn: (branchId: string, workerId: string) => Promise<{ id: string | null; error: any }>;
   clockOut: (attendanceId: string) => Promise<{ attendance: Attendance | null; error: any }>;
   getActiveAttendance: (workerId: string) => Promise<{ attendance: Attendance | null; error: any }>;
+  getActiveAttendanceByUserId: (userId: string) => Promise<{ attendance: Attendance | null; error: any }>;
   getAttendancesByBranch: (branchId: string, startDate?: Date, endDate?: Date) => Promise<{ records: Attendance[]; error: any }>;
   getAttendancesByWorker: (workerId: string, startDate?: Date, endDate?: Date, limit?: number) => Promise<{ records: Attendance[]; error: any }>;
 }
@@ -32,6 +33,10 @@ export const attendanceService: AttendanceService = {
 
   getActiveAttendance: async (workerId: string): Promise<{ attendance: Attendance | null; error: any }> => {
     return await attendanceRepository.getActiveByWorker(workerId);
+  },
+
+  getActiveAttendanceByUserId: async (userId: string): Promise<{ attendance: Attendance | null; error: any }> => {
+    return await attendanceRepository.getActiveByUserId(userId);
   },
 
   getAttendancesByBranch: async (

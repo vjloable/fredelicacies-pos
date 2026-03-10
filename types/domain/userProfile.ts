@@ -36,6 +36,7 @@ export interface UpdateUserProfileData {
 
 // Extended User Profile with Role Assignments (for compatibility with existing code)
 export interface RoleAssignment {
+  workersTableId: string; // workers.id (UUID pk) — used as attendance.worker_id FK
   branchId: string;
   role: 'manager' | 'worker';
   assignedAt: string | Date;

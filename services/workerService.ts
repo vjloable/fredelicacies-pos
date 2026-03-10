@@ -13,6 +13,7 @@ export interface Worker {
   phoneNumber?: string;
   employeeId?: string;
   roleAssignments: Array<{
+    workersTableId: string;
     branchId: string;
     role: 'manager' | 'worker';
     assignedAt: Date;
@@ -108,7 +109,7 @@ export const workerService = {
 
       if (!user.is_owner) {
         // Get active attendance if any
-        const { attendance: activeAttendance } = await attendanceService.getActiveAttendance(userId);
+        const { attendance: activeAttendance } = await attendanceService.getActiveAttendanceByUserId(userId);
         if (activeAttendance) {
           currentStatus = 'clocked_in';
           currentBranchId = activeAttendance.branch_id;
@@ -126,6 +127,7 @@ export const workerService = {
         phoneNumber: user.phone_number,
         employeeId: user.employee_id,
         roleAssignments: user.roleAssignments.map(ra => ({
+          workersTableId: ra.workersTableId,
           branchId: ra.branchId,
           role: ra.role,
           assignedAt: new Date(ra.assignedAt),

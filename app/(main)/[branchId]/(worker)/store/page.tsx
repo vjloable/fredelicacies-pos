@@ -501,7 +501,7 @@ export default function StoreScreen() {
 		0
 	);
 	const total = subtotal - discountAmount;
-	const grabFee = paymentMethod === 'grab' ? Math.round(total * (grabFeePercent / 100)) : 0;
+	const grabFee = paymentMethod === 'grab' && grabFeePercent > 0 ? Math.round(total / (100 - grabFeePercent)) : 0;
 
 	// Get unique category IDs from cart items
 	const getCartCategoryIds = (): string[] => {
@@ -542,7 +542,7 @@ export default function StoreScreen() {
 								maxAvailable = getAvailableStock(id);
 							}
 
-							if (maxAvailable <= 0 || item.quantity >= maxAvailable) {
+							if (maxAvailable <= 0) {
 								return item; // Don't increase if no available stock
 							}
 						}

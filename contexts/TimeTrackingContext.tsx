@@ -124,7 +124,7 @@ export function TimeTrackingProvider({
 
 				if (isWorking && needsTimeTracking) {
 					try {
-						const result = await attendanceService.getActiveAttendance(
+						const result = await attendanceService.getActiveAttendanceByUserId(
 							workerData.id
 						);
 						if (result.attendance && !result.error) {
@@ -177,7 +177,7 @@ const refreshStatus = useCallback(async () => {
 		if (!user || !state.worker || !state.isWorking) return;
 
 		try {
-			const result = await attendanceService.getActiveAttendance(
+			const result = await attendanceService.getActiveAttendanceByUserId(
 				state.worker.id
 			);
 			if (result.attendance && !result.error) {
@@ -210,23 +210,37 @@ const refreshStatus = useCallback(async () => {
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
+				const assignment = state.worker.roleAssignments.find(
+					ra => ra.branchId === branchId
+				);
+				if (!assignment?.workersTableId) {
+					throw new Error('No active assignment found for this branch');
+				}
 				const result = await attendanceService.clockIn(
 					branchId,
-					state.worker.id
+					assignment.workersTableId
 				);
 
 				if (result.error) {
 					throw new Error(result.error.message || "Failed to clock in");
 				}
 
-				// Status will be updated automatically via dataStore subscription
+				// Manually update state since attendance realtime filter can't use worker_id
+				const { attendance } = await attendanceService.getActiveAttendanceByUserId(user.uid);
+				setState((prev) => ({
+					...prev,
+					isWorking: true,
+					currentAttendance: attendance,
+					workingDuration: attendance ? calculateDuration(attendance) : 0,
+					loading: false,
+				}));
 			} catch (err: any) {
 				const errorMessage = err.message || "Failed to clock in";
 				setState((prev) => ({ ...prev, loading: false, error: errorMessage }));
 				throw new Error(errorMessage);
 			}
 		},
-		[user, state.worker]
+		[user, state.worker, calculateDuration]
 	);
 
 	// Clock out
@@ -252,7 +266,14 @@ const refreshStatus = useCallback(async () => {
 					throw new Error(result.error.message || "Failed to clock out");
 				}
 
-				// Status will be updated automatically via dataStore subscription
+				// Manually update state since attendance realtime filter can't use worker_id
+				setState((prev) => ({
+					...prev,
+					isWorking: false,
+					currentAttendance: null,
+					workingDuration: 0,
+					loading: false,
+				}));
 			} catch (err: any) {
 				const errorMessage = err.message || "Failed to clock out";
 				setState((prev) => ({ ...prev, loading: false, error: errorMessage }));

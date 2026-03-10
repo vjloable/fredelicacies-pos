@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { CreateWastageData, WastageDailySummary, WastageItemSummary } from '@/types/domain';
+import type { WastageLog, CreateWastageData, WastageDailySummary, WastageItemSummary } from '@/types/domain';
 
 // ---------------------------------------------------------------------------
 // Write
@@ -113,4 +113,25 @@ export async function getTopWastedItems(
       .slice(0, limit),
     error: null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Read — individual log entries (for the destock log table)
+// ---------------------------------------------------------------------------
+
+export async function getWastageLogs(
+  branchId: string,
+  startDate: string, // 'YYYY-MM-DD'
+  endDate: string    // 'YYYY-MM-DD'
+): Promise<{ data: WastageLog[]; error: any }> {
+  const { data, error } = await supabase
+    .from('wastage_logs')
+    .select('*')
+    .eq('branch_id', branchId)
+    .gte('wastage_date', startDate)
+    .lte('wastage_date', endDate)
+    .order('wastage_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  return { data: data ?? [], error };
 }
