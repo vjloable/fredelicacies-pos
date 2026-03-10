@@ -5,31 +5,42 @@ import type { Attendance } from '@/types/domain/attendance';
 export const attendanceRepository = {
   // Clock in a worker
   async clockIn(branchId: string, workerId: string): Promise<{ attendance: Attendance | null; error: any }> {
-    const { data, error } = await supabase
+    const clockInTime = new Date().toISOString();
+    const { error } = await supabase
       .from('attendance')
-      .insert({
-        branch_id: branchId,
-        worker_id: workerId,
-        clock_in: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      .insert({ branch_id: branchId, worker_id: workerId, clock_in: clockInTime });
 
-    return { attendance: data, error };
+    if (error) return { attendance: null, error };
+
+    const { data: attendance } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('worker_id', workerId)
+      .eq('branch_id', branchId)
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return { attendance, error: null };
   },
 
   // Clock out a worker
   async clockOut(attendanceId: string): Promise<{ attendance: Attendance | null; error: any }> {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('attendance')
-      .update({
-        clock_out: new Date().toISOString(),
-      })
-      .eq('id', attendanceId)
-      .select()
-      .single();
+      .update({ clock_out: new Date().toISOString() })
+      .eq('id', attendanceId);
 
-    return { attendance: data, error };
+    if (error) return { attendance: null, error };
+
+    const { data: attendance } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('id', attendanceId)
+      .maybeSingle();
+
+    return { attendance, error: null };
   },
 
   // Get active attendance for a worker (not clocked out)
