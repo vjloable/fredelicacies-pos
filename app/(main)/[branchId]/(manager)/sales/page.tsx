@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
 	LineChart,
 	Line,
@@ -824,10 +824,10 @@ export default function SalesScreen() {
 												<span className='text-2.5 font-semibold text-secondary/30 uppercase tracking-wide'>Item</span>
 												<span className='text-2.5 font-semibold text-secondary/30 uppercase tracking-wide text-right'>Date · Pcs</span>
 												{wastageLogs.map((log) => (
-													<>
-														<span key={log.id + '-n'} className='text-2.5 text-secondary truncate'>{log.item_name}</span>
-														<span key={log.id + '-d'} className='text-2.5 text-secondary/50 text-right'>{new Date(log.wastage_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {log.quantity_wasted} pcs</span>
-													</>
+													<React.Fragment key={log.id}>
+														<span className='text-2.5 text-secondary truncate'>{log.item_name}</span>
+														<span className='text-2.5 text-secondary/50 text-right'>{new Date(log.wastage_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {log.quantity_wasted} pcs</span>
+													</React.Fragment>
 												))}
 											</div>
 										</div>
