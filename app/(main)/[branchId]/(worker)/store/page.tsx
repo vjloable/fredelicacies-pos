@@ -310,7 +310,7 @@ export default function StoreScreen() {
 		type: 'bundle';
 		availability: number;
 		components?: BundleComponent[];
-		category_id?: string | number;
+		category_id?: string | null;
 		description?: string | null;
 		is_custom?: boolean;
 		max_pieces?: number | null;
