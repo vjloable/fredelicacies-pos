@@ -219,7 +219,7 @@ export default function SettingsScreen() {
 												Grab Fee (%)
 											</label>
 											<p className='text-xs text-gray-500 mt-1'>
-												Added on top of the order total when Grab is selected as payment method
+												Grab's commission rate. Grab price = Selling price ÷ (100% − X%)
 											</p>
 										</div>
 										<div className='flex items-center gap-2 shrink-0'>

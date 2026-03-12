@@ -22,6 +22,8 @@ interface MobileTopBarProps {
 	icon?: React.ReactNode;
 	showTimeTracking?: boolean;
 	onOrderClick?: () => void;
+	topRightAction?: React.ReactNode;
+	rightAction?: React.ReactNode;
 }
 
 export default function MobileTopBar({
@@ -29,6 +31,8 @@ export default function MobileTopBar({
 	icon,
 	showTimeTracking = true,
 	onOrderClick,
+	topRightAction,
+	rightAction,
 }: MobileTopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
@@ -156,7 +160,7 @@ export default function MobileTopBar({
 						<TextLogo className='h-5' />
 					</div>
 				</div>{" "}
-				{onOrderClick ? (
+				{topRightAction ?? (onOrderClick ? (
 					<button
 						onClick={onOrderClick}
 						className='h-12 w-12 bg-accent xl:bg-primary rounded-xl flex justify-center items-center opacity-100 hover:opacity-50 transition-all cursor-pointer'>
@@ -164,7 +168,7 @@ export default function MobileTopBar({
 					</button>
 				) :
 					<div className='h-12 w-12' />
-				}
+				)}
 			</div>
 			<div className='flex items-center gap-3 px-4 py-2 overflow-x-auto'>
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
@@ -284,9 +288,12 @@ export default function MobileTopBar({
 				</div>
 			</div>{" "}
 			{title && (
-				<div className='flex items-center justify-start px-4 py-2'>
-					{icon && <div className='mr-2'>{icon}</div>}
-					<h1 className='text-secondary text-lg font-bold'>{title}</h1>
+				<div className='flex items-center justify-between px-4 py-2'>
+					<div className='flex items-center'>
+						{icon && <div className='mr-2'>{icon}</div>}
+						<h1 className='text-secondary text-lg font-bold'>{title}</h1>
+					</div>
+					{rightAction}
 				</div>
 			)}
 			</div>

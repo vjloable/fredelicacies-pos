@@ -20,12 +20,14 @@ interface TopBarProps {
 	title?: string;
 	icon?: React.ReactNode;
 	showTimeTracking?: boolean;
+	rightAction?: React.ReactNode;
 }
 
 export default function TopBar({
 	title,
 	icon,
 	showTimeTracking = true,
+	rightAction,
 }: TopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
@@ -319,11 +321,14 @@ export default function TopBar({
 
 			{/* Page Title */}
 			{title && (
-				<div className='flex items-center justify-start ml-6 py-1'>
-					{icon}
-					<h1 className='text-secondary text-xl font-bold'>
-						{title}
-					</h1>
+				<div className='flex items-center justify-between ml-6 py-1 mr-6'>
+					<div className='flex items-center'>
+						{icon}
+						<h1 className='text-secondary text-xl font-bold'>
+							{title}
+						</h1>
+					</div>
+					{rightAction}
 				</div>
 			)}
 			</div>

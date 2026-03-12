@@ -223,7 +223,7 @@ export default function SidebarNav() {
 				)}
 
 				{/* Navigation */}
-				<nav className='flex-1 py-2'>
+				<nav className='flex-1 min-h-0 py-2 overflow-y-auto'>
 					<ul className='space-y-0.5'>
 						{/* Worker Section - Show for non-owners or owners with selected branch */}
 						{shouldShowWorkerSection && (
@@ -286,7 +286,7 @@ export default function SidebarNav() {
 					</ul>
 				</nav>
 			{/* Version */}
-			<div className='px-4 py-3 border-t border-gray-200'>
+			<div className='shrink-0 px-4 py-3 border-t border-gray-200'>
 				<p className='text-2.5 text-secondary/30 text-center'>
 					<VersionDisplay variant="simple" /> 
 				</p>

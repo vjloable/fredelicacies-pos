@@ -578,11 +578,13 @@ export default function SalesScreen() {
 						</div>
 						<button
 							onClick={generateXLSX}
-							className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/30 text-accent hover:bg-accent hover:text-primary text-3 font-medium transition-colors shrink-0'>
-							<svg className='w-3 h-3 shrink-0' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
-								<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
-							</svg>
-							Export
+							className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0'>
+							<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
+								<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+									<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
+								</svg>
+								<span className='mt-0.5'>EXPORT</span>
+							</div>
 						</button>
 					</div>
 				</div>
