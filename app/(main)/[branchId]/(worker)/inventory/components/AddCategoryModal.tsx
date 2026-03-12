@@ -1,49 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { createCategory } from '@/services/categoryService';
+import { createCategory, updateCategory } from '@/services/categoryService';
+import type { Category } from '@/types/domain';
 
 interface AddCategoryModalProps {
   branchId: string;
   isOpen: boolean;
   onClose: () => void;
   onError: (error: string) => void;
+  editingCategory?: Category;
 }
 
 export default function AddCategoryModal({
   branchId,
   isOpen,
   onClose,
-  onError
+  onError,
+  editingCategory,
 }: AddCategoryModalProps) {
   const [loading, setLoading] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", color: "#ff9f80" });
+  const [category, setCategory] = useState({ name: "", color: "#ff9f80" });
+
+  const isEditing = !!editingCategory;
+
+  // Sync state when modal opens or editingCategory changes
+  useEffect(() => {
+    if (isOpen) {
+      setCategory(
+        editingCategory
+          ? { name: editingCategory.name, color: editingCategory.color }
+          : { name: "", color: "#ff9f80" }
+      );
+    }
+  }, [isOpen, editingCategory]);
 
   if (!isOpen) return null;
 
-  const addCategory = async () => {
-    if (newCategory.name.trim()) {
-      setLoading(true);
-      try {
-        await createCategory(branchId, {
-          name: newCategory.name,
-          color: newCategory.color
+  const handleSubmit = async () => {
+    if (!category.name.trim()) return;
+    setLoading(true);
+    try {
+      if (isEditing && editingCategory?.id) {
+        await updateCategory(editingCategory.id, {
+          name: category.name,
+          color: category.color,
         });
-        setNewCategory({ name: "", color: "#ff9f80" });
-        onClose();
-      } catch (error) {
-        console.error('Error adding category:', error);
-        onError('Failed to add category. Please try again.');
-      } finally {
-        setLoading(false);
+      } else {
+        await createCategory(branchId, {
+          name: category.name,
+          color: category.color,
+        });
       }
+      onClose();
+    } catch (error) {
+      console.error('Error saving category:', error);
+      onError(`Failed to ${isEditing ? 'update' : 'add'} category. Please try again.`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      addCategory();
+      handleSubmit();
     } else if (e.key === 'Escape') {
       onClose();
     }
@@ -62,7 +83,9 @@ export default function AddCategoryModal({
           <div className="flex flex-col items-center justify-center py-10 gap-3">
             <LoadingSpinner size="lg" />
             <div className="text-center">
-              <p className="text-sm font-semibold text-secondary">Adding Category...</p>
+              <p className="text-sm font-semibold text-secondary">
+                {isEditing ? 'Saving Category...' : 'Adding Category...'}
+              </p>
               <p className="text-xs text-secondary/50">Please wait</p>
             </div>
           </div>
@@ -76,10 +99,10 @@ export default function AddCategoryModal({
                 </svg>
               </div>
               <h3 className="text-sm font-bold text-secondary mb-1">
-                Add New Category
+                {isEditing ? 'Edit Category' : 'Add New Category'}
               </h3>
               <p className="text-xs text-secondary opacity-70">
-                Create a new category to organize your items
+                {isEditing ? 'Update the category name or color' : 'Create a new category to organize your items'}
               </p>
             </div>
 
@@ -90,8 +113,8 @@ export default function AddCategoryModal({
                 </label>
                 <input
                   type="text"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                  value={category.name}
+                  onChange={(e) => setCategory({...category, name: e.target.value})}
                   onKeyDown={handleKeyDown}
                   className="w-full px-3 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Enter category name"
@@ -106,15 +129,15 @@ export default function AddCategoryModal({
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
-                    value={newCategory.color}
-                    onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
+                    value={category.color}
+                    onChange={(e) => setCategory({...category, color: e.target.value})}
                     className="w-12 h-9.5 border-2 p-1 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer"
                   />
                   <div className="flex-1">
                     <input
                       type="text"
-                      value={newCategory.color}
-                      onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
+                      value={category.color}
+                      onChange={(e) => setCategory({...category, color: e.target.value})}
                       className="w-full px-3 py-2 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-xs"
                       placeholder="#3B82F6"
                     />
@@ -131,20 +154,20 @@ export default function AddCategoryModal({
                 Cancel
               </button>
               <button
-                onClick={addCategory}
-                disabled={!newCategory.name.trim()}
+                onClick={handleSubmit}
+                disabled={!category.name.trim()}
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
-                  newCategory.name.trim()
+                  category.name.trim()
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 hover:scale-100 cursor-not-allowed'
                 }`}
               >
-                Add Category
+                {isEditing ? 'Save' : 'Add Category'}
               </button>
             </div>
           </>
         )}
-    </div>
+      </div>
     </div>
   );
 }

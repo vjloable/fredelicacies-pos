@@ -8,6 +8,7 @@ export interface Bundle {
   img_url: string | null;
   is_custom: boolean;
   max_pieces: number | null;
+  category_id?: string | null;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -22,8 +23,18 @@ export interface BundleComponent {
   inventory_item?: any; // For joined queries
 }
 
+export interface BundleAdditionalItem {
+  id: string;
+  bundle_id: string;
+  inventory_item_id: string;
+  quantity: number;
+  created_at: string;
+  inventory_item?: any; // For joined queries
+}
+
 export interface BundleWithComponents extends Bundle {
   components: BundleComponent[];
+  additional_items: BundleAdditionalItem[];
 }
 
 export interface CreateBundleData {
@@ -34,6 +45,7 @@ export interface CreateBundleData {
   is_predefined?: boolean;
   is_custom?: boolean;
   max_pieces?: number | null;
+  category_id?: string | null;
   status?: 'active' | 'inactive';
 }
 
@@ -44,5 +56,6 @@ export interface UpdateBundleData {
   img_url?: string;
   is_custom?: boolean;
   max_pieces?: number | null;
+  category_id?: string | null;
   status?: 'active' | 'inactive';
 }

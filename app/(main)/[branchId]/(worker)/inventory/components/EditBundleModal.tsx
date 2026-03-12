@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { updateBundle, deleteBundle, calculateBundleAvailability } from '@/services/bundleService';
-import type { BundleWithComponents, InventoryItem } from '@/types/domain';
+import type { BundleWithComponents, InventoryItem, Category } from '@/types/domain';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,7 @@ interface EditBundleModalProps {
   isOpen: boolean;
   bundle: BundleWithComponents;
   inventory: InventoryItem[];
+  categories: Category[];
   onClose: () => void;
   onError: (error: string) => void;
 }
@@ -30,6 +31,7 @@ export default function EditBundleModal({
   isOpen,
   bundle,
   inventory,
+  categories,
   onClose,
   onError
 }: EditBundleModalProps) {
@@ -44,6 +46,8 @@ export default function EditBundleModal({
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
   const [isCustom, setIsCustom] = useState(false);
   const [maxPieces, setMaxPieces] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [selectedAdditionalItems, setSelectedAdditionalItems] = useState<SelectedComponent[]>([]);
 
   // Initialize form with bundle data
   useEffect(() => {
@@ -54,6 +58,7 @@ export default function EditBundleModal({
       setImgUrl(bundle.img_url || '');
       setIsCustom(bundle.is_custom ?? false);
       setMaxPieces(bundle.max_pieces?.toString() ?? '');
+      setCategoryId(bundle.category_id ?? '');
 
       // Initialize components (only relevant for non-custom bundles)
       const components: SelectedComponent[] = [];
@@ -68,6 +73,17 @@ export default function EditBundleModal({
         }
       });
       setSelectedComponents(components);
+
+      // Initialize additional items
+      const additionalItems: SelectedComponent[] = [];
+      bundle.additional_items?.forEach(ai => {
+        const item = inventory.find(i => i.id === ai.inventory_item_id);
+        if (item && item.id) {
+          additionalItems.push({ inventoryItemId: item.id, quantity: ai.quantity, item });
+        }
+      });
+      setSelectedAdditionalItems(additionalItems);
+
       setShowDeleteConfirm(false);
     }
   }, [bundle, inventory]);
@@ -119,6 +135,22 @@ export default function EditBundleModal({
     ));
   };
 
+  const handleSelectAdditionalItem = (itemName: string) => {
+    const item = inventory.find(i => i.name === itemName);
+    if (!item || !item.id) return;
+    setSelectedAdditionalItems(prev => [...prev, { inventoryItemId: item.id!, quantity: 1, item }]);
+  };
+
+  const handleRemoveAdditionalItem = (inventoryItemId: string) => {
+    setSelectedAdditionalItems(prev => prev.filter(a => a.inventoryItemId !== inventoryItemId));
+  };
+
+  const handleUpdateAdditionalQty = (inventoryItemId: string, quantity: number) => {
+    setSelectedAdditionalItems(prev => prev.map(a =>
+      a.inventoryItemId === inventoryItemId ? { ...a, quantity: Math.max(1, quantity) } : a
+    ));
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       onError('Please enter a bundle name');
@@ -151,6 +183,7 @@ export default function EditBundleModal({
         img_url: imgUrl || undefined,
         is_custom: isCustom,
         max_pieces: isCustom ? parseInt(maxPieces) : null,
+        category_id: categoryId || null,
       };
 
       const components = isCustom
@@ -160,7 +193,12 @@ export default function EditBundleModal({
             quantity: c.quantity
           }));
 
-      const { error } = await updateBundle(bundle.id, updates, components);
+      const additionalItems = selectedAdditionalItems.map(a => ({
+        inventoryItemId: a.inventoryItemId,
+        quantity: a.quantity,
+      }));
+
+      const { error } = await updateBundle(bundle.id, updates, components, additionalItems);
 
       if (error) {
         onError('Failed to update bundle. Please try again.');
@@ -324,6 +362,33 @@ export default function EditBundleModal({
                 compact
               />
 
+              {/* Category */}
+              {categories.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-secondary mb-2">
+                    Category
+                    <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                  </label>
+                  <DropdownField
+                    options={['None', ...categories.map(c => c.name)]}
+                    defaultValue={categoryId ? (categories.find(c => c.id === categoryId)?.name ?? 'None') : 'None'}
+                    dropdownPosition="bottom-left"
+                    dropdownOffset={{ top: 3, left: 0 }}
+                    onChange={(name) => {
+                      const cat = categories.find(c => c.name === name);
+                      setCategoryId(cat?.id ?? '');
+                    }}
+                    height={38}
+                    roundness="lg"
+                    valueAlignment="left"
+                    shadow={false}
+                    maxDropdownHeight={180}
+                    constrainWidth
+                    autoDirection
+                  />
+                </div>
+              )}
+
               {/* Custom Bundle Toggle */}
               <div className="border-t-2 border-secondary/20 pt-4">
                 <div className="flex items-center justify-between">
@@ -390,14 +455,18 @@ export default function EditBundleModal({
                         options={availableItems.map(item => item.name)}
                         defaultValue="Select an item to add..."
                         dropdownPosition="bottom-left"
-                        dropdownOffset={{ top: 2, left: 0 }}
+                        dropdownOffset={{ top: 3, left: 0 }}
                         onChange={(itemName) => {
                           handleSelectItem(itemName);
                         }}
                         height={38}
-                        roundness={"lg"}
-                        valueAlignment={'left'}
+                        roundness="lg"
+                        valueAlignment="left"
                         shadow={false}
+                        maxDropdownHeight={180}
+                        constrainWidth
+                        searchable
+                        autoDirection
                       />
                     </div>
                   )}
@@ -464,6 +533,69 @@ export default function EditBundleModal({
                   )}
                 </div>
               )}
+
+              {/* Additional Items — always deducted on every order (e.g. packaging) */}
+              <div className="border-t-2 border-secondary/20 pt-4">
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-secondary">Additional Items</p>
+                  <p className="text-xs text-secondary/50">Always deducted when this bundle is ordered (e.g. packaging)</p>
+                </div>
+
+                {inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id)).length > 0 && (
+                  <div className="mb-3">
+                    <DropdownField
+                      options={inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id)).map(i => i.name)}
+                      defaultValue="Add an item..."
+                      dropdownPosition="bottom-left"
+                      dropdownOffset={{ top: 3, left: 0 }}
+                      onChange={handleSelectAdditionalItem}
+                      height={38}
+                      roundness="lg"
+                      valueAlignment="left"
+                      shadow={false}
+                      maxDropdownHeight={180}
+                      constrainWidth
+                      searchable
+                      autoDirection
+                    />
+                  </div>
+                )}
+
+                {selectedAdditionalItems.length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {selectedAdditionalItems.map(ai => (
+                      <div key={ai.inventoryItemId} className="flex items-center gap-3 p-2 bg-secondary/5 rounded-lg border border-secondary/20">
+                        <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                          {ai.item.img_url ? (
+                            <Image src={ai.item.img_url} alt={ai.item.name} width={32} height={32} className="w-full h-full object-cover" />
+                          ) : (
+                            <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-secondary truncate">{ai.item.name}</p>
+                          <p className="text-[10px] text-secondary/50">Stock: {ai.item.stock}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-secondary/60">Qty:</span>
+                          <input
+                            type="number"
+                            value={ai.quantity}
+                            onChange={e => handleUpdateAdditionalQty(ai.inventoryItemId, parseInt(e.target.value) || 1)}
+                            min="1"
+                            className="w-14 px-2 py-1 text-center text-xs border-2 border-secondary/30 rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                          />
+                        </div>
+                        <button onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-secondary/40 text-center py-2">No additional items set</p>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}

@@ -68,16 +68,25 @@ export async function getActivityLogs(
   return { logs, error: null };
 }
 
+const ALL_LOGS_PAGE_SIZE = 20;
+
 export async function getAllActivityLogs(options?: {
   from?: Date;
   to?: Date;
-}): Promise<{ logs: ActivityLog[]; error: any }> {
+  before?: string; // cursor: fetch items with created_at < this ISO string
+  limit?: number;
+}): Promise<{ logs: ActivityLog[]; hasMore: boolean; error: any }> {
+  const limit = options?.limit ?? ALL_LOGS_PAGE_SIZE;
+
   let query = supabase
     .from('activity_logs')
     .select('*, user_profiles(name)')
-    .order('created_at', { ascending: true })
-    .limit(500);
+    .order('created_at', { ascending: false })
+    .limit(limit + 1); // one extra to detect hasMore
 
+  if (options?.before) {
+    query = query.lt('created_at', options.before);
+  }
   if (options?.from) {
     query = query.gte('created_at', options.from.toISOString());
   }
@@ -87,14 +96,16 @@ export async function getAllActivityLogs(options?: {
 
   const { data, error } = await query;
 
-  if (error) return { logs: [], error };
+  if (error) return { logs: [], hasMore: false, error };
 
-  const logs: ActivityLog[] = (data ?? []).map((row: any) => ({
+  const rows = data ?? [];
+  const hasMore = rows.length > limit;
+  const logs: ActivityLog[] = (hasMore ? rows.slice(0, limit) : rows).map((row: any) => ({
     ...row,
     user_name: row.user_profiles?.name ?? undefined,
   }));
 
-  return { logs, error: null };
+  return { logs, hasMore, error: null };
 }
 
 // ---------------------------------------------------------------------------

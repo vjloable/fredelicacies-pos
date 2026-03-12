@@ -156,11 +156,15 @@ export default function LogsScreen() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const topRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<string | null>(null);
   const newLogIds = useRef<Set<string>>(new Set());
 
   // Branch name lookup map
@@ -177,17 +181,50 @@ export default function LogsScreen() {
     });
   }, []);
 
-  // Fetch logs when date filter changes
+  // Fetch first page when date filter changes
   useEffect(() => {
     setLoading(true);
     setFetchError(null);
+    setLogs([]);
+    setHasMore(false);
+    cursorRef.current = null;
     const { from, to } = getDateRange(dateFilter);
-    getAllActivityLogs({ from, to }).then(({ logs: fetched, error }) => {
+    getAllActivityLogs({ from, to }).then(({ logs: fetched, hasMore: more, error }) => {
       if (error) setFetchError(String(error?.message ?? error));
       setLogs(fetched);
+      setHasMore(more);
+      cursorRef.current = fetched.length > 0 ? fetched[fetched.length - 1].created_at : null;
       setLoading(false);
     });
   }, [dateFilter]);
+
+  // Load next page (called by IntersectionObserver)
+  const loadMore = useRef<() => void>(() => {});
+  loadMore.current = () => {
+    if (loadingMore || !hasMore || !cursorRef.current) return;
+    setLoadingMore(true);
+    const { from, to } = getDateRange(dateFilter);
+    getAllActivityLogs({ from, to, before: cursorRef.current }).then(({ logs: fetched, hasMore: more, error }) => {
+      if (!error && fetched.length > 0) {
+        setLogs(prev => [...prev, ...fetched]);
+        setHasMore(more);
+        cursorRef.current = fetched[fetched.length - 1].created_at;
+      }
+      setLoadingMore(false);
+    });
+  };
+
+  // IntersectionObserver: trigger load when sentinel enters viewport
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore.current(); },
+      { rootMargin: "200px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   // Realtime subscription — all branches
   useEffect(() => {
@@ -402,12 +439,18 @@ export default function LogsScreen() {
                 ))}
 
 
-                {/* Oldest marker */}
-                <div className="flex items-center gap-2.5 pl-2 pt-2">
+                {/* Sentinel + bottom state */}
+                <div ref={sentinelRef} className="flex items-center gap-2.5 pl-2 pt-2 pb-4">
                   <div className="w-6 flex justify-center shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-secondary/25" />
+                    {loadingMore ? (
+                      <LoadingSpinner size="sm" />
+                    ) : !hasMore ? (
+                      <div className="w-1.5 h-1.5 rounded-full bg-secondary/25" />
+                    ) : null}
                   </div>
-                  <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Oldest</span>
+                  {!hasMore && !loadingMore && (
+                    <span className="text-[9px] font-semibold text-secondary/30 uppercase tracking-widest">Oldest</span>
+                  )}
                 </div>
               </div>
             )}

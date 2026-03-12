@@ -28,6 +28,7 @@ export type {
 
 export type {
   Bundle,
+  BundleAdditionalItem,
   BundleComponent,
   BundleWithComponents,
   CreateBundleData,

@@ -28,8 +28,12 @@ interface DropdownFieldProps {
 	fontSize?: string;
 	padding?: string;
 	maxVisibleOptions?: number;
+	maxDropdownHeight?: number;
+	constrainWidth?: boolean;
 	hasAllOptionsVisible?: boolean;
 	allSuffix?: string;
+	searchable?: boolean;
+	autoDirection?: boolean;
 }
 
 export default function DropdownField({
@@ -47,10 +51,15 @@ export default function DropdownField({
 	fontSize = "10px",
 	padding = "12px",
 	maxVisibleOptions,
+	maxDropdownHeight,
+	constrainWidth = false,
 	hasAllOptionsVisible = false,
 	allSuffix = "",
+	searchable = false,
+	autoDirection = false,
 }: DropdownFieldProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
 
 	const initialValue =
 		defaultValue ||
@@ -72,11 +81,10 @@ export default function DropdownField({
 		const offsetLeft = dropdownOffset.left ?? 0;
 		const offsetRight = dropdownOffset.right ?? 0;
 
-		const maxH = maxVisibleOptions
-			? (hasAllOptionsVisible ? maxVisibleOptions + 1 : maxVisibleOptions) *
-					40 +
-				8
-			: 240;
+		const maxH = maxDropdownHeight
+			?? (maxVisibleOptions
+				? (hasAllOptionsVisible ? maxVisibleOptions + 1 : maxVisibleOptions) * 40 + 8
+				: 240);
 
 		const style: React.CSSProperties = {
 			position: "fixed",
@@ -88,10 +96,15 @@ export default function DropdownField({
 				"0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1)",
 			overflowY: "auto",
 			minWidth: rect.width,
+			...(constrainWidth ? { width: rect.width } : {}),
 			maxHeight: `${maxH}px`,
 		};
 
-		if (dropdownPosition.startsWith("bottom")) {
+		const openDownward = autoDirection
+			? rect.top < window.innerHeight / 2
+			: dropdownPosition.startsWith("bottom");
+
+		if (openDownward) {
 			style.top = rect.bottom + offsetTop;
 		} else {
 			style.bottom = window.innerHeight - rect.top + offsetTop;
@@ -104,7 +117,7 @@ export default function DropdownField({
 		}
 
 		setListStyle(style);
-	}, [dropdownOffset, dropdownPosition, maxVisibleOptions, hasAllOptionsVisible]);
+	}, [dropdownOffset, dropdownPosition, maxVisibleOptions, maxDropdownHeight, constrainWidth, hasAllOptionsVisible, autoDirection]);
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -143,12 +156,17 @@ export default function DropdownField({
 	const handleSelect = (value: string) => {
 		setSelectedValue(value);
 		setIsOpen(false);
+		setSearchQuery("");
 		onChange?.(value);
 	};
 
-	const finalOptions = hasAllOptionsVisible
+	const baseOptions = hasAllOptionsVisible
 		? [`ALL ${allSuffix.toUpperCase()}`, ...options]
 		: options;
+
+	const finalOptions = searchable && searchQuery
+		? baseOptions.filter(o => o.toLowerCase().includes(searchQuery.toLowerCase()))
+		: baseOptions;
 
 	// Resolve border-radius from the roundness prop without dynamic Tailwind classes
 	const borderRadius =
@@ -214,6 +232,19 @@ export default function DropdownField({
 				mounted &&
 				createPortal(
 					<div ref={listRef} style={listStyle}>
+						{searchable && (
+							<div className="px-2 pt-2 pb-1 border-b border-gray-100">
+								<input
+									autoFocus
+									type="text"
+									value={searchQuery}
+									onChange={e => setSearchQuery(e.target.value)}
+									placeholder="Search..."
+									className="w-full px-2 py-1 text-xs text-secondary border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+									onClick={e => e.stopPropagation()}
+								/>
+							</div>
+						)}
 						<div className='py-1'>
 							{finalOptions.map((option, index) => {
 								const isAllOption =

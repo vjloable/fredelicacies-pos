@@ -22,14 +22,15 @@ export const calculateBundleAvailability = (
   return Math.max(Math.min(...availabilityPerComponent), 0);
 };
 
-// Create bundle with components
+// Create bundle with components and optional additional items
 export const createBundle = async (
   branchId: string,
   bundleData: CreateBundleData,
-  components: Array<{ inventoryItemId: string; quantity: number }>
+  components: Array<{ inventoryItemId: string; quantity: number }>,
+  additionalItems: Array<{ inventoryItemId: string; quantity: number }> = []
 ): Promise<{ id: string | null; error: any }> => {
   const { bundle, error } = await bundleRepository.create(branchId, bundleData);
-  
+
   if (error || !bundle) {
     return { id: null, error };
   }
@@ -45,6 +46,10 @@ export const createBundle = async (
     }
   }
 
+  if (additionalItems.length > 0) {
+    await bundleRepository.addAdditionalItems(bundle.id, additionalItems);
+  }
+
   await bundleRepository.triggerRefresh(branchId);
   return { id: bundle.id, error: null };
 };
@@ -53,23 +58,28 @@ export const createBundle = async (
 export const updateBundle = async (
   id: string,
   updates: UpdateBundleData,
-  components?: Array<{ inventoryItemId: string; quantity: number }>
+  components?: Array<{ inventoryItemId: string; quantity: number }>,
+  additionalItems?: Array<{ inventoryItemId: string; quantity: number }>
 ): Promise<{ error: any }> => {
   const { error } = await bundleRepository.update(id, updates);
-  
+
   if (error) {
     return { error };
   }
 
-  // If components provided, update them
+  // If components provided, replace them
   if (components) {
-    // Remove old components
     await bundleRepository.removeAllComponents(id);
-    // Add new components
     const { error: componentsError } = await bundleRepository.addComponents(id, components);
     if (componentsError) {
       return { error: componentsError };
     }
+  }
+
+  // If additionalItems provided, replace them
+  if (additionalItems !== undefined) {
+    await bundleRepository.removeAllAdditionalItems(id);
+    await bundleRepository.addAdditionalItems(id, additionalItems);
   }
 
   await bundleRepository.triggerRefreshByBundleId(id);

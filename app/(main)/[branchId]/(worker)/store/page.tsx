@@ -242,10 +242,10 @@ export default function StoreScreen() {
 		return category ? category.color.trim() : "transparent";
 	};
 
-	// Get display categories including "All" button plus real categories
+	// Get display categories including "All" button plus visible (non-hidden) categories
 	const displayCategories = [
 		{ id: "all", name: "All", isSpecial: true },
-		...categories.map((cat) => ({ ...cat, isSpecial: false })),
+		...categories.filter((cat) => !cat.is_hidden).map((cat) => ({ ...cat, isSpecial: false })),
 	];
 
 	// Function to handle category toggle
@@ -277,6 +277,9 @@ export default function StoreScreen() {
 
 	// Filter items based on selected categories and search query
 	const filteredItems = inventoryItems.filter((item) => {
+		// Hide items from categories marked as hidden
+		const isVisible = !categories.find(c => c.id === String(item.category_id))?.is_hidden;
+
 		// First apply search filter
 		const matchesSearch =
 			searchQuery === "" ||
@@ -295,7 +298,7 @@ export default function StoreScreen() {
 		// Filter out out-of-stock items if hideOutOfStock is enabled
 		const hasStock = hideOutOfStock ? item.stock > 0 : true;
 
-		return matchesSearch && matchesCategory && hasStock;
+		return isVisible && matchesSearch && matchesCategory && hasStock;
 	});
 
 	// Combine inventory items and bundles for display
@@ -333,8 +336,12 @@ export default function StoreScreen() {
 				components: bundle.components,
 				is_custom: bundle.is_custom,
 				max_pieces: bundle.max_pieces,
+				category_id: bundle.category_id,
 			}))
 			.filter(bundle => {
+				// Hide bundles from categories marked as hidden
+				const isVisible = !bundle.category_id || !categories.find(c => c.id === String(bundle.category_id))?.is_hidden;
+
 				// Apply search filter
 				const matchesSearch =
 					searchQuery === "" ||
@@ -344,7 +351,7 @@ export default function StoreScreen() {
 				// Filter out unavailable bundles if hideOutOfStock is enabled
 				const hasAvailability = hideOutOfStock ? bundle.availability > 0 : true;
 
-				return matchesSearch && hasAvailability;
+				return isVisible && matchesSearch && hasAvailability;
 			});
 
 		return [...items, ...bundleItems];
@@ -436,6 +443,16 @@ export default function StoreScreen() {
 			);
 		} else {
 			if (isBundle) {
+				// Merge additional_items into components so they get stock-deducted on order
+				const fullBundle = bundles.find(b => b.id === itemId);
+				const additionalAsComponents: BundleComponent[] = (fullBundle?.additional_items ?? []).map(ai => ({
+					id: ai.id,
+					bundle_id: ai.bundle_id,
+					inventory_item_id: ai.inventory_item_id,
+					quantity: ai.quantity,
+					created_at: ai.created_at,
+					inventory_item: ai.inventory_item,
+				}));
 				setCart([
 					...cart,
 					{
@@ -447,7 +464,7 @@ export default function StoreScreen() {
 						imgUrl: item.img_url ?? undefined,
 						categoryId: 0,
 						type: 'bundle',
-						components: item.components,
+						components: [...(item.components ?? []), ...additionalAsComponents],
 					},
 				]);
 			} else {
@@ -471,7 +488,7 @@ export default function StoreScreen() {
 
 	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[]) => {
 		const cost = selections.reduce((s, p) => s + p.cost, 0);
-		const components: BundleComponent[] = selections.map(p => ({
+		const pickedComponents: BundleComponent[] = selections.map(p => ({
 			id: '',
 			bundle_id: bundle.id,
 			inventory_item_id: p.inventoryItemId,
@@ -479,6 +496,16 @@ export default function StoreScreen() {
 			created_at: '',
 			inventory_item: p.item,
 		}));
+		// Merge additional_items so they get stock-deducted on order
+		const additionalAsComponents: BundleComponent[] = (bundle.additional_items ?? []).map(ai => ({
+			id: ai.id,
+			bundle_id: bundle.id,
+			inventory_item_id: ai.inventory_item_id,
+			quantity: ai.quantity,
+			created_at: ai.created_at,
+			inventory_item: ai.inventory_item,
+		}));
+		const components = [...pickedComponents, ...additionalAsComponents];
 		setCart(prev => [...prev, {
 			id: `${bundle.id}_custom_${Date.now()}`,
 			bundleId: bundle.id,
@@ -501,7 +528,7 @@ export default function StoreScreen() {
 		0
 	);
 	const total = subtotal - discountAmount;
-	const grabFee = paymentMethod === 'grab' && grabFeePercent > 0 ? Math.round(total / (100 - grabFeePercent)) : 0;
+	const grabFee = paymentMethod === 'grab' && grabFeePercent > 0 ? Math.round(total / (1 - grabFeePercent / 100)) - total : 0;
 
 	// Get unique category IDs from cart items
 	const getCartCategoryIds = (): string[] => {
@@ -1225,7 +1252,7 @@ export default function StoreScreen() {
 			</AnimatePresence>
 
 			{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
-			<div className='hidden xl:flex flex-col h-screen bg-primary border-l border-gray-200 overflow-hidden w-90 shrink-0'>
+			<div className='hidden xl:flex flex-col h-full bg-primary border-l border-gray-200 overflow-hidden w-90 shrink-0'>
 				{/* Header Section - Fixed at top (154px total) */}
 				<div className='shrink-0'>
 					<div className='w-full h-22.5 bg-primary border-b border-secondary/20 border-dashed'>
@@ -1440,7 +1467,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Order Summary */}
-				<div className='shrink border-t-2 border-accent'>
+				<div className='shrink-0 border-t-2 border-accent'>
 					<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>

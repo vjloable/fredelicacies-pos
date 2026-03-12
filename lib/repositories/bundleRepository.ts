@@ -1,6 +1,6 @@
 // Bundle Repository - Handles bundle data access with components
 import { supabase } from '@/lib/supabase';
-import type { Bundle, BundleComponent, BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain/bundle';
+import type { Bundle, BundleAdditionalItem, BundleComponent, BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain/bundle';
 
 // Module-level callback registry for immediate post-mutation refresh
 const activeCallbacks = new Map<string, Set<(bundles: BundleWithComponents[]) => void>>();
@@ -25,6 +25,7 @@ export const bundleRepository = {
         is_predefined: data.is_predefined || false,
         is_custom: data.is_custom || false,
         max_pieces: data.is_custom ? (data.max_pieces ?? null) : null,
+        category_id: data.category_id ?? null,
         status: data.status || 'active',
       })
       .select()
@@ -72,20 +73,19 @@ export const bundleRepository = {
       return { bundles: [], error: bundlesError };
     }
 
-    // Then get components for all bundles
-    const { data: components, error: componentsError } = await supabase
-      .from('bundle_components')
-      .select(`
-        *,
-        inventory_items (*)
-      `)
-      .in('bundle_id', bundles.map(b => b.id));
+    const bundleIds = bundles.map(b => b.id);
+
+    // Fetch components and additional items in parallel
+    const [{ data: components, error: componentsError }, { data: additionalItems }] = await Promise.all([
+      supabase.from('bundle_components').select('*, inventory_items (*)').in('bundle_id', bundleIds),
+      supabase.from('bundle_additional_items').select('*, inventory_items (*)').in('bundle_id', bundleIds),
+    ]);
 
     if (componentsError) {
       return { bundles: [], error: componentsError };
     }
 
-    // Merge bundles with their components
+    // Merge bundles with their components and additional items
     const bundlesWithComponents: BundleWithComponents[] = bundles.map(bundle => ({
       ...bundle,
       components: (components || [])
@@ -97,6 +97,16 @@ export const bundleRepository = {
           quantity: c.quantity,
           created_at: c.created_at,
           inventory_item: c.inventory_items,
+        })),
+      additional_items: (additionalItems || [])
+        .filter(a => a.bundle_id === bundle.id)
+        .map((a): BundleAdditionalItem => ({
+          id: a.id,
+          bundle_id: a.bundle_id,
+          inventory_item_id: a.inventory_item_id,
+          quantity: a.quantity,
+          created_at: a.created_at,
+          inventory_item: a.inventory_items,
         })),
     }));
 
@@ -126,13 +136,10 @@ export const bundleRepository = {
       return { bundle: null, error: bundleError };
     }
 
-    const { data: components, error: componentsError } = await supabase
-      .from('bundle_components')
-      .select(`
-        *,
-        inventory_items (*)
-      `)
-      .eq('bundle_id', id);
+    const [{ data: components, error: componentsError }, { data: additionalItems }] = await Promise.all([
+      supabase.from('bundle_components').select('*, inventory_items (*)').eq('bundle_id', id),
+      supabase.from('bundle_additional_items').select('*, inventory_items (*)').eq('bundle_id', id),
+    ]);
 
     if (componentsError) {
       return { bundle: null, error: componentsError };
@@ -147,6 +154,14 @@ export const bundleRepository = {
         quantity: c.quantity,
         created_at: c.created_at,
         inventory_item: c.inventory_items,
+      })),
+      additional_items: (additionalItems || []).map((a): BundleAdditionalItem => ({
+        id: a.id,
+        bundle_id: a.bundle_id,
+        inventory_item_id: a.inventory_item_id,
+        quantity: a.quantity,
+        created_at: a.created_at,
+        inventory_item: a.inventory_items,
       })),
     };
 
@@ -182,6 +197,28 @@ export const bundleRepository = {
       .delete()
       .eq('bundle_id', bundleId);
 
+    return { error };
+  },
+
+  // Add additional items (fixed stock-deductible items) to a bundle
+  async addAdditionalItems(bundleId: string, items: Array<{ inventoryItemId: string; quantity: number }>): Promise<{ error: any }> {
+    if (items.length === 0) return { error: null };
+    const { error } = await supabase
+      .from('bundle_additional_items')
+      .insert(items.map(i => ({
+        bundle_id: bundleId,
+        inventory_item_id: i.inventoryItemId,
+        quantity: i.quantity,
+      })));
+    return { error };
+  },
+
+  // Remove all additional items from a bundle
+  async removeAllAdditionalItems(bundleId: string): Promise<{ error: any }> {
+    const { error } = await supabase
+      .from('bundle_additional_items')
+      .delete()
+      .eq('bundle_id', bundleId);
     return { error };
   },
 
@@ -237,6 +274,20 @@ export const bundleRepository = {
           event: '*',
           schema: 'public',
           table: 'bundle_components',
+        },
+        () => {
+          this.getByBranchWithComponents(branchId).then(({ bundles }) => {
+            registerBundles(bundles, branchId);
+            callback(bundles);
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bundle_additional_items',
         },
         () => {
           this.getByBranchWithComponents(branchId).then(({ bundles }) => {

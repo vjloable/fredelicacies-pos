@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import SafeImage from '@/components/SafeImage';
 import LogoIcon from '../../store/icons/LogoIcon';
-import type { BundleWithComponents, InventoryItem } from '@/types/domain';
+import type { BundleWithComponents, InventoryItem, Category } from '@/types/domain';
 import { subscribeToBundles } from '@/services/bundleService';
 import { subscribeToInventoryItems } from '@/services/inventoryService';
 import { calculateBundleAvailability } from '@/services/bundleService';
@@ -15,9 +15,17 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import AddBundleModal from './AddBundleModal';
 import EditBundleModal from './EditBundleModal';
 
-export default function BundlesView() {
+interface BundlesViewProps {
+  categoryFilter: string | null;
+  categories: Category[];
+}
+
+export default function BundlesView({ categoryFilter, categories }: BundlesViewProps) {
   const { currentBranch } = useBranch();
   const [bundles, setBundles] = useState<BundleWithComponents[]>([]);
+  const filteredBundles = categoryFilter
+    ? bundles.filter(b => b.category_id === categoryFilter)
+    : bundles;
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -103,7 +111,7 @@ export default function BundlesView() {
         <h2 className="text-xs font-bold text-secondary uppercase tracking-wide">
           Bundles
           <span className="ml-2 text-xs font-normal text-secondary/50 normal-case tracking-normal">
-            {bundles.length} {bundles.length === 1 ? 'bundle' : 'bundles'}
+            {filteredBundles.length} {filteredBundles.length === 1 ? 'bundle' : 'bundles'}
           </span>
         </h2>
         <button
@@ -116,7 +124,7 @@ export default function BundlesView() {
       </div>
 
       {/* Bundles List */}
-      {bundles.length === 0 ? (
+      {filteredBundles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10">
           <div className="w-20 h-20 bg-bundle/20 rounded-full flex items-center justify-center mb-4">
             <svg className="w-10 h-10 text-bundle/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +145,7 @@ export default function BundlesView() {
         </div>
       ) : (
         <div className="space-y-3">
-          {bundles.map((bundle) => {
+          {filteredBundles.map((bundle) => {
             const availability = bundleAvailability.get(bundle.id) || 0;
             const availabilityColor = availability > 10
               ? 'bg-green-100 text-green-700'
@@ -218,6 +226,7 @@ export default function BundlesView() {
       <AddBundleModal
         isOpen={showAddModal}
         inventory={inventory}
+        categories={categories}
         onClose={() => setShowAddModal(false)}
         onError={(err) => setError(err)}
       />
@@ -227,6 +236,7 @@ export default function BundlesView() {
           isOpen={showEditModal}
           bundle={editingBundle}
           inventory={inventory}
+          categories={categories}
           onClose={handleCloseEditModal}
           onError={(err) => setError(err)}
         />

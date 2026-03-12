@@ -4,6 +4,7 @@ export interface Category {
   branch_id: string;
   name: string;
   color: string;
+  is_hidden?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -16,4 +17,5 @@ export interface CreateCategoryData {
 export interface UpdateCategoryData {
   name?: string;
   color?: string;
+  is_hidden?: boolean;
 }
