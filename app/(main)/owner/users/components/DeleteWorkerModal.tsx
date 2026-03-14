@@ -170,13 +170,13 @@ export default function DeleteWorkerModal({
 							<button
 								type='button'
 								onClick={handleClose}
-								className='flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors'>
+								className='flex-1 py-3 px-4 border border-secondary/30 rounded-lg text-secondary/70 font-medium hover:bg-secondary/10 transition-colors'>
 								Cancel
 							</button>
 							<button
 								onClick={handleDelete}
 								disabled={loading || !isConfirmValid}
-								className='flex-1 py-3 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+								className='flex-1 py-3 px-4 bg-(--error) text-white rounded-lg font-medium hover:bg-(--error)/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
 								Delete Worker
 							</button>
 						</div>

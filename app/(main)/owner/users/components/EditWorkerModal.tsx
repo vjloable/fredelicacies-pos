@@ -426,13 +426,13 @@ export default function EditWorkerModal({
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
 								</div>
 								<div>
-									<label className='block text-xs font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Email Address <span className="text-error">*</span>
 									</label>
 									<input
@@ -440,7 +440,7 @@ export default function EditWorkerModal({
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -449,7 +449,7 @@ export default function EditWorkerModal({
 
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<label className='block text-xs font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Phone Number
 									</label>
 									<input
@@ -457,12 +457,12 @@ export default function EditWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
 								<div>
-									<label className='block text-xs font-medium text-gray-700 mb-2'>
+									<label className='block text-xs font-medium text-secondary/70 mb-2'>
 										Employee ID
 									</label>
 									<input
@@ -470,7 +470,7 @@ export default function EditWorkerModal({
 										name='employeeId'
 										value={formData.employeeId}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter employee ID (optional)'
 									/>
 								</div>
@@ -484,7 +484,7 @@ export default function EditWorkerModal({
 										name='isOwner'
 										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='h-5 w-5 text-primary focus:ring-accent border-secondary/30 rounded'
+										className='w-4 h-4 rounded shrink-0 accent-accent'
 									/>
 									<label className='ml-2 block text-xs text-secondary p-1'>
 										Grant admin privileges
@@ -496,12 +496,12 @@ export default function EditWorkerModal({
 							{!formData.isOwner && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
-										<label className='block text-xs font-medium text-gray-700 mb-2'>
+										<label className='block text-xs font-medium text-secondary/70 mb-2'>
 											Assign to Branch <span className="text-error">*</span>
 										</label>
 										{!isOwner || availableBranches.length === 1 ? (
 											// For managers - show readonly branch name (no changes allowed)
-											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700'>
+											<div className='w-full px-3 py-2 h-9.5 flex items-center text-3 bg-secondary/5 border-2 border-secondary/20 rounded-lg text-secondary/50'>
 												{availableBranches[0]?.name || selectedBranchId}
 											</div>
 										) : (
@@ -543,7 +543,7 @@ export default function EditWorkerModal({
 										)}
 									</div>
 									<div>
-										<label className='block text-xs font-medium text-gray-700 mb-2'>
+										<label className='block text-xs font-medium text-secondary/70 mb-2'>
 											Role <span className="text-error">*</span>
 										</label>
 										{isOwner && canDemoteWorker(worker) ? (
@@ -566,16 +566,16 @@ export default function EditWorkerModal({
 											/>
 										) : (
 											// Show readonly role for managers or when cannot demote
-											<div className='w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 flex items-center justify-between'>
+											<div className='w-full px-3 py-2 h-9.5 text-3 bg-secondary/5 border-2 border-secondary/20 rounded-lg text-secondary/50 flex items-center justify-between'>
 												<span>{selectedRole === "worker" ? "Worker" : "Manager"}</span>
 												{!isOwner && (
-													<span className='text-xs text-gray-500'>(Only owners can change roles)</span>
+													<span className='text-xs text-secondary/40'>(Only owners can change roles)</span>
 												)}
 												{isOwner && worker?.id === currentUserId && (
-													<span className='text-xs text-gray-500'>(Cannot change own role)</span>
+													<span className='text-xs text-secondary/40'>(Cannot change own role)</span>
 												)}
 												{isOwner && worker?.roleAssignments.some(a => a.role === "manager" && a.isActive !== false) && worker?.id !== currentUserId && (
-													<span className='text-xs text-gray-500'>(Cannot demote managers)</span>
+													<span className='text-xs text-secondary/40'>(Cannot demote managers)</span>
 												)}
 											</div>
 										)}

@@ -274,7 +274,7 @@ export default function CreateWorkerModal({
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
@@ -288,7 +288,7 @@ export default function CreateWorkerModal({
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -305,7 +305,7 @@ export default function CreateWorkerModal({
 										name='password'
 										value={formData.password}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter password'
 										required
 										minLength={6}
@@ -320,7 +320,7 @@ export default function CreateWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
@@ -335,7 +335,7 @@ export default function CreateWorkerModal({
 									name='employeeId'
 									value={formData.employeeId}
 									onChange={handleInputChange}
-									className='w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+									className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 									placeholder='Enter employee ID (optional)'
 								/>
 							</div>
@@ -348,7 +348,7 @@ export default function CreateWorkerModal({
 										name='isOwner'
 										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='h-4 w-4 text-accent focus:ring-accent border-secondary/30 rounded'
+										className='w-4 h-4 rounded shrink-0 accent-accent'
 									/>
 									<label className='ml-2 block text-xs text-secondary/70'>
 										Grant owner privileges
@@ -365,7 +365,7 @@ export default function CreateWorkerModal({
 										</label>
 										{availableBranches.length === 1 ? (
 											// For managers - show readonly branch name
-											<div className='w-full px-3 py-2 bg-secondary/10 border border-secondary/30 rounded-lg text-secondary/70'>
+											<div className='w-full px-3 py-2 h-9.5 flex items-center text-3 bg-secondary/5 border-2 border-secondary/20 rounded-lg text-secondary/50'>
 												{availableBranches[0].name}
 											</div>
 										) : (

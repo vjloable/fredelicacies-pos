@@ -324,11 +324,11 @@ export default function WorkersPage() {
 										);
 										handleBranchChange(selectedBranch?.id || "");
 									}}
-									roundness={"xl"}
-									height={42}
+									roundness="8"
+									heightClassName="h-10.5"
 									valueAlignment={"left"}
 									padding=''
-									shadow={true}
+									borderClassName="shadow-sm" 
 								/>
 							</div>
 						)}
@@ -337,13 +337,11 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
-									<div className='size-4'>
-										<PlusIcon className='drop-shadow-lg' />
-									</div>
-									<span className='mt-0.5'>ADD WORKER</span>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95'>
+								<div className='size-4'>
+									<PlusIcon className='drop-shadow-lg' />
 								</div>
+								<span className='mt-0.5'>ADD WORKER</span>
 							</button>
 						)}
 					</div>
@@ -376,11 +374,11 @@ export default function WorkersPage() {
 										);
 										handleBranchChange(selectedBranch?.id || "");
 									}}
-									roundness={"xl"}
-									height={42}
+									roundness="8"
+									heightClassName="h-10.5"
 									valueAlignment={"left"}
 									padding=''
-									shadow={true}
+									borderClassName="shadow-sm" 
 								/>
 							</div>
 						)}
@@ -389,13 +387,11 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95'>
-								<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
-									<div className='size-4'>
-										<PlusIcon className='drop-shadow-lg' />
-									</div>
-									<span className='mt-0.5'>ADD WORKER</span>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95'>
+								<div className='size-4'>
+									<PlusIcon className='drop-shadow-lg' />
 								</div>
+								<span className='mt-0.5'>ADD WORKER</span>
 							</button>
 						)}
 					</div>
