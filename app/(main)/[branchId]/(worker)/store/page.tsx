@@ -320,6 +320,7 @@ export default function StoreScreen() {
 		availability: number;
 		components?: BundleComponent[];
 		category_id?: string | null;
+		category_ids?: string[];
 		description?: string | null;
 		is_custom?: boolean;
 		max_pieces?: number | null;
@@ -347,10 +348,18 @@ export default function StoreScreen() {
 				is_custom: bundle.is_custom,
 				max_pieces: bundle.max_pieces,
 				category_id: bundle.category_id,
+				category_ids: bundle.category_ids,
 			}))
 			.filter(bundle => {
+				// All category IDs this bundle belongs to
+				const bundleCategoryIds: string[] = bundle.category_ids?.length
+					? bundle.category_ids
+					: bundle.category_id ? [bundle.category_id] : [];
+
 				// Hide bundles from categories marked as hidden
-				const isVisible = !bundle.category_id || !categories.find(c => c.id === String(bundle.category_id))?.is_hidden;
+				const isVisible = bundleCategoryIds.length === 0
+					? true
+					: bundleCategoryIds.some(catId => !categories.find(c => c.id === catId)?.is_hidden);
 
 				// Apply search filter
 				const matchesSearch =
@@ -358,14 +367,20 @@ export default function StoreScreen() {
 					bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 					bundle.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
+				// Apply category filter — bundle matches if any of its categories is selected
+				const matchesCategory =
+					selectedCategories.length === 0 ||
+					selectedCategory === "All" ||
+					bundleCategoryIds.some(catId => selectedCategories.includes(getCategoryName(catId)));
+
 				// Filter out unavailable bundles if hideOutOfStock is enabled
 				const hasAvailability = hideOutOfStock ? bundle.availability > 0 : true;
 
-				return isVisible && matchesSearch && hasAvailability;
+				return isVisible && matchesSearch && matchesCategory && hasAvailability;
 			});
 
 		return [...items, ...bundleItems];
-	}, [filteredItems, bundles, bundleAvailability, searchQuery, hideOutOfStock]);
+	}, [filteredItems, bundles, bundleAvailability, searchQuery, hideOutOfStock, selectedCategories, selectedCategory, categories, getCategoryName]);
 
 	// Group displayItems by category for sectioned rendering
 	const groupedItems = useMemo(() => {
