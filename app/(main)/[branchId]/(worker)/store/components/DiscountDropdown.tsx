@@ -134,7 +134,7 @@ export default function DiscountDropdown({
         />
         <button
           onClick={handleApplyDiscount}
-          className={`shrink py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
+          className={`shrink-0 py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
             canApply
               ? 'bg-accent text-primary hover:bg-accent/80'
               : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
