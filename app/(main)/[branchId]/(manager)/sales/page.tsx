@@ -428,6 +428,18 @@ export default function SalesScreen() {
 		const avgOrderValue = currentPeriodStats.totalOrders > 0
 			? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
 			: 0;
+		const totalPieces = analyticsOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+
+		// Payment method breakdown
+		const pmMap = { cash: { orders: 0, pieces: 0, revenue: 0 }, gcash: { orders: 0, pieces: 0, revenue: 0 }, grab: { orders: 0, pieces: 0, revenue: 0 } };
+		analyticsOrders.forEach(o => {
+			const m = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof pmMap;
+			if (pmMap[m]) {
+				pmMap[m].orders++;
+				pmMap[m].pieces += o.items.reduce((s, i) => s + i.quantity, 0);
+				pmMap[m].revenue += o.total;
+			}
+		});
 
 		// ── Sheet 1: Summary ───────────────────────────────────────────────
 		// Report metadata + all aggregated stats in one place. No raw rows.
@@ -442,13 +454,20 @@ export default function SalesScreen() {
 			["Total Profit (₱)", currentPeriodStats.totalProfit],
 			["Profit Margin (%)", parseFloat(currentPeriodStats.profitMargin.toFixed(2))],
 			["Total Orders", currentPeriodStats.totalOrders],
+			["Total Pieces Sold", totalPieces],
 			["Avg Order Value (₱)", parseFloat(avgOrderValue.toFixed(2))],
 			["Total Wastage Cost (₱)", totalWastageCost],
 			["Peak Period", peakEntry ? peakEntry.label : "—"],
 			["Peak Orders", peakEntry ? peakEntry.orders : 0],
+			[],
+			["PAYMENT METHOD BREAKDOWN"],
+			["Method", "Orders", "Pieces", "Revenue (₱)"],
+			["Cash", pmMap.cash.orders, pmMap.cash.pieces, parseFloat(pmMap.cash.revenue.toFixed(2))],
+			["GCash", pmMap.gcash.orders, pmMap.gcash.pieces, parseFloat(pmMap.gcash.revenue.toFixed(2))],
+			["Grab", pmMap.grab.orders, pmMap.grab.pieces, parseFloat(pmMap.grab.revenue.toFixed(2))],
 		];
 		const wsSum = XLSX.utils.aoa_to_sheet(summaryData);
-		wsSum["!cols"] = [{ wch: 24 }, { wch: 20 }];
+		wsSum["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 16 }];
 		XLSX.utils.book_append_sheet(wb, wsSum, "Summary");
 
 		// ── Sheet 2: Orders ────────────────────────────────────────────────
@@ -462,7 +481,7 @@ export default function SalesScreen() {
 				"Date": dt.toLocaleDateString(),
 				"Time": dt.toLocaleTimeString(),
 				"Items (summary)": order.items.map(i => `${i.name} ×${i.quantity}`).join(", "),
-				"Item Count": order.items.reduce((s, i) => s + i.quantity, 0),
+				"Pieces": order.items.reduce((s, i) => s + i.quantity, 0),
 				"Subtotal (₱)": order.subtotal ?? order.total,
 				"Discount (₱)": order.discount_amount ?? 0,
 				"Total (₱)": order.total,
@@ -472,7 +491,7 @@ export default function SalesScreen() {
 		const wsOrders = XLSX.utils.json_to_sheet(orderRows);
 		wsOrders["!cols"] = [
 			{ wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 40 },
-			{ wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 10 },
+			{ wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 10 },
 		];
 		XLSX.utils.book_append_sheet(wb, wsOrders, "Orders");
 
@@ -503,7 +522,20 @@ export default function SalesScreen() {
 		];
 		XLSX.utils.book_append_sheet(wb, wsItems, "Line Items");
 
-		// ── Sheet 4: Wastage ───────────────────────────────────────────────
+		// ── Sheet 4: Payment Methods ──────────────────────────────────────
+		const pmRows = (["cash", "gcash", "grab"] as const).map(m => ({
+			"Payment Method": m === "gcash" ? "GCash" : m.charAt(0).toUpperCase() + m.slice(1),
+			"Orders": pmMap[m].orders,
+			"Pieces": pmMap[m].pieces,
+			"Revenue (₱)": parseFloat(pmMap[m].revenue.toFixed(2)),
+			"% of Orders": currentPeriodStats.totalOrders > 0 ? parseFloat((pmMap[m].orders / currentPeriodStats.totalOrders * 100).toFixed(1)) : 0,
+			"% of Revenue": currentPeriodStats.totalRevenue > 0 ? parseFloat((pmMap[m].revenue / currentPeriodStats.totalRevenue * 100).toFixed(1)) : 0,
+		}));
+		const wsPm = XLSX.utils.json_to_sheet(pmRows);
+		wsPm["!cols"] = [{ wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+		XLSX.utils.book_append_sheet(wb, wsPm, "Payment Methods");
+
+		// ── Sheet 5: Wastage ───────────────────────────────────────────────
 		// Top wasted items + period breakdown in one sheet, separated by a
 		// blank row. No duplication with Summary (totals already there).
 		const wastageData: (string | number)[][] = [
