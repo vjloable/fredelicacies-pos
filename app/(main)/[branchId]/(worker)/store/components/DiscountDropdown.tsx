@@ -20,226 +20,224 @@ export default function DiscountDropdown({
 }: DiscountDropdownProps) {
   const { currentBranch } = useBranch();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
-  const [filteredDiscounts, setFilteredDiscounts] = useState<Discount[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
-  const [isValidCode, setIsValidCode] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to discounts
   useEffect(() => {
     if (!currentBranch) return;
-
-    const unsubscribe = subscribeToDiscounts(currentBranch.id, (discountsData) => {
-      setDiscounts(discountsData);
+    const unsubscribe = subscribeToDiscounts(currentBranch.id, (data) => {
+      setDiscounts(data);
     });
-
     return () => unsubscribe();
   }, [currentBranch]);
 
-  // Filter discounts based on input
-  useEffect(() => {
-    if (!value) {
-      setFilteredDiscounts([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const filtered = discounts.filter(discount =>
-      discount.name.toLowerCase().includes(value.toLowerCase()) &&
-      discount.status === 'active'
-    );
-
-    setFilteredDiscounts(filtered);
-    setShowSuggestions(filtered.length > 0 && value.length > 0);
-  }, [value, discounts]);
-
-  // Validate current discount code
+  // Sync appliedDiscount when value changes externally
   useEffect(() => {
     if (!value) {
       setAppliedDiscount(null);
-      setIsValidCode(false);
       return;
     }
-
-    const exactMatch = discounts.find(discount =>
-      discount.name.toLowerCase() === value.toLowerCase() &&
-      discount.status === 'active'
+    const match = discounts.find(
+      (d) => d.name.toLowerCase() === value.toLowerCase() && d.status === "active"
     );
-
-    if (exactMatch) {
-      setIsValidCode(true);
-      setAppliedDiscount(exactMatch);
-    } else {
-      setIsValidCode(false);
-      setAppliedDiscount(null);
-    }
+    setAppliedDiscount(match ?? null);
   }, [value, discounts]);
 
-  // Handle clicking outside to close suggestions
+  // Close on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearch("");
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const eligible = appliedDiscount ? isDiscountEligible(appliedDiscount, cartItems) : false;
-  const canApply = isValidCode && eligible;
+  // Focus search when panel opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => searchRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value.toUpperCase();
-    onChange(newValue);
+  const activeDiscounts = discounts.filter((d) => d.status === "active");
+  const filtered = search
+    ? activeDiscounts.filter((d) =>
+        d.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : activeDiscounts;
+
+  const getPreview = (discount: Discount) => {
+    const sub = calculateEligibleSubtotal(discount, cartItems);
+    return calculateDiscountAmount(discount, sub);
   };
 
-  const handleSuggestionClick = (discount: Discount) => {
+  const handleSelect = (discount: Discount) => {
+    const eligible = isDiscountEligible(discount, cartItems);
     onChange(discount.name);
-    setShowSuggestions(false);
-    inputRef.current?.blur();
-  };
-
-  const handleApplyDiscount = () => {
-    if (appliedDiscount && canApply) {
-      const eligibleSubtotal = calculateEligibleSubtotal(appliedDiscount, cartItems);
-      const discountAmount = calculateDiscountAmount(appliedDiscount, eligibleSubtotal);
-      onDiscountApplied(appliedDiscount, discountAmount);
+    setIsOpen(false);
+    setSearch("");
+    if (eligible) {
+      const preview = getPreview(discount);
+      onDiscountApplied(discount, preview);
     } else {
       onDiscountApplied(null, 0);
     }
   };
 
-  const getDiscountPreview = (discount: Discount): number => {
-    const eligibleSubtotal = calculateEligibleSubtotal(discount, cartItems);
-    return calculateDiscountAmount(discount, eligibleSubtotal);
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange("");
+    onDiscountApplied(null, 0);
+    setAppliedDiscount(null);
   };
+
+  const eligible = appliedDiscount ? isDiscountEligible(appliedDiscount, cartItems) : false;
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex flex-row border border-accent rounded-md bg-light-accent/40">
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={handleInputChange}
-          onFocus={() => value && filteredDiscounts.length > 0 && setShowSuggestions(true)}
-          className="grow py-2 px-4 text-3 border-none rounded-l-md focus:outline-none bg-transparent"
-          placeholder="Enter discount coupon code"
-        />
-        <button
-          onClick={handleApplyDiscount}
-          className={`shrink-0 py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
-            canApply
-              ? 'bg-accent text-primary hover:bg-accent/80'
-              : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
-          }`}
-          disabled={!canApply}
-        >
-          {canApply ? (
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              APPLY
-            </span>
-          ) : (
-            'APPLY'
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((o) => !o)}
+        className={`w-full flex items-center justify-between px-3 py-2 h-9.5 text-3 border-2 rounded-lg transition-all ${
+          appliedDiscount && eligible
+            ? "border-accent bg-accent/10 text-secondary"
+            : "border-secondary/20 bg-light-accent/40 text-secondary/50"
+        } focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent`}
+      >
+        <span className={appliedDiscount && eligible ? "font-medium text-secondary" : ""}>
+          {appliedDiscount && eligible ? appliedDiscount.name : "Select a discount..."}
+        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          {appliedDiscount && eligible && (
+            <>
+              <span className="text-xs text-accent font-semibold">
+                -{formatCurrency(getPreview(appliedDiscount))}
+              </span>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="ml-1 text-secondary/40 hover:text-secondary/80 transition-colors"
+                aria-label="Clear discount"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </>
           )}
-        </button>
-      </div>
+          <svg
+            className={`w-4 h-4 text-secondary/40 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
 
       {/* Ineligible notice */}
-      {isValidCode && !eligible && (
-        <div className="mt-1.5 px-3 py-1.5 bg-error/10 border border-error/20 rounded-lg">
-          <p className="text-xs text-error font-medium">
+      {appliedDiscount && !eligible && (
+        <div className="mt-1.5 px-3 py-1.5 bg-(--error)/10 border border-(--error)/20 rounded-lg">
+          <p className="text-xs text-(--error) font-medium">
             This discount doesn&apos;t apply to the items in your cart
           </p>
         </div>
       )}
 
-      {/* Suggestions Dropdown */}
-      {showSuggestions && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-          {filteredDiscounts.map((discount) => {
-            const previewAmount = getDiscountPreview(discount);
-            const discountEligible = isDiscountEligible(discount, cartItems);
+      {/* Dropdown panel */}
+      {isOpen && (
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-white border-2 border-secondary/20 rounded-lg shadow-lg">
+          {/* Search */}
+          <div className="p-2 border-b border-secondary/10">
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search discounts..."
+                className="w-full pl-8 pr-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              />
+            </div>
+          </div>
 
-            return (
-              <div
-                key={discount.id}
-                onClick={() => handleSuggestionClick(discount)}
-                className="p-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-secondary text-xs">
-                        {discount.name}
-                      </span>
-                      {!discountEligible && (
-                        <span className="text-xs text-error bg-error/10 px-1.5 py-0.5 rounded font-medium">
-                          Not eligible
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-secondary opacity-70 mt-1">
-                      {discount.type === 'percentage'
-                        ? `${discount.value}% off`
-                        : `₱${discount.value} off`
-                      }
-                      {discountEligible && previewAmount > 0 && (
-                        <span className="text-success font-medium ml-2">
-                          (-{formatCurrency(previewAmount)})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {discountEligible && (
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500">Savings</div>
-                      <div className="font-semibold text-success">
-                        {formatCurrency(previewAmount)}
+          {/* List */}
+          <div className="max-h-56 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="p-3 text-center text-secondary/50 text-xs">
+                {search ? `No discounts matching "${search}"` : "No active discounts"}
+              </div>
+            ) : (
+              filtered.map((discount) => {
+                const discountEligible = isDiscountEligible(discount, cartItems);
+                const preview = getPreview(discount);
+                const isSelected = value.toLowerCase() === discount.name.toLowerCase();
+
+                return (
+                  <button
+                    key={discount.id}
+                    type="button"
+                    onClick={() => handleSelect(discount)}
+                    className={`w-full text-left px-3 py-2.5 border-b border-secondary/10 last:border-b-0 transition-colors ${
+                      isSelected
+                        ? "bg-accent/10"
+                        : discountEligible
+                        ? "hover:bg-secondary/5"
+                        : "hover:bg-secondary/5 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-secondary text-xs truncate">
+                            {discount.name}
+                          </span>
+                          {isSelected && (
+                            <svg className="w-3.5 h-3.5 text-accent shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {!discountEligible && (
+                            <span className="text-xs text-(--error) bg-(--error)/10 px-1.5 py-0.5 rounded font-medium shrink-0">
+                              Not eligible
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-secondary/50 mt-0.5">
+                          {discount.type === "percentage"
+                            ? `${discount.value}% off`
+                            : `₱${discount.value} off`}
+                          {discountEligible && preview > 0 && (
+                            <span className="text-(--success) font-medium ml-1">
+                              · save {formatCurrency(preview)}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {discountEligible && preview > 0 && (
+                        <div className="text-right ml-3 shrink-0">
+                          <div className="font-semibold text-(--success) text-xs">
+                            -{formatCurrency(preview)}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {filteredDiscounts.length === 0 && value && (
-            <div className="p-3 text-center text-gray-500 text-xs">
-              No discount codes found matching &quot;{value}&quot;
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Current Discount Info */}
-      {appliedDiscount && isValidCode && eligible && (
-        <div className="mt-2 px-4 py-2 bg-accent/10 border border-dashed border-accent rounded-lg">
-          <div className="flex items-center justify-between text-3">
-            <div>
-              <span className="font-semibold text-secondary">
-                {appliedDiscount.name}
-              </span>
-              <span className="text-secondary ml-2">
-                ({appliedDiscount.type === 'percentage'
-                  ? `${appliedDiscount.value}% off`
-                  : `₱${appliedDiscount.value} off`
-                })
-              </span>
-            </div>
-            <div className="text-right">
-              <div className="font-semibold text-secondary">
-                -{formatCurrency(getDiscountPreview(appliedDiscount))}
-              </div>
-            </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       )}
