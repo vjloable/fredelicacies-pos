@@ -320,7 +320,7 @@ export default function WorkerRow({
 									e.stopPropagation();
 									onAssignBranch(worker);
 								}}
-								className='text-secondary hover:text-secondary p-1 rounded hover:bg-secondary/10'>
+								className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'>
 								<BranchIcon />
 							</button>
 						</Tooltip>
