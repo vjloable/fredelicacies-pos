@@ -314,6 +314,7 @@ export default function StoreScreen() {
 		id: string;
 		name: string;
 		price: number;
+		grab_price?: number | null;
 		img_url: string | null | undefined;
 		type: 'bundle';
 		availability: number;
@@ -337,6 +338,7 @@ export default function StoreScreen() {
 				id: bundle.id,
 				name: bundle.name,
 				price: bundle.price,
+				grab_price: bundle.grab_price ?? null,
 				img_url: bundle.img_url,
 				description: bundle.description,
 				type: 'bundle' as const,
@@ -463,6 +465,7 @@ export default function StoreScreen() {
 						id: itemId,
 						name: item.name,
 						price: item.price,
+						grab_price: item.grab_price ?? null,
 						quantity: 1,
 						originalStock: availableStock,
 						imgUrl: item.img_url ?? undefined,
@@ -518,6 +521,7 @@ export default function StoreScreen() {
 			bundleId: bundle.id,
 			name: bundle.name,
 			price: bundle.price,
+			grab_price: bundle.grab_price ?? null,
 			cost,
 			quantity: 1,
 			originalStock: 999,
@@ -1623,16 +1627,23 @@ export default function StoreScreen() {
 												<h4 className='font-medium text-secondary truncate'>
 													{item.name}
 												</h4>
-												<p className='text-xs text-secondary'>
-													{formatCurrency(item.price)}
-												</p>
+												<div className='flex items-center gap-1.5 flex-wrap'>
+													<p className='text-xs text-secondary'>
+														{formatCurrency(paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price)}
+													</p>
+													{paymentMethod === 'grab' && item.grab_price && item.grab_price !== item.price && (
+														<span className='text-[9px] font-semibold px-1 py-0.5 rounded bg-[#02B150]/10 text-[#02B150]'>
+															+{formatCurrency(item.grab_price - item.price)}
+														</span>
+													)}
+												</div>
 												{appliedDiscount?.category_filter_mode && (appliedDiscount.category_filter_ids?.length ?? 0) > 0 && (() => {
 													const catIds = item.categoryIds ?? [];
 													const ids = appliedDiscount.category_filter_ids!;
 													const matches = catIds.some(id => ids.includes(id));
 													const discounted = appliedDiscount.category_filter_mode === 'include' ? matches : !matches;
 													return discounted
-														? <span className='inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-(--success)/10 text-(--success)'>Discounted</span>
+														? <span className='inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-success/10 text-success'>Discounted</span>
 														: <span className='inline-block mt-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary/5 text-secondary/40'>No discount</span>;
 												})()}
 											</div>
@@ -1643,7 +1654,7 @@ export default function StoreScreen() {
 													Qty: {item.quantity}
 												</div>
 												<div className='text-xs font-regular text-secondary'>
-													{formatCurrency(item.price * item.quantity)}
+													{formatCurrency((paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price) * item.quantity)}
 												</div>
 											</div>
 										</div>
@@ -1660,6 +1671,15 @@ export default function StoreScreen() {
 											{formatCurrency(subtotal)}
 										</span>
 									</div>
+									{paymentMethod === 'grab' && (() => {
+										const grabUplift = cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0);
+										return grabUplift > 0 ? (
+											<div className='flex justify-between text-xs'>
+												<span className='text-[#02B150]'>Grab price adjustment:</span>
+												<span className='font-medium text-[#02B150]'>+{formatCurrency(grabUplift)}</span>
+											</div>
+										) : null;
+									})()}
 									{discountAmount > 0 && (
 										<div className='flex justify-between text-xs'>
 											<span className='text-secondary'>
