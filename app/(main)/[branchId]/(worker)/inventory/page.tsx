@@ -266,7 +266,7 @@ export default function InventoryScreen() {
 								onClick={() => toggleCategoryVisibility(cat)}
 								className={`p-1.5 rounded-lg transition-colors ${
 									cat.is_hidden
-										? 'text-(--error) hover:bg-(--error)/10'
+										? 'text-error hover:bg-error/10'
 										: 'text-secondary/30 hover:bg-gray-100 hover:text-secondary'
 								}`}
 								title={cat.is_hidden ? 'Hidden from store — click to show' : 'Visible in store — click to hide'}
@@ -292,7 +292,7 @@ export default function InventoryScreen() {
 							</button>
 							<button
 								onClick={() => handleDeleteCategory(cat)}
-								className='p-1.5 hover:bg-(--error)/10 rounded-lg text-secondary/30 hover:text-(--error) transition-colors opacity-0 group-hover:opacity-100'
+								className='p-1.5 hover:bg-error/10 rounded-lg text-secondary/30 hover:text-error transition-colors opacity-0 group-hover:opacity-100'
 								title='Delete'
 							>
 								<DeleteIcon className='w-4 h-4' />

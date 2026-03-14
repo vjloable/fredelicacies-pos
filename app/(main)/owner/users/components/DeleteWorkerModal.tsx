@@ -176,7 +176,7 @@ export default function DeleteWorkerModal({
 							<button
 								onClick={handleDelete}
 								disabled={loading || !isConfirmValid}
-								className='flex-1 py-3 px-4 bg-(--error) text-white rounded-lg font-medium hover:bg-(--error)/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+								className='flex-1 py-3 px-4 bg-error text-white rounded-lg font-medium hover:bg-(--error)/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
 								Delete Worker
 							</button>
 						</div>

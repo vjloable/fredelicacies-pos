@@ -160,7 +160,7 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='h-10.5 hover:cursor-pointer sm:w-auto px-4 text-xs text-(--error) bg-(--error)/10 border border-(--error)/20 hover:bg-(--error)/50 hover:border-(--error) hover:text-white rounded-lg transition-colors'>
+						className='h-10.5 hover:cursor-pointer sm:w-auto px-4 text-xs text-error bg-error/10 border border-error/20 hover:bg-(--error)/50 hover:border-error hover:text-white rounded-lg transition-colors'>
 						CLEAR
 					</button>
 				)}

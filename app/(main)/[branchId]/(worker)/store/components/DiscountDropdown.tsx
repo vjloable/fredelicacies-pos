@@ -156,8 +156,8 @@ export default function DiscountDropdown({
 
       {/* Ineligible notice */}
       {isValidCode && !eligible && (
-        <div className="mt-1.5 px-3 py-1.5 bg-(--error)/10 border border-(--error)/20 rounded-lg">
-          <p className="text-xs text-(--error) font-medium">
+        <div className="mt-1.5 px-3 py-1.5 bg-error/10 border border-error/20 rounded-lg">
+          <p className="text-xs text-error font-medium">
             This discount doesn&apos;t apply to the items in your cart
           </p>
         </div>
@@ -183,7 +183,7 @@ export default function DiscountDropdown({
                         {discount.name}
                       </span>
                       {!discountEligible && (
-                        <span className="text-xs text-(--error) bg-(--error)/10 px-1.5 py-0.5 rounded font-medium">
+                        <span className="text-xs text-error bg-error/10 px-1.5 py-0.5 rounded font-medium">
                           Not eligible
                         </span>
                       )}
