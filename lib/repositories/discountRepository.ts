@@ -13,6 +13,8 @@ export const discountRepository = {
         type: data.type,
         value: data.value,
         status: data.status || 'active',
+        category_filter_mode: data.category_filter_mode ?? null,
+        category_filter_ids: data.category_filter_ids ?? null,
       })
       .select()
       .single();

@@ -49,16 +49,41 @@ export const subscribeToDiscounts = (
   return discountRepository.subscribe(branchId, callback);
 };
 
+export type CartItemForDiscount = { price: number; quantity: number; categoryIds: string[] };
+
+// Calculate the subtotal of cart items that qualify under the discount's category filter
+export const calculateEligibleSubtotal = (
+  discount: Discount,
+  cartItems: CartItemForDiscount[]
+): number => {
+  const { category_filter_mode: mode, category_filter_ids: ids } = discount;
+  let eligible = cartItems;
+  if (mode && ids && ids.length > 0) {
+    eligible = cartItems.filter(item => {
+      const matches = item.categoryIds.some(catId => ids.includes(catId));
+      return mode === 'include' ? matches : !matches;
+    });
+  }
+  return eligible.reduce((sum, item) => sum + item.price * item.quantity, 0);
+};
+
+// Check if a discount is eligible based on cart items (at least one item qualifies)
+export const isDiscountEligible = (
+  discount: Discount,
+  cartItems: CartItemForDiscount[]
+): boolean => {
+  return calculateEligibleSubtotal(discount, cartItems) > 0;
+};
+
 // Calculate discount amount
 export const calculateDiscountAmount = (
   discount: Discount,
   subtotal: number
 ): number => {
   if (discount.type === 'percentage') {
-    return Math.round((subtotal * discount.value / 100) * 100) / 100; // Round to 2 decimal places
+    return Math.round((subtotal * discount.value / 100) * 100) / 100;
   } else {
-    // Fixed discount
-    return Math.min(discount.value, subtotal); // Discount can't exceed subtotal
+    return Math.min(discount.value, subtotal);
   }
 };
 

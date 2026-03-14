@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import { Discount, deleteDiscount, subscribeToDiscounts } from "@/services/discountService";
+import { subscribeToCategories } from "@/services/categoryService";
+import type { Category } from "@/types/domain";
 import { logActivity } from "@/services/activityLogService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
@@ -21,6 +23,7 @@ export default function DiscountsScreen() {
 	const { user, isAuthenticated } = useAuth();
 	const { currentBranch } = useBranch();
 	const [discounts, setDiscounts] = useState<Discount[]>([]);
+	const [categories, setCategories] = useState<Category[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	// Modal states
@@ -51,6 +54,11 @@ export default function DiscountsScreen() {
 		);
 
 		return unsubscribe;
+	}, [currentBranch?.id]);
+
+	useEffect(() => {
+		if (!currentBranch?.id) return;
+		return subscribeToCategories(currentBranch.id, setCategories);
 	}, [currentBranch?.id]);
 
 	const handleCreateDiscount = () => {
@@ -352,6 +360,7 @@ export default function DiscountsScreen() {
 					isOpen={isModalOpen}
 					onClose={() => setIsModalOpen(false)}
 					discount={editingDiscount}
+					categories={categories}
 					onSuccess={() => {
 						setIsModalOpen(false);
 						setEditingDiscount(null);

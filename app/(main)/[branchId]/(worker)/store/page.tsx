@@ -19,6 +19,7 @@ import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
+import { isDiscountEligible } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
@@ -117,7 +118,6 @@ export default function StoreScreen() {
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
 	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab'>('cash');
-	const [grabFeePercent, setGrabFeePercent] = useState(0);
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
@@ -137,11 +137,13 @@ export default function StoreScreen() {
 			bundleId?: string;
 			name: string;
 			price: number;
+			grab_price?: number | null;
 			cost?: number;
 			quantity: number;
 			originalStock: number;
 			imgUrl?: string | null;
 			categoryId: number | string;
+			categoryIds?: string[];
 			type?: 'item' | 'bundle';
 			is_custom?: boolean;
 			components?: BundleComponent[];
@@ -226,8 +228,7 @@ export default function StoreScreen() {
 	useEffect(() => {
 		const settings = loadSettingsFromLocal();
 		setHideOutOfStock(settings.hideOutOfStock);
-		setGrabFeePercent(settings.grabFeePercent ?? 0);
-	}, []);
+		}, []);
 
 	// Helper function to get category name from real categories data
 	const getCategoryName = (categoryId: number | string | null) => {
@@ -277,23 +278,30 @@ export default function StoreScreen() {
 
 	// Filter items based on selected categories and search query
 	const filteredItems = inventoryItems.filter((item) => {
-		// Hide items from categories marked as hidden
-		const isVisible = !categories.find(c => c.id === String(item.category_id))?.is_hidden;
+		// All category IDs this item belongs to (multi-category aware)
+		const itemCategoryIds: string[] = item.category_ids?.length
+			? item.category_ids
+			: item.category_id ? [item.category_id] : [];
+
+		// Hide items if all their categories are hidden (or they have no visible category)
+		const isVisible = itemCategoryIds.length === 0
+			? !categories.find(c => c.id === String(item.category_id))?.is_hidden
+			: itemCategoryIds.some(catId => !categories.find(c => c.id === catId)?.is_hidden);
 
 		// First apply search filter
 		const matchesSearch =
 			searchQuery === "" ||
 			item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			getCategoryName(item.category_id)
-				.toLowerCase()
-				.includes(searchQuery.toLowerCase());
+			itemCategoryIds.some(catId =>
+				getCategoryName(catId).toLowerCase().includes(searchQuery.toLowerCase())
+			);
 
-		// Then apply category filter (only after search logic)
+		// Then apply category filter — item matches if any of its categories is selected
 		const matchesCategory =
 			selectedCategories.length === 0 ||
 			selectedCategory === "All" ||
-			selectedCategories.includes(getCategoryName(item.category_id));
+			itemCategoryIds.some(catId => selectedCategories.includes(getCategoryName(catId)));
 
 		// Filter out out-of-stock items if hideOutOfStock is enabled
 		const hasStock = hideOutOfStock ? item.stock > 0 : true;
@@ -361,9 +369,7 @@ export default function StoreScreen() {
 	const groupedItems = useMemo(() => {
 		const categoryMap = new Map<string, DisplayItem[]>();
 		displayItems.forEach(item => {
-			const key = item.type === 'bundle'
-				? '__bundles__'
-				: (item.category_id ? String(item.category_id) : '__uncategorized__');
+			const key = item.category_id ? String(item.category_id) : '__uncategorized__';
 			if (!categoryMap.has(key)) categoryMap.set(key, []);
 			categoryMap.get(key)!.push(item);
 		});
@@ -374,8 +380,6 @@ export default function StoreScreen() {
 		});
 		const uncategorized = categoryMap.get('__uncategorized__') || [];
 		if (uncategorized.length > 0) groups.push({ id: '__uncategorized__', name: 'Uncategorized', color: '#9CA3AF', items: uncategorized });
-		const bundleItems = categoryMap.get('__bundles__') || [];
-		if (bundleItems.length > 0) groups.push({ id: '__bundles__', name: 'Bundles', color: '#F59E0B', items: bundleItems });
 		return groups;
 	}, [displayItems, categories]);
 
@@ -463,6 +467,7 @@ export default function StoreScreen() {
 						originalStock: availableStock,
 						imgUrl: item.img_url ?? undefined,
 						categoryId: 0,
+						categoryIds: item.category_id ? [String(item.category_id)] : [],
 						type: 'bundle',
 						components: [...(item.components ?? []), ...additionalAsComponents],
 					},
@@ -474,11 +479,13 @@ export default function StoreScreen() {
 						id: itemId,
 						name: item.name,
 						price: item.price,
+						grab_price: item.grab_price ?? null,
 						cost: item.cost ?? undefined,
 						quantity: 1,
 						originalStock: item.stock,
 						imgUrl: item.img_url ?? undefined,
 						categoryId: item.category_id ?? "",
+						categoryIds: item.category_ids?.length ? item.category_ids : item.category_id ? [item.category_id] : [],
 						type: 'item',
 					},
 				]);
@@ -516,6 +523,7 @@ export default function StoreScreen() {
 			originalStock: 999,
 			imgUrl: bundle.img_url ?? undefined,
 			categoryId: 0,
+			categoryIds: bundle.category_id ? [bundle.category_id] : [],
 			type: 'bundle',
 			is_custom: true,
 			components,
@@ -524,17 +532,26 @@ export default function StoreScreen() {
 	};
 
 	const subtotal = cart.reduce(
-		(sum, item) => sum + item.price * item.quantity,
+		(sum, item) => sum + (paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price) * item.quantity,
 		0
 	);
 	const total = subtotal - discountAmount;
-	const grabFee = paymentMethod === 'grab' && grabFeePercent > 0 ? Math.round(total / (1 - grabFeePercent / 100)) - total : 0;
 
-	// Get unique category IDs from cart items
-	const getCartCategoryIds = (): string[] => {
-		const categoryIds = cart.map((item) => String(item.categoryId));
-		return [...new Set(categoryIds)]; // Remove duplicates
-	};
+
+	// Auto-clear applied discount when cart changes and discount is no longer eligible
+	useEffect(() => {
+		if (!appliedDiscount) return;
+		const cartItemsForDiscount = cart.map(i => ({
+			price: i.price,
+			quantity: i.quantity,
+			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
+		}));
+		if (!isDiscountEligible(appliedDiscount, cartItemsForDiscount)) {
+			setAppliedDiscount(null);
+			setDiscountAmount(0);
+			setDiscountCode("");
+		}
+	}, [cart, appliedDiscount]);
 
 	// Handle discount application
 	const handleDiscountApplied = (discount: Discount | null, amount: number) => {
@@ -624,7 +641,7 @@ export default function StoreScreen() {
 					components: item.components,
 				})),
 				subtotal,
-				total + grabFee,
+				total,
 				appliedDiscount?.id,
 				discountAmount,
 				paymentMethod
@@ -701,7 +718,7 @@ export default function StoreScreen() {
 	return (
 		<div className='flex h-full overflow-hidden'>
 			{/* Menu Area - This should expand to fill available space */}
-			<div className='flex flex-col flex-1 h-full overflow-hidden'>
+			<div className='flex flex-col flex-1 min-w-0 h-full overflow-hidden'>
 
 				{/* Header Section - Fixed */}
 				<div className='flex items-center justify-between'>
@@ -758,7 +775,7 @@ export default function StoreScreen() {
 						</h2>
 						{isSearching && (
 							<p className='text-xs text-secondary opacity-60'>
-								Searching for `{searchQuery}`
+								Searching for "{searchQuery}"
 							</p>
 						)}
 					</div>
@@ -782,7 +799,10 @@ export default function StoreScreen() {
 								{category.name}
 								{!category.isSpecial && (
 									<span className='ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-secondary/10 text-secondary/50 text-[9px] font-medium'>
-										{inventoryItems.filter((item) => getCategoryName(item.category_id) === category.name).length}
+										{inventoryItems.filter((item) => {
+										const ids = item.category_ids?.length ? item.category_ids : item.category_id ? [item.category_id] : [];
+										return ids.includes(category.id);
+									}).length + bundles.filter(b => b.category_id === category.id).length}
 									</span>
 								)}
 							</div>
@@ -1207,7 +1227,7 @@ export default function StoreScreen() {
 										value={discountCode}
 										onChange={setDiscountCode}
 										onDiscountApplied={handleDiscountApplied}
-										subtotal={subtotal}
+										cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 									/>
 								</div>
 
@@ -1482,7 +1502,7 @@ export default function StoreScreen() {
 							value={discountCode}
 							onChange={setDiscountCode}
 							onDiscountApplied={handleDiscountApplied}
-							subtotal={subtotal}
+							cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 						/>
 					</div>
 
@@ -1552,18 +1572,24 @@ export default function StoreScreen() {
 									Payment Method:
 								</span>
 								<div className='flex gap-2'>
-									{(['cash', 'gcash', 'grab'] as const).map((method) => (
+									{(['cash', 'gcash', 'grab'] as const).map((method) => {
+										const grabDisabled = method === 'grab' && !cart.some(item => item.grab_price && item.grab_price > 0);
+										return (
 										<button
 											key={method}
-											onClick={() => setPaymentMethod(method)}
+											onClick={() => !grabDisabled && setPaymentMethod(method)}
+											disabled={grabDisabled}
 											className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-												paymentMethod === method
+												grabDisabled
+													? 'bg-gray-100 text-secondary/30 border-gray-200 cursor-not-allowed'
+													: paymentMethod === method
 													? 'bg-accent text-primary border-accent'
 													: 'bg-white text-secondary border-gray-200 hover:border-secondary/40'
 											}`}>
 											{method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : 'Grab'}
 										</button>
-									))}
+										);
+									})}
 								</div>
 							</div>
 
@@ -1600,6 +1626,15 @@ export default function StoreScreen() {
 												<p className='text-xs text-secondary'>
 													{formatCurrency(item.price)}
 												</p>
+												{appliedDiscount?.category_filter_mode && (appliedDiscount.category_filter_ids?.length ?? 0) > 0 && (() => {
+													const catIds = item.categoryIds ?? [];
+													const ids = appliedDiscount.category_filter_ids!;
+													const matches = catIds.some(id => ids.includes(id));
+													const discounted = appliedDiscount.category_filter_mode === 'include' ? matches : !matches;
+													return discounted
+														? <span className='inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-(--success)/10 text-(--success)'>Discounted</span>
+														: <span className='inline-block mt-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary/5 text-secondary/40'>No discount</span>;
+												})()}
 											</div>
 
 											{/* Quantity and Total */}
@@ -1645,20 +1680,10 @@ export default function StoreScreen() {
 											</span>
 										</div>
 									)}
-									{paymentMethod === 'grab' && grabFeePercent > 0 && (
-										<div className='flex justify-between text-xs'>
-											<span className='text-secondary'>
-												Grab Fee ({grabFeePercent}%):
-											</span>
-											<span className='font-medium text-amber-600'>
-												+{formatCurrency(grabFee)}
-											</span>
-										</div>
-									)}
 									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>
 										<span>Total:</span>
 										<span className='text-secondary'>
-											{formatCurrency(total + grabFee)}
+											{formatCurrency(total)}
 										</span>
 									</div>
 								</div>

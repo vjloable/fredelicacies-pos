@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { subscribeToDiscounts, Discount, calculateDiscountAmount } from "@/services/discountService";
+import { subscribeToDiscounts, Discount, calculateDiscountAmount, calculateEligibleSubtotal, isDiscountEligible, CartItemForDiscount } from "@/services/discountService";
 import { formatCurrency } from "@/lib/currency_formatter";
 import { useBranch } from "@/contexts/BranchContext";
 
@@ -9,14 +9,14 @@ interface DiscountDropdownProps {
   value: string;
   onChange: (code: string) => void;
   onDiscountApplied: (discount: Discount | null, amount: number) => void;
-  subtotal: number;
+  cartItems: CartItemForDiscount[];
 }
 
 export default function DiscountDropdown({
   value,
   onChange,
   onDiscountApplied,
-  subtotal
+  cartItems,
 }: DiscountDropdownProps) {
   const { currentBranch } = useBranch();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -63,7 +63,7 @@ export default function DiscountDropdown({
       return;
     }
 
-    const exactMatch = discounts.find(discount => 
+    const exactMatch = discounts.find(discount =>
       discount.name.toLowerCase() === value.toLowerCase() &&
       discount.status === 'active'
     );
@@ -91,6 +91,9 @@ export default function DiscountDropdown({
     };
   }, []);
 
+  const eligible = appliedDiscount ? isDiscountEligible(appliedDiscount, cartItems) : false;
+  const canApply = isValidCode && eligible;
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value.toUpperCase();
     onChange(newValue);
@@ -103,11 +106,9 @@ export default function DiscountDropdown({
   };
 
   const handleApplyDiscount = () => {
-    if (appliedDiscount) {
-      const discountAmount = calculateDiscountAmount(
-        appliedDiscount, 
-        subtotal
-      );
+    if (appliedDiscount && canApply) {
+      const eligibleSubtotal = calculateEligibleSubtotal(appliedDiscount, cartItems);
+      const discountAmount = calculateDiscountAmount(appliedDiscount, eligibleSubtotal);
       onDiscountApplied(appliedDiscount, discountAmount);
     } else {
       onDiscountApplied(null, 0);
@@ -115,7 +116,8 @@ export default function DiscountDropdown({
   };
 
   const getDiscountPreview = (discount: Discount): number => {
-    return calculateDiscountAmount(discount, subtotal);
+    const eligibleSubtotal = calculateEligibleSubtotal(discount, cartItems);
+    return calculateDiscountAmount(discount, eligibleSubtotal);
   };
 
   return (
@@ -133,13 +135,13 @@ export default function DiscountDropdown({
         <button
           onClick={handleApplyDiscount}
           className={`shrink py-2 px-4 font-bold text-xs rounded-e-md transition-all ${
-            isValidCode 
-              ? 'bg-accent text-primary hover:bg-accent/80' 
+            canApply
+              ? 'bg-accent text-primary hover:bg-accent/80'
               : 'bg-accent/50 text-primary text-shadow-lg cursor-not-allowed'
           }`}
-          disabled={!isValidCode}
+          disabled={!canApply}
         >
-          {isValidCode ? (
+          {canApply ? (
             <span className="flex items-center gap-1">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -152,11 +154,21 @@ export default function DiscountDropdown({
         </button>
       </div>
 
+      {/* Ineligible notice */}
+      {isValidCode && !eligible && (
+        <div className="mt-1.5 px-3 py-1.5 bg-(--error)/10 border border-(--error)/20 rounded-lg">
+          <p className="text-xs text-(--error) font-medium">
+            This discount doesn&apos;t apply to the items in your cart
+          </p>
+        </div>
+      )}
+
       {/* Suggestions Dropdown */}
       {showSuggestions && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {filteredDiscounts.map((discount) => {
             const previewAmount = getDiscountPreview(discount);
+            const discountEligible = isDiscountEligible(discount, cartItems);
 
             return (
               <div
@@ -170,25 +182,32 @@ export default function DiscountDropdown({
                       <span className="font-semibold text-secondary text-xs">
                         {discount.name}
                       </span>
+                      {!discountEligible && (
+                        <span className="text-xs text-(--error) bg-(--error)/10 px-1.5 py-0.5 rounded font-medium">
+                          Not eligible
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-secondary opacity-70 mt-1">
-                      {discount.type === 'percentage' 
+                      {discount.type === 'percentage'
                         ? `${discount.value}% off`
                         : `₱${discount.value} off`
                       }
-                      {previewAmount > 0 && (
+                      {discountEligible && previewAmount > 0 && (
                         <span className="text-success font-medium ml-2">
                           (-{formatCurrency(previewAmount)})
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500">Savings</div>
-                    <div className="font-semibold text-success">
-                      {formatCurrency(previewAmount)}
+                  {discountEligible && (
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">Savings</div>
+                      <div className="font-semibold text-success">
+                        {formatCurrency(previewAmount)}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             );
@@ -202,7 +221,7 @@ export default function DiscountDropdown({
       )}
 
       {/* Current Discount Info */}
-      {appliedDiscount && isValidCode && (
+      {appliedDiscount && isValidCode && eligible && (
         <div className="mt-2 px-4 py-2 bg-accent/10 border border-dashed border-accent rounded-lg">
           <div className="flex items-center justify-between text-3">
             <div>
@@ -210,7 +229,7 @@ export default function DiscountDropdown({
                 {appliedDiscount.name}
               </span>
               <span className="text-secondary ml-2">
-                ({appliedDiscount.type === 'percentage' 
+                ({appliedDiscount.type === 'percentage'
                   ? `${appliedDiscount.value}% off`
                   : `₱${appliedDiscount.value} off`
                 })

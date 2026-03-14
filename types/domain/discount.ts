@@ -6,6 +6,8 @@ export interface Discount {
   type: 'percentage' | 'fixed';
   value: number;
   status: 'active' | 'inactive';
+  category_filter_mode: 'include' | 'exclude' | null;
+  category_filter_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -15,6 +17,8 @@ export interface CreateDiscountData {
   type: 'percentage' | 'fixed';
   value: number;
   status?: 'active' | 'inactive';
+  category_filter_mode?: 'include' | 'exclude' | null;
+  category_filter_ids?: string[] | null;
 }
 
 export interface UpdateDiscountData {
@@ -22,4 +26,6 @@ export interface UpdateDiscountData {
   type?: 'percentage' | 'fixed';
   value?: number;
   status?: 'active' | 'inactive';
+  category_filter_mode?: 'include' | 'exclude' | null;
+  category_filter_ids?: string[] | null;
 }
