@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion } from "motion/react";
 import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import TopBar from "@/components/TopBar";
@@ -25,7 +25,7 @@ const TYPE_ACTIONS: Record<string, string[]> = {
     "item_price_changed", "item_photo_changed", "item_category_changed",
     "stock_added", "stock_removed",
   ],
-  bundles: ["bundle_created", "bundle_updated", "bundle_deleted", "bundle_status_changed"],
+  bundles: ["bundle_created", "bundle_updated", "bundle_deleted", "bundle_status_changed", "bundle_categories_changed"],
   orders: ["order_created"],
   discounts: ["discount_created", "discount_updated", "discount_deleted"],
 };
@@ -84,18 +84,33 @@ function formatDescription(log: ActivityLog): string {
     case "logout":              return `${who} logged out`;
     case "time_in":             return `${who} clocked in`;
     case "time_out":            return `${who} clocked out`;
-    case "item_created":        return `${who} added item "${d.name ?? ""}"`;
+    case "item_created": {
+      const cats = Array.isArray(d.categories) && d.categories.length > 0 ? ` · ${d.categories.join(", ")}` : "";
+      return `${who} added item "${d.name ?? ""}"${cats}`;
+    }
     case "item_deleted":        return `${who} deleted item "${d.name ?? ""}"`;
     case "item_renamed":        return `${who} renamed "${d.old_name ?? ""}" → "${d.new_name ?? ""}"`;
     case "item_price_changed":  return `${who} changed price · "${d.item_name ?? ""}" ₱${d.old_price} → ₱${d.new_price}`;
     case "item_photo_changed":  return `${who} updated photo · "${d.item_name ?? ""}"`;
-    case "item_category_changed": return `${who} changed category · "${d.item_name ?? ""}"`;
+    case "item_category_changed": {
+      const oldCats = Array.isArray(d.old_categories) ? d.old_categories.join(", ") : (d.old_category ?? "");
+      const newCats = Array.isArray(d.new_categories) ? d.new_categories.join(", ") : (d.new_category ?? "");
+      return `${who} changed categories · "${d.item_name ?? ""}" [${oldCats}] → [${newCats}]`;
+    }
     case "stock_added":         return `${who} added ${d.delta ?? ""} stock · ${d.item_name ?? ""}`;
     case "stock_removed":       return `${who} removed ${d.delta ?? ""} stock · ${d.item_name ?? ""}`;
-    case "bundle_created":      return `${who} created bundle "${d.name ?? ""}"`;
+    case "bundle_created": {
+      const cats = Array.isArray(d.categories) && d.categories.length > 0 ? ` · ${d.categories.join(", ")}` : "";
+      return `${who} created bundle "${d.name ?? ""}"${cats}`;
+    }
     case "bundle_updated":      return `${who} updated bundle "${d.name ?? ""}"`;
     case "bundle_status_changed": return `${who} set bundle "${d.name ?? ""}" to ${d.status ?? ""}`;
     case "bundle_deleted":      return `${who} deleted bundle "${d.name ?? ""}"`;
+    case "bundle_categories_changed": {
+      const oldCats = Array.isArray(d.old_categories) ? d.old_categories.join(", ") : "";
+      const newCats = Array.isArray(d.new_categories) ? d.new_categories.join(", ") : "";
+      return `${who} changed bundle categories · "${d.bundle_name ?? ""}" [${oldCats}] → [${newCats}]`;
+    }
     case "discount_created":    return `${who} created discount "${d.name ?? ""}"`;
     case "discount_updated":    return `${who} updated discount "${d.name ?? ""}"`;
     case "discount_deleted":    return `${who} deleted discount "${d.name ?? ""}"`;
@@ -163,8 +178,8 @@ export default function LogsScreen() {
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const topRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<string | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const newLogIds = useRef<Set<string>>(new Set());
 
   // Branch name lookup map
@@ -214,16 +229,18 @@ export default function LogsScreen() {
     });
   };
 
-  // IntersectionObserver: trigger load when sentinel enters viewport
-  useEffect(() => {
-    const el = sentinelRef.current;
+  // Callback ref: attaches IntersectionObserver whenever the sentinel mounts/unmounts
+  const sentinelRef = useCallback((el: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
     if (!el) return;
-    const obs = new IntersectionObserver(
+    observerRef.current = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) loadMore.current(); },
       { rootMargin: "200px" }
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+    observerRef.current.observe(el);
   }, []);
 
   // Realtime subscription — all branches
@@ -423,7 +440,7 @@ export default function LogsScreen() {
                               </div>
                               {/* Branch tag — only shown when viewing all branches */}
                               {branchFilter === "all" && log.branch_id && branchMap[log.branch_id] && (
-                                <span className="text-[9px] font-medium text-secondary/40 bg-secondary/8 px-1.5 py-0.5 rounded-full shrink-0 max-w-[80px] truncate">
+                                <span className="text-[9px] font-medium text-secondary/40 bg-secondary/8 px-1.5 py-0.5 rounded-full shrink-0 max-w-20 truncate">
                                   {branchMap[log.branch_id]}
                                 </span>
                               )}
