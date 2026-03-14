@@ -259,3 +259,80 @@ export async function formatReceiptWithCustomLogo(
 ): Promise<Uint8Array> {
 	return formatReceiptESC(order, logoUrl, copies);
 }
+
+// ─── Daily sales summary ──────────────────────────────────────────────────────
+
+export interface DailySalesItem {
+	name: string;
+	qty: number;
+	total: number;
+}
+
+export interface DailySalesData {
+	date: string;         // human-readable label e.g. "Mar 15, 2026"
+	items: DailySalesItem[];
+	totalRevenue: number;
+	totalOrders: number;
+	storeName?: string;
+	branchName?: string;
+	paymentBreakdown?: { method: string; orders: number; total: number }[];
+}
+
+export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Array> {
+	const enc = new TextEncoder();
+	const t = (s: string) => enc.encode(s);
+	const lines: (string | Uint8Array)[] = [];
+
+	lines.push(INIT);
+
+	// Header
+	lines.push(ALIGN_CTR);
+	if (data.storeName) {
+		lines.push(BOLD_ON, SIZE_TALL);
+		lines.push(t(center(data.storeName) + "\n"));
+		lines.push(SIZE_NORMAL, BOLD_OFF);
+	}
+	if (data.branchName) {
+		lines.push(t(center(data.branchName) + "\n"));
+	}
+	lines.push(t(divider("=")));
+	lines.push(BOLD_ON);
+	lines.push(t(center("SALES SUMMARY") + "\n"));
+	lines.push(BOLD_OFF);
+	lines.push(t(center(data.date) + "\n"));
+	lines.push(t(divider("=")));
+
+	// Column header
+	lines.push(ALIGN_LEFT);
+	lines.push(t(` ${padRight("QTY", 3)} ${padRight("ITEM", 19)} ${padLeft("AMOUNT", 7)}\n`));
+	lines.push(t(divider()));
+
+	// Items
+	for (const item of data.items) {
+		lines.push(t(itemLine(item.qty, item.name, item.total)));
+	}
+	lines.push(t(divider()));
+
+	// ── Payment method breakdown ──────────────────────────────────────────────
+	if (data.paymentBreakdown && data.paymentBreakdown.length > 0) {
+		lines.push(t(`${padRight("Payment Type", 13)}${padLeft("ORDERS", 7)}${padLeft("AMOUNT", 12)}\n`));
+		lines.push(t(divider()));
+		for (const pm of data.paymentBreakdown) {
+			lines.push(t(`${padRight(pm.method, 13)}${padLeft(pm.orders.toString(), 7)}${padLeft(formatAmount(pm.total), 12)}\n`));
+		}
+		lines.push(t(divider()));
+	}
+
+	// Totals
+	lines.push(t(totalRow("Total Orders:", data.totalOrders.toString())));
+	lines.push(t(divider("=")));
+	lines.push(BOLD_ON);
+	lines.push(t(totalRow("TOTAL REVENUE:", formatAmount(data.totalRevenue))));
+	lines.push(BOLD_OFF);
+	lines.push(t(divider("=")));
+
+	lines.push(t("\n\n\n"));
+	lines.push(CUT);
+
+	return assembleBytes(lines);
+}

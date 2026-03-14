@@ -127,6 +127,9 @@ export default function StoreScreen() {
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 	const [isClient, setIsClient] = useState(false);
 	const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+	const [tenderedAmount, setTenderedAmount] = useState("");
+	const [orderNote, setOrderNote] = useState("");
+	const [gcashTransactionNumber, setGcashTransactionNumber] = useState("");
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
@@ -663,7 +666,9 @@ export default function StoreScreen() {
 				total,
 				appliedDiscount?.id,
 				discountAmount,
-				paymentMethod
+				paymentMethod,
+				paymentMethod !== 'gcash' ? orderNote : undefined,
+				paymentMethod === 'gcash' ? gcashTransactionNumber : undefined
 			);
 
 			if (orderError) {
@@ -691,8 +696,8 @@ export default function StoreScreen() {
 					? cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0)
 					: 0,
 				total,
-				payment: total,
-				change: 0,
+				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
+				change: paymentMethod === 'cash' ? Math.max(0, (parseFloat(tenderedAmount) || total) - total) : 0,
 				cashier:
 					timeTracking.worker?.name ||
 					user.email ||
@@ -730,6 +735,9 @@ export default function StoreScreen() {
 			setDiscountAmount(0);
 			setAppliedDiscount(null);
 			setPaymentMethod('cash');
+			setTenderedAmount("");
+			setOrderNote("");
+			setGcashTransactionNumber("");
 			setShowOrderConfirmation(false);
 		} catch (error) {
 			console.error("Error placing order:", error);
@@ -1726,7 +1734,55 @@ export default function StoreScreen() {
 											{formatCurrency(total)}
 										</span>
 									</div>
+									{paymentMethod === 'cash' && (
+										<>
+											<div className='flex justify-between items-center text-sm border-t border-gray-200 pt-2'>
+												<span className='text-secondary/70'>Tendered:</span>
+												<div className='relative w-32'>
+													<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
+													<input
+														type='text'
+														inputMode='decimal'
+														value={tenderedAmount}
+														onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) setTenderedAmount(v); }}
+														placeholder={String(total)}
+														className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+													/>
+												</div>
+											</div>
+											{parseFloat(tenderedAmount) >= total && (
+												<div className='flex justify-between text-sm font-semibold text-accent'>
+													<span>Change:</span>
+													<span>{formatCurrency(parseFloat(tenderedAmount) - total)}</span>
+												</div>
+											)}
+										</>
+									)}
 								</div>
+							</div>
+							{/* Note / Transaction # */}
+							<div className='mt-3 pt-3 border-t border-gray-200 space-y-1'>
+								<label className='text-xs text-secondary/70'>
+									{paymentMethod === 'gcash' ? 'Transaction #' : 'Note'}{' '}
+									<span className='text-secondary/40'>(optional)</span>
+								</label>
+								{paymentMethod === 'gcash' ? (
+									<input
+										type='text'
+										value={gcashTransactionNumber}
+										onChange={e => setGcashTransactionNumber(e.target.value)}
+										placeholder='e.g. 123456789'
+										className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+									/>
+								) : (
+									<textarea
+										value={orderNote}
+										onChange={e => setOrderNote(e.target.value)}
+										placeholder='Add a note...'
+										rows={2}
+										className='w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none'
+									/>
+								)}
 							</div>
 						</div>
 

@@ -14,6 +14,8 @@ export const orderRepository = {
       discount_id?: string | null;
       discount_amount?: number;
       payment_method?: 'cash' | 'gcash' | 'grab';
+      note?: string | null;
+      transaction_number?: string | null;
       items: Array<{
         item_id?: string | null;
         bundle_id?: string | null;
@@ -38,6 +40,8 @@ export const orderRepository = {
         discount_id: orderData.discount_id || null,
         discount_amount: orderData.discount_amount || 0,
         payment_method: orderData.payment_method ?? 'cash',
+        note: orderData.note ?? null,
+        transaction_number: orderData.transaction_number ?? null,
         status: 'completed',
       })
       .select()
@@ -118,6 +122,8 @@ export const orderRepository = {
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
       payment_method: order.payment_method ?? 'cash',
+      note: order.note ?? null,
+      transaction_number: order.transaction_number ?? null,
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -152,6 +158,8 @@ export const orderRepository = {
       discount_id: data.discount_id,
       discount_amount: data.discount_amount,
       payment_method: data.payment_method ?? 'cash',
+      note: data.note ?? null,
+      transaction_number: data.transaction_number ?? null,
       status: data.status,
       created_at: data.created_at,
       updated_at: data.updated_at,
@@ -192,6 +200,8 @@ export const orderRepository = {
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
       payment_method: order.payment_method ?? 'cash',
+      note: order.note ?? null,
+      transaction_number: order.transaction_number ?? null,
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -236,6 +246,8 @@ export const orderRepository = {
       discount_id: order.discount_id,
       discount_amount: order.discount_amount,
       payment_method: order.payment_method ?? 'cash',
+      note: order.note ?? null,
+      transaction_number: order.transaction_number ?? null,
       status: order.status,
       created_at: order.created_at,
       updated_at: order.updated_at,

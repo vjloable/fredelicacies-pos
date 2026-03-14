@@ -28,7 +28,7 @@ import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
 import * as XLSX from "xlsx";
-import { formatReceiptWithLogo } from "@/lib/esc_formatter";
+import { formatReceiptWithLogo, formatDailySalesESC } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
 interface TimeSeriesData {
@@ -312,6 +312,56 @@ export default function SalesScreen() {
 			await printReceipt(bytes);
 		} catch (e) {
 			console.error("Reprint failed:", e);
+		} finally {
+			setIsPrinting(false);
+		}
+	};
+
+	const handlePrintDailySales = async () => {
+		if (isPrinting) return;
+		setIsPrinting(true);
+		try {
+			// Aggregate items across all orders in the current period
+			const itemMap = new Map<string, { qty: number; total: number }>();
+			for (const order of analyticsOrders) {
+				for (const item of order.items) {
+					const existing = itemMap.get(item.name);
+					if (existing) {
+						existing.qty += item.quantity;
+						existing.total += item.price * item.quantity;
+					} else {
+						itemMap.set(item.name, { qty: item.quantity, total: item.price * item.quantity });
+					}
+				}
+			}
+			const items = Array.from(itemMap.entries())
+				.map(([name, { qty, total }]) => ({ name, qty, total }))
+				.sort((a, b) => b.total - a.total);
+
+			const pmMap = new Map<string, { orders: number; total: number }>();
+			for (const order of analyticsOrders) {
+				const raw = ((order.payment_method as string) || 'cash').toLowerCase();
+				const m = raw === 'gcash' ? 'GCash' : raw === 'grab' ? 'Grab' : 'Cash';
+				const entry = pmMap.get(m);
+				if (entry) { entry.orders++; entry.total += order.total; }
+				else { pmMap.set(m, { orders: 1, total: order.total }); }
+			}
+			const paymentBreakdown = Array.from(pmMap.entries())
+				.map(([method, { orders, total }]) => ({ method, orders, total }))
+				.sort((a, b) => b.total - a.total);
+
+			const bytes = await formatDailySalesESC({
+				date: periodLabel.replace(/_/g, " "),
+				items,
+				totalRevenue: currentPeriodStats.totalRevenue,
+				totalOrders: currentPeriodStats.totalOrders,
+				storeName: "FREDELECACIES",
+				branchName: currentBranch?.name,
+				paymentBreakdown,
+			});
+			await printReceipt(bytes);
+		} catch (e) {
+			console.error("Daily sales print failed:", e);
 		} finally {
 			setIsPrinting(false);
 		}
@@ -621,31 +671,29 @@ export default function SalesScreen() {
 					<TopBar title='Sales' icon={<SalesIcon />} />
 				</div>
 
-				{/* Toolbar: branch + mode tabs + date picker */}
+				{/* Toolbar: branch + date picker row */}
 				<div className='px-6 py-3 shrink-0 flex flex-col gap-2 border-b border-gray-100'>
-					<div className='flex items-center justify-between gap-4'>
-						<span className='flex items-center gap-2 text-xs text-secondary/50'>
-							<span className='w-1.5 h-1.5 bg-accent rounded-full' />
-							{currentBranch?.name || "Loading..."}
-						</span>
-						<div className='flex items-center gap-1 bg-accent/10 rounded-lg p-1 border border-accent/20'>
-							{(["day", "week", "month", "year", "all"] as ViewMode[]).map((mode) => (
-								<button
-									key={mode}
-									onClick={() => setViewMode(mode)}
-									className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-										viewMode === mode
-											? "bg-accent text-primary font-bold shadow-sm"
-											: "text-secondary/50 hover:text-secondary"
-									}`}>
-									{mode === "day" ? "Day" : mode === "week" ? "Week" : mode === "month" ? "Month" : mode === "year" ? "Year" : "All"}
-								</button>
-							))}
-						</div>
-					</div>
-					{/* Date selector row — export button lives here to share the same height as pickers */}
+					<span className='flex items-center gap-2 text-xs text-secondary/50'>
+						<span className='w-1.5 h-1.5 bg-accent rounded-full' />
+						{currentBranch?.name || "Loading..."}
+					</span>
+					{/* Date selector row */}
 					<div className='flex items-center justify-between gap-2 flex-wrap'>
 						<div className='flex items-center gap-2 flex-wrap'>
+							<div className='flex items-center gap-1 bg-accent/10 rounded-lg p-1 border border-accent/20'>
+								{(["day", "week", "month", "year", "all"] as ViewMode[]).map((mode) => (
+									<button
+										key={mode}
+										onClick={() => setViewMode(mode)}
+										className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+											viewMode === mode
+												? "bg-accent text-primary font-bold shadow-sm"
+												: "text-secondary/50 hover:text-secondary"
+										}`}>
+										{mode === "day" ? "Day" : mode === "week" ? "Week" : mode === "month" ? "Month" : mode === "year" ? "Year" : "All"}
+									</button>
+								))}
+							</div>
 							{viewMode === "day" && (
 								<DayPicker value={selDay} onChange={setSelDay} />
 							)}
@@ -659,16 +707,31 @@ export default function SalesScreen() {
 								<YearPicker value={selYear} onChange={setSelYear} />
 							)}
 						</div>
-						<button
-							onClick={generateXLSX}
-							className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0'>
-							<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
-								<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
-									<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
-								</svg>
-								<span className='mt-0.5'>EXPORT</span>
-							</div>
-						</button>
+						<div className="flex items-center gap-2 shrink-0">
+							<button
+								onClick={handlePrintDailySales}
+								disabled={isPrinting}
+								className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-60 disabled:pointer-events-none'>
+								<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
+									<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+										<polyline points='6 9 6 2 18 2 18 9' />
+										<path d='M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2' />
+										<rect x='6' y='14' width='12' height='8' />
+									</svg>
+									<span className='mt-0.5'>{isPrinting ? 'PRINTING...' : 'PRINT'}</span>
+								</div>
+							</button>
+							<button
+								onClick={generateXLSX}
+								className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0'>
+								<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
+									<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+										<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
+									</svg>
+									<span className='mt-0.5'>EXPORT</span>
+								</div>
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -1291,6 +1354,17 @@ export default function SalesScreen() {
 									{formatCurrency(calculateOrderProfit(selectedOrder))}
 								</span>
 							</div>
+
+							{(selectedOrder.note || selectedOrder.transaction_number) && (
+								<div className='mt-3 pt-3 border-t border-dashed border-secondary/20 space-y-1'>
+									<span className='text-secondary/40 uppercase tracking-wide text-2.5 font-sans'>
+										{selectedOrder.payment_method === 'gcash' ? 'Transaction #' : 'Note'}
+									</span>
+									<p className='text-xs text-secondary/70 wrap-break-word'>
+										{selectedOrder.transaction_number || selectedOrder.note}
+									</p>
+								</div>
+							)}
 
 							<div className='flex gap-2 mt-5'>
 								<button
