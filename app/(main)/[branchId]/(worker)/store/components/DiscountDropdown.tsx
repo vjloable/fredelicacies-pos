@@ -146,8 +146,8 @@ export default function DiscountDropdown({
 
       {/* Ineligible notice */}
       {appliedDiscount && !eligible && (
-        <div className="mt-1.5 px-3 py-1.5 bg-(--error)/10 border border-(--error)/20 rounded-lg">
-          <p className="text-xs text-(--error) font-medium">
+        <div className="mt-1.5 px-3 py-1.5 bg-error/10 border border-error/20 rounded-lg">
+          <p className="text-xs text-error font-medium">
             This discount doesn&apos;t apply to the items in your cart
           </p>
         </div>
@@ -210,7 +210,7 @@ export default function DiscountDropdown({
                             </svg>
                           )}
                           {!discountEligible && (
-                            <span className="text-xs text-(--error) bg-(--error)/10 px-1.5 py-0.5 rounded font-medium shrink-0">
+                            <span className="text-xs text-error bg-error/10 px-1.5 py-0.5 rounded font-medium shrink-0">
                               Not eligible
                             </span>
                           )}
@@ -220,7 +220,7 @@ export default function DiscountDropdown({
                             ? `${discount.value}% off`
                             : `₱${discount.value} off`}
                           {discountEligible && preview > 0 && (
-                            <span className="text-(--success) font-medium ml-1">
+                            <span className="text-success font-medium ml-1">
                               · save {formatCurrency(preview)}
                             </span>
                           )}
@@ -228,7 +228,7 @@ export default function DiscountDropdown({
                       </div>
                       {discountEligible && preview > 0 && (
                         <div className="text-right ml-3 shrink-0">
-                          <div className="font-semibold text-(--success) text-xs">
+                          <div className="font-semibold text-success text-xs">
                             -{formatCurrency(preview)}
                           </div>
                         </div>
