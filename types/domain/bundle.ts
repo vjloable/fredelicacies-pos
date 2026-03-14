@@ -9,6 +9,7 @@ export interface Bundle {
   is_custom: boolean;
   max_pieces: number | null;
   category_id?: string | null;
+  category_ids?: string[]; // populated from bundle_categories junction table
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -46,6 +47,7 @@ export interface CreateBundleData {
   is_custom?: boolean;
   max_pieces?: number | null;
   category_id?: string | null;
+  category_ids?: string[];
   status?: 'active' | 'inactive';
 }
 
@@ -57,5 +59,6 @@ export interface UpdateBundleData {
   is_custom?: boolean;
   max_pieces?: number | null;
   category_id?: string | null;
+  category_ids?: string[];
   status?: 'active' | 'inactive';
 }

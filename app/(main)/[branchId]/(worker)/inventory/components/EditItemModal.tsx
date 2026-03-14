@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
 import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
-import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { logActivity } from '@/services/activityLogService';
@@ -34,9 +33,25 @@ export default function EditItemModal({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [priceInput, setPriceInput] = useState('');
   const [costInput, setCostInput] = useState('');
+  const [grabPriceInput, setGrabPriceInput] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click-outside for category dropdown
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [categoryDropdownOpen]);
 
   // Update local state when editingItem changes
   useEffect(() => {
@@ -44,6 +59,12 @@ export default function EditItemModal({
       setLocalEditingItem({ ...editingItem });
       setPriceInput(editingItem.price > 0 ? editingItem.price.toString() : '');
       setCostInput(editingItem.cost ? editingItem.cost.toString() : '');
+      setGrabPriceInput(editingItem.grab_price ? editingItem.grab_price.toString() : '');
+      setSelectedCategoryIds(
+        editingItem.category_ids?.length
+          ? editingItem.category_ids
+          : editingItem.category_id ? [editingItem.category_id] : []
+      );
       setShowDeleteConfirm(false); // Reset delete confirmation when new item is loaded
     }
   }, [editingItem]);
@@ -79,7 +100,17 @@ export default function EditItemModal({
         return;
       }
     }
-    
+
+    // Validate grab price (optional field)
+    let finalGrabPrice: number | null = null;
+    if (grabPriceInput !== '') {
+      finalGrabPrice = parseFloat(grabPriceInput);
+      if (isNaN(finalGrabPrice) || finalGrabPrice < 0) {
+        onError('Please enter a valid grab price');
+        return;
+      }
+    }
+
     // Ensure price is greater than 0 for selling
     if (finalPrice <= 0) {
       onError('Selling price must be greater than 0');
@@ -92,9 +123,11 @@ export default function EditItemModal({
         name: localEditingItem.name,
         price: finalPrice,
         cost: finalCost,
+        grab_price: finalGrabPrice,
         stock: localEditingItem.stock,
         description: localEditingItem.description || undefined,
-        category_id: localEditingItem.category_id || undefined,
+        category_ids: selectedCategoryIds,
+        category_id: selectedCategoryIds[0] || undefined,
         img_url: localEditingItem.img_url || undefined
       };
       
@@ -110,8 +143,14 @@ export default function EditItemModal({
           void logActivity({ branchId, userId, action: 'item_price_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_price: editingItem.price, new_price: updates.price } });
         if (updates.img_url !== undefined && (updates.img_url || null) !== editingItem.img_url)
           void logActivity({ branchId, userId, action: 'item_photo_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName } });
-        if (updates.category_id !== undefined && updates.category_id !== editingItem.category_id)
-          void logActivity({ branchId, userId, action: 'item_category_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName } });
+        const prevCategoryIds = editingItem.category_ids?.length
+          ? editingItem.category_ids
+          : editingItem.category_id ? [editingItem.category_id] : [];
+        const categoriesChanged =
+          selectedCategoryIds.length !== prevCategoryIds.length ||
+          selectedCategoryIds.some(id => !prevCategoryIds.includes(id));
+        if (categoriesChanged)
+          void logActivity({ branchId, userId, action: 'item_category_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_categories: prevCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean), new_categories: selectedCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) } });
         if (updates.stock !== undefined && updates.stock !== editingItem.stock) {
           const delta = updates.stock - editingItem.stock;
           void logActivity({ branchId, userId, action: delta > 0 ? 'stock_added' : 'stock_removed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_stock: editingItem.stock, new_stock: updates.stock, delta: Math.abs(delta) } });
@@ -209,25 +248,65 @@ export default function EditItemModal({
             />
           </div>
 
-          {/* Category */}
+          {/* Categories */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
-              Category <span className='text-error'>*</span>
+              Categories
+              <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
             </label>
-            <DropdownField
-              options={categories.map((category) => category.name)}
-              defaultValue={categories.find(cat => cat.id === localEditingItem.category_id)?.name || ''}
-              onChange={(categoryName) => {
-                const selectedCategory = categories.find(cat => cat.name === categoryName);
-                if (selectedCategory) {
-                  setLocalEditingItem({...localEditingItem, category_id: selectedCategory.id});
-                }
-              }}
-              roundness={"lg"}
-              height={38}
-              valueAlignment={'left'}
-              shadow={false}
-            />
+            <div className="relative" ref={categoryDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setCategoryDropdownOpen(o => !o)}
+                className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+              >
+                {selectedCategoryIds.length === 0 ? (
+                  <span className="text-secondary/40 text-3">Select categories...</span>
+                ) : (
+                  selectedCategoryIds.map(id => {
+                    const cat = categories.find(c => c.id === id);
+                    if (!cat) return null;
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                        {cat.name}
+                        <span
+                          onClick={(e) => { e.stopPropagation(); setSelectedCategoryIds(prev => prev.filter(i => i !== id)); }}
+                          className="ml-0.5 hover:text-error cursor-pointer leading-none"
+                        >×</span>
+                      </span>
+                    );
+                  })
+                )}
+                <svg className={`w-4 h-4 text-secondary/40 ml-auto shrink-0 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {categoryDropdownOpen && (
+                <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                  {categories.map(cat => (
+                    <label
+                      key={cat.id}
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCategoryIds.includes(cat.id)}
+                        onChange={() => setSelectedCategoryIds(prev =>
+                          prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                        )}
+                        className="w-3.5 h-3.5 rounded shrink-0 accent-accent"
+                      />
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                      <span className="text-xs text-secondary">{cat.name}</span>
+                    </label>
+                  ))}
+                  {categories.length === 0 && (
+                    <p className="text-xs text-secondary/50 text-center py-2">No categories available</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Description */}
@@ -333,6 +412,42 @@ export default function EditItemModal({
                   inputMode="decimal"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Grab Price */}
+          <div>
+            <label className="block text-xs font-medium text-secondary mb-2">
+              Grab Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
+              <input
+                type="number"
+                value={grabPriceInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                    setGrabPriceInput(value);
+                    if (value !== '' && !isNaN(parseFloat(value))) {
+                      setLocalEditingItem({...localEditingItem, grab_price: parseFloat(value)});
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                }}
+                onFocus={(e) => e.target.select()}
+                onBlur={() => {
+                  if (grabPriceInput === '' || isNaN(parseFloat(grabPriceInput))) {
+                    setLocalEditingItem({...localEditingItem, grab_price: null});
+                    setGrabPriceInput('');
+                  }
+                }}
+                className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                placeholder="0.00"
+                inputMode="decimal"
+              />
             </div>
           </div>
 

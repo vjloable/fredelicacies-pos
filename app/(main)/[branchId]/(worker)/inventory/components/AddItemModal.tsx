@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { createInventoryItem } from '@/services/inventoryService';
 import type { Category, CreateInventoryItemData } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
-import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { logActivity } from '@/services/activityLogService';
@@ -27,23 +26,32 @@ export default function AddItemModal({
   const { currentBranch } = useBranch();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [newItem, setNewItem] = useState({ 
-    name: "", 
-    price: 0, 
-    cost: undefined as number | undefined, // Add optional cost field
-    category_id: categories[0]?.id || '', 
-    stock: 0, 
+  const [newItem, setNewItem] = useState({
+    name: "",
+    price: 0,
+    cost: undefined as number | undefined,
+    stock: 0,
     description: "",
     img_url: ""
   });
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [priceInput, setPriceInput] = useState('');
   const [costInput, setCostInput] = useState('');
+  const [grabPriceInput, setGrabPriceInput] = useState('');
   const [stockInput, setStockInput] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Update category_id when categories change and current selection is invalid
-  if (categories.length > 0 && !categories.find(cat => cat.id === newItem.category_id)) {
-    setNewItem(prev => ({ ...prev, category_id: categories[0].id || '' }));
-  }
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [categoryDropdownOpen]);
 
   if (!isOpen) return null;
 
@@ -66,6 +74,16 @@ export default function AddItemModal({
         return;
       }
     }
+
+    // Validate grab price (optional field)
+    let finalGrabPrice: number | null = null;
+    if (grabPriceInput !== '') {
+      finalGrabPrice = parseFloat(grabPriceInput);
+      if (isNaN(finalGrabPrice) || finalGrabPrice < 0) {
+        onError('Please enter a valid grab price');
+        return;
+      }
+    }
     
     // Validate stock
     const finalStock = stockInput === '' ? 0 : parseInt(stockInput);
@@ -80,27 +98,30 @@ export default function AddItemModal({
         name: newItem.name,
         price: finalPrice,
         cost: finalCost,
-        category_id: newItem.category_id,
+        grab_price: finalGrabPrice,
+        category_ids: selectedCategoryIds,
+        category_id: selectedCategoryIds[0] || undefined,
         stock: finalStock,
         description: newItem.description || undefined,
         img_url: newItem.img_url || undefined
       };
       
       await createInventoryItem(currentBranch!.id, itemData);
-      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'item_created', entityType: 'inventory', details: { name: newItem.name, price: finalPrice } });
+      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'item_created', entityType: 'inventory', details: { name: newItem.name, price: finalPrice, categories: selectedCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) } });
 
       // Reset form
-      setNewItem({ 
-        name: "", 
-        price: 0, 
-        cost: undefined, // Reset cost field
-        category_id: categories[0]?.id || '', 
-        stock: 0, 
+      setNewItem({
+        name: "",
+        price: 0,
+        cost: undefined,
+        stock: 0,
         description: "",
         img_url: ""
       });
+      setSelectedCategoryIds([]);
       setPriceInput('');
       setCostInput('');
+      setGrabPriceInput('');
       setStockInput('');
       onClose();
     } catch (error) {
@@ -144,7 +165,7 @@ export default function AddItemModal({
             </div>
 
             {/* Add Item Form */}
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                 <div>
@@ -270,6 +291,36 @@ export default function AddItemModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
+                    Grab Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
+                    <input
+                      type="text"
+                      value={grabPriceInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                          setGrabPriceInput(value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      onBlur={() => {
+                        if (grabPriceInput !== '' && isNaN(parseFloat(grabPriceInput))) {
+                          setGrabPriceInput('');
+                        }
+                      }}
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="0.00"
+                      inputMode="decimal"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-secondary mb-2">
                     Initial Stock <span className="text-error">*</span>
                   </label>
                   <input
@@ -310,98 +361,64 @@ export default function AddItemModal({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Category <span className="text-error">*</span>
+                    Categories
+                    <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                   </label>
-                  <DropdownField
-                    options={categories.map(cat => cat.name)}
-                    defaultValue={categories.find(cat => cat.id === newItem.category_id)?.name || categories[0]?.name || ''}
-                    dropdownPosition="bottom-right"
-                    dropdownOffset={{ top: 2, right: 0 }}
-                    onChange={(categoryName) => {
-                      const selectedCategory = categories.find(cat => cat.name === categoryName);
-                      if (selectedCategory) {
-                        setNewItem({...newItem, category_id: selectedCategory.id});
-                      }
-                    }}
-                    heightClassName="h-9.5"
-                    roundness="8"
-                    fontSize="12px"
-                    valueAlignment="left"
-                    shadow={false}
-                    padding="12px"
-                    borderClassName="border-2 border-secondary/20 shadow-none bg-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Preview Section */}
-              {/* {(newItem.name || newItem.price || newItem.imgUrl) && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="text-xs text-secondary opacity-70 mb-2">Preview:</div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                      {newItem.imgUrl ? (
-                        <Image
-                          src={newItem.imgUrl}
-                          alt={newItem.name || 'New item'}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-cover"
-                        />
+                  <div className="relative" ref={categoryDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDropdownOpen(o => !o)}
+                      className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+                    >
+                      {selectedCategoryIds.length === 0 ? (
+                        <span className="text-secondary/40 text-3">Select categories...</span>
                       ) : (
-                        <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                        </svg>
+                        selectedCategoryIds.map(id => {
+                          const cat = categories.find(c => c.id === id);
+                          if (!cat) return null;
+                          return (
+                            <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                              {cat.name}
+                              <span
+                                onClick={(e) => { e.stopPropagation(); setSelectedCategoryIds(prev => prev.filter(i => i !== id)); }}
+                                className="ml-0.5 hover:text-error cursor-pointer leading-none"
+                              >×</span>
+                            </span>
+                          );
+                        })
                       )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-1">
-                        <h4 className="font-semibold text-secondary">
-                          {newItem.name || 'Item Name'}
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold text-accent">
-                            {formatCurrency(newItem.price || 0)}
-                          </div>
-                          {newItem.cost && newItem.cost > 0 && (
-                            <>
-                              <span className="text-xs text-gray-400">|</span>
-                              <div className="text-xs text-gray-600">
-                                Cost: {formatCurrency(newItem.cost)}
-                              </div>
-                              {(newItem.price || 0) > 0 && (
-                                <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                                  {(((newItem.price - (newItem.cost || 0)) / newItem.price) * 100).toFixed(1)}% margin
-                                </div>
+                      <svg className={`w-4 h-4 text-secondary/40 ml-auto shrink-0 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                        {categories.map(cat => (
+                          <label
+                            key={cat.id}
+                            className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCategoryIds.includes(cat.id)}
+                              onChange={() => setSelectedCategoryIds(prev =>
+                                prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
                               )}
-                            </>
-                          )}
-                        </div>
+                              className="w-3.5 h-3.5 rounded shrink-0 accent-accent"
+                            />
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                            <span className="text-xs text-secondary">{cat.name}</span>
+                          </label>
+                        ))}
+                        {categories.length === 0 && (
+                          <p className="text-xs text-secondary/50 text-center py-2">No categories available</p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-xs text-secondary opacity-70 flex-1">
-                          {newItem.description || 'No description'}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: categories.find(cat => cat.id === newItem.categoryId)?.color || '#6B7280' }}
-                          ></div>
-                          <span className="text-xs text-secondary opacity-70">
-                            {categories.find(cat => cat.id === newItem.categoryId)?.name || 'Unknown Category'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-secondary opacity-70">Initial Stock</div>
-                      <div className="text-lg font-bold text-secondary">
-                        {newItem.stock || 0}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-              )} */}
+              </div>
             </div>
 
             {/* Image Upload */}

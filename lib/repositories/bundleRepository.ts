@@ -11,9 +11,17 @@ function registerBundles(bundles: BundleWithComponents[], branchId: string) {
   bundles.forEach(bundle => { if (bundle.id) bundleBranchIndex.set(bundle.id, branchId); });
 }
 
+function mergeBundleCategoryIds(bundle: any, bundleCategories: any[]): any {
+  const catIds = bundleCategories
+    .filter(bc => bc.bundle_id === bundle.id)
+    .map(bc => bc.category_id as string);
+  return { ...bundle, category_ids: catIds };
+}
+
 export const bundleRepository = {
   // Create a new bundle
   async create(branchId: string, data: CreateBundleData): Promise<{ bundle: Bundle | null; error: any }> {
+    const categoryIds = data.category_ids ?? (data.category_id ? [data.category_id] : []);
     const { data: bundle, error } = await supabase
       .from('bundles')
       .insert({
@@ -25,13 +33,19 @@ export const bundleRepository = {
         is_predefined: data.is_predefined || false,
         is_custom: data.is_custom || false,
         max_pieces: data.is_custom ? (data.max_pieces ?? null) : null,
-        category_id: data.category_id ?? null,
+        category_id: categoryIds[0] ?? null,
         status: data.status || 'active',
       })
       .select()
       .single();
 
-    return { bundle, error };
+    if (bundle && categoryIds.length > 0) {
+      await supabase.from('bundle_categories').insert(
+        categoryIds.map(catId => ({ bundle_id: bundle.id, category_id: catId }))
+      );
+    }
+
+    return { bundle: bundle ? { ...bundle, category_ids: categoryIds } : null, error };
   },
 
   // Add components to a bundle
@@ -53,11 +67,16 @@ export const bundleRepository = {
   async getByBranch(branchId: string): Promise<{ bundles: Bundle[]; error: any }> {
     const { data, error } = await supabase
       .from('bundles')
-      .select('*')
+      .select('*, bundle_categories(category_id)')
       .eq('branch_id', branchId)
       .order('name', { ascending: true });
 
-    return { bundles: data || [], error };
+    const bundles: Bundle[] = (data || []).map(({ bundle_categories: bc, ...bundle }) => ({
+      ...bundle,
+      category_ids: (bc || []).map((r: { category_id: string }) => r.category_id),
+    }));
+
+    return { bundles, error };
   },
 
   // Get all bundles with their components
@@ -75,19 +94,24 @@ export const bundleRepository = {
 
     const bundleIds = bundles.map(b => b.id);
 
-    // Fetch components and additional items in parallel
-    const [{ data: components, error: componentsError }, { data: additionalItems }] = await Promise.all([
+    // Fetch components, additional items, and category associations in parallel
+    const [
+      { data: components, error: componentsError },
+      { data: additionalItems },
+      { data: bundleCategories },
+    ] = await Promise.all([
       supabase.from('bundle_components').select('*, inventory_items (*)').in('bundle_id', bundleIds),
       supabase.from('bundle_additional_items').select('*, inventory_items (*)').in('bundle_id', bundleIds),
+      supabase.from('bundle_categories').select('bundle_id, category_id').in('bundle_id', bundleIds),
     ]);
 
     if (componentsError) {
       return { bundles: [], error: componentsError };
     }
 
-    // Merge bundles with their components and additional items
+    // Merge bundles with their components, additional items, and category_ids
     const bundlesWithComponents: BundleWithComponents[] = bundles.map(bundle => ({
-      ...bundle,
+      ...mergeBundleCategoryIds(bundle, bundleCategories || []),
       components: (components || [])
         .filter(c => c.bundle_id === bundle.id)
         .map(c => ({
@@ -117,11 +141,16 @@ export const bundleRepository = {
   async getById(id: string): Promise<{ bundle: Bundle | null; error: any }> {
     const { data, error } = await supabase
       .from('bundles')
-      .select('*')
+      .select('*, bundle_categories(category_id)')
       .eq('id', id)
       .single();
 
-    return { bundle: data, error };
+    if (!data) return { bundle: null, error };
+    const { bundle_categories: bc, ...bundle } = data;
+    return {
+      bundle: { ...bundle, category_ids: (bc || []).map((r: { category_id: string }) => r.category_id) },
+      error,
+    };
   },
 
   // Get single bundle with components
@@ -136,9 +165,14 @@ export const bundleRepository = {
       return { bundle: null, error: bundleError };
     }
 
-    const [{ data: components, error: componentsError }, { data: additionalItems }] = await Promise.all([
+    const [
+      { data: components, error: componentsError },
+      { data: additionalItems },
+      { data: bundleCategories },
+    ] = await Promise.all([
       supabase.from('bundle_components').select('*, inventory_items (*)').eq('bundle_id', id),
       supabase.from('bundle_additional_items').select('*, inventory_items (*)').eq('bundle_id', id),
+      supabase.from('bundle_categories').select('bundle_id, category_id').eq('bundle_id', id),
     ]);
 
     if (componentsError) {
@@ -147,6 +181,7 @@ export const bundleRepository = {
 
     const bundleWithComponents: BundleWithComponents = {
       ...bundle,
+      category_ids: (bundleCategories || []).map((r: { category_id: string }) => r.category_id),
       components: (components || []).map(c => ({
         id: c.id,
         bundle_id: c.bundle_id,
@@ -170,14 +205,31 @@ export const bundleRepository = {
 
   // Update bundle
   async update(id: string, data: UpdateBundleData): Promise<{ bundle: Bundle | null; error: any }> {
+    const { category_ids, ...dbData } = data;
+
+    // Keep category_id in sync with the first selected category
+    if (category_ids !== undefined) {
+      dbData.category_id = category_ids[0] ?? null;
+    }
+
     const { data: bundle, error } = await supabase
       .from('bundles')
-      .update(data)
+      .update(dbData)
       .eq('id', id)
       .select()
       .single();
 
-    return { bundle, error };
+    if (bundle && category_ids !== undefined) {
+      await supabase.from('bundle_categories').delete().eq('bundle_id', id);
+      if (category_ids.length > 0) {
+        await supabase.from('bundle_categories').insert(
+          category_ids.map(catId => ({ bundle_id: id, category_id: catId }))
+        );
+      }
+    }
+
+    const resolvedCategoryIds = category_ids ?? [];
+    return { bundle: bundle ? { ...bundle, category_ids: resolvedCategoryIds } : null, error };
   },
 
   // Delete bundle (components cascade delete via FK)
@@ -288,6 +340,20 @@ export const bundleRepository = {
           event: '*',
           schema: 'public',
           table: 'bundle_additional_items',
+        },
+        () => {
+          this.getByBranchWithComponents(branchId).then(({ bundles }) => {
+            registerBundles(bundles, branchId);
+            callback(bundles);
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bundle_categories',
         },
         () => {
           this.getByBranchWithComponents(branchId).then(({ bundles }) => {

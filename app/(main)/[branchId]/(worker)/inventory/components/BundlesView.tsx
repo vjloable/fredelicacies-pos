@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import SafeImage from '@/components/SafeImage';
-import LogoIcon from '../../store/icons/LogoIcon';
 import type { BundleWithComponents, InventoryItem, Category } from '@/types/domain';
 import { subscribeToBundles } from '@/services/bundleService';
 import { subscribeToInventoryItems } from '@/services/inventoryService';
 import { calculateBundleAvailability } from '@/services/bundleService';
+import { getCategoryColor } from '@/services/categoryService';
 import { useBranch } from '@/contexts/BranchContext';
 import { formatCurrency } from '@/lib/currency_formatter';
 import PlusIcon from '@/components/icons/PlusIcon';
@@ -33,6 +33,15 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingBundle, setEditingBundle] = useState<BundleWithComponents | null>(null);
+  const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedBundles(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // Subscribe to bundles
   useEffect(() => {
@@ -116,10 +125,14 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
         </h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-3 py-1.5 bg-bundle hover:bg-bundle/90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
+          className="bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
         >
-          <PlusIcon className="w-3.5 h-3.5" />
-          Add Bundle
+          <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
+            <div className="size-4">
+              <PlusIcon className="drop-shadow-lg" />
+            </div>
+            <span className="mt-0.5">ADD BUNDLE</span>
+          </div>
         </button>
       </div>
 
@@ -137,85 +150,89 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-bundle hover:bg-bundle/90 text-white rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
+            className="bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
           >
-            <PlusIcon className="w-4 h-4" />
-            Create First Bundle
+            <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
+              <div className="size-4">
+                <PlusIcon className="drop-shadow-lg" />
+              </div>
+              <span className="mt-0.5">ADD BUNDLE</span>
+            </div>
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-1">
           {filteredBundles.map((bundle) => {
             const availability = bundleAvailability.get(bundle.id) || 0;
-            const availabilityColor = availability > 10
-              ? 'bg-green-100 text-green-700'
-              : availability > 0
-              ? 'bg-yellow-100 text-yellow-700'
-              : 'bg-red-100 text-red-600';
-
+            const isExpanded = expandedBundles.has(bundle.id);
             return (
-              <div
-                key={bundle.id}
-                className="bg-primary p-2 rounded-lg border border-gray-200"
-              >
-                <div className="flex items-center gap-2">
-                  {/* Amber left bar */}
-                  <div className="w-1 h-14 rounded-full bg-bundle/80 shrink-0" />
+              <div key={bundle.id} className="bg-primary rounded-lg border border-gray-100 overflow-hidden transition-colors">
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  {/* Category dot */}
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getCategoryColor(categories, bundle.category_id || '') }} />
 
                   {/* Bundle Image */}
-                  <div className="relative w-14 h-14 bg-bundle/10 rounded-0.75 shrink-0 overflow-hidden flex items-center justify-center">
+                  <div className="w-8 h-8 rounded bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center">
                     {bundle.img_url ? (
                       <SafeImage src={bundle.img_url} alt={bundle.name} />
                     ) : (
-                      <LogoIcon className="w-7 h-8 opacity-20" />
+                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
                     )}
                   </div>
 
-                  {/* Bundle Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-3 font-semibold text-secondary truncate">
-                        {bundle.name}
-                      </span>
-                      {bundle.is_custom && (
-                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded">
-                          Custom
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-3 text-secondary/60">
-                      {bundle.is_custom
-                        ? `${formatCurrency(bundle.price)} · Up to ${bundle.max_pieces} pieces`
-                        : `${formatCurrency(bundle.price)} · ${bundle.components?.length || 0} ${bundle.components?.length === 1 ? 'item' : 'items'}`
-                      }
-                    </div>
-                  </div>
+                  {/* Name + Custom badge */}
+                  <span className="text-xs font-semibold text-secondary truncate flex-1 min-w-0">{bundle.name}</span>
+                  {bundle.is_custom && (
+                    <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded">Custom</span>
+                  )}
 
-                  {/* Availability Badge (desktop) */}
-                  <span className={`hidden md:inline text-xs px-2 py-1 rounded-full font-medium ${
-                    bundle.is_custom
-                      ? 'bg-bundle/10 text-bundle'
-                      : availabilityColor
+                  {/* Price */}
+                  <span className="text-xs text-secondary/60 shrink-0 tabular-nums">{formatCurrency(bundle.price)}</span>
+
+                  {/* Availability */}
+                  <span className={`text-xs font-bold shrink-0 w-8 text-center tabular-nums ${
+                    bundle.is_custom ? 'text-bundle' : availability === 0 ? 'text-error' : availability <= 5 ? 'text-accent' : 'text-secondary/50'
                   }`}>
-                    {bundle.is_custom ? 'Mix & Match' : (availability > 0 ? `${availability} avail.` : 'Out of stock')}
+                    {bundle.is_custom ? '∞' : availability}
                   </span>
 
-                  {/* Edit Button (desktop) */}
-                  <button
-                    onClick={() => handleEditBundle(bundle)}
-                    className="hidden md:flex items-center justify-center w-9 h-9 bg-bundle/10 hover:bg-bundle/20 rounded-lg transition-all hover:scale-105 active:scale-95 ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
-                  >
-                    <EditIcon className="w-4 h-4 text-bundle" />
+                  {/* Edit button */}
+                  <button onClick={() => handleEditBundle(bundle)} className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                    <EditIcon className="w-4 h-4" />
+                  </button>
+
+                  {/* Expand button */}
+                  <button onClick={() => toggleExpand(bundle.id)} className="shrink-0 p-1.5 hover:bg-gray-100 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                    <svg className={`w-3 h-3 text-secondary/50 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
                 </div>
 
-                {/* Edit Button (mobile) */}
-                <button
-                  onClick={() => handleEditBundle(bundle)}
-                  className="md:hidden w-full mt-1.5 py-1 text-3 font-bold bg-bundle text-white rounded-lg transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
-                >
-                  Edit
-                </button>
+                {/* Expanded details */}
+                {isExpanded && (
+                  <div className="px-3 pb-2 pt-2 border-t border-gray-100 ml-11 flex flex-wrap gap-x-4 gap-y-1">
+                    {bundle.description ? (
+                      <p className="text-xs text-secondary/60 w-full">{bundle.description}</p>
+                    ) : (
+                      <p className="text-xs text-secondary/30 italic w-full">No description</p>
+                    )}
+                    {bundle.is_custom ? (
+                      <span className="text-xs text-secondary/60">Up to {bundle.max_pieces} pieces</span>
+                    ) : (
+                      <span className="text-xs text-secondary/60">
+                        {bundle.components?.length || 0} {bundle.components?.length === 1 ? 'item' : 'items'}
+                      </span>
+                    )}
+                    {!bundle.is_custom && availability <= 5 && (
+                      <span className={`text-xs font-medium ${availability === 0 ? 'text-error' : 'text-accent'}`}>
+                        {availability === 0 ? 'Out of stock' : `Only ${availability} left`}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
