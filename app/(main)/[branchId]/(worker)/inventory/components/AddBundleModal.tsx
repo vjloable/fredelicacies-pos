@@ -41,6 +41,7 @@ export default function AddBundleModal({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priceInput, setPriceInput] = useState('');
+  const [grabPriceInput, setGrabPriceInput] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
   const [isCustom, setIsCustom] = useState(false);
@@ -141,6 +142,7 @@ export default function AddBundleModal({
         img_url: imgUrl || undefined,
         is_custom: isCustom,
         max_pieces: isCustom ? parseInt(maxPieces) : null,
+        grab_price: grabPriceInput !== '' ? parseFloat(grabPriceInput) : null,
         category_id: selectedCategoryIds[0] || null,
         category_ids: selectedCategoryIds,
         status: 'active' as const
@@ -175,6 +177,7 @@ export default function AddBundleModal({
       setSelectedAdditionalItems([]);
       setIsCustom(false);
       setMaxPieces('');
+      setGrabPriceInput('');
       setSelectedCategoryIds([]);
       onClose();
     } catch (error) {
@@ -264,6 +267,40 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="0.00"
+                      inputMode="decimal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grab Price */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-secondary mb-2">
+                    Grab Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary font-thin">₱</span>
+                    <input
+                      type="text"
+                      value={grabPriceInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                          setGrabPriceInput(value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      onBlur={() => {
+                        if (grabPriceInput !== '' && isNaN(parseFloat(grabPriceInput))) {
+                          setGrabPriceInput('');
+                        }
+                      }}
                       className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"

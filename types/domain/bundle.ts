@@ -5,6 +5,7 @@ export interface Bundle {
   name: string;
   description: string | null;
   price: number;
+  grab_price: number | null;
   img_url: string | null;
   is_custom: boolean;
   max_pieces: number | null;
@@ -41,6 +42,7 @@ export interface BundleWithComponents extends Bundle {
 export interface CreateBundleData {
   name: string;
   price: number;
+  grab_price?: number | null;
   description?: string;
   img_url?: string;
   is_predefined?: boolean;
@@ -55,6 +57,7 @@ export interface UpdateBundleData {
   name?: string;
   description?: string;
   price?: number;
+  grab_price?: number | null;
   img_url?: string;
   is_custom?: boolean;
   max_pieces?: number | null;

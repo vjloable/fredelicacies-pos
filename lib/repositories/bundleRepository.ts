@@ -28,6 +28,7 @@ export const bundleRepository = {
         branch_id: branchId,
         name: data.name,
         price: data.price,
+        grab_price: data.grab_price ?? null,
         description: data.description || null,
         img_url: data.img_url || null,
         is_predefined: data.is_predefined || false,
