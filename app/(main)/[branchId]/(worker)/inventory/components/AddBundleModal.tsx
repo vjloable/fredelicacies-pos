@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { createBundle } from '@/services/bundleService';
@@ -8,6 +8,7 @@ import type { InventoryItem, Category } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
 import DropdownField from '@/components/DropdownField';
 import { useBranch } from '@/contexts/BranchContext';
+// DropdownField kept for component/additional item selectors
 import { useAuth } from '@/contexts/AuthContext';
 import { logActivity } from '@/services/activityLogService';
 import { formatCurrency } from '@/lib/currency_formatter';
@@ -44,8 +45,21 @@ export default function AddBundleModal({
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
   const [isCustom, setIsCustom] = useState(false);
   const [maxPieces, setMaxPieces] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedAdditionalItems, setSelectedAdditionalItems] = useState<SelectedComponent[]>([]);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [categoryDropdownOpen]);
 
   if (!isOpen) return null;
 
@@ -127,7 +141,8 @@ export default function AddBundleModal({
         img_url: imgUrl || undefined,
         is_custom: isCustom,
         max_pieces: isCustom ? parseInt(maxPieces) : null,
-        category_id: categoryId || null,
+        category_id: selectedCategoryIds[0] || null,
+        category_ids: selectedCategoryIds,
         status: 'active' as const
       };
 
@@ -149,7 +164,7 @@ export default function AddBundleModal({
         onError('Failed to create bundle. Please try again.');
         return;
       }
-      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'bundle_created', entityType: 'bundle', entityId: id ?? undefined, details: { name: bundleData.name, price: bundleData.price, is_custom: bundleData.is_custom } });
+      void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'bundle_created', entityType: 'bundle', entityId: id ?? undefined, details: { name: bundleData.name, price: bundleData.price, is_custom: bundleData.is_custom, categories: selectedCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) } });
 
       // Reset form
       setName('');
@@ -160,7 +175,7 @@ export default function AddBundleModal({
       setSelectedAdditionalItems([]);
       setIsCustom(false);
       setMaxPieces('');
-      setCategoryId('');
+      setSelectedCategoryIds([]);
       onClose();
     } catch (error) {
       console.error('Error creating bundle:', error);
@@ -224,7 +239,7 @@ export default function AddBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3 h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -249,7 +264,7 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3 h-11 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -266,7 +281,7 @@ export default function AddBundleModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus-visible:ring-bundle resize-none"
+                  className="w-full px-3 py-2 text-3 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -281,30 +296,63 @@ export default function AddBundleModal({
                 compact
               />
 
-              {/* Category */}
+              {/* Categories */}
               {categories.length > 0 && (
                 <div>
                   <label className="block text-xs font-medium text-secondary mb-2">
-                    Category
+                    Categories
                     <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                   </label>
-                  <DropdownField
-                    options={['None', ...categories.map(c => c.name)]}
-                    defaultValue={categoryId ? (categories.find(c => c.id === categoryId)?.name ?? 'None') : 'None'}
-                    dropdownPosition="bottom-left"
-                    dropdownOffset={{ top: 3, left: 0 }}
-                    onChange={(name) => {
-                      const cat = categories.find(c => c.name === name);
-                      setCategoryId(cat?.id ?? '');
-                    }}
-                    height={44}
-                    roundness="lg"
-                    valueAlignment="left"
-                    shadow={false}
-                    maxDropdownHeight={180}
-                    constrainWidth
-                    autoDirection
-                  />
+                  <div className="relative" ref={categoryDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDropdownOpen(o => !o)}
+                      className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+                    >
+                      {selectedCategoryIds.length === 0 ? (
+                        <span className="text-secondary/40 text-3">Select categories...</span>
+                      ) : (
+                        selectedCategoryIds.map(id => {
+                          const cat = categories.find(c => c.id === id);
+                          if (!cat) return null;
+                          return (
+                            <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                              {cat.name}
+                              <span
+                                onClick={(e) => { e.stopPropagation(); setSelectedCategoryIds(prev => prev.filter(i => i !== id)); }}
+                                className="ml-0.5 hover:text-error cursor-pointer leading-none"
+                              >×</span>
+                            </span>
+                          );
+                        })
+                      )}
+                      <svg className={`w-4 h-4 text-secondary/40 ml-auto shrink-0 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                        {categories.map(cat => (
+                          <label
+                            key={cat.id}
+                            className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCategoryIds.includes(cat.id)}
+                              onChange={() => setSelectedCategoryIds(prev =>
+                                prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                              )}
+                              className="w-3.5 h-3.5 rounded shrink-0 accent-accent"
+                            />
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                            <span className="text-xs text-secondary">{cat.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -350,7 +398,7 @@ export default function AddBundleModal({
                         }
                       }}
                       min="1"
-                      className="w-full px-3 py-2 text-3 h-11 rounded-lg border-2 border-bundle/40 focus:border-transparent focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                      className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="e.g. 5"
                     />
                     <p className="text-xs text-secondary/50 mt-1">
@@ -441,7 +489,7 @@ export default function AddBundleModal({
                               value={component.quantity}
                               onChange={(e) => handleUpdateQuantity(component.inventoryItemId, parseInt(e.target.value) || 1)}
                               min="1"
-                              className="w-16 px-2 py-1 text-center text-xs border-2 border-bundle/60 rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                              className="w-16 px-2 py-1 text-center text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                           </div>
 
@@ -522,7 +570,7 @@ export default function AddBundleModal({
                             value={ai.quantity}
                             onChange={e => handleUpdateAdditionalQty(ai.inventoryItemId, parseInt(e.target.value) || 1)}
                             min="1"
-                            className="w-14 px-2 py-1 text-center text-xs border-2 border-secondary/30 rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-bundle"
+                            className="w-14 px-2 py-1 text-center text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                           />
                         </div>
                         <button onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">
