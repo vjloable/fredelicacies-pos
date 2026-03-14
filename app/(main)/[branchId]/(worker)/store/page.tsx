@@ -681,22 +681,27 @@ export default function StoreScreen() {
 				items: cart.map((item) => ({
 					name: item.name,
 					qty: item.quantity,
-					price: item.price,
-					total: item.price * item.quantity,
+					price: paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price,
+					total: (paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price) * item.quantity,
 				})),
 				subtotal,
 				discount: discountAmount,
 				appliedDiscountCode: appliedDiscount?.name || "",
+				grabUplift: paymentMethod === 'grab'
+					? cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0)
+					: 0,
 				total,
-				payment: total, // You may want to prompt for payment amount if needed
-				change: 0, // You may want to calculate change if payment > total
+				payment: total,
+				change: 0,
 				cashier:
 					timeTracking.worker?.name ||
 					user.email ||
 					"Unknown Worker",
 				cashierEmployeeId: timeTracking.worker?.employeeId || user.uid,
-				storeName: "FOODMOOD POS",
+				storeName: "FREDELECACIES",
 				branchName: currentBranch.name,
+				paymentMethod,
+				orderType,
 			};
 
 			// Print receipt via Bluetooth printer using context
