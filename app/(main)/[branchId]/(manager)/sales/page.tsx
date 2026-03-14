@@ -28,6 +28,8 @@ import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
 import * as XLSX from "xlsx";
+import { formatReceiptWithLogo } from "@/lib/esc_formatter";
+import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
 interface TimeSeriesData {
 	label: string;
@@ -232,6 +234,8 @@ const calculateOrderProfit = (order: OrderWithItems): number => {
 
 export default function SalesScreen() {
 	const { currentBranch } = useBranch();
+	const { printReceipt } = useBluetoothPrinter();
+	const [isPrinting, setIsPrinting] = useState(false);
 
 	// ── Date selection state ──────────────────────────────────────────────────
 	const [viewMode, setViewMode] = useState<ViewMode>("day");
@@ -281,6 +285,37 @@ export default function SalesScreen() {
 	const [prevWastageCost, setPrevWastageCost] = useState<number | null>(null);
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
+
+	const handleReprint = async (order: OrderWithItems) => {
+		if (isPrinting) return;
+		setIsPrinting(true);
+		try {
+			const receiptData = {
+				orderId: order.order_number || order.id,
+				date: new Date(order.created_at),
+				items: order.items.map((item) => ({
+					name: item.name,
+					qty: item.quantity,
+					price: item.price,
+					total: item.price * item.quantity,
+				})),
+				subtotal: order.subtotal,
+				discount: order.discount_amount,
+				total: order.total,
+				payment: order.total,
+				change: 0,
+				storeName: "FREDELECACIES",
+				branchName: currentBranch?.name,
+				paymentMethod: order.payment_method,
+			};
+			const bytes = await formatReceiptWithLogo(receiptData);
+			await printReceipt(bytes);
+		} catch (e) {
+			console.error("Reprint failed:", e);
+		} finally {
+			setIsPrinting(false);
+		}
+	};
 
 	// ── Analytics fetch ───────────────────────────────────────────────────────
 
@@ -1257,11 +1292,26 @@ export default function SalesScreen() {
 								</span>
 							</div>
 
-							<button
-								onClick={() => setSelectedOrder(null)}
-								className='w-full mt-5 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
-								Close
-							</button>
+							<div className='flex gap-2 mt-5'>
+								<button
+									onClick={() => handleReprint(selectedOrder)}
+									disabled={isPrinting}
+									className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 ${
+										isPrinting
+											? 'bg-gray-100 text-secondary/30 cursor-not-allowed'
+											: 'bg-accent/10 text-accent hover:bg-accent/20'
+									}`}>
+									<svg className='w-3.5 h-3.5 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z' />
+									</svg>
+									{isPrinting ? 'Printing...' : 'Reprint'}
+								</button>
+								<button
+									onClick={() => setSelectedOrder(null)}
+									className='flex-1 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
+									Close
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
