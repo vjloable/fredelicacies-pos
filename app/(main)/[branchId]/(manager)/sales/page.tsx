@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
 	LineChart,
 	Line,
 	BarChart,
 	Bar,
+	PieChart,
+	Pie,
+	Cell,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -258,6 +261,19 @@ export default function SalesScreen() {
 		totalProfit: 0,
 		profitMargin: 0,
 	});
+
+	const paymentBreakdown = useMemo(() => {
+		const map = { cash: { orders: 0, total: 0 }, gcash: { orders: 0, total: 0 }, grab: { orders: 0, total: 0 } };
+		analyticsOrders.forEach(o => {
+			const method = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof map;
+			if (map[method]) { map[method].orders++; map[method].total += o.total; }
+		});
+		return [
+			{ name: 'Cash', ...map.cash, color: 'var(--accent)' },
+			{ name: 'GCash', ...map.gcash, color: '#007CFF' },
+			{ name: 'Grab', ...map.grab, color: '#02B150' },
+		];
+	}, [analyticsOrders]);
 	const [wastageBarData, setWastageBarData] = useState<{ label: string; wastage: number }[]>([]);
 	const [topWastedItems, setTopWastedItems] = useState<WastageItemSummary[]>([]);
 	const [wastageLogs, setWastageLogs] = useState<WastageLog[]>([]);
@@ -641,7 +657,62 @@ export default function SalesScreen() {
 						</div>
 					</div>
 
-					{/* Main bento: analytics left, orders right */}
+					{/* Payment Methods card */}
+				<div className='bg-primary rounded-xl p-4 shadow-sm'>
+					<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide mb-3'>Payment Methods</p>
+					<div className='flex items-center gap-6'>
+						<div className='shrink-0'>
+							{(() => {
+								const pieData = paymentBreakdown.filter(p => p.orders > 0).length > 0
+									? paymentBreakdown.filter(p => p.orders > 0)
+									: [{ name: 'None', total: 1, orders: 0, color: '#e5e7eb' }];
+								return (
+									<PieChart width={120} height={120}>
+										<Pie
+											data={pieData}
+											dataKey="total"
+											cx={60}
+											cy={60}
+											innerRadius={30}
+											outerRadius={50}
+											paddingAngle={2}
+											strokeWidth={0}
+										>
+											{pieData.map((entry, i) => (
+												<Cell key={i} fill={entry.color} />
+											))}
+										</Pie>
+										<Tooltip
+											formatter={(value: number | string | undefined, name: string | undefined) => [formatCurrency(Number(value ?? 0)), name ?? '']}
+											contentStyle={{ fontSize: '11px', borderRadius: '6px', border: '1px solid var(--accent)' }}
+										/>
+									</PieChart>
+								);
+							})()}
+						</div>
+						<div className='flex-1 space-y-2.5 min-w-0'>
+							{paymentBreakdown.map(p => (
+								<div key={p.name} className='flex items-center gap-2'>
+									<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
+									<span className='text-xs text-secondary/60 w-10 shrink-0'>{p.name}</span>
+									<div className='flex-1 h-1.5 rounded-full bg-secondary/10 overflow-hidden'>
+										<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
+									</div>
+									<span className='text-xs font-semibold text-secondary tabular-nums w-5 text-right shrink-0'>{p.orders}</span>
+									<span className='text-xs text-secondary/50 tabular-nums w-20 text-right shrink-0'>{formatCurrency(p.total)}</span>
+								</div>
+							))}
+							<div className='pt-1 border-t border-secondary/10 flex items-center gap-2'>
+								<span className='text-xs text-secondary/40 w-12 shrink-0'>Total</span>
+								<div className='flex-1' />
+								<span className='text-xs font-bold text-secondary tabular-nums w-5 text-right shrink-0'>{currentPeriodStats.totalOrders}</span>
+								<span className='text-xs font-semibold text-secondary tabular-nums w-20 text-right shrink-0'>{formatCurrency(currentPeriodStats.totalRevenue)}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Main bento: analytics left, orders right */}
 					<div className='grid grid-cols-1 xl:grid-cols-5 gap-3 items-stretch'>
 						{/* Left col: charts */}
 						<div className='xl:col-span-3 flex flex-col gap-3'>
@@ -700,7 +771,7 @@ export default function SalesScreen() {
 												}}
 											/>
 											<Line
-												type='monotone'
+												type='linear'
 												dataKey='orders'
 												stroke='var(--secondary)'
 												strokeWidth={2}
@@ -709,7 +780,7 @@ export default function SalesScreen() {
 												activeDot={{ r: 4 }}
 											/>
 											<Line
-												type='monotone'
+												type='linear'
 												dataKey='revenue'
 												stroke='var(--accent)'
 												strokeWidth={2}
