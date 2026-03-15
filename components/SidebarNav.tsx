@@ -44,6 +44,8 @@ export default function SidebarNav() {
 		(!isUserOwner() && (isManagerForCurrentBranch || isUserOwner())) ||
 		(isUserOwner() && currentBranch);
 
+	const isWorkerOnly = !isUserOwner() && !isManagerForCurrentBranch;
+
 	// Worker Section - Available to all users (workers, managers, owners)
 	const workerNavItems: NavItem[] = [
 		{
@@ -61,6 +63,7 @@ export default function SidebarNav() {
 			label: "Sales",
 			icon: SalesIcon,
 		},
+		...(isWorkerOnly ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
 	];
 
 	// Manager Section - Available to managers and owners

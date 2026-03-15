@@ -268,14 +268,20 @@ export interface DailySalesItem {
 	total: number;
 }
 
-export interface DailySalesData {
-	date: string;         // human-readable label e.g. "Mar 15, 2026"
+export interface DailySalesGroup {
+	method: 'Cash' | 'GCash' | 'Grab';
 	items: DailySalesItem[];
-	totalRevenue: number;
+	gross: number;
+	net?: number; // Grab only: gross - grab fees = selling price total
+}
+
+export interface DailySalesData {
+	date: string;
+	groups: DailySalesGroup[];
 	totalOrders: number;
+	netRevenue: number; // Cash + GCash + Grab*0.73
 	storeName?: string;
 	branchName?: string;
-	paymentBreakdown?: { method: string; orders: number; total: number }[];
 }
 
 export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Array> {
@@ -305,29 +311,32 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 	// Column header
 	lines.push(ALIGN_LEFT);
 	lines.push(t(` ${padRight("QTY", 3)} ${padRight("ITEM", 19)} ${padLeft("AMOUNT", 7)}\n`));
-	lines.push(t(divider()));
 
-	// Items
-	for (const item of data.items) {
-		lines.push(t(itemLine(item.qty, item.name, item.total)));
-	}
-	lines.push(t(divider()));
-
-	// ── Payment method breakdown ──────────────────────────────────────────────
-	if (data.paymentBreakdown && data.paymentBreakdown.length > 0) {
-		lines.push(t(`${padRight("Payment Type", 13)}${padLeft("ORDERS", 7)}${padLeft("AMOUNT", 12)}\n`));
+	// Payment groups
+	for (const group of data.groups) {
+		lines.push(t(divider("=")));
+		lines.push(BOLD_ON);
+		lines.push(t(group.method + "\n"));
+		lines.push(BOLD_OFF);
 		lines.push(t(divider()));
-		for (const pm of data.paymentBreakdown) {
-			lines.push(t(`${padRight(pm.method, 13)}${padLeft(pm.orders.toString(), 7)}${padLeft(formatAmount(pm.total), 12)}\n`));
+		for (const item of group.items) {
+			lines.push(t(itemLine(item.qty, item.name, item.total)));
 		}
 		lines.push(t(divider()));
+		lines.push(t(totalRow("Total:", formatAmount(group.gross))));
+		if (group.method === 'Grab' && group.net !== undefined) {
+			const grabFees = group.gross - group.net;
+			lines.push(t(totalRow("Total Grab Fees:", `-${formatAmount(grabFees)}`)));
+			lines.push(t(totalRow("Net Grab Sales:", formatAmount(group.net))));
+		}
 	}
 
-	// Totals
+	// Grand totals
+	lines.push(t(divider("=")));
 	lines.push(t(totalRow("Total Orders:", data.totalOrders.toString())));
 	lines.push(t(divider("=")));
 	lines.push(BOLD_ON);
-	lines.push(t(totalRow("TOTAL REVENUE:", formatAmount(data.totalRevenue))));
+	lines.push(t(totalRow("TOTAL REVENUE:", formatAmount(data.netRevenue))));
 	lines.push(BOLD_OFF);
 	lines.push(t(divider("=")));
 

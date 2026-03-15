@@ -13,8 +13,11 @@ import {
 } from "@/services/settingsService";
 import SettingsIcon from "@/components/icons/SidebarNav/SettingsIcon";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SettingsScreen() {
+	const { isWorker } = useAuth();
+	const workerOnly = isWorker();
 	const [settings, setSettings] = useState<AppSettings>({
 		hideOutOfStock: false,
 		grabFeePercent: 0,
@@ -149,7 +152,28 @@ export default function SettingsScreen() {
 					</div>
 				)}
 
-				{!isLoading && (
+				{!isLoading && workerOnly && (
+					<div className='flex-1 overflow-y-auto px-6 pb-6'>
+						<div className='max-w-md mx-auto pt-8'>
+							<div className='mb-6'>
+								<h2 className='text-xl font-bold text-secondary mb-2'>Bluetooth Printer</h2>
+								<p className='text-secondary/70 text-3'>
+									Connect to a thermal receipt printer. Receipts will automatically print when orders are confirmed.
+								</p>
+							</div>
+							<BluetoothCard
+								bluetoothDevice={bluetoothDevice}
+								bluetoothStatus={bluetoothStatus}
+								isConnecting={isConnecting}
+								connectToBluetoothPrinter={connectToBluetoothPrinter}
+								disconnectPrinter={disconnectPrinter}
+								testPrint={testPrint}
+							/>
+						</div>
+					</div>
+				)}
+
+			{!isLoading && !workerOnly && (
 					<div className='flex-1 overflow-y-auto px-6 pb-6'>
 						<div className='max-w-6xl mx-auto pt-8'>
 							{/* Two Column Layout */}
@@ -408,6 +432,89 @@ export default function SettingsScreen() {
 						</div>
 					</div>
 				)}
+			</div>
+		</div>
+	);
+}
+
+interface BluetoothCardProps {
+	bluetoothDevice: BluetoothDevice | null;
+	bluetoothStatus: string;
+	isConnecting: boolean;
+	connectToBluetoothPrinter: () => void;
+	disconnectPrinter: () => void;
+	testPrint: () => void;
+}
+
+function BluetoothCard({
+	bluetoothDevice,
+	bluetoothStatus,
+	isConnecting,
+	connectToBluetoothPrinter,
+	disconnectPrinter,
+	testPrint,
+}: BluetoothCardProps) {
+	return (
+		<div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4'>
+			{bluetoothStatus && (
+				<div className='p-3 bg-gray-50 rounded-lg border'>
+					<p className='text-3 text-secondary'>{bluetoothStatus}</p>
+				</div>
+			)}
+			<div
+				className={`inline-flex items-center px-3 py-1 rounded-full text-3 font-medium ${
+					bluetoothDevice ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+				}`}>
+				<div
+					className={`w-2 h-2 rounded-full mr-2 ${
+						bluetoothDevice ? "bg-green-400" : "bg-gray-400"
+					}`}
+				/>
+				{bluetoothDevice ? `Connected: ${bluetoothDevice.name || "Unknown"}` : "Not Connected"}
+			</div>
+			<div className='space-y-3'>
+				{!bluetoothDevice ? (
+					<button
+						onClick={connectToBluetoothPrinter}
+						disabled={isConnecting}
+						className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+							isConnecting
+								? "bg-gray-300 text-gray-500 cursor-not-allowed"
+								: "bg-accent hover:bg-accent/90 text-primary shadow-sm hover:shadow-md"
+						}`}>
+						{isConnecting ? (
+							<div className='flex items-center justify-center gap-2'>
+								<LoadingSpinner className='border-white' />
+								Connecting...
+							</div>
+						) : (
+							"Connect Printer"
+						)}
+					</button>
+				) : (
+					<>
+						<button
+							onClick={testPrint}
+							className='w-full py-2 px-4 rounded-lg font-medium bg-success hover:bg-success/80 text-primary transition-all'>
+							Test Print
+						</button>
+						<button
+							onClick={disconnectPrinter}
+							className='w-full py-2 px-4 rounded-lg font-medium bg-error hover:bg-error/80 text-primary transition-all'>
+							Disconnect
+						</button>
+					</>
+				)}
+			</div>
+			<div className='pt-2 p-4 bg-secondary/5 rounded-lg border border-secondary/20'>
+				<h4 className='font-medium text-secondary mb-2 text-3'>How to use:</h4>
+				<ul className='text-3 text-secondary/70 space-y-1'>
+					<li>• Put your thermal printer in pairing mode</li>
+					<li>• Tap Connect Printer and select your device</li>
+					<li>• Use Test Print to verify the connection</li>
+					<li>• Receipts auto-print on order confirmation</li>
+					<li>• Connection persists until manually disconnected</li>
+				</ul>
 			</div>
 		</div>
 	);
