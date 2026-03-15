@@ -321,15 +321,14 @@ export default function SalesScreen() {
 		if (isPrinting) return;
 		setIsPrinting(true);
 		try {
-			type GroupEntry = { itemMap: Map<string, { qty: number; total: number }>; gross: number; sellingTotal: number };
+			type GroupEntry = { itemMap: Map<string, { qty: number; total: number }>; gross: number };
 			const groupMap = new Map<string, GroupEntry>();
 			for (const order of analyticsOrders) {
 				const raw = ((order.payment_method as string) || 'cash').toLowerCase();
 				const method = raw === 'gcash' ? 'GCash' : raw === 'grab' ? 'Grab' : 'Cash';
-				if (!groupMap.has(method)) groupMap.set(method, { itemMap: new Map(), gross: 0, sellingTotal: 0 });
+				if (!groupMap.has(method)) groupMap.set(method, { itemMap: new Map(), gross: 0 });
 				const group = groupMap.get(method)!;
 				group.gross += order.total;
-				group.sellingTotal += order.subtotal - order.discount_amount;
 				for (const item of order.items) {
 					const existing = group.itemMap.get(item.name);
 					if (existing) { existing.qty += item.quantity; existing.total += item.price * item.quantity; }
@@ -339,11 +338,11 @@ export default function SalesScreen() {
 			const groups = (['Cash', 'GCash', 'Grab'] as const)
 				.filter(m => groupMap.has(m))
 				.map(method => {
-					const { itemMap, gross, sellingTotal } = groupMap.get(method)!;
+					const { itemMap, gross } = groupMap.get(method)!;
 					const items = Array.from(itemMap.entries())
 						.map(([name, { qty, total }]) => ({ name, qty, total }))
 						.sort((a, b) => b.total - a.total);
-					const net = method === 'Grab' ? sellingTotal : undefined;
+					const net = method === 'Grab' ? gross * 0.73 : undefined;
 					return { method, items, gross, net };
 				});
 			const netRevenue = groups.reduce((sum, g) => sum + (g.net ?? g.gross), 0);

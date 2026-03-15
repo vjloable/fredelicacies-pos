@@ -272,7 +272,7 @@ export interface DailySalesGroup {
 	method: 'Cash' | 'GCash' | 'Grab';
 	items: DailySalesItem[];
 	gross: number;
-	net?: number; // Grab only: gross - grab fees = selling price total
+	net?: number; // Grab only: gross * 0.73
 }
 
 export interface DailySalesData {
