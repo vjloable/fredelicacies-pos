@@ -32,6 +32,8 @@ import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingCon
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
+import HelpButton from "@/components/HelpButton";
+import { storeSteps } from "@/components/TutorialSteps";
 
 // Toast notification component
 const SuccessToast = ({
@@ -699,8 +701,10 @@ export default function StoreScreen() {
 				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
 				change: paymentMethod === 'cash' ? Math.max(0, (parseFloat(tenderedAmount) || total) - total) : 0,
 				cashier:
+					user?.display_name?.trim() ||
+					user?.name?.trim().split(' ')[0] ||
 					timeTracking.worker?.name ||
-					user.email ||
+					user?.email ||
 					"Unknown Worker",
 				cashierEmployeeId: timeTracking.worker?.employeeId || user.uid,
 				storeName: "FREDELECACIES",
@@ -763,6 +767,7 @@ export default function StoreScreen() {
 							onOrderClick={() => {
 								setShowOrderMenu(!showOrderMenu);
 							}}
+							rightAction={<HelpButton variant='page' steps={storeSteps} />}
 						/>
 					</div>
 					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
@@ -771,6 +776,7 @@ export default function StoreScreen() {
 							title='Store'
 							icon={<StoreIcon />}
 							showTimeTracking={true}
+							rightAction={<HelpButton variant='page' steps={storeSteps} />}
 						/>
 					</div>
 				</div>{" "}
@@ -1244,7 +1250,7 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Summary */}
-							<div className='shrink-0 border-t-2 border-accent pb-4'>
+							<div className='shrink-0 border-t-2 border-accent pb-[max(1rem,env(safe-area-inset-bottom))]'>
 								<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
@@ -1570,7 +1576,7 @@ export default function StoreScreen() {
 			{/* Order Confirmation Modal */}
 			{showOrderConfirmation && (
 				<div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4'>
-					<div className='bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col'>
+					<div className='bg-white rounded-lg max-w-md w-full max-h-[80dvh] overflow-hidden flex flex-col'>
 						{/* Modal Header */}
 						<div className='p-4 border-b border-gray-200'>
 							<div className='flex items-center justify-between'>
@@ -1787,7 +1793,7 @@ export default function StoreScreen() {
 						</div>
 
 						{/* Modal Footer */}
-						<div className='p-4 border-t border-gray-200 bg-gray-50'>
+						<div className='p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-200 bg-gray-50'>
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}

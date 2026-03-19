@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
 	LineChart,
 	Line,
 	BarChart,
 	Bar,
-	PieChart,
-	Pie,
-	Cell,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -18,10 +15,15 @@ import {
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts } from "@/services/orderService";
+import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts, voidOrder } from "@/services/orderService";
+import { useAuth } from "@/contexts/AuthContext";
 import type { OrderWithItems, OrderItem, WastageItemSummary, WastageLog } from "@/types/domain";
+import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { formatCurrency } from "@/services/salesService";
 import { getWastageSummary, getTopWastedItems, getWastageLogs } from "@/services/wastageService";
+import { getEodLocks } from "@/services/eodService";
+import HelpButton from "@/components/HelpButton";
+import { salesSteps } from "@/components/TutorialSteps";
 import { useBranch } from "@/contexts/BranchContext";
 import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
@@ -235,7 +237,13 @@ const calculateOrderProfit = (order: OrderWithItems): number => {
 export default function SalesScreen() {
 	const { currentBranch } = useBranch();
 	const { printReceipt } = useBluetoothPrinter();
+	const { user, isManager, isUserOwner } = useAuth();
 	const [isPrinting, setIsPrinting] = useState(false);
+
+	// ── Void order state ──────────────────────────────────────────────────────
+	const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+	const [voidReason, setVoidReason] = useState('');
+	const [isVoiding, setIsVoiding] = useState(false);
 
 	// ── Date selection state ──────────────────────────────────────────────────
 	const [viewMode, setViewMode] = useState<ViewMode>("day");
@@ -258,7 +266,7 @@ export default function SalesScreen() {
 	const [totalTableCount, setTotalTableCount] = useState(0);
 	const [tableLoading, setTableLoading] = useState(true);
 	const [tablePage, setTablePage] = useState(1);
-	const PAGE_SIZE = 10;
+	const [pageSize, setPageSize] = useState(10);
 	const [currentPeriodStats, setCurrentPeriodStats] = useState({
 		totalRevenue: 0,
 		totalOrders: 0,
@@ -283,8 +291,31 @@ export default function SalesScreen() {
 	const [wastageLogs, setWastageLogs] = useState<WastageLog[]>([]);
 	const [totalWastageCost, setTotalWastageCost] = useState(0);
 	const [prevWastageCost, setPrevWastageCost] = useState<number | null>(null);
+	// EOD audit state
+	const [eodLocks, setEodLocks] = useState<EodItemLock[]>([]);
+	const [eodSession, setEodSession] = useState<EodSession | null>(null);
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
+	// Orders table filters
+	const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gcash' | 'grab'>('all');
+	const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
+	// Actions dropdown
+	const [showActionsMenu, setShowActionsMenu] = useState(false);
+	const actionsMenuRef = useRef<HTMLDivElement>(null);
+	// Prior period stats for trend deltas
+	const [priorPeriodStats, setPriorPeriodStats] = useState<{ totalRevenue: number; totalOrders: number; totalProfit: number } | null>(null);
+
+	// Close actions menu on outside click
+	useEffect(() => {
+		if (!showActionsMenu) return;
+		const handler = (e: MouseEvent) => {
+			if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
+				setShowActionsMenu(false);
+			}
+		};
+		document.addEventListener('mousedown', handler);
+		return () => document.removeEventListener('mousedown', handler);
+	}, [showActionsMenu]);
 
 	const handleReprint = async (order: OrderWithItems) => {
 		if (isPrinting) return;
@@ -321,29 +352,36 @@ export default function SalesScreen() {
 		if (isPrinting) return;
 		setIsPrinting(true);
 		try {
-			type GroupEntry = { itemMap: Map<string, { qty: number; total: number }>; gross: number };
+			type GroupEntry = { orders: { orderId: string; items: { name: string; qty: number; total: number }[]; total: number }[]; gross: number };
 			const groupMap = new Map<string, GroupEntry>();
-			for (const order of analyticsOrders) {
+			const sorted = [...analyticsOrders].sort(
+				(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+			);
+			for (const order of sorted.filter(o => o.status !== 'voided')) {
 				const raw = ((order.payment_method as string) || 'cash').toLowerCase();
 				const method = raw === 'gcash' ? 'GCash' : raw === 'grab' ? 'Grab' : 'Cash';
-				if (!groupMap.has(method)) groupMap.set(method, { itemMap: new Map(), gross: 0 });
+				if (!groupMap.has(method)) groupMap.set(method, { orders: [], gross: 0 });
 				const group = groupMap.get(method)!;
 				group.gross += order.total;
-				for (const item of order.items) {
-					const existing = group.itemMap.get(item.name);
-					if (existing) { existing.qty += item.quantity; existing.total += item.price * item.quantity; }
-					else { group.itemMap.set(item.name, { qty: item.quantity, total: item.price * item.quantity }); }
-				}
+				const shortId = order.order_number
+					? order.order_number.replace('ORD-', '')
+					: order.id.slice(-8).toUpperCase();
+				group.orders.push({
+					orderId: shortId,
+					items: order.items.map((item: OrderItem) => ({
+						name: item.name,
+						qty: item.quantity,
+						total: item.price * item.quantity,
+					})),
+					total: order.total,
+				});
 			}
 			const groups = (['Cash', 'GCash', 'Grab'] as const)
 				.filter(m => groupMap.has(m))
 				.map(method => {
-					const { itemMap, gross } = groupMap.get(method)!;
-					const items = Array.from(itemMap.entries())
-						.map(([name, { qty, total }]) => ({ name, qty, total }))
-						.sort((a, b) => b.total - a.total);
+					const { orders, gross } = groupMap.get(method)!;
 					const net = method === 'Grab' ? gross * 0.73 : undefined;
-					return { method, items, gross, net };
+					return { method, orders, gross, net };
 				});
 			const netRevenue = groups.reduce((sum, g) => sum + (g.net ?? g.gross), 0);
 			const bytes = await formatDailySalesESC({
@@ -378,6 +416,24 @@ export default function SalesScreen() {
 		const totalProfit = orders.reduce((s, o) => s + calculateOrderProfit(o), 0);
 		const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 		setCurrentPeriodStats({ totalRevenue, totalOrders, totalProfit, profitMargin });
+
+		// Fetch prior period for trend deltas
+		const prior = computePriorDateRange(viewMode, selDay, selWeek, selMonth, selYear);
+		if (prior) {
+			const { orders: priorOrders } = await getOrdersByBranch(
+				currentBranch.id,
+				new Date(`${prior.startStr}T00:00:00`),
+				new Date(`${prior.endStr}T23:59:59`)
+			);
+			setPriorPeriodStats({
+				totalRevenue: priorOrders.reduce((s, o) => s + o.total, 0),
+				totalOrders: priorOrders.length,
+				totalProfit: priorOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+			});
+		} else {
+			setPriorPeriodStats(null);
+		}
+
 		setAnalyticsLoading(false);
 	}, [currentBranch, viewMode, selDay, selWeek, selMonth, selYear]);
 
@@ -388,15 +444,47 @@ export default function SalesScreen() {
 	const fetchTablePage = useCallback(async () => {
 		if (!currentBranch) return;
 		setTableLoading(true);
+		const { startDate, endDate } = computeDateRange(viewMode, selDay, selWeek, selMonth, selYear);
 		const { orders, totalCount } = await getOrdersPage(
-			currentBranch.id, tablePage, PAGE_SIZE, searchTerm || undefined
+			currentBranch.id, tablePage, pageSize, {
+				search: searchTerm || undefined,
+				startDate: viewMode !== 'all' ? startDate.toISOString().slice(0, 10) : undefined,
+				endDate: viewMode !== 'all' ? endDate.toISOString().slice(0, 10) : undefined,
+				paymentMethod: paymentFilter !== 'all' ? paymentFilter : undefined,
+				status: statusFilter !== 'all' ? statusFilter : undefined,
+			}
 		);
 		setTableOrders(orders);
 		setTotalTableCount(totalCount);
 		setTableLoading(false);
-	}, [currentBranch, tablePage, searchTerm]);
+	}, [currentBranch, tablePage, pageSize, searchTerm, paymentFilter, statusFilter, viewMode, selDay, selWeek, selMonth, selYear]);
 
 	useEffect(() => { fetchTablePage(); }, [fetchTablePage]);
+
+	// Reset table to page 1 when period changes
+	useEffect(() => { setTablePage(1); }, [viewMode, selDay, selWeek, selMonth, selYear]);
+
+	// ── Void order ────────────────────────────────────────────────────────────
+	const canVoid = isManager() || isUserOwner();
+
+	const handleVoidOrder = async () => {
+		if (!selectedOrder || !user || !currentBranch) return;
+		setIsVoiding(true);
+		const { error } = await voidOrder(
+			selectedOrder.id,
+			user.uid,
+			currentBranch.id,
+			voidReason,
+			selectedOrder.order_number,
+		);
+		setIsVoiding(false);
+		if (!error) {
+			setShowVoidConfirm(false);
+			setVoidReason('');
+			setSelectedOrder(null);
+			fetchTablePage();
+		}
+	};
 
 	// ── Realtime ──────────────────────────────────────────────────────────────
 
@@ -479,6 +567,18 @@ export default function SalesScreen() {
 		}
 	}, [currentBranch, viewMode, selDay, selWeek, selMonth, selYear]);
 
+	// ── EOD fetch (day view only) ─────────────────────────────────────────────
+
+	useEffect(() => {
+		if (!currentBranch) return;
+		const date = viewMode === 'day' ? selDay : null;
+		if (!date) { setEodLocks([]); setEodSession(null); return; }
+		getEodLocks(currentBranch.id, date).then(({ locks, session }) => {
+			setEodLocks(locks);
+			setEodSession(session);
+		});
+	}, [currentBranch, viewMode, selDay]);
+
 	// ── Derived ───────────────────────────────────────────────────────────────
 
 	const formatTooltipValue = (value: number | undefined, name: string | undefined) => {
@@ -489,7 +589,7 @@ export default function SalesScreen() {
 		return [value, name === "orders" ? "Orders" : name];
 	};
 
-	const totalPages = Math.ceil(totalTableCount / PAGE_SIZE);
+	const totalPages = Math.ceil(totalTableCount / pageSize);
 
 	const peakEntry =
 		timeSeriesData.length > 0
@@ -551,21 +651,23 @@ export default function SalesScreen() {
 		XLSX.utils.book_append_sheet(wb, wsSum, "Summary");
 
 		// ── Sheet 2: Orders ────────────────────────────────────────────────
-		// One row per order. Items are summarised in a single column to avoid
-		// repeating the same order-level data across multiple rows (that's
-		// what the Line Items sheet is for).
+		// One row per order. Voided orders are included but clearly marked
+		// so the export is a complete audit trail without inflating revenue.
 		const orderRows = analyticsOrders.map(order => {
 			const dt = new Date(order.created_at);
+			const isVoided = order.status === 'voided';
 			return {
 				"Order #": order.order_number,
+				"Status": isVoided ? "VOIDED" : "Completed",
 				"Date": dt.toLocaleDateString(),
 				"Time": dt.toLocaleTimeString(),
 				"Items (summary)": order.items.map(i => `${i.name} ×${i.quantity}`).join(", "),
-				"Pieces": order.items.reduce((s, i) => s + i.quantity, 0),
-				"Subtotal (₱)": order.subtotal ?? order.total,
-				"Discount (₱)": order.discount_amount ?? 0,
-				"Total (₱)": order.total,
+				"Pieces": isVoided ? 0 : order.items.reduce((s, i) => s + i.quantity, 0),
+				"Subtotal (₱)": isVoided ? 0 : (order.subtotal ?? order.total),
+				"Discount (₱)": isVoided ? 0 : (order.discount_amount ?? 0),
+				"Total (₱)": isVoided ? 0 : order.total,
 				"Payment": order.payment_method ?? "cash",
+				"Void Reason": order.void_reason ?? "",
 			};
 		});
 		const wsOrders = XLSX.utils.json_to_sheet(orderRows);
@@ -579,7 +681,7 @@ export default function SalesScreen() {
 		// One row per order-item. Links back to Orders sheet via Order #.
 		// Keeps item-level profitability without duplicating order-level totals.
 		const itemRows: object[] = [];
-		for (const order of analyticsOrders) {
+		for (const order of analyticsOrders.filter(o => o.status !== 'voided')) {
 			const dt = new Date(order.created_at);
 			for (const item of order.items) {
 				itemRows.push({
@@ -643,10 +745,10 @@ export default function SalesScreen() {
 			<div className='flex h-full overflow-hidden'>
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					<div className='xl:hidden w-full'>
-						<MobileTopBar title='Sales' icon={<SalesIcon />} />
+						<MobileTopBar title='Sales' icon={<SalesIcon />} rightAction={<HelpButton variant='page' steps={salesSteps} />} />
 					</div>
 					<div className='hidden xl:block w-full'>
-						<TopBar title='Sales' icon={<SalesIcon />} />
+						<TopBar title='Sales' icon={<SalesIcon />} rightAction={<HelpButton variant='page' steps={salesSteps} />} />
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<LoadingSpinner />
@@ -660,10 +762,10 @@ export default function SalesScreen() {
 		<div className='flex h-full overflow-hidden'>
 			<div className='flex flex-col flex-1 h-full overflow-hidden'>
 				<div className='xl:hidden w-full'>
-					<MobileTopBar title='Sales' icon={<SalesIcon />} />
+					<MobileTopBar title='Sales' icon={<SalesIcon />} rightAction={<HelpButton variant='page' steps={salesSteps} />} />
 				</div>
 				<div className='hidden xl:block w-full'>
-					<TopBar title='Sales' icon={<SalesIcon />} />
+					<TopBar title='Sales' icon={<SalesIcon />} rightAction={<HelpButton variant='page' steps={salesSteps} />} />
 				</div>
 
 				{/* Toolbar: branch + date picker row */}
@@ -702,141 +804,120 @@ export default function SalesScreen() {
 								<YearPicker value={selYear} onChange={setSelYear} />
 							)}
 						</div>
-						<div className="flex items-center gap-2 shrink-0">
+						<div ref={actionsMenuRef} className="relative shrink-0">
 							<button
-								onClick={handlePrintDailySales}
-								disabled={isPrinting}
-								className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-60 disabled:pointer-events-none'>
-								<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
-									<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-										<polyline points='6 9 6 2 18 2 18 9' />
-										<path d='M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2' />
-										<rect x='6' y='14' width='12' height='8' />
-									</svg>
-									<span className='mt-0.5'>{isPrinting ? 'PRINTING...' : 'PRINT'}</span>
-								</div>
+								onClick={() => setShowActionsMenu(v => !v)}
+								className='w-8 h-8 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary flex items-center justify-center transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+								aria-label="Actions"
+							>
+								<svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
+									<circle cx='4' cy='10' r='1.5' />
+									<circle cx='10' cy='10' r='1.5' />
+									<circle cx='16' cy='10' r='1.5' />
+								</svg>
 							</button>
-							<button
-								onClick={generateXLSX}
-								className='bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0'>
-								<div className='flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3'>
-									<svg className='w-4 h-4 shrink-0 drop-shadow-lg' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
-										<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
-									</svg>
-									<span className='mt-0.5'>EXPORT</span>
+							{showActionsMenu && (
+								<div className='absolute right-0 top-10 z-20 bg-primary rounded-xl shadow-lg border border-secondary/10 py-1 min-w-44'>
+									<button
+										onClick={() => { setShowActionsMenu(false); handlePrintDailySales(); }}
+										disabled={isPrinting}
+										className='w-full flex items-center gap-3 px-4 py-2.5 text-xs text-secondary hover:bg-secondary/5 disabled:opacity-40 disabled:pointer-events-none transition-colors'
+									>
+										<svg className='w-3.5 h-3.5 shrink-0' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+											<polyline points='6 9 6 2 18 2 18 9' />
+											<path d='M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2' />
+											<rect x='6' y='14' width='12' height='8' />
+										</svg>
+										{isPrinting ? 'Printing...' : 'Print Report'}
+									</button>
+									<button
+										onClick={() => { setShowActionsMenu(false); generateXLSX(); }}
+										className='w-full flex items-center gap-3 px-4 py-2.5 text-xs text-secondary hover:bg-secondary/5 transition-colors'
+									>
+										<svg className='w-3.5 h-3.5 shrink-0' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+											<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
+										</svg>
+										Export Excel
+									</button>
 								</div>
-							</button>
+							)}
 						</div>
 					</div>
 				</div>
 
 				{/* Bento layout */}
 				<div className='flex-1 overflow-y-auto px-6 pb-6 space-y-3'>
-					{/* Stat cards row */}
-					<div className='grid grid-cols-2 lg:grid-cols-4 gap-3'>
+					{/* Stat cards + payment methods row */}
+					<div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
+						{/* Revenue */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
-							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Revenue</p>
+							<div className='flex items-center justify-between'>
+								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Revenue</p>
+								{priorPeriodStats && priorPeriodStats.totalRevenue > 0 && (() => {
+									const pct = ((currentPeriodStats.totalRevenue - priorPeriodStats.totalRevenue) / priorPeriodStats.totalRevenue) * 100;
+									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>{pct >= 0 ? '\u2191' : '\u2193'} {Math.abs(pct).toFixed(0)}%</span>;
+								})()}
+							</div>
 							<p className='text-lg font-semibold text-secondary mt-1'>
-								<span className='text-sm font-normal mr-0.5'>₱</span>
+								<span className='text-sm font-normal mr-0.5'>\u20b1</span>
 								{formatCurrency(currentPeriodStats.totalRevenue).slice(1)}
 							</p>
-							<p className='text-2.5 text-secondary/40 mt-1'>
-								Margin {currentPeriodStats.profitMargin.toFixed(1)}%
-							</p>
+							<p className='text-2.5 text-secondary/40 mt-1'>Margin {currentPeriodStats.profitMargin.toFixed(1)}%</p>
 						</div>
 
+						{/* Orders */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
-							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Orders</p>
+							<div className='flex items-center justify-between'>
+								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Orders</p>
+								{priorPeriodStats && priorPeriodStats.totalOrders > 0 && (() => {
+									const pct = ((currentPeriodStats.totalOrders - priorPeriodStats.totalOrders) / priorPeriodStats.totalOrders) * 100;
+									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>{pct >= 0 ? '\u2191' : '\u2193'} {Math.abs(pct).toFixed(0)}%</span>;
+								})()}
+							</div>
 							<p className='text-lg font-bold text-secondary mt-1'>{currentPeriodStats.totalOrders}</p>
-							<p className='text-2.5 text-secondary/40 mt-1'>
-								Avg{" "}
-								{formatCurrency(
-									currentPeriodStats.totalOrders > 0
-										? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
-										: 0
-								)}
-							</p>
+							<p className='text-2.5 text-secondary/40 mt-1'>Avg {formatCurrency(currentPeriodStats.totalOrders > 0 ? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders : 0)}</p>
 						</div>
 
+						{/* Profit */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
-							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Profit</p>
+							<div className='flex items-center justify-between'>
+								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Profit</p>
+								{priorPeriodStats && priorPeriodStats.totalProfit > 0 && (() => {
+									const pct = ((currentPeriodStats.totalProfit - priorPeriodStats.totalProfit) / priorPeriodStats.totalProfit) * 100;
+									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>{pct >= 0 ? '\u2191' : '\u2193'} {Math.abs(pct).toFixed(0)}%</span>;
+								})()}
+							</div>
 							<p className='text-lg font-semibold text-secondary mt-1'>
-								<span className='text-sm font-normal mr-0.5'>₱</span>
+								<span className='text-sm font-normal mr-0.5'>\u20b1</span>
 								{formatCurrency(currentPeriodStats.totalProfit).slice(1)}
 							</p>
-							<p className='text-2.5 text-secondary/40 mt-1'>
-								Wastage {formatCurrency(totalWastageCost)}
-							</p>
+							<p className='text-2.5 text-secondary/40 mt-1'>Wastage {formatCurrency(totalWastageCost)}</p>
 						</div>
 
+						{/* Peak */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
-							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>
-								Peak {viewMode === "day" ? "Hour" : "Day"}
-							</p>
-							<p className='text-lg font-bold text-secondary mt-1 truncate'>
-								{peakEntry ? peakEntry.label : "--"}
-							</p>
-							<p className='text-2.5 text-secondary/40 mt-1'>
-								{peakEntry ? `${peakEntry.orders} orders` : "0 orders"}
-							</p>
+							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Peak {viewMode === "day" ? "Hour" : "Day"}</p>
+							<p className='text-lg font-bold text-secondary mt-1 truncate'>{peakEntry ? peakEntry.label : "--"}</p>
+							<p className='text-2.5 text-secondary/40 mt-1'>{peakEntry ? `${peakEntry.orders} orders` : "0 orders"}</p>
 						</div>
-					</div>
 
-					{/* Payment Methods card */}
-				<div className='bg-primary rounded-xl p-4 shadow-sm'>
-					<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide mb-3'>Payment Methods</p>
-					<div className='flex items-center gap-6'>
-						<div className='shrink-0'>
-							{(() => {
-								const pieData = paymentBreakdown.filter(p => p.orders > 0).length > 0
-									? paymentBreakdown.filter(p => p.orders > 0)
-									: [{ name: 'None', total: 1, orders: 0, color: '#e5e7eb' }];
-								return (
-									<PieChart width={120} height={120}>
-										<Pie
-											data={pieData}
-											dataKey="total"
-											cx={60}
-											cy={60}
-											innerRadius={30}
-											outerRadius={50}
-											paddingAngle={2}
-											strokeWidth={0}
-										>
-											{pieData.map((entry, i) => (
-												<Cell key={i} fill={entry.color} />
-											))}
-										</Pie>
-										<Tooltip
-											formatter={(value: number | string | undefined, name: string | undefined) => [formatCurrency(Number(value ?? 0)), name ?? '']}
-											contentStyle={{ fontSize: '11px', borderRadius: '6px', border: '1px solid var(--accent)' }}
-										/>
-									</PieChart>
-								);
-							})()}
-						</div>
-						<div className='flex-1 space-y-2.5 min-w-0'>
-							{paymentBreakdown.map(p => (
-								<div key={p.name} className='flex items-center gap-2'>
-									<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
-									<span className='text-xs text-secondary/60 w-10 shrink-0'>{p.name}</span>
-									<div className='flex-1 h-1.5 rounded-full bg-secondary/10 overflow-hidden'>
-										<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
+						{/* Payment methods — inline compact */}
+						<div className='col-span-2 lg:col-span-1 bg-primary rounded-xl p-4 shadow-sm'>
+							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide mb-3'>Payments</p>
+							<div className='space-y-2'>
+								{paymentBreakdown.map(p => (
+									<div key={p.name} className='flex items-center gap-2'>
+										<span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
+										<span className='text-2.5 text-secondary/60 w-8 shrink-0'>{p.name}</span>
+										<div className='flex-1 h-1 rounded-full bg-secondary/10 overflow-hidden'>
+											<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
+										</div>
+										<span className='text-2.5 font-semibold text-secondary tabular-nums w-4 text-right shrink-0'>{p.orders}</span>
 									</div>
-									<span className='text-xs font-semibold text-secondary tabular-nums w-5 text-right shrink-0'>{p.orders}</span>
-									<span className='text-xs text-secondary/50 tabular-nums w-20 text-right shrink-0'>{formatCurrency(p.total)}</span>
-								</div>
-							))}
-							<div className='pt-1 border-t border-secondary/10 flex items-center gap-2'>
-								<span className='text-xs text-secondary/40 w-12 shrink-0'>Total</span>
-								<div className='flex-1' />
-								<span className='text-xs font-bold text-secondary tabular-nums w-5 text-right shrink-0'>{currentPeriodStats.totalOrders}</span>
-								<span className='text-xs font-semibold text-secondary tabular-nums w-20 text-right shrink-0'>{formatCurrency(currentPeriodStats.totalRevenue)}</span>
+								))}
 							</div>
 						</div>
 					</div>
-				</div>
-
 				{/* Main bento: analytics left, orders right */}
 					<div className='grid grid-cols-1 xl:grid-cols-5 gap-3 items-stretch'>
 						{/* Left col: charts */}
@@ -869,58 +950,76 @@ export default function SalesScreen() {
 								<div className='relative w-full aspect-video'>
 								<div className='absolute inset-0'>
 									<ResponsiveContainer width='100%' height='100%'>
-										<LineChart data={timeSeriesData}>
-											<CartesianGrid strokeDasharray='1 1' stroke='#374151' opacity={0.2} />
-											<XAxis
-												dataKey='label'
-												stroke='#9CA3AF'
-												fontSize={9}
-												tickLine={false}
-												axisLine={false}
-												interval='preserveStartEnd'
-											/>
-											<YAxis
-												stroke='#9CA3AF'
-												fontSize={9}
-												tickLine={false}
-												axisLine={false}
-												width={30}
-											/>
-											<Tooltip
-												formatter={formatTooltipValue}
-												contentStyle={{
-													backgroundColor: "#fff",
-													border: "1px solid #e5e7eb",
-													borderRadius: "8px",
-													fontSize: "11px",
-												}}
-											/>
-											<Line
-												type='linear'
-												dataKey='orders'
-												stroke='var(--secondary)'
-												strokeWidth={2}
-												name='orders'
-												dot={false}
-												activeDot={{ r: 4 }}
-											/>
-											<Line
-												type='linear'
-												dataKey='revenue'
-												stroke='var(--accent)'
-												strokeWidth={2}
-												name='revenue'
-												dot={false}
-												activeDot={{ r: 4 }}
-											/>
-										</LineChart>
+							<LineChart data={timeSeriesData}>
+								<CartesianGrid strokeDasharray='1 1' stroke='#374151' opacity={0.2} />
+								<XAxis
+									dataKey='label'
+									stroke='#9CA3AF'
+									fontSize={9}
+									tickLine={false}
+									axisLine={false}
+									interval='preserveStartEnd'
+								/>
+								<YAxis
+									yAxisId='revenue'
+									orientation='left'
+									stroke='#9CA3AF'
+									fontSize={9}
+									tickLine={false}
+									axisLine={false}
+									width={36}
+									tickFormatter={(v) => `\u20b1${v}`}
+								/>
+								<YAxis
+									yAxisId='orders'
+									orientation='right'
+									stroke='#9CA3AF'
+									fontSize={9}
+									tickLine={false}
+									axisLine={false}
+									width={24}
+									allowDecimals={false}
+								/>
+								<Tooltip
+									formatter={formatTooltipValue}
+									contentStyle={{
+										backgroundColor: "#fff",
+										border: "1px solid #e5e7eb",
+										borderRadius: "8px",
+										fontSize: "11px",
+									}}
+								/>
+								<Line
+									yAxisId='orders'
+									type='linear'
+									dataKey='orders'
+									stroke='var(--secondary)'
+									strokeWidth={2}
+									name='orders'
+									dot={false}
+									activeDot={{ r: 4 }}
+								/>
+								<Line
+									yAxisId='revenue'
+									type='linear'
+									dataKey='revenue'
+									stroke='var(--accent)'
+									strokeWidth={2}
+									name='revenue'
+									dot={false}
+									activeDot={{ r: 4 }}
+								/>
+							</LineChart>
 									</ResponsiveContainer>
 								</div>
 								</div>
 							</div>
 
+							{/* Wastage + Carry-Over row */}
+							<div className='flex gap-3 items-start'>
+
 							{/* Wastage panel */}
-							<div className='bg-primary rounded-xl p-4 shadow-sm'>
+							<div className='flex-1 min-w-0 bg-primary rounded-xl p-4 shadow-sm'>
 								<div className='flex items-center justify-between mb-3'>
 									<p className='text-xs font-semibold text-secondary'>Wastage</p>
 									{prevWastageCost !== null && prevWastageCost > 0 && (() => {
@@ -1033,14 +1132,71 @@ export default function SalesScreen() {
 								</div>
 							)}
 							</div>
-						</div>
+							</div>
 
-						{/* Right col: orders list */}
-						<div className='xl:col-span-2 bg-primary rounded-xl shadow-sm flex flex-col h-full'>
+							{/* Carry-Over Stock panel — day view only */}
+							{viewMode === 'day' && (
+								<div className='flex-1 min-w-0 bg-primary rounded-xl p-4 shadow-sm'>
+									<div className='flex items-center justify-between mb-3'>
+										<p className='text-xs font-semibold text-secondary'>Carry-Over Stock</p>
+										{eodSession?.status === 'submitted' ? (
+											<span className='text-2.5 px-2 py-0.5 bg-success/10 text-success rounded-full font-medium'>Submitted</span>
+										) : (
+											<span className='text-2.5 px-2 py-0.5 bg-secondary/10 text-secondary/60 rounded-full font-medium'>Draft</span>
+										)}
+									</div>
+									{eodLocks.length === 0 && !eodSession ? (
+										<p className='text-2.5 text-secondary/30 py-2 text-center'>No items locked yet \u2014 lock items from Inventory</p>
+									) : (
+										<div className='flex items-center justify-between py-1'>
+											<p className='text-2.5 text-secondary/40'>Items carrying over</p>
+											<p className='text-sm font-semibold text-secondary'>{eodLocks.length}</p>
+										</div>
+									)}
+									{eodLocks.length > 0 && (
+										<div className='mt-3 border-t border-secondary/10 pt-3 space-y-2.5'>
+											{(() => {
+												const maxStock = Math.max(...eodLocks.map(l => l.locked_stock), 1);
+												return eodLocks.map(lock => (
+													<div key={lock.id} className='flex items-center gap-2'>
+														<div className='flex-1 min-w-0'>
+															<div className='flex items-baseline justify-between mb-0.5'>
+																<p className='text-2.5 text-secondary truncate'>{lock.item_name}</p>
+																{lock.discrepancy !== 0 && (
+																	<span className={`text-2.5 font-semibold shrink-0 ml-1 ${lock.discrepancy > 0 ? 'text-accent' : 'text-error'}`}>
+																		{lock.discrepancy > 0 ? '+' : ''}{lock.discrepancy}
+																	</span>
+																)}
+															</div>
+															<div className='h-1 bg-secondary/10 rounded-full overflow-hidden'>
+																<div
+																	className='h-full rounded-full'
+																	style={{
+																		width: `${Math.min(100, (lock.locked_stock / maxStock) * 100)}%`,
+																		backgroundColor: lock.discrepancy === 0 ? 'var(--success)' : 'var(--error)',
+																	}}
+																/>
+															</div>
+														</div>
+														<p className='text-2.5 font-semibold text-secondary/60 shrink-0 w-5 text-right'>{lock.locked_stock}</p>
+													</div>
+												));
+											})()}
+										</div>
+									)}
+								</div>
+							)}
+
+							</div>
+
+							{/* Right col: orders list */}
+						<div className='xl:col-span-2 bg-primary rounded-xl shadow-sm flex flex-col overflow-hidden' style={{ maxHeight: 'calc(100vh - 220px)' }}>
 							{/* Header + search */}
 							<div className='p-4 border-b border-gray-100'>
 								<div className='flex items-center justify-between mb-3'>
-									<p className='text-xs font-semibold text-secondary'>Recent Orders</p>
+									<p className='text-xs font-semibold text-secondary'>
+										{viewMode === 'all' ? 'All Orders' : `Orders \u00b7 ${periodLabel.replace(/_/g, ' ')}`}
+									</p>
 									<span className='flex items-center gap-1.5 text-2.5 text-secondary/40'>
 										<LoadingSpinner className='w-2! h-2! border-success bg-success/20' />
 										{totalTableCount} total
@@ -1060,6 +1216,32 @@ export default function SalesScreen() {
 									<div className='absolute right-2 top-1/2 -translate-y-1/2'>
 										<SearchIcon className='text-secondary/30' />
 									</div>
+								</div>
+								{/* Filters */}
+								<div className='flex items-center gap-1.5 mt-2 flex-wrap'>
+									{(['all', 'cash', 'gcash', 'grab'] as const).map(m => (
+										<button
+											key={m}
+											onClick={() => { setPaymentFilter(m); setTablePage(1); }}
+											className={`px-2 py-0.5 rounded-md text-2.5 font-medium transition-colors ${
+												paymentFilter === m ? 'bg-accent text-primary' : 'bg-secondary/5 text-secondary/50 hover:text-secondary'
+											}`}
+										>
+											{m === 'all' ? 'All' : m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : 'Cash'}
+										</button>
+									))}
+									<span className='text-secondary/20 mx-0.5'>|</span>
+									{(['all', 'active', 'voided'] as const).map(s => (
+										<button
+											key={s}
+											onClick={() => { setStatusFilter(s); setTablePage(1); }}
+											className={`px-2 py-0.5 rounded-md text-2.5 font-medium transition-colors ${
+												statusFilter === s ? 'bg-secondary text-primary' : 'bg-secondary/5 text-secondary/50 hover:text-secondary'
+											}`}
+										>
+											{s === 'all' ? 'All' : s === 'active' ? 'Active' : 'Voided'}
+										</button>
+									))}
 								</div>
 							</div>
 
@@ -1085,18 +1267,20 @@ export default function SalesScreen() {
 									<tbody className='divide-y divide-gray-50'>
 										{tableLoading ? (
 											<tr>
-												<td colSpan={4} className='text-center py-10'>
-													<LoadingSpinner />
+												<td colSpan={4} className='py-5'>
+													<div className='flex justify-center'>
+														<LoadingSpinner />
+													</div>
 												</td>
 											</tr>
 										) : tableOrders.map((order) => (
 											<tr
 												key={order.id}
-												className='hover:bg-accent/5 cursor-pointer transition-colors'
+												className={`cursor-pointer transition-colors ${order.status === 'voided' ? 'opacity-40 hover:opacity-60' : 'hover:bg-accent/5'}`}
 												onClick={() => setSelectedOrder(order)}>
 												<td className='px-4 py-2.5'>
-													<span className='text-2.5 font-mono font-semibold text-secondary/60 bg-secondary/5 px-2 py-0.5 rounded-md'>
-														#{order.id ? order.id.slice(-6) : "N/A"}
+													<span className='text-[10px] font-mono font-semibold text-secondary/60 bg-secondary/5 px-2 py-0.5 rounded-md'>
+														#{order.order_number ? order.order_number.split('-').pop() : order.id.slice(-6)}
 													</span>
 												</td>
 												<td className='px-4 py-2.5 text-2.5 text-secondary/50 whitespace-nowrap'>
@@ -1130,13 +1314,19 @@ export default function SalesScreen() {
 													</div>
 												</td>
 												<td className='px-4 py-2.5 text-right'>
-													<p className='text-xs font-semibold text-secondary'>
-														{formatCurrency(order.total || 0)}
-													</p>
-													{order.discount_amount > 0 && (
-														<p className='text-2.5 text-red-400'>
-															-{formatCurrency(order.discount_amount)}
-														</p>
+													{order.status === 'voided' ? (
+														<span className='text-2.5 font-semibold text-error bg-error/10 px-2 py-0.5 rounded-md'>VOID</span>
+													) : (
+														<>
+															<p className='text-xs font-semibold text-secondary'>
+																{formatCurrency(order.total || 0)}
+															</p>
+															{order.discount_amount > 0 && (
+																<p className='text-2.5 text-red-400'>
+																	-{formatCurrency(order.discount_amount)}
+																</p>
+															)}
+														</>
 													)}
 												</td>
 											</tr>
@@ -1155,10 +1345,25 @@ export default function SalesScreen() {
 							{/* Pagination */}
 							{totalPages > 1 && (
 								<div className='px-4 py-3 border-t border-gray-100 flex items-center justify-between'>
-									<p className='text-2.5 text-secondary/40'>
-										{(tablePage - 1) * PAGE_SIZE + 1}–{Math.min(tablePage * PAGE_SIZE, totalTableCount)} of{" "}
-										{totalTableCount}
-									</p>
+									<div className='flex items-center gap-2'>
+										<p className='text-2.5 text-secondary/40'>
+											{(tablePage - 1) * pageSize + 1}–{Math.min(tablePage * pageSize, totalTableCount)} of{" "}
+											{totalTableCount}
+										</p>
+										<div className='flex items-center gap-0.5'>
+											{([10, 25, 50] as const).map(n => (
+												<button
+													key={n}
+													onClick={() => { setPageSize(n); setTablePage(1); }}
+													className={`px-1.5 py-0.5 text-2.5 rounded transition-colors ${
+														pageSize === n ? 'bg-accent/10 text-accent font-bold' : 'text-secondary/40 hover:text-secondary'
+													}`}
+												>
+													{n}
+												</button>
+											))}
+										</div>
+									</div>
 									<div className='flex items-center gap-1'>
 										<button
 											onClick={() => setTablePage((p: number) => Math.max(1, p - 1))}
@@ -1361,7 +1566,18 @@ export default function SalesScreen() {
 								</div>
 							)}
 
-							<div className='flex gap-2 mt-5'>
+							{/* Void badge if already voided */}
+						{selectedOrder.status === 'voided' && (
+							<div className='mt-4 p-3 bg-error/10 border border-error/20 rounded-xl text-center'>
+								<p className='text-xs font-semibold text-error'>VOIDED</p>
+								{selectedOrder.void_reason && (
+									<p className='text-2.5 text-(--error)/70 mt-0.5'>{selectedOrder.void_reason}</p>
+								)}
+							</div>
+						)}
+
+						<div className='flex gap-2 mt-5'>
+							{selectedOrder.status !== 'voided' && (
 								<button
 									onClick={() => handleReprint(selectedOrder)}
 									disabled={isPrinting}
@@ -1375,16 +1591,53 @@ export default function SalesScreen() {
 									</svg>
 									{isPrinting ? 'Printing...' : 'Reprint'}
 								</button>
+							)}
+							{canVoid && selectedOrder.status !== 'voided' && (
 								<button
-									onClick={() => setSelectedOrder(null)}
-									className='flex-1 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
-									Close
+									onClick={() => setShowVoidConfirm(true)}
+									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-error/10 text-error hover:bg-(--error)/20 transition-colors'>
+									Void
 								</button>
-							</div>
+							)}
+							<button
+								onClick={() => setSelectedOrder(null)}
+								className='flex-1 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
+								Close
+							</button>
 						</div>
+
+						{/* Void confirmation */}
+						{showVoidConfirm && (
+							<div className='mt-4 p-4 bg-(--error)/5 border border-error/20 rounded-xl space-y-3'>
+								<p className='text-xs font-semibold text-error'>Confirm Void</p>
+								<p className='text-2.5 text-secondary/60'>This will mark the order as voided. The action is logged and cannot be undone.</p>
+								<input
+									type='text'
+									value={voidReason}
+									onChange={(e) => setVoidReason(e.target.value)}
+									placeholder='Reason (optional)'
+									className='w-full px-3 py-2 text-xs border border-(--error)/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--error)/40 bg-white'
+								/>
+								<div className='flex gap-2'>
+									<button
+										onClick={() => { setShowVoidConfirm(false); setVoidReason(''); }}
+										disabled={isVoiding}
+										className='flex-1 py-2 text-xs font-medium text-secondary border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50'>
+										Cancel
+									</button>
+									<button
+										onClick={handleVoidOrder}
+										disabled={isVoiding}
+										className='flex-1 py-2 text-xs font-semibold bg-error text-white rounded-lg hover:bg-(--error)/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5'>
+										{isVoiding ? <><LoadingSpinner size='sm' />Voiding...</> : 'Confirm Void'}
+									</button>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
-			)}
-		</div>
+			</div>
+		)}
+	</div>
 	);
 }

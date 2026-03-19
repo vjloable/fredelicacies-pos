@@ -18,6 +18,8 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import DiscountsIcon from "@/components/icons/SidebarNav/DiscountsIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import HelpButton from "@/components/HelpButton";
+import { discountsSteps } from "@/components/TutorialSteps";
 
 export default function DiscountsScreen() {
 	const { user, isAuthenticated } = useAuth();
@@ -118,11 +120,11 @@ export default function DiscountsScreen() {
 				<div className='flex flex-col flex-1 h-full overflow-hidden'>
 					{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
 					<div className='xl:hidden w-full'>
-						<MobileTopBar title='Discounts' icon={<DiscountsIcon />} />
+						<MobileTopBar title='Discounts' icon={<DiscountsIcon />} rightAction={<HelpButton variant='page' steps={discountsSteps} />} />
 					</div>
 					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
 					<div className='hidden xl:block w-full'>
-						<TopBar title='Discounts' icon={<DiscountsIcon />} />
+						<TopBar title='Discounts' icon={<DiscountsIcon />} rightAction={<HelpButton variant='page' steps={discountsSteps} />} />
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
 						<LoadingSpinner size="lg" />
@@ -137,11 +139,11 @@ export default function DiscountsScreen() {
 			<div className='flex flex-col flex-1 h-full overflow-hidden'>
 				{/* Mobile/Tablet TopBar - visible below xl: breakpoint (< 1280px) */}
 				<div className='xl:hidden w-full'>
-					<MobileTopBar title='Discounts' icon={<DiscountsIcon />} />
+					<MobileTopBar title='Discounts' icon={<DiscountsIcon />} rightAction={<HelpButton variant='page' steps={discountsSteps} />} />
 				</div>
 				{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
 				<div className='hidden xl:block w-full'>
-					<TopBar title='Discounts' icon={<DiscountsIcon />} />
+					<TopBar title='Discounts' icon={<DiscountsIcon />} rightAction={<HelpButton variant='page' steps={discountsSteps} />} />
 				</div>
 
 				<div className='flex-1 overflow-auto p-6'>

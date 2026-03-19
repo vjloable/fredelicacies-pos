@@ -9,10 +9,14 @@ import EditItemModal from "./components/EditItemModal";
 import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
 import BundlesView from "./components/BundlesView";
+import LockItemModal from "./components/LockItemModal";
+import SubmitEODModal from "./components/SubmitEODModal";
 import type { InventoryItem, Category } from "@/types/domain";
+import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
 import { logActivity } from "@/services/activityLogService";
 import { recordWastage } from "@/services/wastageService";
+import { subscribeToEodLocks, getEodLocks } from "@/services/eodService";
 import { useAuth } from "@/contexts/AuthContext";
 import {
 	subscribeToCategories,
@@ -21,6 +25,9 @@ import {
 	updateCategory,
 } from "@/services/categoryService";
 import { useBranch } from "@/contexts/BranchContext";
+import { useDateTime } from "@/contexts/DateTimeContext";
+import HelpButton from "@/components/HelpButton";
+import { inventorySteps } from "@/components/TutorialSteps";
 import EditIcon from "../store/icons/EditIcon";
 import PlusIcon from "../../../../../components/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
@@ -46,6 +53,7 @@ function CategoriesIcon({ className }: { className?: string }) {
 export default function InventoryScreen() {
 	const { currentBranch } = useBranch();
 	const { user } = useAuth();
+	const { date: todayFormatted } = useDateTime();
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [items, setItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -67,6 +75,12 @@ export default function InventoryScreen() {
 	const [selectedForDestock, setSelectedForDestock] = useState<Set<string>>(new Set());
 	const [showDestockConfirm, setShowDestockConfirm] = useState(false);
 	const [destocking, setDestocking] = useState(false);
+	// EOD state
+	const [eodLocks, setEodLocks] = useState<EodItemLock[]>([]);
+	const [eodSession, setEodSession] = useState<EodSession | null>(null);
+	const [eodPanelOpen, setEodPanelOpen] = useState(true);
+	const [lockingItem, setLockingItem] = useState<Item | null>(null);
+	const [showSubmitEOD, setShowSubmitEOD] = useState(false);
 	const [newItem, setNewItem] = useState({
 		name: "",
 		price: "",
@@ -114,6 +128,16 @@ export default function InventoryScreen() {
 			if (unsubscribe) unsubscribe();
 		};
 	}, [isClient, currentBranch]);
+
+	// Subscribe to today's EOD locks
+	useEffect(() => {
+		if (!isClient || !currentBranch || !canAccessPOS) return;
+		const today = new Date().toISOString().slice(0, 10);
+		// Fetch session too on mount
+		getEodLocks(currentBranch.id, today).then(({ session }) => setEodSession(session));
+		const unsubscribe = subscribeToEodLocks(currentBranch.id, today, setEodLocks);
+		return () => { unsubscribe(); };
+	}, [isClient, currentBranch, canAccessPOS]);
 
 	const openEditModal = (item: InventoryItem) => {
 		setEditingItem({ ...item });
@@ -328,11 +352,11 @@ export default function InventoryScreen() {
 			<div className='flex flex-col flex-1 min-w-0 h-full overflow-hidden'>
 				{/* Mobile TopBar */}
 				<div className='xl:hidden w-full'>
-					<MobileTopBar title='Inventory' icon={<InventoryIcon />} topRightAction={categoriesButton} />
+					<MobileTopBar title='Inventory' icon={<InventoryIcon />} topRightAction={categoriesButton} rightAction={<HelpButton variant='page' steps={inventorySteps} />} />
 				</div>
 				{/* Desktop TopBar */}
 				<div className='hidden xl:block w-full'>
-					<TopBar title='Inventory' icon={<InventoryIcon />} />
+					<TopBar title='Inventory' icon={<InventoryIcon />} rightAction={<HelpButton variant='page' steps={inventorySteps} />} />
 				</div>
 				<span className='flex h-6'></span>
 
@@ -448,6 +472,88 @@ export default function InventoryScreen() {
 												</div>
 											</div>
 
+											{/* EOD Audit Panel */}
+											{canAccessPOS && (
+												<div className='mb-3 border border-secondary/15 rounded-xl overflow-hidden'>
+													<button
+														onClick={() => setEodPanelOpen(p => !p)}
+														className='w-full flex items-center justify-between px-3 py-2.5 bg-secondary/5 hover:bg-secondary/10 transition-colors'
+													>
+														<div className='flex items-center gap-2'>
+															<svg className='w-3.5 h-3.5 text-secondary/60' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
+															</svg>
+															<span className='text-xs font-semibold text-secondary'>End-of-Day Audit</span>
+															<span className='text-xs text-secondary/40'>· {todayFormatted}</span>
+															{eodLocks.length > 0 && (
+																<span className='text-xs bg-secondary/10 text-secondary px-1.5 py-0.5 rounded-full font-semibold'>
+																	{eodLocks.length} locked
+																</span>
+															)}
+															{eodLocks.filter(l => l.discrepancy !== 0).length > 0 && (
+																<span className='text-xs bg-error/10 text-error px-1.5 py-0.5 rounded-full font-semibold'>
+																	{eodLocks.filter(l => l.discrepancy !== 0).length} disc.
+																</span>
+															)}
+															{eodSession?.status === 'submitted' && (
+																<span className='text-xs bg-success/10 text-success px-1.5 py-0.5 rounded-full font-semibold'>Submitted</span>
+															)}
+														</div>
+														<svg className={`w-3.5 h-3.5 text-secondary/40 transition-transform ${eodPanelOpen ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+															<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+														</svg>
+													</button>
+													{eodPanelOpen && (
+														<div className='px-3 py-2.5 space-y-2'>
+															{eodLocks.length === 0 ? (
+																<p className='text-xs text-secondary/40 text-center py-2'>
+																	No items locked yet. Click the lock icon on any item to start auditing.
+																</p>
+															) : (
+																<>
+																	<div className='flex items-center gap-2'>
+																		<div className='flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden'>
+																			<div
+																				className='h-full bg-secondary/60 rounded-full transition-all'
+																				style={{ width: `${Math.min(100, (eodLocks.length / Math.max(items.length, 1)) * 100)}%` }}
+																			/>
+																		</div>
+																		<span className='text-xs text-secondary/50 tabular-nums shrink-0'>
+																			{eodLocks.length} / {items.length}
+																		</span>
+																	</div>
+																	<div className='space-y-1 max-h-40 overflow-y-auto'>
+																		{eodLocks.map(lock => (
+																			<div key={lock.id} className='flex items-center gap-2 text-xs py-0.5'>
+																				<span className='truncate flex-1 text-secondary'>{lock.item_name}</span>
+																				<span className='text-secondary/40 shrink-0 tabular-nums'>exp {lock.expected_stock} → {lock.locked_stock}</span>
+																				{lock.discrepancy === 0 ? (
+																					<svg className='w-3 h-3 text-success shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
+																					</svg>
+																				) : (
+																					<span className={`shrink-0 font-bold ${lock.resolution ? 'text-secondary/40' : 'text-error'}`}>
+																						{lock.discrepancy > 0 ? '+' : ''}{lock.discrepancy}
+																					</span>
+																				)}
+																			</div>
+																		))}
+																	</div>
+																</>
+															)}
+															{eodLocks.length > 0 && eodSession?.status !== 'submitted' && (
+																<button
+																	onClick={() => setShowSubmitEOD(true)}
+																	className='w-full mt-1 py-2 bg-secondary hover:bg-secondary/80 text-primary text-xs font-bold rounded-lg transition-all hover:scale-105 active:scale-95'
+																>
+																	Submit End-of-Day & Carry Over →
+																</button>
+															)}
+														</div>
+													)}
+												</div>
+											)}
+
 											{/* Items List */}
 											<div className={`space-y-1 ${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}`}>
 												{filteredItems.length === 0 && items.length === 0 ? (
@@ -544,6 +650,26 @@ export default function InventoryScreen() {
 																	<button onClick={() => openEditModal(item)} className='shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 																		<EditIcon className='w-4 h-4' />
 																	</button>
+																	{canAccessPOS && (() => {
+																		const lock = eodLocks.find(l => l.item_id === item.id);
+																		return (
+																			<button
+																				onClick={() => setLockingItem(item)}
+																				title={lock ? 'Locked for End-of-Day' : 'Lock for End-of-Day audit'}
+																				className={`shrink-0 p-1.5 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${
+																					lock ? 'text-secondary bg-secondary/10 hover:bg-secondary/20' : 'text-secondary/30 hover:bg-gray-100 hover:text-secondary'
+																				}`}
+																			>
+																				<svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																					{lock ? (
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
+																					) : (
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' />
+																					)}
+																				</svg>
+																			</button>
+																		);
+																	})()}
 																	<button onClick={() => toggleExpandItem(item.id)} className='shrink-0 p-1.5 hover:bg-gray-100 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 																		<svg className={`w-3 h-3 text-secondary/50 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
@@ -596,7 +722,44 @@ export default function InventoryScreen() {
 							items={items}
 							onClose={closeEditModal}
 							onError={handleError}
+							eodLock={editingItem ? (eodLocks.find(l => l.item_id === editingItem.id) ?? null) : null}
+							onUnlocked={() => {
+								if (editingItem) setEodLocks(prev => prev.filter(l => l.item_id !== editingItem.id));
+							}}
 						/>
+
+						{lockingItem && (
+							<LockItemModal
+								isOpen={!!lockingItem}
+								item={lockingItem}
+								existingLock={eodLocks.find(l => l.item_id === lockingItem.id) ?? null}
+								onClose={() => setLockingItem(null)}
+								onLocked={(lock) => {
+									setEodLocks(prev => [...prev.filter(l => l.item_id !== lock.item_id), lock]);
+									if (!eodSession) getEodLocks(currentBranch?.id ?? '', new Date().toISOString().slice(0, 10)).then(({ session }) => setEodSession(session));
+									setLockingItem(null);
+								}}
+								onUnlocked={() => {
+									setEodLocks(prev => prev.filter(l => l.item_id !== lockingItem.id));
+									setLockingItem(null);
+								}}
+								onError={handleError}
+							/>
+						)}
+
+						{showSubmitEOD && eodSession && (
+							<SubmitEODModal
+								isOpen={showSubmitEOD}
+								session={eodSession}
+								locks={eodLocks}
+								onClose={() => setShowSubmitEOD(false)}
+								onSubmitted={() => {
+									setShowSubmitEOD(false);
+									setEodSession(prev => prev ? { ...prev, status: 'submitted' } : prev);
+								}}
+								onError={handleError}
+							/>
+						)}
 
 						<AddItemModal
 							isOpen={showItemForm}
