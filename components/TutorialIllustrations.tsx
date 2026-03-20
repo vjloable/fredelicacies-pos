@@ -431,7 +431,7 @@ export function IllEODSubmit() {
   return (
     <div className="flex items-center justify-center gap-2 p-3 w-full h-full">
       {/* Today — locked counts */}
-      <div className="bg-white rounded-xl border-2 border-accent/40 overflow-hidden w-[118px] shadow-sm">
+      <div className="bg-white rounded-xl border-2 border-accent/40 overflow-hidden w-29.5 shadow-sm">
         <div className="bg-accent/10 px-2 py-1.5 border-b border-accent/20">
           <div className="text-[6px] font-bold text-accent uppercase tracking-wide">Today · End-of-Day</div>
           <div className="text-[5px] text-secondary/50">Locked counts</div>
@@ -455,7 +455,7 @@ export function IllEODSubmit() {
       </div>
 
       {/* Tomorrow — opening stock */}
-      <div className="bg-white rounded-xl border-2 border-green-300 overflow-hidden w-[118px] shadow-sm">
+      <div className="bg-white rounded-xl border-2 border-green-300 overflow-hidden w-29.5 shadow-sm">
         <div className="bg-green-50 px-2 py-1.5 border-b border-green-200">
           <div className="text-[6px] font-bold text-green-700 uppercase tracking-wide">Tomorrow · Opening</div>
           <div className="text-[5px] text-secondary/50">Starting stock</div>
