@@ -5,6 +5,7 @@ import { DateTimeProvider } from "@/contexts/DateTimeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import { BranchProvider } from "@/contexts/BranchContext";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const poppins = Poppins({
 	variable: "--font-poppins",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Fredelicacies POS" />
 			</head>
 			<body className={`${poppins.variable} antialiased`}>
+				<ServiceWorkerRegistration />
 				<AuthProvider>
 					<TimeTrackingProvider options={{ autoRefresh: true }}>
 						<BranchProvider>

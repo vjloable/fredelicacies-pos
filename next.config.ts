@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         search: '',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 31536000, // 1 year — safe because Supabase URLs are content-addressed (Date.now() prefix)
+    deviceSizes: [128, 256, 384, 640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 64, 96, 128, 256],
   },
   env: {
     // Supabase configuration
