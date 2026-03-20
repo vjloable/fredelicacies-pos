@@ -289,7 +289,7 @@ export default function SidebarNav() {
 					</ul>
 				</nav>
 			{/* Version */}
-			<div className='shrink-0 px-4 py-3 border-t border-gray-200'>
+			<div className='shrink-0 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-gray-200'>
 				<p className='text-2.5 text-secondary/30 text-center'>
 					<VersionDisplay variant="simple" /> 
 				</p>

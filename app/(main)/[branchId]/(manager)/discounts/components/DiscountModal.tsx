@@ -288,7 +288,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
           {/* Category Filter */}
           {categories.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-secondary/70 mb-1">
+              <label className="text-xs font-medium text-secondary/70 mb-1 block">
                 Applies To
               </label>
 
