@@ -8,10 +8,12 @@ export interface Order {
   discount_id: string | null;
   discount_amount: number;
   total: number;
-  status: 'completed' | 'cancelled' | 'refunded';
+  status: 'completed' | 'cancelled' | 'refunded' | 'voided';
   payment_method: 'cash' | 'gcash' | 'grab';
   note: string | null;
   transaction_number: string | null;
+  voided_by: string | null;
+  void_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,8 +59,10 @@ export interface CreateOrderData {
 }
 
 export interface UpdateOrderData {
-  status?: 'completed' | 'cancelled' | 'refunded';
+  status?: 'completed' | 'cancelled' | 'refunded' | 'voided';
   discount_id?: string | null;
   discount_amount?: number;
   total?: number;
+  voided_by?: string | null;
+  void_reason?: string | null;
 }

@@ -214,9 +214,17 @@ export const orderRepository = {
   // Get paginated orders for table display with total count
   async getByBranchPaginated(
     branchId: string,
-    options: { page: number; pageSize: number; search?: string }
+    options: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      paymentMethod?: 'cash' | 'gcash' | 'grab';
+      status?: 'active' | 'voided';
+    }
   ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> {
-    const { page, pageSize, search } = options;
+    const { page, pageSize, search, startDate, endDate, paymentMethod, status } = options;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -228,6 +236,24 @@ export const orderRepository = {
 
     if (search) {
       query = query.or(`id.ilike.%${search}%,order_number.ilike.%${search}%`);
+    }
+
+    if (startDate) {
+      query = query.gte('created_at', `${startDate}T00:00:00`);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', `${endDate}T23:59:59`);
+    }
+
+    if (paymentMethod) {
+      query = query.eq('payment_method', paymentMethod);
+    }
+
+    if (status === 'active') {
+      query = query.neq('status', 'voided');
+    } else if (status === 'voided') {
+      query = query.eq('status', 'voided');
     }
 
     const { data, error, count } = await query.range(from, to);
