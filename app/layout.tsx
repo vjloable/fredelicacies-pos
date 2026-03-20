@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const poppins = Poppins({
 	variable: "--font-poppins",
@@ -42,6 +43,7 @@ export default function RootLayout({
 						</BranchProvider>
 					</TimeTrackingProvider>
 				</AuthProvider>
+				<SpeedInsights />
 			</body>
 		</html>
 	);
