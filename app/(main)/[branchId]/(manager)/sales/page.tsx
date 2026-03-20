@@ -29,7 +29,7 @@ import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
-import * as XLSX from "xlsx";
+import { Workbook } from "exceljs";
 import { formatReceiptWithLogo, formatDailySalesESC } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
@@ -603,8 +603,8 @@ export default function SalesScreen() {
 		: viewMode === "year" ? `${selYear}`
 		: "All_Time";
 
-	const generateXLSX = () => {
-		const wb = XLSX.utils.book_new();
+	const generateXLSX = async () => {
+		const workbook = new Workbook();
 		const avgOrderValue = currentPeriodStats.totalOrders > 0
 			? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
 			: 0;
@@ -622,122 +622,110 @@ export default function SalesScreen() {
 		});
 
 		// ── Sheet 1: Summary ───────────────────────────────────────────────
-		// Report metadata + all aggregated stats in one place. No raw rows.
-		const summaryData = [
-			["SALES REPORT"],
-			["Branch", currentBranch?.name ?? ""],
-			["Period", periodLabel.replace(/_/g, " ")],
-			["Generated", new Date().toLocaleString()],
-			[],
-			["Metric", "Value"],
-			["Total Revenue (₱)", currentPeriodStats.totalRevenue],
-			["Total Profit (₱)", currentPeriodStats.totalProfit],
-			["Profit Margin (%)", parseFloat(currentPeriodStats.profitMargin.toFixed(2))],
-			["Total Orders", currentPeriodStats.totalOrders],
-			["Total Pieces Sold", totalPieces],
-			["Avg Order Value (₱)", parseFloat(avgOrderValue.toFixed(2))],
-			["Total Wastage Cost (₱)", totalWastageCost],
-			["Peak Period", peakEntry ? peakEntry.label : "—"],
-			["Peak Orders", peakEntry ? peakEntry.orders : 0],
-			[],
-			["PAYMENT METHOD BREAKDOWN"],
-			["Method", "Orders", "Pieces", "Revenue (₱)"],
-			["Cash", pmMap.cash.orders, pmMap.cash.pieces, parseFloat(pmMap.cash.revenue.toFixed(2))],
-			["GCash", pmMap.gcash.orders, pmMap.gcash.pieces, parseFloat(pmMap.gcash.revenue.toFixed(2))],
-			["Grab", pmMap.grab.orders, pmMap.grab.pieces, parseFloat(pmMap.grab.revenue.toFixed(2))],
-		];
-		const wsSum = XLSX.utils.aoa_to_sheet(summaryData);
-		wsSum["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 16 }];
-		XLSX.utils.book_append_sheet(wb, wsSum, "Summary");
+		const sheet1 = workbook.addWorksheet("Summary");
+		sheet1.columns = [{ width: 28 }, { width: 14 }];
+		sheet1.addRow(["SALES REPORT"]);
+		sheet1.addRow(["Branch", currentBranch?.name ?? ""]);
+		sheet1.addRow(["Period", periodLabel.replace(/_/g, " ")]);
+		sheet1.addRow(["Generated", new Date().toLocaleString()]);
+		sheet1.addRow([]);
+		sheet1.addRow(["Metric", "Value"]);
+		sheet1.addRow(["Total Revenue (₱)", currentPeriodStats.totalRevenue]);
+		sheet1.addRow(["Total Profit (₱)", currentPeriodStats.totalProfit]);
+		sheet1.addRow(["Profit Margin (%)", parseFloat(currentPeriodStats.profitMargin.toFixed(2))]);
+		sheet1.addRow(["Total Orders", currentPeriodStats.totalOrders]);
+		sheet1.addRow(["Total Pieces Sold", totalPieces]);
+		sheet1.addRow(["Avg Order Value (₱)", parseFloat(avgOrderValue.toFixed(2))]);
+		sheet1.addRow(["Total Wastage Cost (₱)", totalWastageCost]);
+		sheet1.addRow(["Peak Period", peakEntry ? peakEntry.label : "—"]);
+		sheet1.addRow(["Peak Orders", peakEntry ? peakEntry.orders : 0]);
+		sheet1.addRow([]);
+		sheet1.addRow(["PAYMENT METHOD BREAKDOWN"]);
+		sheet1.addRow(["Method", "Orders", "Pieces", "Revenue (₱)"]);
+		sheet1.addRow(["Cash", pmMap.cash.orders, pmMap.cash.pieces, parseFloat(pmMap.cash.revenue.toFixed(2))]);
+		sheet1.addRow(["GCash", pmMap.gcash.orders, pmMap.gcash.pieces, parseFloat(pmMap.gcash.revenue.toFixed(2))]);
+		sheet1.addRow(["Grab", pmMap.grab.orders, pmMap.grab.pieces, parseFloat(pmMap.grab.revenue.toFixed(2))]);
 
 		// ── Sheet 2: Orders ────────────────────────────────────────────────
-		// One row per order. Voided orders are included but clearly marked
-		// so the export is a complete audit trail without inflating revenue.
-		const orderRows = analyticsOrders.map(order => {
+		const sheet2 = workbook.addWorksheet("Orders");
+		sheet2.columns = [
+			{ width: 20 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 40 },
+			{ width: 8 }, { width: 14 }, { width: 14 }, { width: 12 }, { width: 10 }, { width: 12 },
+		];
+		sheet2.addRow(["Order #", "Status", "Date", "Time", "Items (summary)", "Pieces", "Subtotal (₱)", "Discount (₱)", "Total (₱)", "Payment", "Void Reason"]);
+		analyticsOrders.forEach(order => {
 			const dt = new Date(order.created_at);
 			const isVoided = order.status === 'voided';
-			return {
-				"Order #": order.order_number,
-				"Status": isVoided ? "VOIDED" : "Completed",
-				"Date": dt.toLocaleDateString(),
-				"Time": dt.toLocaleTimeString(),
-				"Items (summary)": order.items.map(i => `${i.name} ×${i.quantity}`).join(", "),
-				"Pieces": isVoided ? 0 : order.items.reduce((s, i) => s + i.quantity, 0),
-				"Subtotal (₱)": isVoided ? 0 : (order.subtotal ?? order.total),
-				"Discount (₱)": isVoided ? 0 : (order.discount_amount ?? 0),
-				"Total (₱)": isVoided ? 0 : order.total,
-				"Payment": order.payment_method ?? "cash",
-				"Void Reason": order.void_reason ?? "",
-			};
+			sheet2.addRow([
+				order.order_number,
+				isVoided ? "VOIDED" : "Completed",
+				dt.toLocaleDateString(),
+				dt.toLocaleTimeString(),
+				order.items.map(i => `${i.name} ×${i.quantity}`).join(", "),
+				isVoided ? 0 : order.items.reduce((s, i) => s + i.quantity, 0),
+				isVoided ? 0 : (order.subtotal ?? order.total),
+				isVoided ? 0 : (order.discount_amount ?? 0),
+				isVoided ? 0 : order.total,
+				order.payment_method ?? "cash",
+				order.void_reason ?? "",
+			]);
 		});
-		const wsOrders = XLSX.utils.json_to_sheet(orderRows);
-		wsOrders["!cols"] = [
-			{ wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 40 },
-			{ wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 10 },
-		];
-		XLSX.utils.book_append_sheet(wb, wsOrders, "Orders");
 
 		// ── Sheet 3: Line Items ────────────────────────────────────────────
-		// One row per order-item. Links back to Orders sheet via Order #.
-		// Keeps item-level profitability without duplicating order-level totals.
-		const itemRows: object[] = [];
+		const sheet3 = workbook.addWorksheet("Line Items");
+		sheet3.columns = [
+			{ width: 20 }, { width: 12 }, { width: 28 }, { width: 8 }, { width: 6 },
+			{ width: 15 }, { width: 14 }, { width: 16 }, { width: 15 },
+		];
+		sheet3.addRow(["Order #", "Date", "Item Name", "Type", "Qty", "Unit Price (₱)", "Unit Cost (₱)", "Line Revenue (₱)", "Line Profit (₱)"]);
 		for (const order of analyticsOrders.filter(o => o.status !== 'voided')) {
 			const dt = new Date(order.created_at);
 			for (const item of order.items) {
-				itemRows.push({
-					"Order #": order.order_number,
-					"Date": dt.toLocaleDateString(),
-					"Item Name": item.name,
-					"Type": item.is_bundle ? "Bundle" : "Item",
-					"Qty": item.quantity,
-					"Unit Price (₱)": item.price,
-					"Unit Cost (₱)": item.cost ?? 0,
-					"Line Revenue (₱)": parseFloat((item.price * item.quantity).toFixed(2)),
-					"Line Profit (₱)": parseFloat(((item.price - (item.cost ?? 0)) * item.quantity).toFixed(2)),
-				});
+				sheet3.addRow([
+					order.order_number,
+					dt.toLocaleDateString(),
+					item.name,
+					item.is_bundle ? "Bundle" : "Item",
+					item.quantity,
+					item.price,
+					item.cost ?? 0,
+					parseFloat((item.price * item.quantity).toFixed(2)),
+					parseFloat(((item.price - (item.cost ?? 0)) * item.quantity).toFixed(2)),
+				]);
 			}
 		}
-		const wsItems = XLSX.utils.json_to_sheet(itemRows);
-		wsItems["!cols"] = [
-			{ wch: 20 }, { wch: 12 }, { wch: 28 }, { wch: 8 }, { wch: 6 },
-			{ wch: 15 }, { wch: 14 }, { wch: 16 }, { wch: 15 },
-		];
-		XLSX.utils.book_append_sheet(wb, wsItems, "Line Items");
 
 		// ── Sheet 4: Payment Methods ──────────────────────────────────────
-		const pmRows = (["cash", "gcash", "grab"] as const).map(m => ({
-			"Payment Method": m === "gcash" ? "GCash" : m.charAt(0).toUpperCase() + m.slice(1),
-			"Orders": pmMap[m].orders,
-			"Pieces": pmMap[m].pieces,
-			"Revenue (₱)": parseFloat(pmMap[m].revenue.toFixed(2)),
-			"% of Orders": currentPeriodStats.totalOrders > 0 ? parseFloat((pmMap[m].orders / currentPeriodStats.totalOrders * 100).toFixed(1)) : 0,
-			"% of Revenue": currentPeriodStats.totalRevenue > 0 ? parseFloat((pmMap[m].revenue / currentPeriodStats.totalRevenue * 100).toFixed(1)) : 0,
-		}));
-		const wsPm = XLSX.utils.json_to_sheet(pmRows);
-		wsPm["!cols"] = [{ wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
-		XLSX.utils.book_append_sheet(wb, wsPm, "Payment Methods");
+		const sheet4 = workbook.addWorksheet("Payment Methods");
+		sheet4.columns = [{ width: 18 }, { width: 10 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 14 }];
+		sheet4.addRow(["Payment Method", "Orders", "Pieces", "Revenue (₱)", "% of Orders", "% of Revenue"]);
+		(["cash", "gcash", "grab"] as const).forEach(m => {
+			sheet4.addRow([
+				m === "gcash" ? "GCash" : m.charAt(0).toUpperCase() + m.slice(1),
+				pmMap[m].orders,
+				pmMap[m].pieces,
+				parseFloat(pmMap[m].revenue.toFixed(2)),
+				currentPeriodStats.totalOrders > 0 ? parseFloat((pmMap[m].orders / currentPeriodStats.totalOrders * 100).toFixed(1)) : 0,
+				currentPeriodStats.totalRevenue > 0 ? parseFloat((pmMap[m].revenue / currentPeriodStats.totalRevenue * 100).toFixed(1)) : 0,
+			]);
+		});
 
 		// ── Sheet 5: Wastage ───────────────────────────────────────────────
-		// Top wasted items + period breakdown in one sheet, separated by a
-		// blank row. No duplication with Summary (totals already there).
-		const wastageData: (string | number)[][] = [
-			["TOP WASTED ITEMS"],
-			["Item Name", "Total Cost (₱)"],
-			...topWastedItems.map(w => [w.item_name, w.total_cost]),
-		];
+		const sheet5 = workbook.addWorksheet("Wastage");
+		sheet5.columns = [{ width: 30 }, { width: 18 }];
+		sheet5.addRow(["TOP WASTED ITEMS"]);
+		sheet5.addRow(["Item Name", "Total Cost (₱)"]);
+		topWastedItems.forEach(w => sheet5.addRow([w.item_name, w.total_cost]));
 		if (wastageBarData.length > 1) {
-			wastageData.push([]);
-			wastageData.push(["WASTAGE BY PERIOD"]);
-			wastageData.push(["Period", "Wastage Cost (₱)"]);
-			for (const b of wastageBarData) {
-				wastageData.push([b.label, b.wastage]);
-			}
+			sheet5.addRow([]);
+			sheet5.addRow(["WASTAGE BY PERIOD"]);
+			sheet5.addRow(["Period", "Wastage Cost (₱)"]);
+			wastageBarData.forEach(b => sheet5.addRow([b.label, b.wastage]));
 		}
-		const wsWastage = XLSX.utils.aoa_to_sheet(wastageData);
-		wsWastage["!cols"] = [{ wch: 30 }, { wch: 18 }];
-		XLSX.utils.book_append_sheet(wb, wsWastage, "Wastage");
 
-		XLSX.writeFile(wb, `sales_${periodLabel}_${(currentBranch?.name ?? "branch").replace(/\s+/g, "_")}.xlsx`);
+		// Write file
+		const filename = `sales_${periodLabel}_${(currentBranch?.name ?? "branch").replace(/\s+/g, "_")}.xlsx`;
+		await workbook.xlsx.writeFile(filename);
 	};
 
 	if (analyticsLoading && tableLoading) {
@@ -831,7 +819,7 @@ export default function SalesScreen() {
 										{isPrinting ? 'Printing...' : 'Print Report'}
 									</button>
 									<button
-										onClick={() => { setShowActionsMenu(false); generateXLSX(); }}
+										onClick={async () => { setShowActionsMenu(false); await generateXLSX(); }}
 										className='w-full flex items-center gap-3 px-4 py-2.5 text-xs text-secondary hover:bg-secondary/5 transition-colors'
 									>
 										<svg className='w-3.5 h-3.5 shrink-0' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
@@ -1595,7 +1583,7 @@ export default function SalesScreen() {
 							{canVoid && selectedOrder.status !== 'voided' && (
 								<button
 									onClick={() => setShowVoidConfirm(true)}
-									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-error/10 text-error hover:bg-(--error)/20 transition-colors'>
+									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-error/10 text-error hover:bg-error/20 transition-colors'>
 									Void
 								</button>
 							)}
@@ -1608,7 +1596,7 @@ export default function SalesScreen() {
 
 						{/* Void confirmation */}
 						{showVoidConfirm && (
-							<div className='mt-4 p-4 bg-(--error)/5 border border-error/20 rounded-xl space-y-3'>
+							<div className='mt-4 p-4 bg-error/5 border border-error/20 rounded-xl space-y-3'>
 								<p className='text-xs font-semibold text-error'>Confirm Void</p>
 								<p className='text-2.5 text-secondary/60'>This will mark the order as voided. The action is logged and cannot be undone.</p>
 								<input
@@ -1616,7 +1604,7 @@ export default function SalesScreen() {
 									value={voidReason}
 									onChange={(e) => setVoidReason(e.target.value)}
 									placeholder='Reason (optional)'
-									className='w-full px-3 py-2 text-xs border border-(--error)/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--error)/40 bg-white'
+									className='w-full px-3 py-2 text-xs border border-error/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--error)/40 bg-white'
 								/>
 								<div className='flex gap-2'>
 									<button
