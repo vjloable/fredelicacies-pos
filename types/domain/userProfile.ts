@@ -6,6 +6,7 @@ export interface UserProfile {
   phone_number?: string;
   employee_id?: string;
   profile_picture?: string;
+  display_name?: string;
   is_owner: boolean;
   is_active: boolean;
   created_at: string;
@@ -26,6 +27,7 @@ export interface CreateUserProfileData {
 
 export interface UpdateUserProfileData {
   name?: string;
+  display_name?: string;
   phone_number?: string;
   employee_id?: string;
   profile_picture?: string;

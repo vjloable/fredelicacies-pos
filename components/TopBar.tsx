@@ -1,6 +1,5 @@
 "use client";
 
-import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
 import RefreshIcon from "@/components/icons/RefreshIcon";
@@ -14,6 +13,8 @@ import { useBranch } from "@/contexts/BranchContext";
 import MenuBurgerIcon from "@/components/icons/MenuBurger";
 import { workerService } from "@/services/workerService";
 import PinEntryModal from "@/components/PinEntryModal";
+import ProfileModal from "@/components/ProfileModal";
+import SafeImage from "@/components/SafeImage";
 
 
 interface TopBarProps {
@@ -37,6 +38,8 @@ export default function TopBar({
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
 	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
 	
+	const [showProfileModal, setShowProfileModal] = useState(false);
+
 	// PIN verification states
 	const [showPinModal, setShowPinModal] = useState(false);
 	const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
@@ -55,8 +58,7 @@ export default function TopBar({
 		}
 	};
 
-	// Extract user display name from email
-	const userDisplayName = user?.email?.split("@")[0] || "Worker";
+	const userDisplayName = user?.display_name?.trim() || user?.name?.trim().split(' ')[0] || user?.email?.split("@")[0] || "Worker";
 
 	// Handle time tracking actions with PIN verification
 	const handleTimeTrackingClick = async () => {
@@ -134,6 +136,8 @@ export default function TopBar({
 
 	return (
 		<>
+			<ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
+
 			{/* PIN Verification Modal */}
 			{showPinModal && user && (
 				<PinEntryModal
@@ -153,15 +157,21 @@ export default function TopBar({
 						<MenuBurgerIcon className="text-secondary" />
 					</button>
 
-					{/* User Info*/}
-					<div className='relative group'>
-						<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
-							<span className='my-6 w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary'>
-								<UserIcon />
-							</span>
-							<span>{userDisplayName}</span>
-						</div>
-					</div>
+					{/* User Info — click to open profile */}
+					<button
+						type='button'
+						onClick={() => setShowProfileModal(true)}
+						className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3 hover:opacity-80 transition-opacity cursor-pointer'
+					>
+						<span className='my-6 w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary overflow-hidden relative'>
+							{user?.profile_picture ? (
+								<SafeImage src={user.profile_picture} alt={userDisplayName} />
+							) : (
+								<span className='text-xs font-bold select-none'>{userDisplayName[0]?.toUpperCase()}</span>
+							)}
+						</span>
+						<span>{userDisplayName}</span>
+					</button>
 
 					{/* Owner Badge */}
 					{isUserOwner() && (

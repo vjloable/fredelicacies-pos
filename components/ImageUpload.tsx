@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { uploadToSupabase } from '@/lib/supabaseStorage';
+import { shimmerBlur } from '@/lib/imageUtils';
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface ImageUploadProps {
@@ -10,7 +11,7 @@ interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void;
   onImageRemove?: () => void;
   className?: string;
-  bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images'; // Supabase storage bucket
+  bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images' | 'profile-images'; // Supabase storage bucket
   compact?: boolean; // Smaller preview/upload area for modals
 }
 
@@ -87,6 +88,8 @@ export default function ImageUpload({
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                placeholder="blur"
+                blurDataURL={shimmerBlur(8, 8)}
               />
             </div>
             

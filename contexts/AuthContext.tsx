@@ -193,7 +193,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = await authService.getUserData(user.id);
       if (userData) {
         // Only update if data actually changed (deep comparison of relevant fields)
-        const hasChanged = 
+        const hasChanged =
+          user.name !== userData.name ||
+          user.phone_number !== userData.phone_number ||
+          user.profile_picture !== userData.profile_picture ||
+          user.display_name !== userData.display_name ||
           user.is_owner !== userData.is_owner ||
           user.roleAssignments.length !== userData.roleAssignments.length ||
           JSON.stringify(user.roleAssignments) !== JSON.stringify(userData.roleAssignments);

@@ -15,7 +15,7 @@ export interface SupabaseUploadResult {
  */
 export const uploadToSupabase = async (
   file: File,
-  bucket: 'branch-logos' | 'inventory-images' | 'bundle-images',
+  bucket: 'branch-logos' | 'inventory-images' | 'bundle-images' | 'profile-images',
   path?: string
 ): Promise<SupabaseUploadResult> => {
   // Generate unique filename
@@ -26,7 +26,7 @@ export const uploadToSupabase = async (
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(filePath, file, {
-      cacheControl: '3600',
+      cacheControl: '31536000',
       upsert: false,
     });
 
