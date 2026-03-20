@@ -22,7 +22,10 @@ export type LogAction =
   | 'discount_updated'
   | 'discount_deleted'
   | 'worker_added'
-  | 'worker_removed';
+  | 'worker_removed'
+  | 'eod_lock_item'
+  | 'eod_unlock_item'
+  | 'eod_submit';
 
 export interface ActivityLog {
   id: string;

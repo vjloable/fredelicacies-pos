@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
+import { unlockItem } from '@/services/eodService';
 import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
+import type { EodItemLock } from '@/types/domain/eod';
 import { useBranch } from '@/contexts/BranchContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { logActivity } from '@/services/activityLogService';
@@ -20,6 +22,8 @@ interface EditItemModalProps {
   items: Item[];
   onClose: () => void;
   onError: (error: string) => void;
+  eodLock?: EodItemLock | null;
+  onUnlocked?: () => void;
 }
 
 export default function EditItemModal({
@@ -27,7 +31,9 @@ export default function EditItemModal({
   editingItem,
   categories,
   onClose,
-  onError
+  onError,
+  eodLock,
+  onUnlocked,
 }: EditItemModalProps) {
   const { currentBranch } = useBranch();
   const { user } = useAuth();
@@ -454,123 +460,76 @@ export default function EditItemModal({
           {/* Stock Adjustment Section */}
           <div className="bg-primary rounded-xl p-4 border-2 border-secondary/20">
             <h4 className="text-xs font-semibold text-secondary mb-2 flex items-center gap-2">
-              Stock Adjustment
+              Add Stock
             </h4>
 
-            {/* Quick Stock Buttons */}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              <div className="space-y-3">
-                <label className="block text-center text-xs font-medium text-secondary/50">Remove Stock</label>
-                <div className="grid grid-rows-3 grid-cols-1 gap-2">
-                  {[1, 5, 10].map(amount => (
-                    <button
-                      key={`remove-${amount}`}
-                      onClick={() => setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)})}
-                      className="py-1 px-2 bg-error/10 hover:bg-error/20 border border-error text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
-                    >
-                      -{amount}
-                    </button>
-                  ))}
-                </div>
+            {/* Quick Stock Buttons + Current Stock */}
+            <div className="flex gap-3 mb-3">
+              <div className="flex flex-col items-center justify-center bg-gray-50 rounded-lg border-2 border-gray-200 px-4 py-3 min-w-24 shrink-0">
+                <div className="text-2xl font-bold text-secondary leading-none">{localEditingItem.stock}</div>
+                <div className="text-xs text-secondary/50 mt-1">in stock</div>
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-xs text-center font-medium text-secondary/50">Current Stock</label>
-                <div className="text-center items-center justify-center flex flex-col bg-gray-50 rounded-xl border border-gray-200 h-20">
-                  <div className="text-xl font-bold text-secondary">{localEditingItem.stock}</div>
-                  <div className="text-xs text-secondary opacity-70">units in stock</div>
-                </div>
+              <div className="flex gap-2 flex-1">
+                {[1, 5, 10].map(amount => (
+                  <button
+                    key={`add-${amount}`}
+                    onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
+                    className="flex-1 py-2 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
+                  >
+                    +{amount}
+                  </button>
+                ))}
               </div>
-              
-              <div className="space-y-3">
-                <label className="block text-xs text-center font-medium text-secondary/50">Add Stock</label>
-                <div className="grid grid-rows-3 gap-2">
-                  {[1, 5, 10].map(amount => (
-                    <button
-                      key={`add-${amount}`}
-                      onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
-                      className="py-1 px-2 bg-success/10 border border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs"
-                    >
-                      +{amount}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
             </div>
 
             {/* Custom Amount Input */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs font-medium text-secondary mb-2">
-                  Custom Amount
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter amount"
-                  className="w-full px-3 py-2 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Only allow whole numbers (no decimals for stock)
-                    if (value === '' || /^[0-9]*$/.test(value)) {
-                      e.target.value = value;
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Prevent scientific notation and decimals
-                    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                      e.preventDefault();
-                    }
-                    if (e.key === 'Enter') {
-                      const amount = parseInt((e.target as HTMLInputElement).value) || 0;
-                      if (amount > 0) {
-                        setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount});
-                        (e.target as HTMLInputElement).value = '';
-                      }
-                    }
-                  }}
-                  onFocus={(e) => {
-                    e.target.select();
-                  }}
-                  onBlur={(e) => {
-                    // If empty or invalid, clear the field
-                    const value = e.target.value;
-                    if (value === '' || isNaN(parseInt(value))) {
-                      e.target.value = '';
-                    }
-                  }}
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <button
-                  onClick={(e) => {
-                    const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input') as HTMLInputElement;
-                    const amount = parseInt(input?.value || '0') || 0;
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Custom amount"
+                className="flex-1 px-3 py-2 h-9.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^[0-9]*$/.test(value)) {
+                    e.target.value = value;
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                  if (e.key === 'Enter') {
+                    const amount = parseInt((e.target as HTMLInputElement).value) || 0;
                     if (amount > 0) {
                       setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount});
-                      if (input) input.value = '';
+                      (e.target as HTMLInputElement).value = '';
                     }
-                  }}
-                  className="flex-1 py-1.5 h-9.5 bg-success/10 border border-success hover:bg-success/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
-                >
-                  Add
-                </button>
-                <button
-                  onClick={(e) => {
-                    const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input') as HTMLInputElement;
-                    const amount = parseInt(input?.value || '0') || 0;
-                    if (amount > 0) {
-                      setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)});
-                      if (input) input.value = '';
-                    }
-                  }}
-                  className="flex-1 py-1.5 h-9.5 bg-error/10 border border-error hover:bg-error/20 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 text-xs"
-                >
-                  Remove
-                </button>
-              </div>
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+                onBlur={(e) => {
+                  if (e.target.value === '' || isNaN(parseInt(e.target.value))) {
+                    e.target.value = '';
+                  }
+                }}
+                inputMode="numeric"
+              />
+              <button
+                onClick={(e) => {
+                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                  const amount = parseInt(input?.value || '0') || 0;
+                  if (amount > 0) {
+                    setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount});
+                    if (input) input.value = '';
+                  }
+                }}
+                className="px-4 h-9.5 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs shrink-0"
+              >
+                Add
+              </button>
             </div>
+            <p className="text-xs text-secondary/40 mt-2">To remove stock, use the Destock feature from the inventory list.</p>
           </div>
 
         </div>
@@ -611,6 +570,59 @@ export default function EditItemModal({
             Save
           </button>
         </div>
+
+        {/* EOD Lock Status */}
+        {eodLock && (
+          <div className="mt-4 bg-secondary/5 border border-secondary/15 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-secondary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className="text-xs font-semibold text-secondary">Locked for EOD</span>
+              </div>
+              {onUnlocked && (
+                <button
+                  onClick={async () => {
+                    const { error } = await unlockItem(currentBranch?.id ?? '', user?.id ?? null, eodLock);
+                    if (!error) onUnlocked();
+                  }}
+                  className="text-xs text-error hover:underline"
+                >
+                  Unlock
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="text-center">
+                <div className="text-secondary/50">Expected</div>
+                <div className="font-bold text-secondary">{eodLock.expected_stock}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-secondary/50">Locked</div>
+                <div className="font-bold text-secondary">{eodLock.locked_stock}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-secondary/50">Discrepancy</div>
+                <div className={`font-bold ${eodLock.discrepancy === 0 ? 'text-success' : 'text-error'}`}>
+                  {eodLock.discrepancy > 0 ? '+' : ''}{eodLock.discrepancy}
+                </div>
+              </div>
+            </div>
+            {eodLock.resolution && (
+              <div className="mt-2 pt-2 border-t border-secondary/10">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  eodLock.resolution === 'force_wastage' ? 'bg-error/10 text-error' : 'bg-accent/10 text-accent'
+                }`}>
+                  {eodLock.resolution === 'force_wastage' ? 'Sent to Wastage' : 'Force Carry-Over'}
+                </span>
+                {eodLock.resolution_reason && (
+                  <p className="text-xs text-secondary/50 mt-1 italic">"{eodLock.resolution_reason}"</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Delete Confirmation Dialog */}
         {showDeleteConfirm && (

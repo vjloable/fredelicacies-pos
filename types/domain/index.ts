@@ -75,3 +75,14 @@ export type {
   WastageDailySummary,
   WastageItemSummary,
 } from './wastage';
+
+export type {
+  EodSession,
+  EodItemLock,
+  EodSessionStatus,
+  EodLockStatus,
+  EodResolution,
+  CreateEodItemLockData,
+  UpdateEodItemLockData,
+  EodDailySummary,
+} from './eod';
