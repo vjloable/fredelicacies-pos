@@ -1,6 +1,7 @@
 import { orderRepository, inventoryRepository } from '@/lib/repositories';
 import type { OrderWithItems, BundleComponent } from '@/types/domain';
 import { logActivity } from '@/services/activityLogService';
+import { log, measureTime } from '@/lib/logging';
 import { supabase } from '@/lib/supabase';
 
 // Generate order number via server-side atomic counter (format: XXX-YYYY-000001)
@@ -40,10 +41,14 @@ export const createOrder = async (
   note?: string,
   transactionNumber?: string
 ): Promise<{ id: string | null; error: any }> => {
+  const timer = measureTime();
+  log.info('Order creation started', { branchId, userId, itemCount: items.length, total, paymentMethod });
+
   let orderNumber: string;
   try {
     orderNumber = await generateOrderNumber(branchId);
   } catch (e: any) {
+    log.error('Failed to generate order number', e as Error, { branchId, userId });
     return { id: null, error: e };
   }
 
@@ -81,6 +86,12 @@ export const createOrder = async (
   );
 
   if (error || !order) {
+    log.error('Order creation failed', new Error(error?.message || 'Unknown error'), {
+      branchId,
+      userId,
+      orderNumber,
+      error: error?.message
+    });
     return { id: null, error };
   }
 
@@ -121,6 +132,17 @@ export const createOrder = async (
     entityType: 'order',
     entityId: order.id,
     details: { total, item_count: items.reduce((s, i) => s + i.quantity, 0) },
+  });
+
+  const duration = timer.duration();
+  log.info('Order created successfully', {
+    branchId,
+    userId,
+    orderId: order.id,
+    orderNumber,
+    total,
+    itemCount: items.length,
+    duration,
   });
 
   return { id: order.id, error: null };
@@ -186,6 +208,8 @@ export const voidOrder = async (
   reason: string,
   orderNumber: string,
 ): Promise<{ error: any }> => {
+  log.info('Order void initiated', { branchId, userId, orderId, orderNumber, reason });
+
   const { error } = await supabase
     .from('orders')
     .update({
@@ -195,16 +219,33 @@ export const voidOrder = async (
     })
     .eq('id', orderId);
 
-  if (!error) {
-    void logActivity({
+  if (error) {
+    log.error('Order void failed', new Error(error.message), {
       branchId,
       userId,
-      action: 'order_voided',
-      entityType: 'order',
-      entityId: orderId,
-      details: { order_number: orderNumber, reason: reason.trim() || null },
+      orderId,
+      orderNumber,
+      reason,
     });
+    return { error };
   }
+
+  log.info('Order voided successfully', {
+    branchId,
+    userId,
+    orderId,
+    orderNumber,
+    reason: reason.trim() || null,
+  });
+
+  void logActivity({
+    branchId,
+    userId,
+    action: 'order_voided',
+    entityType: 'order',
+    entityId: orderId,
+    details: { order_number: orderNumber, reason: reason.trim() || null },
+  });
 
   return { error };
 };

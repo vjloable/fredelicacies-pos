@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { log } from '@/lib/logging';
 import type { ActivityLog } from '@/types/domain';
 
 // ---------------------------------------------------------------------------
@@ -22,7 +23,19 @@ export async function logActivity(params: {
       entity_id: params.entityId ?? null,
       details: params.details ?? null,
     });
-  } catch {
+
+    log.info('Activity logged', {
+      branchId: params.branchId,
+      userId: params.userId,
+      action: params.action,
+      entityType: params.entityType,
+    });
+  } catch (err) {
+    log.error('Failed to log activity', err as Error, {
+      branchId: params.branchId,
+      userId: params.userId,
+      action: params.action,
+    });
     // Never throw — logging must never break the calling code
   }
 }
