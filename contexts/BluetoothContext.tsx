@@ -1,18 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 
 // Web Bluetooth API type declarations
 declare global {
   interface Navigator {
     bluetooth?: Bluetooth;
   }
-  
+
   interface Bluetooth {
     requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
     getDevices?(): Promise<BluetoothDevice[]>;
   }
-  
+
   interface BluetoothDevice extends EventTarget {
     id: string;
     name?: string;
@@ -20,7 +20,7 @@ declare global {
     addEventListener(type: 'gattserverdisconnected', listener: (event: Event) => void): void;
     removeEventListener(type: 'gattserverdisconnected', listener: (event: Event) => void): void;
   }
-  
+
   interface BluetoothRemoteGATTServer {
     connected: boolean;
     connect(): Promise<BluetoothRemoteGATTServer>;
@@ -28,13 +28,13 @@ declare global {
     getPrimaryService(service: string): Promise<BluetoothRemoteGATTService>;
     getPrimaryServices(): Promise<BluetoothRemoteGATTService[]>;
   }
-  
+
   interface BluetoothRemoteGATTService {
     uuid: string;
     getCharacteristics(): Promise<BluetoothRemoteGATTCharacteristic[]>;
     getCharacteristic(characteristic: string): Promise<BluetoothRemoteGATTCharacteristic>;
   }
-  
+
   interface BluetoothRemoteGATTCharacteristic {
     uuid: string;
     properties: {
@@ -44,12 +44,22 @@ declare global {
     writeValue(value: ArrayBuffer | ArrayBufferView): Promise<void>;
     writeValueWithoutResponse(value: ArrayBuffer | ArrayBufferView): Promise<void>;
   }
-  
+
   interface RequestDeviceOptions {
     acceptAllDevices?: boolean;
     optionalServices?: string[];
   }
 }
+
+const PRINTER_SERVICES = [
+  '00001101-0000-1000-8000-00805f9b34fb',
+  '000018f0-0000-1000-8000-00805f9b34fb',
+  '0000ff00-0000-1000-8000-00805f9b34fb',
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+  '0000fff0-0000-1000-8000-00805f9b34fb',
+  '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+  '0000ffe0-0000-1000-8000-00805f9b34fb',
+];
 
 interface BluetoothContextType {
   bluetoothDevice: BluetoothDevice | null;
@@ -65,291 +75,269 @@ const BluetoothContext = createContext<BluetoothContextType | undefined>(undefin
 
 export const useBluetoothPrinter = () => {
   const context = useContext(BluetoothContext);
-  if (!context) {
-    throw new Error('useBluetoothPrinter must be used within a BluetoothProvider');
-  }
+  if (!context) throw new Error('useBluetoothPrinter must be used within a BluetoothProvider');
   return context;
 };
 
-interface BluetoothProviderProps {
-  children: ReactNode;
-}
-
-export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({ children }) => {
+export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice | null>(null);
   const [bluetoothStatus, setBluetoothStatus] = useState<string>('');
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const setupBluetoothDevice = async (device: BluetoothDevice) => {
-    console.log('Setting up device:', {
-      id: device.id,
-      name: device.name,
-      gatt: !!device.gatt
-    });
+  // Cache writable characteristic — avoid re-discovering services on every print
+  const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isReconnectingRef = useRef(false);
+  const deviceRef = useRef<BluetoothDevice | null>(null);
 
-    setBluetoothDevice(device);
-    
-    // Store printer in localStorage for persistence
-    localStorage.setItem('connectedPrinter', JSON.stringify({
-      id: device.id,
-      name: device.name || 'Unknown Printer'
-    }));
+  // Keep deviceRef in sync so callbacks always see the latest device
+  useEffect(() => { deviceRef.current = bluetoothDevice; }, [bluetoothDevice]);
 
-    setBluetoothStatus(`Connected to: ${device.name || 'Unknown Printer'} - Ready for printing`);
+  // ── GATT helpers ──────────────────────────────────────────────────────────
+
+  const getWritableCharacteristic = async (
+    device: BluetoothDevice
+  ): Promise<BluetoothRemoteGATTCharacteristic | null> => {
+    const server = await device.gatt!.connect();
+    const services = await server.getPrimaryServices();
+    for (const service of services) {
+      try {
+        const chars = await service.getCharacteristics();
+        const writable = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+        if (writable) return writable;
+      } catch { /* service may not expose characteristics — skip */ }
+    }
+    return null;
   };
 
-  const tryAutoReconnect = async () => {
-    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
-    
-    const savedPrinter = localStorage.getItem('connectedPrinter');
-    if (!savedPrinter) return;
+  const writeData = async (
+    characteristic: BluetoothRemoteGATTCharacteristic,
+    data: Uint8Array
+  ): Promise<boolean> => {
+    const chunkSize = 20;
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, i + chunkSize);
+      try {
+        if (characteristic.properties.writeWithoutResponse) {
+          await characteristic.writeValueWithoutResponse(chunk);
+        } else {
+          await characteristic.writeValue(chunk);
+        }
+        await new Promise(r => setTimeout(r, 50));
+      } catch (err: any) {
+        console.error('Write error:', err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // ── Disconnect handler + auto-reconnect ───────────────────────────────────
+
+  const handleDisconnected = useCallback(() => {
+    const device = deviceRef.current;
+    if (!device) return;
+
+    console.log('Printer disconnected — scheduling reconnect...');
+    characteristicRef.current = null;
+    setBluetoothStatus('Printer disconnected — reconnecting...');
+
+    if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    reconnectTimerRef.current = setTimeout(async () => {
+      if (isReconnectingRef.current) return;
+      isReconnectingRef.current = true;
+      try {
+        const char = await getWritableCharacteristic(device);
+        if (char) {
+          characteristicRef.current = char;
+          setBluetoothStatus(`Reconnected to ${device.name || 'printer'}`);
+        }
+      } catch {
+        setBluetoothStatus(`${device.name || 'Printer'} out of range — will retry on next print`);
+      } finally {
+        isReconnectingRef.current = false;
+      }
+    }, 2000);
+  }, []);
+
+  // ── Silent reconnect via getDevices() ────────────────────────────────────
+
+  const silentReconnect = useCallback(async (): Promise<boolean> => {
+    if (!navigator.bluetooth?.getDevices) return false;
+    const saved = localStorage.getItem('connectedPrinter');
+    if (!saved) return false;
+
+    let printerInfo: { id: string; name: string };
+    try { printerInfo = JSON.parse(saved); } catch { return false; }
 
     try {
-      const printerInfo = JSON.parse(savedPrinter);
-      setBluetoothStatus(`Attempting to reconnect to ${printerInfo.name}...`);
-      
       const devices = await navigator.bluetooth.getDevices();
-      const savedDevice = devices.find((device: BluetoothDevice) => device.id === printerInfo.id);
-      
-      if (savedDevice && savedDevice.gatt) {
-        try {
-          await savedDevice.gatt.connect();
-          await setupBluetoothDevice(savedDevice);
-          console.log('Auto-reconnected to saved printer');
-        } catch (connectError) {
-          console.log('Auto-reconnect failed:', connectError);
-          setBluetoothStatus(`${printerInfo.name} found but connection failed. Click to reconnect.`);
-        }
-      } else {
-        setBluetoothStatus(`${printerInfo.name} not available. Click to reconnect.`);
+      const device = devices.find(d => d.id === printerInfo.id);
+      if (!device) return false;
+
+      const char = await getWritableCharacteristic(device);
+      if (!char) return false;
+
+      characteristicRef.current = char;
+
+      if (deviceRef.current?.id !== device.id) {
+        device.addEventListener('gattserverdisconnected', handleDisconnected);
+        setBluetoothDevice(device);
       }
-    } catch (error) {
-      console.log('Auto-reconnect error:', error);
-      localStorage.removeItem('connectedPrinter');
-      setBluetoothStatus('');
+
+      setBluetoothStatus(`Reconnected to ${printerInfo.name}`);
+      return true;
+    } catch {
+      return false;
     }
-  };
+  }, [handleDisconnected]);
+
+  // ── Ensure connected before any print ────────────────────────────────────
+
+  const ensureConnected = useCallback(async (): Promise<BluetoothRemoteGATTCharacteristic | null> => {
+    // Fast path — cached char and GATT still up
+    if (characteristicRef.current && deviceRef.current?.gatt?.connected) {
+      return characteristicRef.current;
+    }
+
+    // Try direct reconnect on current device object
+    if (deviceRef.current) {
+      try {
+        const char = await getWritableCharacteristic(deviceRef.current);
+        if (char) { characteristicRef.current = char; return char; }
+      } catch { /* fall through */ }
+    }
+
+    // Fall back to getDevices() silent reconnect
+    const ok = await silentReconnect();
+    return ok ? characteristicRef.current : null;
+  }, [silentReconnect]);
+
+  // ── Public API ────────────────────────────────────────────────────────────
 
   const connectToBluetoothPrinter = async () => {
     if (!navigator.bluetooth) {
       setBluetoothStatus('Bluetooth not supported in this browser');
       return;
     }
-
     setIsConnecting(true);
     setBluetoothStatus('Scanning for Bluetooth printers...');
-
     try {
       const device = await navigator.bluetooth.requestDevice({
-        optionalServices: [
-          '00001101-0000-1000-8000-00805f9b34fb',
-          '000018f0-0000-1000-8000-00805f9b34fb',
-          '0000ff00-0000-1000-8000-00805f9b34fb', 
-          '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-          '0000fff0-0000-1000-8000-00805f9b34fb',
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          '0000ffe0-0000-1000-8000-00805f9b34fb',
-        ],
-        acceptAllDevices: true
+        acceptAllDevices: true,
+        optionalServices: PRINTER_SERVICES,
       });
 
-      await setupBluetoothDevice(device);
-      
-    } catch (error: any) {
-      console.error('Bluetooth connection error:', error);
-      setBluetoothStatus(`Connection failed: ${error.message}`);
+      const char = await getWritableCharacteristic(device);
+      if (!char) throw new Error('No writable characteristic found on this device');
+
+      device.addEventListener('gattserverdisconnected', handleDisconnected);
+      characteristicRef.current = char;
+      setBluetoothDevice(device);
+      localStorage.setItem('connectedPrinter', JSON.stringify({ id: device.id, name: device.name || 'Unknown Printer' }));
+      setBluetoothStatus(`Connected to ${device.name || 'Unknown Printer'} — ready`);
+    } catch (err: any) {
+      setBluetoothStatus(`Connection failed: ${err.message}`);
     } finally {
       setIsConnecting(false);
     }
   };
 
   const disconnectPrinter = () => {
-    if (bluetoothDevice) {
-      bluetoothDevice.removeEventListener('gattserverdisconnected', () => {});
-      
-      if (bluetoothDevice.gatt?.connected) {
-        bluetoothDevice.gatt.disconnect();
-      }
+    const device = deviceRef.current;
+    if (device) {
+      device.removeEventListener('gattserverdisconnected', handleDisconnected);
+      if (device.gatt?.connected) device.gatt.disconnect();
     }
+    characteristicRef.current = null;
     setBluetoothDevice(null);
     localStorage.removeItem('connectedPrinter');
     setBluetoothStatus('Disconnected');
   };
 
   const testPrint = async () => {
-    if (!bluetoothDevice) {
-      setBluetoothStatus('No printer connected');
-      return;
-    }
+    if (!deviceRef.current) { setBluetoothStatus('No printer connected'); return; }
+    setBluetoothStatus('Connecting...');
+    const char = await ensureConnected();
+    if (!char) { setBluetoothStatus('Could not reach printer'); return; }
 
-    try {
-      setBluetoothStatus('Connecting to printer...');
-      const server = await bluetoothDevice.gatt!.connect();
-      
-      setBluetoothStatus('Getting services...');
-      const services = await server.getPrimaryServices();
-      
-      console.log('Available services:', services.map(s => s.uuid));
-      
-      let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
-      
-      for (const service of services) {
-        try {
-          const characteristics = await service.getCharacteristics();
-          console.log(`Service ${service.uuid} characteristics:`, 
-            characteristics.map(c => ({ uuid: c.uuid, properties: c.properties })));
-          
-          const writableChar = characteristics.find(c => 
-            c.properties.write || c.properties.writeWithoutResponse
-          );
-          
-          if (writableChar) {
-            characteristic = writableChar;
-            console.log('Found writable characteristic:', writableChar.uuid);
-            break;
-          }
-        } catch (error) {
-          console.log(`Error getting characteristics for service ${service.uuid}:`, error);
-        }
-      }
-      
-      if (!characteristic) {
-        setBluetoothStatus('No writable characteristic found');
-        return;
-      }
-      
-      const escPos = [
-        0x1B, 0x40,
-        0x1B, 0x61, 0x01,
-        0x1D, 0x21, 0x11,
-        ...Array.from(new TextEncoder().encode('FOODMOOD POS\n')),
-        0x1D, 0x21, 0x00,
-        0x1B, 0x61, 0x00,
-        ...Array.from(new TextEncoder().encode('\n')),
-        ...Array.from(new TextEncoder().encode('Test Receipt\n')),
-        ...Array.from(new TextEncoder().encode('Date: ' + new Date().toLocaleString() + '\n')),
-        ...Array.from(new TextEncoder().encode('\n')),
-        ...Array.from(new TextEncoder().encode('Bluetooth connection successful!\n')),
-        ...Array.from(new TextEncoder().encode('\n')),
-        0x1B, 0x61, 0x01,
-        ...Array.from(new TextEncoder().encode('Thank you!\n')),
-        ...Array.from(new TextEncoder().encode('\n\n\n')),
-        0x1D, 0x56, 0x00
-      ];
-      
-      const data = new Uint8Array(escPos);
-      setBluetoothStatus('Printing...');
-      
-      const chunkSize = 20;
-      for (let i = 0; i < data.length; i += chunkSize) {
-        const chunk = data.slice(i, i + chunkSize);
-        
-        try {
-          if (characteristic.properties.writeWithoutResponse) {
-            await characteristic.writeValueWithoutResponse(chunk);
-          } else {
-            await characteristic.writeValue(chunk);
-          }
-          
-          await new Promise(resolve => setTimeout(resolve, 50));
-        } catch (writeError: any) {
-          console.error('Write error:', writeError);
-          setBluetoothStatus(`Print error: ${writeError.message}`);
-          return;
-        }
-      }
-      
-      setBluetoothStatus('Test print sent successfully!');
-      
-    } catch (error: any) {
-      console.error('Test print error:', error);
-      setBluetoothStatus(`Test print failed: ${error.message}`);
-    }
+    const data = new Uint8Array([
+      0x1B, 0x40,
+      0x1B, 0x61, 0x01,
+      0x1D, 0x21, 0x11,
+      ...new TextEncoder().encode('FREDELECACIES\n'),
+      0x1D, 0x21, 0x00,
+      0x1B, 0x61, 0x00,
+      ...new TextEncoder().encode('\n'),
+      ...new TextEncoder().encode('Test Receipt\n'),
+      ...new TextEncoder().encode('Date: ' + new Date().toLocaleString() + '\n'),
+      ...new TextEncoder().encode('\n'),
+      ...new TextEncoder().encode('Bluetooth connection successful!\n'),
+      ...new TextEncoder().encode('\n\n\n'),
+      0x1D, 0x56, 0x00,
+    ]);
+
+    setBluetoothStatus('Printing...');
+    const ok = await writeData(char, data);
+    setBluetoothStatus(ok ? 'Test print sent!' : 'Print failed — try reconnecting');
   };
 
   const printReceipt = async (receiptData: Uint8Array): Promise<boolean> => {
-    if (!bluetoothDevice) {
-      console.error('No printer connected');
-      return false;
-    }
-
-    try {
-      console.log('Connecting to printer for receipt...');
-      const server = await bluetoothDevice.gatt!.connect();
-      
-      console.log('Getting services...');
-      const services = await server.getPrimaryServices();
-      
-      let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
-      
-      for (const service of services) {
-        try {
-          const characteristics = await service.getCharacteristics();
-          
-          const writableChar = characteristics.find(c => 
-            c.properties.write || c.properties.writeWithoutResponse
-          );
-          
-          if (writableChar) {
-            characteristic = writableChar;
-            console.log('Found writable characteristic for receipt:', writableChar.uuid);
-            break;
-          }
-        } catch (error) {
-          console.log(`Error getting characteristics for service ${service.uuid}:`, error);
-        }
-      }
-      
-      if (!characteristic) {
-        console.error('No writable characteristic found for receipt');
-        return false;
-      }
-      
-      console.log('Printing receipt...');
-      const chunkSize = 20;
-      for (let i = 0; i < receiptData.length; i += chunkSize) {
-        const chunk = receiptData.slice(i, i + chunkSize);
-        
-        try {
-          if (characteristic.properties.writeWithoutResponse) {
-            await characteristic.writeValueWithoutResponse(chunk);
-          } else {
-            await characteristic.writeValue(chunk);
-          }
-          
-          await new Promise(resolve => setTimeout(resolve, 50));
-        } catch (writeError: any) {
-          console.error('Write error during receipt print:', writeError);
-          return false;
-        }
-      }
-      
-      console.log('Receipt sent successfully!');
-      return true;
-      
-    } catch (error: any) {
-      console.error('Receipt print error:', error);
-      return false;
-    }
+    const char = await ensureConnected();
+    if (!char) { console.error('printReceipt: no connected printer'); return false; }
+    return writeData(char, receiptData);
   };
 
-  // Auto-reconnect on context initialization
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    tryAutoReconnect();
+    // On mount — silent reconnect to last known printer
+    silentReconnect().then(ok => {
+      if (!ok) {
+        const saved = localStorage.getItem('connectedPrinter');
+        if (saved) {
+          try { setBluetoothStatus(`${JSON.parse(saved).name} not available. Click to reconnect.`); }
+          catch { /* ignore */ }
+        }
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value: BluetoothContextType = {
-    bluetoothDevice,
-    bluetoothStatus,
-    isConnecting,
-    connectToBluetoothPrinter,
-    disconnectPrinter,
-    testPrint,
-    printReceipt
-  };
+  useEffect(() => {
+    // Reconnect when tab becomes visible or window gains focus
+    const onVisible = () => {
+      if (!document.hidden && deviceRef.current && !deviceRef.current.gatt?.connected) {
+        silentReconnect();
+      }
+    };
+    const onFocus = () => {
+      if (deviceRef.current && !deviceRef.current.gatt?.connected) {
+        silentReconnect();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [silentReconnect]);
+
+  useEffect(() => {
+    return () => { if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current); };
+  }, []);
 
   return (
-    <BluetoothContext.Provider value={value}>
+    <BluetoothContext.Provider value={{
+      bluetoothDevice,
+      bluetoothStatus,
+      isConnecting,
+      connectToBluetoothPrinter,
+      disconnectPrinter,
+      testPrint,
+      printReceipt,
+    }}>
       {children}
     </BluetoothContext.Provider>
   );

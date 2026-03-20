@@ -98,6 +98,8 @@ const BOLD_OFF    = esc(0x1b, 0x45, 0x00);
 const SIZE_NORMAL = esc(0x1d, 0x21, 0x00);
 const SIZE_TALL   = esc(0x1d, 0x21, 0x01); // 2× height
 const CUT         = esc(0x1d, 0x56, 0x00);
+const FONT_B      = esc(0x1b, 0x4d, 0x01); // Font B — smaller baseline (~2px less than Font A)
+const FONT_A      = esc(0x1b, 0x4d, 0x00); // Font A — normal (used for SIZE_TALL sections)
 
 // ─── Build a single receipt copy ─────────────────────────────────────────────
 async function buildCopy(
@@ -110,6 +112,7 @@ async function buildCopy(
 	const lines: (string | Uint8Array)[] = [];
 
 	lines.push(INIT);
+	lines.push(FONT_B);
 
 	// ── Logo (customer copy only) ────────────────────────────────────────────
 	if (copyType === "customer" && logoBitmap && logoBitmap.length > 0) {
@@ -121,9 +124,9 @@ async function buildCopy(
 	// ── Store name & branch ───────────────────────────────────────────────────
 	lines.push(ALIGN_CTR);
 	if (order.storeName) {
-		lines.push(BOLD_ON, SIZE_TALL);
+		lines.push(FONT_A, BOLD_ON, SIZE_TALL);
 		lines.push(t(center(order.storeName) + "\n"));
-		lines.push(SIZE_NORMAL, BOLD_OFF);
+		lines.push(SIZE_NORMAL, BOLD_OFF, FONT_B);
 	}
 	if (order.branchName) {
 		lines.push(t(center(order.branchName) + "\n"));
@@ -262,15 +265,21 @@ export async function formatReceiptWithCustomLogo(
 
 // ─── Daily sales summary ──────────────────────────────────────────────────────
 
-export interface DailySalesItem {
+export interface DailySalesOrderItem {
 	name: string;
 	qty: number;
 	total: number;
 }
 
+export interface DailySalesOrder {
+	orderId: string;
+	items: DailySalesOrderItem[];
+	total: number;
+}
+
 export interface DailySalesGroup {
 	method: 'Cash' | 'GCash' | 'Grab';
-	items: DailySalesItem[];
+	orders: DailySalesOrder[];
 	gross: number;
 	net?: number; // Grab only: gross * 0.73
 }
@@ -284,19 +293,31 @@ export interface DailySalesData {
 	branchName?: string;
 }
 
+// Item line for sales summary — wraps name to next line instead of truncating
+function salesItemLine(name: string, qty: number, total: number): string {
+	const amtStr = formatAmount(total);
+	const label = `  ${name} x${qty}`;
+	if (label.length + 1 + amtStr.length <= W) {
+		return label + padLeft(amtStr, W - label.length) + "\n";
+	}
+	// Name too long — put it on its own line, amount right-aligned below
+	return label + "\n" + padLeft(amtStr, W) + "\n";
+}
+
 export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Array> {
 	const enc = new TextEncoder();
 	const t = (s: string) => enc.encode(s);
 	const lines: (string | Uint8Array)[] = [];
 
 	lines.push(INIT);
+	lines.push(FONT_B);
 
 	// Header
 	lines.push(ALIGN_CTR);
 	if (data.storeName) {
-		lines.push(BOLD_ON, SIZE_TALL);
+		lines.push(FONT_A, BOLD_ON, SIZE_TALL);
 		lines.push(t(center(data.storeName) + "\n"));
-		lines.push(SIZE_NORMAL, BOLD_OFF);
+		lines.push(SIZE_NORMAL, BOLD_OFF, FONT_B);
 	}
 	if (data.branchName) {
 		lines.push(t(center(data.branchName) + "\n"));
@@ -308,26 +329,31 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 	lines.push(t(center(data.date) + "\n"));
 	lines.push(t(divider("=")));
 
-	// Column header
+	// Payment groups — one order per block, listed chronologically
 	lines.push(ALIGN_LEFT);
-	lines.push(t(` ${padRight("QTY", 3)} ${padRight("ITEM", 19)} ${padLeft("AMOUNT", 7)}\n`));
-
-	// Payment groups
 	for (const group of data.groups) {
 		lines.push(t(divider("=")));
 		lines.push(BOLD_ON);
-		lines.push(t(group.method + "\n"));
+		lines.push(t(center(group.method) + "\n"));
 		lines.push(BOLD_OFF);
-		lines.push(t(divider()));
-		for (const item of group.items) {
-			lines.push(t(itemLine(item.qty, item.name, item.total)));
+
+		for (const order of group.orders) {
+			lines.push(t(divider()));
+			lines.push(BOLD_ON);
+			lines.push(t(`#${order.orderId}\n`));
+			lines.push(BOLD_OFF);
+			for (const item of order.items) {
+				lines.push(t(salesItemLine(item.name, item.qty, item.total)));
+			}
+			lines.push(t(totalRow("Order Total:", formatAmount(order.total))));
 		}
-		lines.push(t(divider()));
-		lines.push(t(totalRow("Total:", formatAmount(group.gross))));
+
+		lines.push(t(divider("=")));
+		lines.push(t(totalRow("Group Total:", formatAmount(group.gross))));
 		if (group.method === 'Grab' && group.net !== undefined) {
 			const grabFees = group.gross - group.net;
-			lines.push(t(totalRow("Total Grab Fees:", `-${formatAmount(grabFees)}`)));
-			lines.push(t(totalRow("Net Grab Sales:", formatAmount(group.net))));
+			lines.push(t(totalRow("Grab Fees:", `-${formatAmount(grabFees)}`)));
+			lines.push(t(totalRow("Net Grab:", formatAmount(group.net))));
 		}
 	}
 
