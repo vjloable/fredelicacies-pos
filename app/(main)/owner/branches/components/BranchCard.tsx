@@ -55,6 +55,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 						alt={branch.name + " branch"}
 						width={400}
 						height={160}
+						loading="eager"
 						className='w-full h-full object-cover drop-shadow-lg'
 						style={{
 							filter: branch.isActive ? "opacity(0.8)" : "grayscale(1) opacity(0.8)",
