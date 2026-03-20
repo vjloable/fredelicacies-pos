@@ -25,7 +25,8 @@ export default function EditBranchModal({
     name: '',
     address: '',
     status: 'active' as 'active' | 'inactive',
-    logo_url: ''
+    logo_url: '',
+    branch_code: '',
   });
 
   // Update form data when branch prop changes
@@ -35,7 +36,8 @@ export default function EditBranchModal({
         name: branch.name,
         address: branch.address || '',
         status: branch.status,
-        logo_url: branch.logo_url || ''
+        logo_url: branch.logo_url || '',
+        branch_code: branch.branch_code || '',
       });
     }
   }, [branch]);
@@ -59,11 +61,17 @@ export default function EditBranchModal({
 
     setLoading(true);
     try {
+      if (branchData.branch_code && !/^[A-Z]{3}$/.test(branchData.branch_code)) {
+        onError('Branch code must be exactly 3 uppercase letters');
+        setLoading(false);
+        return;
+      }
       await branchService.updateBranch(branch.id, {
         name: branchData.name.trim(),
         address: branchData.address.trim(),
         status: branchData.status,
-        logo_url: branchData.logo_url || ''
+        logo_url: branchData.logo_url || '',
+        branch_code: branchData.branch_code || undefined,
       });
 
       onSuccess();
@@ -86,8 +94,9 @@ export default function EditBranchModal({
   const hasChanges = branch && (
     branchData.name !== branch.name ||
     branchData.address !== (branch.address || '') ||
-    branchData.status !== branch.status
-    || branchData.logo_url !== (branch.logo_url || '')
+    branchData.status !== branch.status ||
+    branchData.logo_url !== (branch.logo_url || '') ||
+    branchData.branch_code !== (branch.branch_code || '')
   );
 
   return (
@@ -143,6 +152,23 @@ export default function EditBranchModal({
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-secondary mb-2">
+                  Branch Code <span className="text-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={branchData.branch_code}
+                  onChange={(e) => handleInputChange('branch_code', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
+                  placeholder="e.g. MNL"
+                  maxLength={3}
+                />
+                <p className="mt-1 text-2.5 text-secondary/40">
+                  3 letters used in order numbers: <span className="font-mono">{branchData.branch_code || 'XXX'}-2025-000001</span>
+                </p>
               </div>
 
               <div>

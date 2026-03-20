@@ -6,6 +6,7 @@ export interface Branch {
   contact_number: string | null;
   status: 'active' | 'inactive';
   logo_url: string | null;
+  branch_code: string | null;
   owner_id: string;
   created_at: string;
   updated_at: string;
@@ -16,6 +17,7 @@ export interface CreateBranchData {
   address?: string;
   contact_number?: string;
   logo_url?: string;
+  branch_code?: string;
 }
 
 export interface UpdateBranchData {
@@ -24,4 +26,5 @@ export interface UpdateBranchData {
   contact_number?: string;
   status?: 'active' | 'inactive';
   logo_url?: string;
+  branch_code?: string;
 }

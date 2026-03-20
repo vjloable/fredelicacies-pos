@@ -25,7 +25,8 @@ export default function AddBranchModal({
   const [branchData, setBranchData] = useState({
     name: '',
     address: '',
-    logo_url: ''
+    logo_url: '',
+    branch_code: '',
   });
 
   if (!isOpen) return null;
@@ -37,6 +38,14 @@ export default function AddBranchModal({
     }
     if (!branchData.address.trim()) {
       onError('Branch location is required');
+      return false;
+    }
+    if (!branchData.branch_code.trim()) {
+      onError('Branch code is required');
+      return false;
+    }
+    if (!/^[A-Z]{3}$/.test(branchData.branch_code)) {
+      onError('Branch code must be exactly 3 uppercase letters');
       return false;
     }
     return true;
@@ -54,14 +63,16 @@ export default function AddBranchModal({
       await branchService.createBranch(user.uid, {
         name: branchData.name.trim(),
         address: branchData.address.trim(),
-        logo_url: branchData.logo_url
+        logo_url: branchData.logo_url,
+        branch_code: branchData.branch_code.toUpperCase(),
       });
 
       // Reset form
       setBranchData({
         name: '',
         address: '',
-        logo_url: ''
+        logo_url: '',
+        branch_code: '',
       });
       
       onSuccess();
@@ -136,6 +147,23 @@ export default function AddBranchModal({
 
               <div>
                 <label className="block text-xs font-medium text-secondary mb-2">
+                  Branch Code <span className="text-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={branchData.branch_code}
+                  onChange={(e) => handleInputChange('branch_code', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
+                  placeholder="e.g. MNL"
+                  maxLength={3}
+                />
+                <p className="mt-1 text-2.5 text-secondary/40">
+                  3 letters used in order numbers: <span className="font-mono">{branchData.branch_code || 'XXX'}-2025-000001</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Location <span className="text-error">*</span>
                 </label>
                 <input
@@ -196,9 +224,9 @@ export default function AddBranchModal({
               </button>
               <button
                 onClick={handleCreateBranch}
-                disabled={!branchData.name.trim() || !branchData.address.trim()}
+                disabled={!branchData.name.trim() || !branchData.address.trim() || branchData.branch_code.length !== 3}
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-xs sm:text-sm ${
-                  branchData.name.trim() && branchData.address.trim()
+                  branchData.name.trim() && branchData.address.trim() && branchData.branch_code.length === 3
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}

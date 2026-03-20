@@ -1,12 +1,17 @@
 import { orderRepository, inventoryRepository } from '@/lib/repositories';
 import type { OrderWithItems, BundleComponent } from '@/types/domain';
 import { logActivity } from '@/services/activityLogService';
+import { supabase } from '@/lib/supabase';
 
-// Generate order number (simple incrementing format)
-function generateOrderNumber(): string {
-  const now = new Date();
-  const timestamp = now.getTime();
-  return `ORD-${timestamp}`;
+// Generate order number via server-side atomic counter (format: XXX-YYYY-000001)
+// Falls back to timestamp format if the branch has no branch_code set yet.
+async function generateOrderNumber(branchId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('next_order_number', { p_branch_id: branchId });
+  if (error || !data) {
+    // Fallback for branches without a branch_code (pre-migration or unset)
+    return `ORD-${Date.now()}`;
+  }
+  return data as string;
 }
 
 // Create order with items
@@ -35,7 +40,12 @@ export const createOrder = async (
   note?: string,
   transactionNumber?: string
 ): Promise<{ id: string | null; error: any }> => {
-  const orderNumber = generateOrderNumber();
+  let orderNumber: string;
+  try {
+    orderNumber = await generateOrderNumber(branchId);
+  } catch (e: any) {
+    return { id: null, error: e };
+  }
 
   // Separate regular items and bundles
   const regularItems = items.filter(i => !i.type || i.type === 'item');
@@ -141,9 +151,15 @@ export const getOrdersPage = async (
   branchId: string,
   page: number,
   pageSize: number,
-  search?: string
+  options?: {
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    paymentMethod?: 'cash' | 'gcash' | 'grab';
+    status?: 'active' | 'voided';
+  }
 ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> => {
-  return orderRepository.getByBranchPaginated(branchId, { page, pageSize, search });
+  return orderRepository.getByBranchPaginated(branchId, { page, pageSize, ...options });
 };
 
 // Lightweight realtime subscription — notifies on new inserts without fetching all orders
@@ -160,6 +176,37 @@ export const subscribeToOrders = (
   callback: (orders: OrderWithItems[]) => void
 ): (() => void) => {
   return orderRepository.subscribe(branchId, callback);
+};
+
+// Void an order (manager/owner only — enforced in UI; logged for audit)
+export const voidOrder = async (
+  orderId: string,
+  userId: string,
+  branchId: string,
+  reason: string,
+  orderNumber: string,
+): Promise<{ error: any }> => {
+  const { error } = await supabase
+    .from('orders')
+    .update({
+      status: 'voided',
+      voided_by: userId,
+      void_reason: reason.trim() || null,
+    })
+    .eq('id', orderId);
+
+  if (!error) {
+    void logActivity({
+      branchId,
+      userId,
+      action: 'order_voided',
+      entityType: 'order',
+      entityId: orderId,
+      details: { order_number: orderNumber, reason: reason.trim() || null },
+    });
+  }
+
+  return { error };
 };
 
 // Calculate sales statistics
