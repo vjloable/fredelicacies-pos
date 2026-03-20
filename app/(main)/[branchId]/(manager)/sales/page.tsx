@@ -843,11 +843,11 @@ export default function SalesScreen() {
 								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Revenue</p>
 								{priorPeriodStats && priorPeriodStats.totalRevenue > 0 && (() => {
 									const pct = ((currentPeriodStats.totalRevenue - priorPeriodStats.totalRevenue) / priorPeriodStats.totalRevenue) * 100;
-									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>{pct >= 0 ? '\u2191' : '\u2193'} {Math.abs(pct).toFixed(0)}%</span>;
+									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>₱{Math.abs(pct).toFixed(0)}%</span>;
 								})()}
 							</div>
 							<p className='text-lg font-semibold text-secondary mt-1'>
-								<span className='text-sm font-normal mr-0.5'>\u20b1</span>
+								<span className='text-sm font-normal mr-0.5'>₱</span>
 								{formatCurrency(currentPeriodStats.totalRevenue).slice(1)}
 							</p>
 							<p className='text-2.5 text-secondary/40 mt-1'>Margin {currentPeriodStats.profitMargin.toFixed(1)}%</p>
@@ -872,11 +872,11 @@ export default function SalesScreen() {
 								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Profit</p>
 								{priorPeriodStats && priorPeriodStats.totalProfit > 0 && (() => {
 									const pct = ((currentPeriodStats.totalProfit - priorPeriodStats.totalProfit) / priorPeriodStats.totalProfit) * 100;
-									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>{pct >= 0 ? '\u2191' : '\u2193'} {Math.abs(pct).toFixed(0)}%</span>;
+									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>₱{Math.abs(pct).toFixed(0)}%</span>;
 								})()}
 							</div>
 							<p className='text-lg font-semibold text-secondary mt-1'>
-								<span className='text-sm font-normal mr-0.5'>\u20b1</span>
+								<span className='text-sm font-normal mr-0.5'>₱</span>
 								{formatCurrency(currentPeriodStats.totalProfit).slice(1)}
 							</p>
 							<p className='text-2.5 text-secondary/40 mt-1'>Wastage {formatCurrency(totalWastageCost)}</p>
@@ -896,7 +896,7 @@ export default function SalesScreen() {
 								{paymentBreakdown.map(p => (
 									<div key={p.name} className='flex items-center gap-2'>
 										<span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
-										<span className='text-2.5 text-secondary/60 w-8 shrink-0'>{p.name}</span>
+										<span className='text-2.5 text-secondary/60 w-14 shrink-0'>{p.name}</span>
 										<div className='flex-1 h-1 rounded-full bg-secondary/10 overflow-hidden'>
 											<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
 										</div>
