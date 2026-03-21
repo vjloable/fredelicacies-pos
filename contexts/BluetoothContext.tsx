@@ -263,16 +263,9 @@ export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const data = new Uint8Array([
       0x1B, 0x40,
-      0x1B, 0x61, 0x01,
-      0x1D, 0x21, 0x11,
-      ...new TextEncoder().encode('FREDELECACIES\n'),
-      0x1D, 0x21, 0x00,
       0x1B, 0x61, 0x00,
-      ...new TextEncoder().encode('\n'),
-      ...new TextEncoder().encode('Test Receipt\n'),
-      ...new TextEncoder().encode('Date: ' + new Date().toLocaleString() + '\n'),
-      ...new TextEncoder().encode('\n'),
-      ...new TextEncoder().encode('Bluetooth connection successful!\n'),
+      0x1D, 0x21, 0x00,
+      ...new TextEncoder().encode('--------------------------------\n'),
       ...new TextEncoder().encode('\n\n\n'),
       0x1D, 0x56, 0x00,
     ]);
