@@ -16,7 +16,9 @@ import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
 import { logActivity } from "@/services/activityLogService";
 import { recordWastage } from "@/services/wastageService";
-import { subscribeToEodLocks, getEodLocks } from "@/services/eodService";
+import { subscribeToEodLocks, getEodLocks, flagUncarriedItems, resolveUncarried } from "@/services/eodService";
+import { categoryEodPolicyRepository } from "@/lib/repositories/categoryEodPolicyRepository";
+import type { CategoryEodPolicy } from "@/types/domain/category";
 import { useAuth } from "@/contexts/AuthContext";
 import {
 	subscribeToCategories,
@@ -81,6 +83,12 @@ export default function InventoryScreen() {
 	const [eodPanelOpen, setEodPanelOpen] = useState(true);
 	const [lockingItem, setLockingItem] = useState<Item | null>(null);
 	const [showSubmitEOD, setShowSubmitEOD] = useState(false);
+	// EOD policy state
+	const [eodPolicies, setEodPolicies] = useState<CategoryEodPolicy[]>([]);
+	// Uncarried stock resolution state
+	const [resolveMode, setResolveMode] = useState(false);
+	const [selectedForResolve, setSelectedForResolve] = useState<Set<string>>(new Set());
+	const [resolving, setResolving] = useState(false);
 	const [newItem, setNewItem] = useState({
 		name: "",
 		price: "",
@@ -138,6 +146,42 @@ export default function InventoryScreen() {
 		const unsubscribe = subscribeToEodLocks(currentBranch.id, today, setEodLocks);
 		return () => { unsubscribe(); };
 	}, [isClient, currentBranch, canAccessPOS]);
+
+	// Subscribe to EOD policies
+	useEffect(() => {
+		if (!isClient || !currentBranch) return;
+		const unsubscribe = categoryEodPolicyRepository.subscribe(currentBranch.id, setEodPolicies);
+		return () => { unsubscribe(); };
+	}, [isClient, currentBranch?.id]);
+
+	// Helper: check if a category is destock-only
+	const isDestockOnly = (categoryId: string | null): boolean => {
+		if (!categoryId) return false;
+		return eodPolicies.some(p => p.category_id === categoryId && p.eod_policy === 'destock_only');
+	};
+
+	// Items with uncarried stock
+	const uncarriedItems = items.filter(item => item.uncarried_stock > 0);
+
+	// Toggle resolve selection
+	const toggleResolveSelection = (id: string) => {
+		setSelectedForResolve(prev => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id); else next.add(id);
+			return next;
+		});
+	};
+
+	// Resolve selected uncarried items
+	const confirmResolve = async (resolution: 'carry_over' | 'destock') => {
+		if (!currentBranch || selectedForResolve.size === 0) return;
+		setResolving(true);
+		const selectedItems = items.filter(item => selectedForResolve.has(item.id));
+		await resolveUncarried(currentBranch.id, user?.id ?? null, selectedItems, resolution);
+		setResolving(false);
+		setSelectedForResolve(new Set());
+		setResolveMode(false);
+	};
 
 	const openEditModal = (item: InventoryItem) => {
 		setEditingItem({ ...item });
@@ -424,6 +468,40 @@ export default function InventoryScreen() {
 													Items
 												</h2>
 												<div className='flex items-center gap-2'>
+													{/* Resolve uncarried controls */}
+													{resolveMode && selectedForResolve.size > 0 && (
+														<>
+															<button
+																onClick={() => confirmResolve('carry_over')}
+																disabled={resolving}
+																className={`px-3 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 bg-success text-white text-3 font-black ${resolving ? 'opacity-50' : ''}`}
+															>
+																CARRY OVER {selectedForResolve.size}
+															</button>
+															<button
+																onClick={() => confirmResolve('destock')}
+																disabled={resolving}
+																className={`px-3 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 bg-error text-white text-3 font-black ${resolving ? 'opacity-50' : ''}`}
+															>
+																DESTOCK {selectedForResolve.size}
+															</button>
+														</>
+													)}
+													{uncarriedItems.length > 0 && (
+														<button
+															onClick={() => { setResolveMode(prev => !prev); setSelectedForResolve(new Set()); }}
+															className={`px-3 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95
+																${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}
+																${resolveMode ? "bg-amber-500 text-white" : "bg-amber-100 text-amber-700 hover:bg-amber-200"}`}
+														>
+															<div className='flex flex-row items-center gap-2 font-black text-3'>
+																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+																</svg>
+																<span className='mt-0.5'>{resolveMode ? 'DONE' : `RESOLVE ${uncarriedItems.length}`}</span>
+															</div>
+														</button>
+													)}
 													{destockMode && selectedForDestock.size > 0 && (
 														<button
 															onClick={() => setShowDestockConfirm(true)}
@@ -614,8 +692,24 @@ export default function InventoryScreen() {
 													filteredItems.map((item) => {
 														const isExpanded = expandedItems.has(item.id);
 														return (
-															<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ? 'border-error/30' : 'border-gray-100'}`}>
+															<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ? 'border-error/30' : resolveMode && item.uncarried_stock > 0 ? 'border-amber-400/50' : 'border-gray-100'}`}>
 																<div className='flex items-center gap-2 px-2 py-1.5'>
+																	{resolveMode && item.uncarried_stock > 0 && (
+																		<button
+																			onClick={() => toggleResolveSelection(item.id)}
+																			className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${
+																				selectedForResolve.has(item.id)
+																					? 'bg-amber-500 border-amber-500 text-white'
+																					: 'border-amber-400/40 bg-transparent hover:border-amber-500'
+																			}`}
+																		>
+																			{selectedForResolve.has(item.id) && (
+																				<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																					<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M5 13l4 4L19 7' />
+																				</svg>
+																			)}
+																		</button>
+																	)}
 																	{destockMode && (
 																		<button
 																			onClick={() => toggleDestockSelection(item.id)}
@@ -644,13 +738,19 @@ export default function InventoryScreen() {
 																	</div>
 																	<span className='text-xs font-semibold text-secondary truncate flex-1 min-w-0'>{item.name}</span>
 																	<span className='text-xs text-secondary/60 shrink-0 tabular-nums'>{formatCurrency(item.price)}</span>
-																	<span className={`text-xs font-bold shrink-0 w-8 text-center tabular-nums ${
-																		item.stock === 0 ? 'text-error' : item.stock <= 5 ? 'text-accent' : 'text-secondary/50'
-																	}`}>{item.stock}</span>
+																	{item.uncarried_stock > 0 ? (
+																		<span className='text-2.5 font-bold shrink-0 text-center tabular-nums text-amber-600' title={`(${item.uncarried_stock} uncarried) + ${item.stock - item.uncarried_stock} new`}>
+																			<span className='line-through opacity-50'>{item.uncarried_stock}</span>+{item.stock - item.uncarried_stock}
+																		</span>
+																	) : (
+																		<span className={`text-xs font-bold shrink-0 w-8 text-center tabular-nums ${
+																			item.stock === 0 ? 'text-error' : item.stock <= 5 ? 'text-accent' : 'text-secondary/50'
+																		}`}>{item.stock}</span>
+																	)}
 																	<button onClick={() => openEditModal(item)} className='shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 																		<EditIcon className='w-4 h-4' />
 																	</button>
-																	{canAccessPOS && (() => {
+																	{canAccessPOS && !isDestockOnly(item.category_id) && (() => {
 																		const lock = eodLocks.find(l => l.item_id === item.id);
 																		return (
 																			<button
@@ -752,6 +852,7 @@ export default function InventoryScreen() {
 								isOpen={showSubmitEOD}
 								session={eodSession}
 								locks={eodLocks}
+								allItems={items}
 								onClose={() => setShowSubmitEOD(false)}
 								onSubmitted={() => {
 									setShowSubmitEOD(false);

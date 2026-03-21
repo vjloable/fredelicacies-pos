@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { submitEOD } from '@/services/eodService';
+import { submitEOD, flagUncarriedItems } from '@/services/eodService';
 import { useBranch } from '@/contexts/BranchContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { EodItemLock, EodSession } from '@/types/domain/eod';
+import type { InventoryItem } from '@/types/domain/inventory';
 
 interface SubmitEODModalProps {
   isOpen: boolean;
   session: EodSession;
   locks: EodItemLock[];
+  allItems: InventoryItem[];
   onClose: () => void;
   onSubmitted: () => void;
   onError: (msg: string) => void;
@@ -20,6 +22,7 @@ export default function SubmitEODModal({
   isOpen,
   session,
   locks,
+  allItems,
   onClose,
   onSubmitted,
   onError,
@@ -45,8 +48,13 @@ export default function SubmitEODModal({
       session.id,
       locks
     );
+    if (error) { setSubmitting(false); onError('Failed to submit End-of-Day audit. Please try again.'); return; }
+
+    // Flag items in carryover categories that were NOT locked
+    const lockedItemIds = new Set(locks.map(l => l.item_id).filter(Boolean) as string[]);
+    await flagUncarriedItems(currentBranch.id, user?.id ?? null, lockedItemIds, allItems);
+
     setSubmitting(false);
-    if (error) { onError('Failed to submit End-of-Day audit. Please try again.'); return; }
     onSubmitted();
   };
 
