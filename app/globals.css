@@ -35,7 +35,18 @@ body {
   font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
 }
 
-/* Hide scrollbars for horizontal scroll */ 
+/* Cursor pointer for all interactive elements */
+button,
+a,
+select,
+summary,
+[role="button"],
+[tabindex]:not([tabindex="-1"]),
+[aria-hidden="true"] {
+  cursor: pointer;
+}
+
+/* Hide scrollbars for horizontal scroll */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
 }
