@@ -309,7 +309,8 @@ export default function StoreScreen() {
 			itemCategoryIds.some(catId => selectedCategories.includes(getCategoryName(catId)));
 
 		// Filter out out-of-stock items if hideOutOfStock is enabled
-		const hasStock = hideOutOfStock ? item.stock > 0 : true;
+		const usableStock = item.stock - (item.uncarried_stock ?? 0);
+		const hasStock = hideOutOfStock ? usableStock > 0 : true;
 
 		return isVisible && matchesSearch && matchesCategory && hasStock;
 	});
@@ -335,7 +336,7 @@ export default function StoreScreen() {
 		const items: DisplayItem[] = filteredItems.map(item => ({
 			...item,
 			type: 'item' as const,
-			availability: item.stock
+			availability: item.stock - (item.uncarried_stock ?? 0)
 		}));
 
 		const bundleItems = bundles
@@ -669,8 +670,8 @@ export default function StoreScreen() {
 				appliedDiscount?.id,
 				discountAmount,
 				paymentMethod,
-				paymentMethod !== 'gcash' ? orderNote : undefined,
-				paymentMethod === 'gcash' ? gcashTransactionNumber : undefined
+				paymentMethod === 'cash' ? orderNote : undefined,
+				paymentMethod === 'gcash' || paymentMethod === 'grab' ? gcashTransactionNumber : undefined
 			);
 
 			if (orderError) {
@@ -711,6 +712,7 @@ export default function StoreScreen() {
 				branchName: currentBranch.name,
 				paymentMethod,
 				orderType,
+				transactionNumber: (paymentMethod === 'gcash' || paymentMethod === 'grab') ? gcashTransactionNumber : undefined,
 			};
 
 			// Print receipt via Bluetooth printer using context
@@ -1769,10 +1771,10 @@ export default function StoreScreen() {
 							{/* Note / Transaction # */}
 							<div className='mt-3 pt-3 border-t border-gray-200 space-y-1'>
 								<label className='text-xs text-secondary/70'>
-									{paymentMethod === 'gcash' ? 'Transaction #' : 'Note'}{' '}
+									{paymentMethod === 'gcash' || paymentMethod === 'grab' ? 'Transaction #' : 'Note'}{' '}
 									<span className='text-secondary/40'>(optional)</span>
 								</label>
-								{paymentMethod === 'gcash' ? (
+								{paymentMethod === 'gcash' || paymentMethod === 'grab' ? (
 									<input
 										type='text'
 										value={gcashTransactionNumber}

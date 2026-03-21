@@ -27,6 +27,7 @@ export interface ReceiptOrderData {
 	appliedDiscountCode?: string;
 	paymentMethod?: 'cash' | 'gcash' | 'grab';
 	orderType?: string;
+	transactionNumber?: string;
 }
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -148,6 +149,9 @@ async function buildCopy(
 		lines.push(t(`Type:  ${order.orderType}\n`));
 	}
 	lines.push(t(`Pay:   ${formatPayment(order.paymentMethod)}\n`));
+	if (order.transactionNumber) {
+		lines.push(t(`Txn#:  ${order.transactionNumber}\n`));
+	}
 	if (order.cashier) {
 		const byLine = copyType === "establishment" && order.cashierEmployeeId
 			? `By:    ${order.cashier} (${order.cashierEmployeeId})\n`
@@ -274,6 +278,7 @@ export interface DailySalesOrder {
 	orderId: string;
 	items: DailySalesOrderItem[];
 	total: number;
+	transactionNumber?: string;
 }
 
 export interface DailySalesGroup {
@@ -290,6 +295,7 @@ export interface DailySalesData {
 	netRevenue: number; // Cash + GCash + Grab*0.73
 	storeName?: string;
 	branchName?: string;
+	cashier?: string;
 }
 
 // Item line for sales summary — wraps name to next line instead of truncating
@@ -341,6 +347,9 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 			lines.push(BOLD_ON);
 			lines.push(t(`#${order.orderId}\n`));
 			lines.push(BOLD_OFF);
+			if (order.transactionNumber) {
+				lines.push(t(`Txn#: ${order.transactionNumber}\n`));
+			}
 			for (const item of order.items) {
 				lines.push(t(salesItemLine(item.name, item.qty, item.total)));
 			}
@@ -364,6 +373,10 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 	lines.push(t(totalRow("TOTAL REVENUE:", formatAmount(data.netRevenue))));
 	lines.push(BOLD_OFF);
 	lines.push(t(divider("=")));
+
+	if (data.cashier) {
+		lines.push(t(`Printed by: ${data.cashier}\n`));
+	}
 
 	lines.push(t("\n\n\n"));
 	lines.push(CUT);
