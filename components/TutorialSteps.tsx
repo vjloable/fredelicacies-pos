@@ -6,6 +6,7 @@ import {
   IllSalesVoidButton, IllSalesVoidReason, IllSalesCannotUndo,
   IllInventoryDestockBtn, IllInventoryDestockMode,
   IllEODPanel, IllEODLockItem, IllEODDiscrepancy, IllEODSubmit,
+  IllUncarriedItems, IllResolveUncarried,
 } from './TutorialIllustrations';
 import type { TutorialStep } from './TutorialModal';
 
@@ -66,7 +67,7 @@ export const salesSteps: TutorialStep[] = [
 export const inventorySteps: TutorialStep[] = [
   {
     title: 'Destock',
-    description: 'Destock removes items from inventory — use it for spoiled, expired, or damaged goods. It is different from editing stock manually.',
+    description: 'Destock removes items from inventory — use it for spoiled, expired, or damaged goods. Categories set to "Destock Only" by the owner can only be destocked, not carried over.',
     illustration: <IllInventoryDestockBtn />,
   },
   {
@@ -76,7 +77,7 @@ export const inventorySteps: TutorialStep[] = [
   },
   {
     title: 'End-of-Day Audit',
-    description: "At the end of each shift, use the audit panel to record the actual stock count of each item. Locked counts carry over as the next day's opening stock.",
+    description: "At the end of each shift, use the audit panel to record the actual stock count. Only items in carryover categories can be locked — destock-only items are excluded.",
     illustration: <IllEODPanel />,
   },
   {
@@ -91,7 +92,17 @@ export const inventorySteps: TutorialStep[] = [
   },
   {
     title: 'Submit & Carry Over',
-    description: 'Once all items are locked, tap "Submit End-of-Day". Locked counts become the opening stock for the next day.',
+    description: 'Once all items are locked, tap "Submit End-of-Day". Locked counts become the opening stock. Unlocked carryover items are flagged as uncarried.',
     illustration: <IllEODSubmit />,
+  },
+  {
+    title: 'Uncarried Items',
+    description: 'Items not locked during EOD show their stock as "(X uncarried) + Y new". The uncarried portion is frozen and cannot be sold until resolved.',
+    illustration: <IllUncarriedItems />,
+  },
+  {
+    title: 'Resolve Uncarried',
+    description: 'Tap "RESOLVE" to enter selection mode. Select uncarried items, then choose "CARRY OVER" to accept the stock, or "DESTOCK" to zero it out as wastage.',
+    illustration: <IllResolveUncarried />,
   },
 ];

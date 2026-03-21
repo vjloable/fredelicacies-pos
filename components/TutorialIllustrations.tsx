@@ -475,3 +475,67 @@ export function IllEODSubmit() {
     </div>
   );
 }
+
+export function IllUncarriedItems() {
+  return (
+    <div className="flex items-center justify-center p-3 w-full h-full">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-64 overflow-hidden">
+        <div className="px-3 py-2 border-b border-amber-100 bg-amber-50/50 flex items-center gap-2">
+          <svg className="w-3 h-3 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div className="text-[7px] font-bold text-amber-700">Items with uncarried stock</div>
+        </div>
+        {[
+          { name: 'Ube Cake', uncarried: 5, added: 3 },
+          { name: 'Ensaymada', uncarried: 8, added: 0 },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center gap-2 px-3 py-2 border-b border-gray-50">
+            <div className="w-7 h-7 bg-gray-100 rounded-lg shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-[7px] font-medium text-secondary">{item.name}</div>
+            </div>
+            <div className="text-[6px] font-bold text-amber-600">
+              <span className="line-through opacity-50">{item.uncarried}</span>+{item.added}
+            </div>
+          </div>
+        ))}
+        <div className="px-3 py-1.5">
+          <div className="text-[5px] text-secondary/40 text-center">Uncarried stock is frozen until resolved</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function IllResolveUncarried() {
+  return (
+    <div className="flex items-center justify-center p-3 w-full h-full">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-64 overflow-hidden">
+        <div className="px-3 py-2 border-b border-amber-100 bg-amber-50 flex items-center justify-between">
+          <div className="text-[7px] font-bold text-amber-700">Select items to resolve</div>
+          <div className="flex gap-1">
+            <div className="px-1.5 py-0.5 rounded bg-green-500 text-[6px] font-bold text-white">CARRY OVER 2</div>
+            <div className="px-1.5 py-0.5 rounded bg-red-500 text-[6px] font-bold text-white">DESTOCK 2</div>
+          </div>
+        </div>
+        {[
+          { name: 'Ube Cake', uncarried: 5, checked: true },
+          { name: 'Ensaymada', uncarried: 8, checked: true },
+          { name: 'Croissant', uncarried: 3, checked: false },
+        ].map((item, i) => (
+          <div key={i} className={`flex items-center gap-2 px-3 py-1.5 border-b border-gray-50 ${item.checked ? 'bg-amber-50/50' : ''}`}>
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${item.checked ? 'bg-amber-500' : 'border-2 border-amber-300'}`}>
+              {item.checked && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
+            </div>
+            <div className="w-7 h-7 bg-gray-100 rounded-lg shrink-0" />
+            <div className="flex-1">
+              <div className="text-[7px] font-medium text-secondary">{item.name}</div>
+              <div className="text-[6px] text-amber-600">{item.uncarried} uncarried</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
