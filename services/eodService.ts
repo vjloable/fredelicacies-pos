@@ -2,6 +2,7 @@ import { eodRepository } from '@/lib/repositories/eodRepository';
 import { updateInventoryItem } from '@/services/inventoryService';
 import { recordWastage } from '@/services/wastageService';
 import { logActivity } from '@/services/activityLogService';
+import { categoryEodPolicyRepository } from '@/lib/repositories/categoryEodPolicyRepository';
 import { log, measureTime } from '@/lib/logging';
 import type { EodItemLock, EodSession, EodDailySummary } from '@/types/domain/eod';
 import type { InventoryItem } from '@/types/domain/inventory';
@@ -244,6 +245,148 @@ export async function submitEOD(
       userId,
       sessionId,
     });
+    return { error: err };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Flag uncarried items — called after EOD submit
+// Items in carryover categories that were NOT locked get flagged
+// ---------------------------------------------------------------------------
+
+export async function flagUncarriedItems(
+  branchId: string,
+  userId: string | null,
+  lockedItemIds: Set<string>,
+  allItems: InventoryItem[]
+): Promise<{ flaggedCount: number; error: any }> {
+  try {
+    // Get EOD policies for this branch
+    const { policies } = await categoryEodPolicyRepository.getByBranch(branchId);
+
+    // Build a set of destock-only category IDs
+    const destockOnlyCategoryIds = new Set(
+      policies.filter(p => p.eod_policy === 'destock_only').map(p => p.category_id)
+    );
+
+    // Find items in carryover categories that were NOT locked and have stock > 0
+    const uncarriedItems = allItems.filter(item => {
+      if (lockedItemIds.has(item.id)) return false; // already locked
+      if (item.stock <= 0) return false; // no stock to carry over
+      if (item.category_id && destockOnlyCategoryIds.has(item.category_id)) return false; // destock-only
+      return true;
+    });
+
+    // Flag each item by setting uncarried_stock
+    for (const item of uncarriedItems) {
+      await updateInventoryItem(item.id, { uncarried_stock: item.stock });
+
+      void logActivity({
+        branchId,
+        userId,
+        action: 'eod_flag_uncarried',
+        entityType: 'inventory',
+        entityId: item.id,
+        details: {
+          item_name: item.name,
+          uncarried_stock: item.stock,
+          reason: 'Item was not locked during EOD',
+        },
+      });
+    }
+
+    log.info('EOD: Flagged uncarried items', {
+      branchId,
+      userId,
+      flaggedCount: uncarriedItems.length,
+      flaggedItems: uncarriedItems.map(i => i.name),
+    });
+
+    return { flaggedCount: uncarriedItems.length, error: null };
+  } catch (err) {
+    log.error('EOD: Failed to flag uncarried items', err as Error, { branchId });
+    return { flaggedCount: 0, error: err };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Resolve uncarried stock — carry over or destock
+// ---------------------------------------------------------------------------
+
+export async function resolveUncarried(
+  branchId: string,
+  userId: string | null,
+  items: InventoryItem[],
+  resolution: 'carry_over' | 'destock'
+): Promise<{ error: any }> {
+  try {
+    for (const item of items) {
+      if (resolution === 'carry_over') {
+        // Accept the old stock as valid — just clear the uncarried flag
+        await updateInventoryItem(item.id, { uncarried_stock: 0 });
+
+        void logActivity({
+          branchId,
+          userId,
+          action: 'resolve_carryover',
+          entityType: 'inventory',
+          entityId: item.id,
+          details: {
+            item_name: item.name,
+            uncarried_stock: item.uncarried_stock,
+            resolution: 'carried_over',
+            usable_stock_after: item.stock,
+          },
+        });
+      } else {
+        // Destock the uncarried portion
+        const newStock = item.stock - item.uncarried_stock;
+        await updateInventoryItem(item.id, {
+          stock: Math.max(0, newStock),
+          uncarried_stock: 0,
+        });
+
+        // Record wastage for the destocked portion
+        if (item.uncarried_stock > 0) {
+          await recordWastage(branchId, userId, [
+            {
+              item_id: item.id,
+              item_name: item.name,
+              quantity_wasted: item.uncarried_stock,
+              cost_per_unit: item.price ?? 0,
+              wastage_date: new Date().toISOString().slice(0, 10),
+            },
+          ]);
+        }
+
+        void logActivity({
+          branchId,
+          userId,
+          action: 'resolve_destock',
+          entityType: 'inventory',
+          entityId: item.id,
+          details: {
+            item_name: item.name,
+            uncarried_stock: item.uncarried_stock,
+            resolution: 'destocked',
+            usable_stock_after: Math.max(0, newStock),
+            wastage_recorded: true,
+          },
+        });
+      }
+    }
+
+    log.info('EOD: Resolved uncarried items', {
+      branchId,
+      userId,
+      resolution,
+      count: items.length,
+      items: items.map(i => i.name),
+    });
+
+    return { error: null };
+  } catch (err) {
+    log.error('EOD: Failed to resolve uncarried items', err as Error, { branchId });
     return { error: err };
   }
 }

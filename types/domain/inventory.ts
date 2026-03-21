@@ -10,6 +10,7 @@ export interface InventoryItem {
   cost: number | null;
   grab_price: number | null;
   stock: number;
+  uncarried_stock: number;
   barcode: string | null;
   img_url: string | null;
   status: 'active' | 'inactive';
@@ -38,6 +39,7 @@ export interface UpdateInventoryItemData {
   cost?: number;
   grab_price?: number | null;
   stock?: number;
+  uncarried_stock?: number;
   category_id?: string;
   category_ids?: string[];
   barcode?: string;
