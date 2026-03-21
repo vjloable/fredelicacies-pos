@@ -22,6 +22,8 @@ import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { formatCurrency } from "@/services/salesService";
 import { getWastageSummary, getTopWastedItems, getWastageLogs } from "@/services/wastageService";
 import { getEodLocks } from "@/services/eodService";
+import { getInventoryItems } from "@/services/inventoryService";
+import type { InventoryItem } from "@/types/domain/inventory";
 import HelpButton from "@/components/HelpButton";
 import { salesSteps } from "@/components/TutorialSteps";
 import { useBranch } from "@/contexts/BranchContext";
@@ -29,7 +31,6 @@ import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
-import { Workbook } from "exceljs";
 import { formatReceiptWithLogo, formatDailySalesESC } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
@@ -294,6 +295,7 @@ export default function SalesScreen() {
 	// EOD audit state
 	const [eodLocks, setEodLocks] = useState<EodItemLock[]>([]);
 	const [eodSession, setEodSession] = useState<EodSession | null>(null);
+	const [uncarriedItems, setUncarriedItems] = useState<InventoryItem[]>([]);
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	// Orders table filters
@@ -352,7 +354,7 @@ export default function SalesScreen() {
 		if (isPrinting) return;
 		setIsPrinting(true);
 		try {
-			type GroupEntry = { orders: { orderId: string; items: { name: string; qty: number; total: number }[]; total: number }[]; gross: number };
+			type GroupEntry = { orders: { orderId: string; items: { name: string; qty: number; total: number }[]; total: number; transactionNumber?: string }[]; gross: number };
 			const groupMap = new Map<string, GroupEntry>();
 			const sorted = [...analyticsOrders].sort(
 				(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -374,6 +376,7 @@ export default function SalesScreen() {
 						total: item.price * item.quantity,
 					})),
 					total: order.total,
+					transactionNumber: order.transaction_number || undefined,
 				});
 			}
 			const groups = (['Cash', 'GCash', 'Grab'] as const)
@@ -391,6 +394,7 @@ export default function SalesScreen() {
 				netRevenue,
 				storeName: "FREDELECACIES",
 				branchName: currentBranch?.name,
+				cashier: user?.display_name?.trim() || user?.name?.trim().split(' ')[0] || user?.email || undefined,
 			});
 			await printReceipt(bytes);
 		} catch (e) {
@@ -577,6 +581,10 @@ export default function SalesScreen() {
 			setEodLocks(locks);
 			setEodSession(session);
 		});
+		// Fetch uncarried items for the carry-over panel
+		getInventoryItems(currentBranch.id).then(({ items }) => {
+			setUncarriedItems(items.filter(i => i.uncarried_stock > 0));
+		});
 	}, [currentBranch, viewMode, selDay]);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
@@ -603,12 +611,17 @@ export default function SalesScreen() {
 		: viewMode === "year" ? `${selYear}`
 		: "All_Time";
 
-	const generateXLSX = async () => {
-		const workbook = new Workbook();
+	const generatePDF = async () => {
+		const { default: jsPDF } = await import("jspdf");
+		const { default: autoTable } = await import("jspdf-autotable");
+		const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+		const branchName = currentBranch?.name ?? 'Branch';
+		const period = periodLabel.replace(/_/g, ' ');
 		const avgOrderValue = currentPeriodStats.totalOrders > 0
 			? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
 			: 0;
 		const totalPieces = analyticsOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+		const peso = (n: number) => `₱${n.toFixed(2)}`;
 
 		// Payment method breakdown
 		const pmMap = { cash: { orders: 0, pieces: 0, revenue: 0 }, gcash: { orders: 0, pieces: 0, revenue: 0 }, grab: { orders: 0, pieces: 0, revenue: 0 } };
@@ -621,111 +634,128 @@ export default function SalesScreen() {
 			}
 		});
 
-		// ── Sheet 1: Summary ───────────────────────────────────────────────
-		const sheet1 = workbook.addWorksheet("Summary");
-		sheet1.columns = [{ width: 28 }, { width: 14 }];
-		sheet1.addRow(["SALES REPORT"]);
-		sheet1.addRow(["Branch", currentBranch?.name ?? ""]);
-		sheet1.addRow(["Period", periodLabel.replace(/_/g, " ")]);
-		sheet1.addRow(["Generated", new Date().toLocaleString()]);
-		sheet1.addRow([]);
-		sheet1.addRow(["Metric", "Value"]);
-		sheet1.addRow(["Total Revenue (₱)", currentPeriodStats.totalRevenue]);
-		sheet1.addRow(["Total Profit (₱)", currentPeriodStats.totalProfit]);
-		sheet1.addRow(["Profit Margin (%)", parseFloat(currentPeriodStats.profitMargin.toFixed(2))]);
-		sheet1.addRow(["Total Orders", currentPeriodStats.totalOrders]);
-		sheet1.addRow(["Total Pieces Sold", totalPieces]);
-		sheet1.addRow(["Avg Order Value (₱)", parseFloat(avgOrderValue.toFixed(2))]);
-		sheet1.addRow(["Total Wastage Cost (₱)", totalWastageCost]);
-		sheet1.addRow(["Peak Period", peakEntry ? peakEntry.label : "—"]);
-		sheet1.addRow(["Peak Orders", peakEntry ? peakEntry.orders : 0]);
-		sheet1.addRow([]);
-		sheet1.addRow(["PAYMENT METHOD BREAKDOWN"]);
-		sheet1.addRow(["Method", "Orders", "Pieces", "Revenue (₱)"]);
-		sheet1.addRow(["Cash", pmMap.cash.orders, pmMap.cash.pieces, parseFloat(pmMap.cash.revenue.toFixed(2))]);
-		sheet1.addRow(["GCash", pmMap.gcash.orders, pmMap.gcash.pieces, parseFloat(pmMap.gcash.revenue.toFixed(2))]);
-		sheet1.addRow(["Grab", pmMap.grab.orders, pmMap.grab.pieces, parseFloat(pmMap.grab.revenue.toFixed(2))]);
+		let y = 15;
 
-		// ── Sheet 2: Orders ────────────────────────────────────────────────
-		const sheet2 = workbook.addWorksheet("Orders");
-		sheet2.columns = [
-			{ width: 20 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 40 },
-			{ width: 8 }, { width: 14 }, { width: 14 }, { width: 12 }, { width: 10 }, { width: 12 },
-		];
-		sheet2.addRow(["Order #", "Status", "Date", "Time", "Items (summary)", "Pieces", "Subtotal (₱)", "Discount (₱)", "Total (₱)", "Payment", "Void Reason"]);
-		analyticsOrders.forEach(order => {
-			const dt = new Date(order.created_at);
-			const isVoided = order.status === 'voided';
-			sheet2.addRow([
-				order.order_number,
-				isVoided ? "VOIDED" : "Completed",
-				dt.toLocaleDateString(),
-				dt.toLocaleTimeString(),
-				order.items.map(i => `${i.name} ×${i.quantity}`).join(", "),
-				isVoided ? 0 : order.items.reduce((s, i) => s + i.quantity, 0),
-				isVoided ? 0 : (order.subtotal ?? order.total),
-				isVoided ? 0 : (order.discount_amount ?? 0),
-				isVoided ? 0 : order.total,
-				order.payment_method ?? "cash",
-				order.void_reason ?? "",
-			]);
+		// ── Header ─────────────────────────────────────────────────────────
+		doc.setFontSize(18);
+		doc.setFont('helvetica', 'bold');
+		doc.text('FREDELECACIES', 105, y, { align: 'center' });
+		y += 7;
+		doc.setFontSize(12);
+		doc.setFont('helvetica', 'normal');
+		doc.text(`${branchName} — Sales Report`, 105, y, { align: 'center' });
+		y += 6;
+		doc.setFontSize(9);
+		doc.setTextColor(100);
+		doc.text(`Period: ${period}  |  Generated: ${new Date().toLocaleDateString()}`, 105, y, { align: 'center' });
+		doc.setTextColor(0);
+		y += 8;
+
+		// ── Summary ────────────────────────────────────────────────────────
+		doc.setFontSize(11);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Summary', 14, y);
+		y += 2;
+
+		autoTable(doc, {
+			startY: y,
+			head: [['Metric', 'Value']],
+			body: [
+				['Total Revenue', peso(currentPeriodStats.totalRevenue)],
+				['Total Profit', peso(currentPeriodStats.totalProfit)],
+				['Profit Margin', `${currentPeriodStats.profitMargin.toFixed(1)}%`],
+				['Total Orders', currentPeriodStats.totalOrders.toString()],
+				['Total Pieces Sold', totalPieces.toString()],
+				['Avg Order Value', peso(avgOrderValue)],
+				['Wastage Cost', peso(totalWastageCost)],
+				['Peak Period', peakEntry ? `${peakEntry.label} (${peakEntry.orders} orders)` : '—'],
+			],
+			theme: 'grid',
+			headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
+			bodyStyles: { fontSize: 8 },
+			columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 }, 1: { halign: 'right' } },
+			margin: { left: 14, right: 14 },
 		});
 
-		// ── Sheet 3: Line Items ────────────────────────────────────────────
-		const sheet3 = workbook.addWorksheet("Line Items");
-		sheet3.columns = [
-			{ width: 20 }, { width: 12 }, { width: 28 }, { width: 8 }, { width: 6 },
-			{ width: 15 }, { width: 14 }, { width: 16 }, { width: 15 },
-		];
-		sheet3.addRow(["Order #", "Date", "Item Name", "Type", "Qty", "Unit Price (₱)", "Unit Cost (₱)", "Line Revenue (₱)", "Line Profit (₱)"]);
-		for (const order of analyticsOrders.filter(o => o.status !== 'voided')) {
-			const dt = new Date(order.created_at);
-			for (const item of order.items) {
-				sheet3.addRow([
-					order.order_number,
+		y = (doc as any).lastAutoTable.finalY + 8;
+
+		// ── Payment Methods ────────────────────────────────────────────────
+		doc.setFontSize(11);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Payment Methods', 14, y);
+		y += 2;
+
+		autoTable(doc, {
+			startY: y,
+			head: [['Method', 'Orders', 'Pieces', 'Revenue']],
+			body: (['cash', 'gcash', 'grab'] as const).map(m => [
+				m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : 'Cash',
+				pmMap[m].orders.toString(),
+				pmMap[m].pieces.toString(),
+				peso(pmMap[m].revenue),
+			]),
+			theme: 'grid',
+			headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
+			bodyStyles: { fontSize: 8 },
+			columnStyles: { 3: { halign: 'right' } },
+			margin: { left: 14, right: 14 },
+		});
+
+		y = (doc as any).lastAutoTable.finalY + 8;
+
+		// ── Orders ─────────────────────────────────────────────────────────
+		doc.setFontSize(11);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Orders', 14, y);
+		y += 2;
+
+		autoTable(doc, {
+			startY: y,
+			head: [['Order #', 'Date', 'Items', 'Pcs', 'Total', 'Payment']],
+			body: analyticsOrders.map(order => {
+				const dt = new Date(order.created_at);
+				const isVoided = order.status === 'voided';
+				return [
+					order.order_number ?? order.id.slice(-8),
 					dt.toLocaleDateString(),
-					item.name,
-					item.is_bundle ? "Bundle" : "Item",
-					item.quantity,
-					item.price,
-					item.cost ?? 0,
-					parseFloat((item.price * item.quantity).toFixed(2)),
-					parseFloat(((item.price - (item.cost ?? 0)) * item.quantity).toFixed(2)),
-				]);
-			}
-		}
-
-		// ── Sheet 4: Payment Methods ──────────────────────────────────────
-		const sheet4 = workbook.addWorksheet("Payment Methods");
-		sheet4.columns = [{ width: 18 }, { width: 10 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 14 }];
-		sheet4.addRow(["Payment Method", "Orders", "Pieces", "Revenue (₱)", "% of Orders", "% of Revenue"]);
-		(["cash", "gcash", "grab"] as const).forEach(m => {
-			sheet4.addRow([
-				m === "gcash" ? "GCash" : m.charAt(0).toUpperCase() + m.slice(1),
-				pmMap[m].orders,
-				pmMap[m].pieces,
-				parseFloat(pmMap[m].revenue.toFixed(2)),
-				currentPeriodStats.totalOrders > 0 ? parseFloat((pmMap[m].orders / currentPeriodStats.totalOrders * 100).toFixed(1)) : 0,
-				currentPeriodStats.totalRevenue > 0 ? parseFloat((pmMap[m].revenue / currentPeriodStats.totalRevenue * 100).toFixed(1)) : 0,
-			]);
+					order.items.map(i => `${i.name} x${i.quantity}`).join(', '),
+					isVoided ? '0' : order.items.reduce((s, i) => s + i.quantity, 0).toString(),
+					isVoided ? 'VOIDED' : peso(order.total),
+					(order.payment_method ?? 'cash').toUpperCase(),
+				];
+			}),
+			theme: 'grid',
+			headStyles: { fillColor: [218, 131, 77], fontSize: 7, fontStyle: 'bold' },
+			bodyStyles: { fontSize: 7 },
+			columnStyles: { 2: { cellWidth: 55 }, 4: { halign: 'right' } },
+			margin: { left: 14, right: 14 },
 		});
 
-		// ── Sheet 5: Wastage ───────────────────────────────────────────────
-		const sheet5 = workbook.addWorksheet("Wastage");
-		sheet5.columns = [{ width: 30 }, { width: 18 }];
-		sheet5.addRow(["TOP WASTED ITEMS"]);
-		sheet5.addRow(["Item Name", "Total Cost (₱)"]);
-		topWastedItems.forEach(w => sheet5.addRow([w.item_name, w.total_cost]));
-		if (wastageBarData.length > 1) {
-			sheet5.addRow([]);
-			sheet5.addRow(["WASTAGE BY PERIOD"]);
-			sheet5.addRow(["Period", "Wastage Cost (₱)"]);
-			wastageBarData.forEach(b => sheet5.addRow([b.label, b.wastage]));
+		y = (doc as any).lastAutoTable.finalY + 8;
+
+		// ── Wastage ────────────────────────────────────────────────────────
+		if (topWastedItems.length > 0) {
+			if (y > 250) { doc.addPage(); y = 15; }
+			doc.setFontSize(11);
+			doc.setFont('helvetica', 'bold');
+			doc.text('Top Wasted Items', 14, y);
+			y += 2;
+
+			autoTable(doc, {
+				startY: y,
+				head: [['Item', 'Total Cost']],
+				body: topWastedItems.map(w => [w.item_name, peso(w.total_cost)]),
+				theme: 'grid',
+				headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
+				bodyStyles: { fontSize: 8 },
+				columnStyles: { 1: { halign: 'right' } },
+				margin: { left: 14, right: 14 },
+			});
 		}
 
-		// Write file
-		const filename = `sales_${periodLabel}_${(currentBranch?.name ?? "branch").replace(/\s+/g, "_")}.xlsx`;
-		await workbook.xlsx.writeFile(filename);
+		// Save
+		const filename = `sales_${periodLabel}_${branchName.replace(/\s+/g, '_')}.pdf`;
+		doc.save(filename);
 	};
 
 	if (analyticsLoading && tableLoading) {
@@ -819,13 +849,13 @@ export default function SalesScreen() {
 										{isPrinting ? 'Printing...' : 'Print Report'}
 									</button>
 									<button
-										onClick={async () => { setShowActionsMenu(false); await generateXLSX(); }}
+										onClick={() => { setShowActionsMenu(false); generatePDF(); }}
 										className='w-full flex items-center gap-3 px-4 py-2.5 text-xs text-secondary hover:bg-secondary/5 transition-colors'
 									>
 										<svg className='w-3.5 h-3.5 shrink-0' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
 											<path d='M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1' />
 										</svg>
-										Export Excel
+										Export PDF
 									</button>
 								</div>
 							)}
@@ -1170,6 +1200,27 @@ export default function SalesScreen() {
 													</div>
 												));
 											})()}
+										</div>
+									)}
+									{/* Uncarried items — pending resolution */}
+									{uncarriedItems.length > 0 && (
+										<div className='mt-3 border-t border-amber-200 pt-3'>
+											<div className='flex items-center gap-1 mb-2'>
+												<svg className='w-3 h-3 text-amber-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+													<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+												</svg>
+												<p className='text-2.5 font-semibold text-amber-600'>{uncarriedItems.length} uncarried (pending)</p>
+											</div>
+											<div className='space-y-1.5'>
+												{uncarriedItems.map(item => (
+													<div key={item.id} className='flex items-center justify-between px-2 py-1.5 bg-amber-50 rounded-lg'>
+														<p className='text-2.5 text-secondary truncate flex-1'>{item.name}</p>
+														<span className='text-2.5 font-semibold text-amber-600 shrink-0'>
+															{item.uncarried_stock} uncarried
+														</span>
+													</div>
+												))}
+											</div>
 										</div>
 									)}
 								</div>
