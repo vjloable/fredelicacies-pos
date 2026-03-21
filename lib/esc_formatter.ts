@@ -98,8 +98,7 @@ const BOLD_OFF    = esc(0x1b, 0x45, 0x00);
 const SIZE_NORMAL = esc(0x1d, 0x21, 0x00);
 const SIZE_TALL   = esc(0x1d, 0x21, 0x01); // 2× height
 const CUT         = esc(0x1d, 0x56, 0x00);
-const FONT_B      = esc(0x1b, 0x4d, 0x01); // Font B — smaller baseline (~2px less than Font A)
-const FONT_A      = esc(0x1b, 0x4d, 0x00); // Font A — normal (used for SIZE_TALL sections)
+const FONT_A      = esc(0x1b, 0x4d, 0x00); // Font A — normal default
 
 // ─── Build a single receipt copy ─────────────────────────────────────────────
 async function buildCopy(
@@ -112,7 +111,7 @@ async function buildCopy(
 	const lines: (string | Uint8Array)[] = [];
 
 	lines.push(INIT);
-	lines.push(FONT_B);
+	lines.push(FONT_A);
 
 	// ── Logo (customer copy only) ────────────────────────────────────────────
 	if (copyType === "customer" && logoBitmap && logoBitmap.length > 0) {
@@ -124,9 +123,9 @@ async function buildCopy(
 	// ── Store name & branch ───────────────────────────────────────────────────
 	lines.push(ALIGN_CTR);
 	if (order.storeName) {
-		lines.push(FONT_A, BOLD_ON, SIZE_TALL);
+		lines.push(BOLD_ON, SIZE_TALL);
 		lines.push(t(center(order.storeName) + "\n"));
-		lines.push(SIZE_NORMAL, BOLD_OFF, FONT_B);
+		lines.push(SIZE_NORMAL, BOLD_OFF);
 	}
 	if (order.branchName) {
 		lines.push(t(center(order.branchName) + "\n"));
@@ -310,14 +309,14 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 	const lines: (string | Uint8Array)[] = [];
 
 	lines.push(INIT);
-	lines.push(FONT_B);
+	lines.push(FONT_A);
 
 	// Header
 	lines.push(ALIGN_CTR);
 	if (data.storeName) {
-		lines.push(FONT_A, BOLD_ON, SIZE_TALL);
+		lines.push(BOLD_ON, SIZE_TALL);
 		lines.push(t(center(data.storeName) + "\n"));
-		lines.push(SIZE_NORMAL, BOLD_OFF, FONT_B);
+		lines.push(SIZE_NORMAL, BOLD_OFF);
 	}
 	if (data.branchName) {
 		lines.push(t(center(data.branchName) + "\n"));
