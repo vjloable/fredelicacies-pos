@@ -539,3 +539,119 @@ export function IllResolveUncarried() {
     </div>
   );
 }
+
+export function IllAuditConfig() {
+  return (
+    <div className="flex items-center justify-center p-3 w-full h-full">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-64 overflow-hidden">
+        <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+          <div className="w-7 h-7 bg-secondary/10 rounded-lg flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </div>
+          <div>
+            <div className="text-[7px] font-bold text-secondary">Audit Configuration</div>
+            <div className="text-[5px] text-secondary/50">Select which category requires manual audit</div>
+          </div>
+        </div>
+        <div className="px-3 py-2 space-y-1">
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0" />
+              <span className="text-[6px] text-secondary/50">None</span>
+            </div>
+          </div>
+          {[{name:'Kakanin',color:'#DA834D',sel:true},{name:'Breads',color:'#4A7C00',sel:false},{name:'Pastries',color:'#7C3AED',sel:false}].map((cat,i) => (
+            <div key={i} className={`flex items-center justify-between px-2 py-1.5 rounded-lg border ${cat.sel ? 'border-accent bg-accent/5' : 'border-gray-200'}`}>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{backgroundColor: cat.color}} />
+                <span className="text-[6px] font-medium text-secondary">{cat.name}</span>
+              </div>
+              {cat.sel && <svg className="w-2.5 h-2.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>}
+            </div>
+          ))}
+        </div>
+        <div className="px-3 pb-2 flex gap-1.5">
+          <div className="flex-1 py-1 bg-gray-100 rounded-lg text-[6px] text-secondary/50 text-center">Cancel</div>
+          <div className="flex-1 py-1 bg-secondary rounded-lg text-[6px] text-primary font-bold text-center">Save</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function IllAuditMode() {
+  return (
+    <div className="flex items-center justify-center p-3 w-full h-full">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-64 overflow-hidden">
+        <div className="px-3 py-2 border-b border-secondary/10 bg-secondary/5 flex items-center justify-between">
+          <div className="text-[7px] font-bold text-secondary">Items · Audit Mode</div>
+          <div className="flex gap-1">
+            <div className="px-2 py-0.5 rounded-lg bg-secondary text-[6px] font-bold text-white">DONE</div>
+            <div className="px-2 py-0.5 rounded-lg bg-secondary/20 text-[6px] font-bold text-secondary/50">LOCK ALL</div>
+          </div>
+        </div>
+        {[
+          {name:'Biko',stock:44,expected:'44',diff:0},
+          {name:'Puto Cheese',stock:12,expected:'10',diff:-2},
+          {name:'Maja',stock:8,expected:'',diff:null},
+        ].map((item,i) => (
+          <div key={i} className="px-3 py-1.5 border-b border-gray-50">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[7px] font-medium text-secondary">{item.name}</span>
+              <span className="text-[6px] text-secondary/40">stock: {item.stock}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[6px] text-secondary/50 shrink-0">Expected:</span>
+              <div className={`flex-1 px-1.5 py-0.5 border rounded text-[7px] font-medium ${item.expected ? 'border-accent/40 text-secondary' : 'border-gray-200 text-secondary/20'}`}>
+                {item.expected || 'Count'}
+              </div>
+              {item.diff === 0 && <svg className="w-3 h-3 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>}
+              {item.diff !== null && item.diff !== 0 && <span className="text-[7px] font-bold text-red-500 shrink-0">{item.diff}</span>}
+            </div>
+            {item.diff !== null && item.diff !== 0 && (
+              <div className="flex gap-1 mt-1">
+                <div className="flex-1 py-0.5 rounded bg-accent/10 text-[5px] font-medium text-accent text-center">Force Carry Over</div>
+                <div className="flex-1 py-0.5 rounded bg-red-50 text-[5px] font-medium text-red-500 text-center">Wastage</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function IllCarryOverAll() {
+  return (
+    <div className="flex items-center justify-center p-3 w-full h-full">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-64 overflow-hidden">
+        <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+          <div className="text-[7px] font-bold text-secondary">Items</div>
+          <div className="flex gap-1 items-center">
+            <div className="px-1.5 py-0.5 rounded-lg bg-error/10 text-[5px] font-bold text-error">DESTOCK</div>
+            <div className="px-1.5 py-0.5 rounded-lg bg-accent text-[5px] font-bold text-primary">ADD ITEM</div>
+            <div className="px-1.5 py-0.5 rounded-lg bg-success text-[5px] font-bold text-white flex items-center gap-0.5">
+              <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+              CARRY OVER ALL
+            </div>
+          </div>
+        </div>
+        <div className="px-3 py-1.5 space-y-1">
+          {[{name:'Biko',stock:44},{name:'Puto Cheese',stock:10},{name:'Maja',stock:8}].map((item,i) => (
+            <div key={i} className="flex items-center gap-2 py-0.5">
+              <div className="w-6 h-6 bg-gray-100 rounded-lg shrink-0" />
+              <div className="flex-1">
+                <div className="text-[7px] font-medium text-secondary">{item.name}</div>
+                <div className="text-[6px] text-secondary/40">{item.stock} in stock</div>
+              </div>
+              <svg className="w-3 h-3 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+          ))}
+        </div>
+        <div className="px-3 pb-2">
+          <div className="text-[5px] text-secondary/40 text-center">All audit items locked — ready to carry over</div>
+        </div>
+      </div>
+    </div>
+  );
+}

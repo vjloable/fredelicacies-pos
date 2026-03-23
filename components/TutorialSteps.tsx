@@ -7,6 +7,7 @@ import {
   IllInventoryDestockBtn, IllInventoryDestockMode,
   IllEODPanel, IllEODLockItem, IllEODDiscrepancy, IllEODSubmit,
   IllUncarriedItems, IllResolveUncarried,
+  IllAuditConfig, IllAuditMode, IllCarryOverAll,
 } from './TutorialIllustrations';
 import type { TutorialStep } from './TutorialModal';
 
@@ -67,33 +68,38 @@ export const salesSteps: TutorialStep[] = [
 export const inventorySteps: TutorialStep[] = [
   {
     title: 'Destock',
-    description: 'Destock removes items from inventory — use it for spoiled, expired, or damaged goods. Categories set to "Destock Only" by the owner can only be destocked, not carried over.',
+    description: 'Destock removes items from inventory — use it for spoiled, expired, or damaged goods. Tap DESTOCK to enter selection mode, select items, then confirm to zero their stock and log as wastage.',
     illustration: <IllInventoryDestockBtn />,
   },
   {
     title: 'Select Items to Destock',
-    description: 'Tap DESTOCK to enter selection mode. The edit buttons disappear — tap any item to select it. Tap "DESTOCKS X" to confirm. Stock is zeroed and logged as wastage.',
+    description: 'In destock mode the edit buttons disappear — tap any item to select it. Tap "DESTOCKS X" to confirm. Stock is zeroed and logged as wastage.',
     illustration: <IllInventoryDestockMode />,
   },
   {
-    title: 'End-of-Day Audit',
-    description: "At the end of each shift, use the audit panel to record the actual stock count. Only items in categories set to \"Carryover\" by the owner can be locked — other categories auto-carry over.",
-    illustration: <IllEODPanel />,
+    title: 'Audit Configuration (Owner)',
+    description: 'Tap the cog icon next to the Items title to open Audit Configuration. Pick exactly one category whose items will require a manual stock count at end-of-day. All other categories are left untouched.',
+    illustration: <IllAuditConfig />,
   },
   {
-    title: 'Lock an Item',
-    description: 'Tap the lock icon on any item row. Enter the expected End-of-Day stock — the system calculates the discrepancy against the actual count.',
-    illustration: <IllEODLockItem />,
+    title: 'Audit Mode (Owner)',
+    description: 'Tap AUDIT to enter audit mode. Each item in the configured category shows an expected stock input. Enter the physical count — a green checkmark means it matches, a red number shows the discrepancy.',
+    illustration: <IllAuditMode />,
   },
   {
-    title: 'Resolve Discrepancies',
-    description: 'If the count differs, choose: re-count (unlock), force carry-over with a written reason, or log the difference as wastage.',
+    title: 'Resolve Discrepancies (Owner)',
+    description: "When the count doesn't match, choose Force Carry Over (requires a written reason) to keep the stock, or Wastage to zero the difference. All items must be resolved before locking.",
     illustration: <IllEODDiscrepancy />,
   },
   {
-    title: 'Submit & Carry Over',
-    description: 'Once all items are locked, tap "Submit End-of-Day". Locked counts become the opening stock. Unlocked carryover items are flagged as uncarried.',
-    illustration: <IllEODSubmit />,
+    title: 'Lock All (Owner)',
+    description: "Once every audit item has a count and all discrepancies are resolved, tap LOCK ALL. This locks each item's expected stock into the end-of-day record.",
+    illustration: <IllEODPanel />,
+  },
+  {
+    title: 'Carry Over All (Owner)',
+    description: "After all audit items are locked, the CARRY OVER ALL button appears. Tap it to submit the day — locked counts become tomorrow's opening stock. Non-audit categories are untouched.",
+    illustration: <IllCarryOverAll />,
   },
   {
     title: 'Uncarried Items',
