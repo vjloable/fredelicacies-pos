@@ -683,21 +683,24 @@ export default function StoreScreen() {
 			}
 
 			// Prepare receipt data for printing
+			const grabUplift = paymentMethod === 'grab'
+				? cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0)
+				: 0;
+			const baseSubtotal = subtotal - grabUplift;
+
 			const receiptData = {
 				orderId,
 				date: new Date(),
 				items: cart.map((item) => ({
 					name: item.name,
 					qty: item.quantity,
-					price: paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price,
-					total: (paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price) * item.quantity,
+					price: item.price,
+					total: item.price * item.quantity,
 				})),
-				subtotal,
+				subtotal: baseSubtotal,
 				discount: discountAmount,
 				appliedDiscountCode: appliedDiscount?.name || "",
-				grabUplift: paymentMethod === 'grab'
-					? cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0)
-					: 0,
+				grabUplift,
 				total,
 				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
 				change: paymentMethod === 'cash' ? Math.max(0, (parseFloat(tenderedAmount) || total) - total) : 0,

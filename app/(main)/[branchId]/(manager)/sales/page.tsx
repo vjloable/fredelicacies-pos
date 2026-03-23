@@ -323,6 +323,9 @@ export default function SalesScreen() {
 		if (isPrinting) return;
 		setIsPrinting(true);
 		try {
+			const baseSubtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+			const grabUplift = order.payment_method === 'grab' ? order.subtotal - baseSubtotal : 0;
+
 			const receiptData = {
 				orderId: order.order_number || order.id,
 				date: new Date(order.created_at),
@@ -332,8 +335,9 @@ export default function SalesScreen() {
 					price: item.price,
 					total: item.price * item.quantity,
 				})),
-				subtotal: order.subtotal,
+				subtotal: baseSubtotal,
 				discount: order.discount_amount,
+				grabUplift: grabUplift > 0 ? grabUplift : 0,
 				total: order.total,
 				payment: order.total,
 				change: 0,

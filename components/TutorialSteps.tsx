@@ -77,7 +77,7 @@ export const inventorySteps: TutorialStep[] = [
   },
   {
     title: 'End-of-Day Audit',
-    description: "At the end of each shift, use the audit panel to record the actual stock count. Only items in carryover categories can be locked — destock-only items are excluded.",
+    description: "At the end of each shift, use the audit panel to record the actual stock count. Only items in categories set to \"Carryover\" by the owner can be locked — other categories auto-carry over.",
     illustration: <IllEODPanel />,
   },
   {

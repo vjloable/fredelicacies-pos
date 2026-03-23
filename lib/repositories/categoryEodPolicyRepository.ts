@@ -27,7 +27,7 @@ export const categoryEodPolicyRepository = {
     return { policy: data, error };
   },
 
-  // Delete a policy (revert to default carryover behavior)
+  // Delete a policy (revert to auto carry-over, no audit needed)
   async delete(branchId: string, categoryId: string): Promise<{ error: any }> {
     const { error } = await supabase
       .from('category_eod_policies')

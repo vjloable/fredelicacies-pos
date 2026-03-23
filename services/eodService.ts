@@ -264,16 +264,16 @@ export async function flagUncarriedItems(
     // Get EOD policies for this branch
     const { policies } = await categoryEodPolicyRepository.getByBranch(branchId);
 
-    // Build a set of destock-only category IDs
-    const destockOnlyCategoryIds = new Set(
-      policies.filter(p => p.eod_policy === 'destock_only').map(p => p.category_id)
+    // Build a set of carryover category IDs (only explicitly selected ones)
+    const carryoverCategoryIds = new Set(
+      policies.filter(p => p.eod_policy === 'carryover').map(p => p.category_id)
     );
 
     // Find items in carryover categories that were NOT locked and have stock > 0
     const uncarriedItems = allItems.filter(item => {
       if (lockedItemIds.has(item.id)) return false; // already locked
       if (item.stock <= 0) return false; // no stock to carry over
-      if (item.category_id && destockOnlyCategoryIds.has(item.category_id)) return false; // destock-only
+      if (!item.category_id || !carryoverCategoryIds.has(item.category_id)) return false; // not a carryover category
       return true;
     });
 

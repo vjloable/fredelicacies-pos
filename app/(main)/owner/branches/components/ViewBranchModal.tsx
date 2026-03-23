@@ -1,7 +1,6 @@
 'use client';
 
 import { Branch } from '@/services/branchService';
-import CategoryEodPoliciesPanel from './CategoryEodPoliciesPanel';
 
 interface ViewBranchModalProps {
   isOpen: boolean;
@@ -167,11 +166,6 @@ export default function ViewBranchModal({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Category EOD Policies */}
-        <div className="mt-6 bg-gray-50 rounded-xl p-4 sm:p-6">
-          <CategoryEodPoliciesPanel branchId={branch.id} />
         </div>
 
         {/* Action Buttons */}
