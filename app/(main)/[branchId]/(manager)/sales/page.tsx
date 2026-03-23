@@ -33,6 +33,7 @@ import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
 import { formatReceiptWithLogo, formatDailySalesESC } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
+import { generateSalesReportPDF } from "@/lib/pdfGenerator";
 
 interface TimeSeriesData {
 	label: string;
@@ -616,150 +617,19 @@ export default function SalesScreen() {
 		: "All_Time";
 
 	const generatePDF = async () => {
-		const { default: jsPDF } = await import("jspdf");
-		const { default: autoTable } = await import("jspdf-autotable");
-		const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 		const branchName = currentBranch?.name ?? 'Branch';
 		const period = periodLabel.replace(/_/g, ' ');
-		const avgOrderValue = currentPeriodStats.totalOrders > 0
-			? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
-			: 0;
-		const totalPieces = analyticsOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
-		const peso = (n: number) => `₱${n.toFixed(2)}`;
 
-		// Payment method breakdown
-		const pmMap = { cash: { orders: 0, pieces: 0, revenue: 0 }, gcash: { orders: 0, pieces: 0, revenue: 0 }, grab: { orders: 0, pieces: 0, revenue: 0 } };
-		analyticsOrders.forEach(o => {
-			const m = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof pmMap;
-			if (pmMap[m]) {
-				pmMap[m].orders++;
-				pmMap[m].pieces += o.items.reduce((s, i) => s + i.quantity, 0);
-				pmMap[m].revenue += o.total;
-			}
+		await generateSalesReportPDF({
+			branchName,
+			period,
+			periodLabel,
+			currentPeriodStats,
+			analyticsOrders,
+			topWastedItems,
+			totalWastageCost,
+			peakEntry,
 		});
-
-		let y = 15;
-
-		// ── Header ─────────────────────────────────────────────────────────
-		doc.setFontSize(18);
-		doc.setFont('helvetica', 'bold');
-		doc.text('FREDELECACIES', 105, y, { align: 'center' });
-		y += 7;
-		doc.setFontSize(12);
-		doc.setFont('helvetica', 'normal');
-		doc.text(`${branchName} — Sales Report`, 105, y, { align: 'center' });
-		y += 6;
-		doc.setFontSize(9);
-		doc.setTextColor(100);
-		doc.text(`Period: ${period}  |  Generated: ${new Date().toLocaleDateString()}`, 105, y, { align: 'center' });
-		doc.setTextColor(0);
-		y += 8;
-
-		// ── Summary ────────────────────────────────────────────────────────
-		doc.setFontSize(11);
-		doc.setFont('helvetica', 'bold');
-		doc.text('Summary', 14, y);
-		y += 2;
-
-		autoTable(doc, {
-			startY: y,
-			head: [['Metric', 'Value']],
-			body: [
-				['Total Revenue', peso(currentPeriodStats.totalRevenue)],
-				['Total Profit', peso(currentPeriodStats.totalProfit)],
-				['Profit Margin', `${currentPeriodStats.profitMargin.toFixed(1)}%`],
-				['Total Orders', currentPeriodStats.totalOrders.toString()],
-				['Total Pieces Sold', totalPieces.toString()],
-				['Avg Order Value', peso(avgOrderValue)],
-				['Wastage Cost', peso(totalWastageCost)],
-				['Peak Period', peakEntry ? `${peakEntry.label} (${peakEntry.orders} orders)` : '—'],
-			],
-			theme: 'grid',
-			headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
-			bodyStyles: { fontSize: 8 },
-			columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 }, 1: { halign: 'right' } },
-			margin: { left: 14, right: 14 },
-		});
-
-		y = (doc as any).lastAutoTable.finalY + 8;
-
-		// ── Payment Methods ────────────────────────────────────────────────
-		doc.setFontSize(11);
-		doc.setFont('helvetica', 'bold');
-		doc.text('Payment Methods', 14, y);
-		y += 2;
-
-		autoTable(doc, {
-			startY: y,
-			head: [['Method', 'Orders', 'Pieces', 'Revenue']],
-			body: (['cash', 'gcash', 'grab'] as const).map(m => [
-				m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : 'Cash',
-				pmMap[m].orders.toString(),
-				pmMap[m].pieces.toString(),
-				peso(pmMap[m].revenue),
-			]),
-			theme: 'grid',
-			headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
-			bodyStyles: { fontSize: 8 },
-			columnStyles: { 3: { halign: 'right' } },
-			margin: { left: 14, right: 14 },
-		});
-
-		y = (doc as any).lastAutoTable.finalY + 8;
-
-		// ── Orders ─────────────────────────────────────────────────────────
-		doc.setFontSize(11);
-		doc.setFont('helvetica', 'bold');
-		doc.text('Orders', 14, y);
-		y += 2;
-
-		autoTable(doc, {
-			startY: y,
-			head: [['Order #', 'Date', 'Items', 'Pcs', 'Total', 'Payment']],
-			body: analyticsOrders.map(order => {
-				const dt = new Date(order.created_at);
-				const isVoided = order.status === 'voided';
-				return [
-					order.order_number ?? order.id.slice(-8),
-					dt.toLocaleDateString(),
-					order.items.map(i => `${i.name} x${i.quantity}`).join(', '),
-					isVoided ? '0' : order.items.reduce((s, i) => s + i.quantity, 0).toString(),
-					isVoided ? 'VOIDED' : peso(order.total),
-					(order.payment_method ?? 'cash').toUpperCase(),
-				];
-			}),
-			theme: 'grid',
-			headStyles: { fillColor: [218, 131, 77], fontSize: 7, fontStyle: 'bold' },
-			bodyStyles: { fontSize: 7 },
-			columnStyles: { 2: { cellWidth: 55 }, 4: { halign: 'right' } },
-			margin: { left: 14, right: 14 },
-		});
-
-		y = (doc as any).lastAutoTable.finalY + 8;
-
-		// ── Wastage ────────────────────────────────────────────────────────
-		if (topWastedItems.length > 0) {
-			if (y > 250) { doc.addPage(); y = 15; }
-			doc.setFontSize(11);
-			doc.setFont('helvetica', 'bold');
-			doc.text('Top Wasted Items', 14, y);
-			y += 2;
-
-			autoTable(doc, {
-				startY: y,
-				head: [['Item', 'Total Cost']],
-				body: topWastedItems.map(w => [w.item_name, peso(w.total_cost)]),
-				theme: 'grid',
-				headStyles: { fillColor: [218, 131, 77], fontSize: 8, fontStyle: 'bold' },
-				bodyStyles: { fontSize: 8 },
-				columnStyles: { 1: { halign: 'right' } },
-				margin: { left: 14, right: 14 },
-			});
-		}
-
-		// Save
-		const filename = `sales_${periodLabel}_${branchName.replace(/\s+/g, '_')}.pdf`;
-		doc.save(filename);
 	};
 
 	if (analyticsLoading && tableLoading) {
