@@ -325,20 +325,33 @@ export default function SalesScreen() {
 		setIsPrinting(true);
 		try {
 			const baseSubtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-			const grabUplift = order.payment_method === 'grab' ? order.subtotal - baseSubtotal : 0;
+			const isGrabOrder = order.payment_method === 'grab';
+			const grabUplift = isGrabOrder ? order.subtotal - baseSubtotal : 0;
 
 			const receiptData = {
 				orderId: order.order_number || order.id,
 				date: new Date(order.created_at),
-				items: order.items.map((item) => ({
-					name: item.name,
-					qty: item.quantity,
-					price: item.price,
-					total: item.price * item.quantity,
-				})),
-				subtotal: baseSubtotal,
+				items: order.items.map((item) => {
+					const baseItemTotal = item.price * item.quantity;
+					let itemPrice = item.price;
+					let itemTotal = baseItemTotal;
+
+					if (isGrabOrder && grabUplift > 0.01 && baseSubtotal > 0) {
+						const proportionalUplift = (baseItemTotal / baseSubtotal) * grabUplift;
+						itemTotal = baseItemTotal + proportionalUplift;
+						itemPrice = itemTotal / item.quantity;
+					}
+
+					return {
+						name: item.name,
+						qty: item.quantity,
+						price: itemPrice,
+						total: itemTotal,
+					};
+				}),
+				subtotal: order.subtotal,
 				discount: order.discount_amount,
-				grabUplift: grabUplift > 0 ? grabUplift : 0,
+				grabUplift: 0,
 				total: order.total,
 				payment: order.total,
 				change: 0,
@@ -373,13 +386,28 @@ export default function SalesScreen() {
 				const shortId = order.order_number
 					? order.order_number.replace('ORD-', '')
 					: order.id.slice(-8).toUpperCase();
+
+				const isGrabOrder = raw === 'grab';
+				const baseOrderSubtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+				const grabUplift = isGrabOrder ? order.subtotal - baseOrderSubtotal : 0;
+
 				group.orders.push({
 					orderId: shortId,
-					items: order.items.map((item: OrderItem) => ({
-						name: item.name,
-						qty: item.quantity,
-						total: item.price * item.quantity,
-					})),
+					items: order.items.map((item: OrderItem) => {
+						const baseItemTotal = item.price * item.quantity;
+						let itemTotal = baseItemTotal;
+
+						if (isGrabOrder && grabUplift > 0.01 && baseOrderSubtotal > 0) {
+							const proportionalUplift = (baseItemTotal / baseOrderSubtotal) * grabUplift;
+							itemTotal = baseItemTotal + proportionalUplift;
+						}
+
+						return {
+							name: item.name,
+							qty: item.quantity,
+							total: itemTotal,
+						};
+					}),
 					total: order.total,
 					transactionNumber: order.transaction_number || undefined,
 				});

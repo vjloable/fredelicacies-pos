@@ -171,20 +171,15 @@ async function buildCopy(
 	lines.push(t(divider()));
 
 	// ── Totals ────────────────────────────────────────────────────────────────
-	lines.push(t(totalRow("Subtotal:", formatAmount(order.subtotal))));
-
-	if (order.grabUplift && order.grabUplift > 0) {
-		lines.push(t(totalRow("Grab Adj.(+):", `+${formatAmount(order.grabUplift)}`)));
-	}
-
 	if (order.discount && order.discount > 0) {
 		lines.push(t(totalRow("Discount:", `-${formatAmount(order.discount)}`)));
 		if (order.appliedDiscountCode) {
 			lines.push(t(center(`(${order.appliedDiscountCode})`) + "\n"));
 		}
+		lines.push(t(divider("=")));
+	} else {
+		lines.push(t(divider("=")));
 	}
-
-	lines.push(t(divider("=")));
 	lines.push(BOLD_ON);
 	lines.push(t(totalRow("TOTAL:", formatAmount(order.total))));
 	lines.push(BOLD_OFF);
