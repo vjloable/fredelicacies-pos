@@ -649,7 +649,7 @@ export default function StoreScreen() {
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
-			const { id: orderId, error: orderError } = await createOrder(
+			const { id: orderId, orderNumber: orderNum, error: orderError } = await createOrder(
 				currentBranch.id,
 				user.id,
 				cart.map((item) => ({
@@ -684,7 +684,7 @@ export default function StoreScreen() {
 
 			// Prepare receipt data for printing
 			const receiptData = {
-				orderId,
+				orderId: orderNum || orderId,
 				date: new Date(),
 				items: cart.map((item) => {
 					const itemPrice = paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;

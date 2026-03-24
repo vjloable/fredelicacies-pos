@@ -40,7 +40,7 @@ export const createOrder = async (
   paymentMethod?: 'cash' | 'gcash' | 'grab',
   note?: string,
   transactionNumber?: string
-): Promise<{ id: string | null; error: any }> => {
+): Promise<{ id: string | null; orderNumber?: string; error: any }> => {
   const timer = measureTime();
   log.info('Order creation started', { branchId, userId, itemCount: items.length, total, paymentMethod });
 
@@ -145,7 +145,7 @@ export const createOrder = async (
     duration,
   });
 
-  return { id: order.id, error: null };
+  return { id: order.id, orderNumber, error: null };
 };
 
 // Get orders by branch with date filter
