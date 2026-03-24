@@ -36,7 +36,8 @@ export default function EditItemModal({
   onUnlocked,
 }: EditItemModalProps) {
   const { currentBranch } = useBranch();
-  const { user } = useAuth();
+  const { user, isManager, isUserOwner } = useAuth();
+  const canRemove = isManager() || isUserOwner();
   const [loading, setLoading] = useState(false);
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -470,16 +471,31 @@ export default function EditItemModal({
                 <div className="text-xs text-secondary/50 mt-1">in stock</div>
               </div>
 
-              <div className="flex gap-2 flex-1">
-                {[1, 5, 10].map(amount => (
-                  <button
-                    key={`add-${amount}`}
-                    onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
-                    className="flex-1 py-2 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
-                  >
-                    +{amount}
-                  </button>
-                ))}
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex gap-2">
+                  {[1, 5, 10].map(amount => (
+                    <button
+                      key={`add-${amount}`}
+                      onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
+                      className="flex-1 py-2 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
+                    >
+                      +{amount}
+                    </button>
+                  ))}
+                </div>
+                {canRemove && (
+                  <div className="flex gap-2">
+                    {[1, 5, 10].map(amount => (
+                      <button
+                        key={`sub-${amount}`}
+                        onClick={() => setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)})}
+                        className="flex-1 py-2 bg-error/10 border-2 border-error/40 hover:bg-error/20 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
+                      >
+                        -{amount}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -536,12 +552,14 @@ export default function EditItemModal({
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-5">
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          >
-            Remove
-          </button>
+          {canRemove && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              Remove
+            </button>
+          )}
           <button
             onClick={closeModal}
             className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
@@ -625,7 +643,7 @@ export default function EditItemModal({
         )}
 
         {/* Delete Confirmation Dialog */}
-        {showDeleteConfirm && (
+        {canRemove && showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center">
