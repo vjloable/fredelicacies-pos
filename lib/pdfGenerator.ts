@@ -56,6 +56,9 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		}
 	});
 
+	const grabNetRevenue = pmMap.grab.revenue * 0.73;
+	const netTotalRevenue = pmMap.cash.revenue + pmMap.gcash.revenue + grabNetRevenue;
+
 	const peso = (n: number) => `PHP ${n.toFixed(2)}`;
 	let y = 12;
 
@@ -84,7 +87,7 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		startY: y,
 		head: [['Metric', 'Value']],
 		body: [
-			['Total Revenue', peso(currentPeriodStats.totalRevenue)],
+			['Total Revenue', peso(netTotalRevenue)],
 			['Total Profit', peso(currentPeriodStats.totalProfit)],
 			['Profit Margin', `${currentPeriodStats.profitMargin.toFixed(1)}%`],
 			['Total Orders', currentPeriodStats.totalOrders.toString()],
@@ -112,10 +115,10 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		startY: y,
 		head: [['Method', 'Orders', 'Pieces', 'Revenue']],
 		body: (['cash', 'gcash', 'grab'] as const).map(m => [
-			m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : 'Cash',
+			m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab (net)' : 'Cash',
 			pmMap[m].orders.toString(),
 			pmMap[m].pieces.toString(),
-			peso(pmMap[m].revenue),
+			peso(m === 'grab' ? grabNetRevenue : pmMap[m].revenue),
 		]),
 		theme: 'grid',
 		headStyles: { fillColor: [218, 131, 77], fontSize: 7, fontStyle: 'bold' },
