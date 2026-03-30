@@ -1,4 +1,4 @@
-import type { OrderWithItems, WastageItemSummary } from "@/types/domain";
+import type { OrderWithItems, WastageItemSummary, Discount } from "@/types/domain";
 
 export interface PeriodStats {
 	totalRevenue: number;
@@ -21,6 +21,7 @@ export interface SalesReportData {
 	topWastedItems: WastageItemSummary[];
 	totalWastageCost: number;
 	peakEntry: PeakPeriod | null;
+	discounts?: Discount[];
 }
 
 export async function generateSalesReportPDF(data: SalesReportData): Promise<void> {
@@ -36,6 +37,7 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		topWastedItems,
 		totalWastageCost,
 		peakEntry,
+		discounts = [],
 	} = data;
 
 	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -45,10 +47,17 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		: 0;
 	const totalPieces = analyticsOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
 
-	// Payment method breakdown
-	const pmMap = { cash: { orders: 0, pieces: 0, revenue: 0 }, gcash: { orders: 0, pieces: 0, revenue: 0 }, grab: { orders: 0, pieces: 0, revenue: 0 } };
+	// Payment method breakdown — all 5 methods
+	type PmKey = 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
+	const pmMap: Record<PmKey, { orders: number; pieces: number; revenue: number }> = {
+		cash: { orders: 0, pieces: 0, revenue: 0 },
+		gcash: { orders: 0, pieces: 0, revenue: 0 },
+		grab: { orders: 0, pieces: 0, revenue: 0 },
+		debit_credit: { orders: 0, pieces: 0, revenue: 0 },
+		employee_charge: { orders: 0, pieces: 0, revenue: 0 },
+	};
 	analyticsOrders.forEach(o => {
-		const m = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof pmMap;
+		const m = ((o.payment_method as string) || 'cash').toLowerCase() as PmKey;
 		if (pmMap[m]) {
 			pmMap[m].orders++;
 			pmMap[m].pieces += o.items.reduce((s, i) => s + i.quantity, 0);
@@ -57,7 +66,8 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	});
 
 	const grabNetRevenue = pmMap.grab.revenue * 0.73;
-	const netTotalRevenue = pmMap.cash.revenue + pmMap.gcash.revenue + grabNetRevenue;
+	const netTotalRevenue = pmMap.cash.revenue + pmMap.gcash.revenue + grabNetRevenue
+		+ pmMap.debit_credit.revenue + pmMap.employee_charge.revenue;
 
 	const peso = (n: number) => `PHP ${n.toFixed(2)}`;
 	let y = 12;
@@ -87,7 +97,7 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		startY: y,
 		head: [['Metric', 'Value']],
 		body: [
-			['Total Revenue', peso(netTotalRevenue)],
+			['Total Revenue (net)', peso(netTotalRevenue)],
 			['Total Profit', peso(currentPeriodStats.totalProfit)],
 			['Profit Margin', `${currentPeriodStats.profitMargin.toFixed(1)}%`],
 			['Total Orders', currentPeriodStats.totalOrders.toString()],
@@ -111,19 +121,33 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	doc.text('Payment Methods', 14, y);
 	y += 2;
 
+	const pmRows: string[][] = [];
+	const pmLabels: [PmKey, string][] = [
+		['cash', 'Cash'],
+		['gcash', 'GCash'],
+		['grab', 'Grab (net 73%)'],
+		['debit_credit', 'Debit / Credit'],
+		['employee_charge', 'Employee Charge'],
+	];
+	for (const [key, label] of pmLabels) {
+		if (pmMap[key].orders === 0) continue;
+		const revenue = key === 'grab' ? grabNetRevenue : pmMap[key].revenue;
+		pmRows.push([label, pmMap[key].orders.toString(), pmMap[key].pieces.toString(), peso(revenue)]);
+	}
+
 	autoTable(doc, {
 		startY: y,
 		head: [['Method', 'Orders', 'Pieces', 'Revenue']],
-		body: (['cash', 'gcash', 'grab'] as const).map(m => [
-			m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab (net)' : 'Cash',
-			pmMap[m].orders.toString(),
-			pmMap[m].pieces.toString(),
-			peso(m === 'grab' ? grabNetRevenue : pmMap[m].revenue),
-		]),
+		body: pmRows,
 		theme: 'grid',
 		headStyles: { fillColor: [218, 131, 77], fontSize: 7, fontStyle: 'bold' },
 		bodyStyles: { fontSize: 7 },
-		columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 20, halign: 'right' }, 2: { cellWidth: 20, halign: 'right' }, 3: { halign: 'right' } },
+		columnStyles: {
+			0: { cellWidth: 38 },
+			1: { cellWidth: 18, halign: 'right' },
+			2: { cellWidth: 18, halign: 'right' },
+			3: { halign: 'right' },
+		},
 		margin: { left: 14, right: 14 },
 	});
 
@@ -135,33 +159,103 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	doc.text('Orders', 14, y);
 	y += 2;
 
+	// Helper: build detailed discount cell text
+	const discountCell = (order: OrderWithItems): string => {
+		if (order.status === 'voided') return '—';
+		if (!order.discount_id || !order.discount_amount) return '—';
+		const disc = discounts.find(d => d.id === order.discount_id);
+		if (!disc) return peso(order.discount_amount);
+
+		const lines: string[] = [`-${peso(order.discount_amount)}`];
+		if (disc.type === 'b1t1') {
+			lines.push('Buy 1 Take 1');
+		} else if (disc.type === 'sc_pwd') {
+			const pct = disc.metadata?.discount_pct ?? 20;
+			const vat = disc.metadata?.vat_rate ?? 12;
+			const applyVat = disc.metadata?.apply_vat !== false;
+			const mostExp = disc.metadata?.most_expensive_only !== false;
+			lines.push(`SC/PWD ${pct}%${applyVat ? `+VAT${vat}%` : ''}`);
+			lines.push(mostExp ? 'Most exp. item' : 'All items');
+		} else if (disc.type === 'percentage') {
+			lines.push(`${disc.name} (${disc.value}% off)`);
+		} else {
+			lines.push(`${disc.name} (-PHP ${disc.value})`);
+		}
+		return lines.join('\n');
+	};
+
+	// Helper: build detailed payment cell text
+	const paymentCell = (order: OrderWithItems): string => {
+		const pm = order.payment_method ?? 'cash';
+		const d = order.payment_details;
+		if (pm === 'debit_credit') {
+			const parts = ['Debit/Credit'];
+			if (d?.reference_no) parts.push(`Ref: ${d.reference_no}`);
+			if (d?.transaction_no) parts.push(`Txn: ${d.transaction_no}`);
+			if (d?.approval_code) parts.push(`Appr: ${d.approval_code}`);
+			return parts.join('\n');
+		}
+		if (pm === 'employee_charge') {
+			return d?.employee_name ? `Emp Charge\n${d.employee_name}` : 'Emp Charge';
+		}
+		if (pm === 'gcash') {
+			return order.transaction_number ? `GCash\nTxn: ${order.transaction_number}` : 'GCash';
+		}
+		if (pm === 'grab') {
+			return order.transaction_number ? `Grab\nTxn: ${order.transaction_number}` : 'Grab';
+		}
+		return 'Cash';
+	};
+
 	autoTable(doc, {
 		startY: y,
-		head: [['Order #', 'Date', 'Items', 'Pcs', 'Total', 'Payment']],
+		head: [['Order #', 'Date', 'Items', 'Subtotal', 'Discount', 'Total', 'Payment']],
 		body: analyticsOrders.map(order => {
 			const dt = new Date(order.created_at);
 			const isVoided = order.status === 'voided';
+			const itemsText = order.items.map(i => {
+				const line = `${i.name} ×${i.quantity}`;
+				// bundle_components is any; check for price override note stored in order_items
+				const comp = i.bundle_components as any;
+				const hasPriceOverride = comp?.isPriceOverride === true;
+				const originalPrice = comp?.originalPrice as number | undefined;
+				if (hasPriceOverride) {
+					const orig = originalPrice !== undefined ? ` (orig: PHP ${originalPrice.toFixed(2)})` : '';
+					return `${line}\n  ⚑ Price adjusted${orig}`;
+				}
+				return line;
+			}).join('\n');
 			return [
 				order.order_number ?? order.id.slice(-8),
-				dt.toLocaleDateString(),
-				order.items.map(i => `${i.name} x${i.quantity}`).join(', '),
-				isVoided ? '0' : order.items.reduce((s, i) => s + i.quantity, 0).toString(),
+				dt.toLocaleDateString('en-PH', { month: '2-digit', day: '2-digit', year: '2-digit' })
+					+ '\n' + dt.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true }),
+				isVoided ? `${itemsText}\n[VOIDED]` : itemsText,
+				isVoided ? '—' : peso(order.subtotal),
+				discountCell(order),
 				isVoided ? 'VOIDED' : peso(order.total),
-				(order.payment_method ?? 'cash').toUpperCase(),
+				paymentCell(order),
 			];
 		}),
 		theme: 'grid',
 		headStyles: { fillColor: [218, 131, 77], fontSize: 7, fontStyle: 'bold' },
-		bodyStyles: { fontSize: 7 },
+		bodyStyles: { fontSize: 6.5, valign: 'top' },
 		columnStyles: {
-			0: { cellWidth: 28 },
+			0: { cellWidth: 22 },
 			1: { cellWidth: 18 },
-			2: { cellWidth: 70 },
-			3: { cellWidth: 10, halign: 'right' },
-			4: { cellWidth: 28, halign: 'right' },
-			5: { cellWidth: 18, halign: 'right' },
+			2: { cellWidth: 50 },
+			3: { cellWidth: 20, halign: 'right' },
+			4: { cellWidth: 28 },
+			5: { cellWidth: 20, halign: 'right' },
+			6: { cellWidth: 24 },
 		},
 		margin: { left: 14, right: 14 },
+		didParseCell: (hookData) => {
+			// Red text for voided rows in Total column
+			if (hookData.column.index === 5 && hookData.cell.raw === 'VOIDED') {
+				hookData.cell.styles.textColor = [200, 50, 50];
+				hookData.cell.styles.fontStyle = 'bold';
+			}
+		},
 	});
 
 	y = (doc as any).lastAutoTable.finalY + 5;
