@@ -768,11 +768,11 @@ export default function StoreScreen() {
 				paymentMethod,
 				orderType,
 				transactionNumber: (paymentMethod === 'gcash' || paymentMethod === 'grab') ? gcashTransactionNumber : undefined,
-				paymentDetails: paymentMethod === 'debit_credit'
+				paymentDetails: (paymentMethod === 'debit_credit'
 					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
 					: paymentMethod === 'employee_charge'
 					? { employee_name: employeeChargeName }
-					: undefined,
+					: undefined) as Record<string, string> | undefined,
 			};
 
 			// Print receipt via Bluetooth printer using context
