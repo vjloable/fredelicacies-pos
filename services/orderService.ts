@@ -32,14 +32,17 @@ export const createOrder = async (
     item_id?: string;
     components?: BundleComponent[];
     bundle_components?: any;
+    isPriceOverride?: boolean;
+    originalPrice?: number;
   }>,
   subtotal: number,
   total: number,
   discountId?: string,
   discountAmount?: number,
-  paymentMethod?: 'cash' | 'gcash' | 'grab',
+  paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge',
   note?: string,
-  transactionNumber?: string
+  transactionNumber?: string,
+  paymentDetails?: Record<string, string> | null
 ): Promise<{ id: string | null; orderNumber?: string; error: any }> => {
   const timer = measureTime();
   log.info('Order creation started', { branchId, userId, itemCount: items.length, total, paymentMethod });
@@ -65,7 +68,11 @@ export const createOrder = async (
     cost: item.cost || 0,
     quantity: item.quantity,
     is_bundle: item.type === 'bundle',
-    bundle_components: item.type === 'bundle' ? item.components : null,
+    bundle_components: item.type === 'bundle'
+      ? (item.isPriceOverride
+          ? { items: item.components, priceOverride: true, originalPrice: item.originalPrice }
+          : item.components)
+      : null,
   }));
 
   // Create order with items
@@ -81,6 +88,7 @@ export const createOrder = async (
       payment_method: paymentMethod ?? 'cash',
       note: note || null,
       transaction_number: transactionNumber || null,
+      payment_details: paymentDetails ?? null,
       items: orderItems,
     }
   );

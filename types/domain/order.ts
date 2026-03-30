@@ -9,9 +9,10 @@ export interface Order {
   discount_amount: number;
   total: number;
   status: 'completed' | 'cancelled' | 'refunded' | 'voided';
-  payment_method: 'cash' | 'gcash' | 'grab';
+  payment_method: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
   note: string | null;
   transaction_number: string | null;
+  payment_details: Record<string, string> | null;
   voided_by: string | null;
   void_reason: string | null;
   created_at: string;
@@ -43,9 +44,10 @@ export interface CreateOrderData {
   discount_id?: string;
   discount_amount?: number;
   total: number;
-  payment_method?: 'cash' | 'gcash' | 'grab';
+  payment_method?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
   note?: string;
   transaction_number?: string;
+  payment_details?: Record<string, string> | null;
   items: Array<{
     item_id?: string;
     bundle_id?: string;

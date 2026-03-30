@@ -13,7 +13,8 @@ export const orderRepository = {
       subtotal: number;
       discount_id?: string | null;
       discount_amount?: number;
-      payment_method?: 'cash' | 'gcash' | 'grab';
+      payment_method?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
+      payment_details?: Record<string, string> | null;
       note?: string | null;
       transaction_number?: string | null;
       items: Array<{
@@ -42,6 +43,7 @@ export const orderRepository = {
         payment_method: orderData.payment_method ?? 'cash',
         note: orderData.note ?? null,
         transaction_number: orderData.transaction_number ?? null,
+        payment_details: orderData.payment_details ?? null,
         status: 'completed',
       })
       .select()
@@ -124,6 +126,7 @@ export const orderRepository = {
       payment_method: order.payment_method ?? 'cash',
       note: order.note ?? null,
       transaction_number: order.transaction_number ?? null,
+      payment_details: order.payment_details ?? null,
       status: order.status,
       voided_by: order.voided_by ?? null,
       void_reason: order.void_reason ?? null,
@@ -162,6 +165,7 @@ export const orderRepository = {
       payment_method: data.payment_method ?? 'cash',
       note: data.note ?? null,
       transaction_number: data.transaction_number ?? null,
+      payment_details: data.payment_details ?? null,
       status: data.status,
       voided_by: data.voided_by ?? null,
       void_reason: data.void_reason ?? null,
@@ -206,6 +210,7 @@ export const orderRepository = {
       payment_method: order.payment_method ?? 'cash',
       note: order.note ?? null,
       transaction_number: order.transaction_number ?? null,
+      payment_details: order.payment_details ?? null,
       status: order.status,
       voided_by: order.voided_by ?? null,
       void_reason: order.void_reason ?? null,
@@ -280,6 +285,7 @@ export const orderRepository = {
       payment_method: order.payment_method ?? 'cash',
       note: order.note ?? null,
       transaction_number: order.transaction_number ?? null,
+      payment_details: order.payment_details ?? null,
       status: order.status,
       voided_by: order.voided_by ?? null,
       void_reason: order.void_reason ?? null,
