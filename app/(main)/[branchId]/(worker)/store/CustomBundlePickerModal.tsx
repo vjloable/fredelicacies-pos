@@ -17,7 +17,7 @@ export interface PickedItem {
 interface CustomBundlePickerModalProps {
   bundle: BundleWithComponents;
   inventory: InventoryItem[];
-  onConfirm: (selections: PickedItem[]) => void;
+  onConfirm: (selections: PickedItem[], overridePrice?: number) => void;
   onClose: () => void;
 }
 
@@ -29,6 +29,8 @@ export default function CustomBundlePickerModal({
 }: CustomBundlePickerModalProps) {
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
+  const [priceOverride, setPriceOverride] = useState(false);
+  const [overridePriceInput, setOverridePriceInput] = useState('');
 
   const maxPieces = bundle.max_pieces ?? 0;
 
@@ -59,6 +61,9 @@ export default function CustomBundlePickerModal({
     });
   };
 
+  const overridePriceValue = parseFloat(overridePriceInput);
+  const overridePriceValid = priceOverride ? (!isNaN(overridePriceValue) && overridePriceValue >= 0) : true;
+
   const handleConfirm = () => {
     const selections: PickedItem[] = Object.entries(picks)
       .filter(([, qty]) => qty > 0)
@@ -73,7 +78,7 @@ export default function CustomBundlePickerModal({
           item,
         };
       });
-    onConfirm(selections);
+    onConfirm(selections, priceOverride && !isNaN(overridePriceValue) ? overridePriceValue : undefined);
   };
 
   // Progress bar fill percentage
@@ -220,27 +225,77 @@ export default function CustomBundlePickerModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-secondary/10 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={totalPicked !== maxPieces}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-              totalPicked === maxPieces
-                ? 'bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95 cursor-pointer'
-                : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
-            }`}
-          >
-            {totalPicked === maxPieces
-              ? 'Confirm Selection'
-              : `${maxPieces - totalPicked} more needed`
-            }
-          </button>
+        <div className="p-4 border-t border-secondary/10 space-y-3">
+          {/* Price override toggle */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <div
+                onClick={() => { setPriceOverride(o => !o); setOverridePriceInput(''); }}
+                className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${priceOverride ? 'bg-accent' : 'bg-secondary/20'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${priceOverride ? 'translate-x-4' : 'translate-x-0'}`} />
+              </div>
+              <span className="text-xs font-medium text-secondary">Override selling price</span>
+              {priceOverride && (
+                <span className="text-xs text-secondary/40 ml-auto">
+                  Fixed: {bundle.price.toFixed(2)}
+                </span>
+              )}
+            </label>
+
+            {priceOverride && (
+              <div className="flex items-center gap-2 pl-11">
+                <span className="text-xs text-secondary/50 shrink-0">Special price (₱)</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-secondary/50 pointer-events-none">₱</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={overridePriceInput}
+                    onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setOverridePriceInput(e.target.value); }}
+                    onFocus={e => e.target.select()}
+                    placeholder={bundle.price.toFixed(2)}
+                    className={`w-full pl-7 pr-3 py-1.5 text-xs border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent ${
+                      overridePriceInput && !overridePriceValid
+                        ? 'border-error/50 bg-error/5'
+                        : 'border-secondary/20'
+                    }`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {priceOverride && (
+              <p className="pl-11 text-[10px] text-secondary/40 leading-snug">
+                A "Price adjusted" note will appear on the receipt and export.
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={totalPicked !== maxPieces || !overridePriceValid}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                totalPicked === maxPieces && overridePriceValid
+                  ? 'bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95 cursor-pointer'
+                  : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
+              }`}
+            >
+              {totalPicked !== maxPieces
+                ? `${maxPieces - totalPicked} more needed`
+                : priceOverride && !overridePriceValid
+                ? 'Enter a valid price'
+                : 'Confirm Selection'
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>
