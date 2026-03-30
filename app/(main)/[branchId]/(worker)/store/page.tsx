@@ -32,6 +32,7 @@ import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingCon
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
+import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import HelpButton from "@/components/HelpButton";
 import { storeSteps } from "@/components/TutorialSteps";
 
@@ -119,7 +120,7 @@ export default function StoreScreen() {
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
-	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab'>('cash');
+	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge'>('cash');
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
@@ -132,6 +133,10 @@ export default function StoreScreen() {
 	const [tenderedAmount, setTenderedAmount] = useState("");
 	const [orderNote, setOrderNote] = useState("");
 	const [gcashTransactionNumber, setGcashTransactionNumber] = useState("");
+	const [debitReferenceNo, setDebitReferenceNo] = useState("");
+	const [debitTransactionNo, setDebitTransactionNo] = useState("");
+	const [debitApprovalCode, setDebitApprovalCode] = useState("");
+	const [employeeChargeName, setEmployeeChargeName] = useState("");
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
@@ -152,8 +157,13 @@ export default function StoreScreen() {
 			type?: 'item' | 'bundle';
 			is_custom?: boolean;
 			components?: BundleComponent[];
+			isB1T1?: boolean;
+			regularPrice?: number;
+			isPriceOverride?: boolean;
+			originalPrice?: number;
 		}>
 	>([]);
+	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
 	const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
 	const toggleBundle = (id: string) => setExpandedBundles(prev => {
 		const next = new Set(prev);
@@ -517,7 +527,7 @@ export default function StoreScreen() {
 		}
 	};
 
-	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[]) => {
+	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[], overridePrice?: number) => {
 		const cost = selections.reduce((s, p) => s + p.cost, 0);
 		const pickedComponents: BundleComponent[] = selections.map(p => ({
 			id: '',
@@ -537,12 +547,13 @@ export default function StoreScreen() {
 			inventory_item: ai.inventory_item,
 		}));
 		const components = [...pickedComponents, ...additionalAsComponents];
+		const finalPrice = overridePrice !== undefined ? overridePrice : bundle.price;
 		setCart(prev => [...prev, {
 			id: `${bundle.id}_custom_${Date.now()}`,
 			bundleId: bundle.id,
 			name: bundle.name,
-			price: bundle.price,
-			grab_price: bundle.grab_price ?? null,
+			price: finalPrice,
+			grab_price: overridePrice !== undefined ? overridePrice : (bundle.grab_price ?? null),
 			cost,
 			quantity: 1,
 			originalStock: 999,
@@ -551,16 +562,44 @@ export default function StoreScreen() {
 			categoryIds: bundle.category_id ? [bundle.category_id] : [],
 			type: 'bundle',
 			is_custom: true,
+			isPriceOverride: overridePrice !== undefined,
+			originalPrice: overridePrice !== undefined ? bundle.price : undefined,
 			components,
 		}]);
 		setCustomBundleTarget(null);
+	};
+
+	const handleB1T1Confirm = (selections: B1T1PickedItem[], b1t1Price: number) => {
+		const newItems = selections.map(s => ({
+			id: `b1t1_${s.inventoryItemId}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+			name: s.itemName,
+			price: b1t1Price,
+			grab_price: b1t1Price,
+			cost: s.item.cost ?? undefined,
+			quantity: s.quantity,
+			originalStock: s.item.stock - (s.item.uncarried_stock ?? 0),
+			imgUrl: s.itemImgUrl ?? undefined,
+			categoryId: s.item.category_id ?? "",
+			categoryIds: s.item.category_ids?.length ? s.item.category_ids : s.item.category_id ? [s.item.category_id] : [],
+			type: 'item' as const,
+			isB1T1: true,
+			regularPrice: s.regularPrice,
+		}));
+		setCart(prev => [...prev, ...newItems]);
+		setB1T1PickerTarget(null);
 	};
 
 	const subtotal = cart.reduce(
 		(sum, item) => sum + (paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price) * item.quantity,
 		0
 	);
-	const total = subtotal - discountAmount;
+	// For B1T1: take-1 items are in cart at the promo price; discount_amount is savings for reporting only
+	const b1t1SavingsAmount = useMemo(
+		() => cart.filter(i => i.isB1T1).reduce((s, i) => s + ((i.regularPrice ?? i.price) - i.price) * i.quantity, 0),
+		[cart]
+	);
+	const effectiveDiscountForTotal = appliedDiscount?.type === 'b1t1' ? 0 : discountAmount;
+	const total = subtotal - effectiveDiscountForTotal;
 
 
 	// Auto-clear applied discount when cart changes and discount is no longer eligible
@@ -575,6 +614,8 @@ export default function StoreScreen() {
 			setAppliedDiscount(null);
 			setDiscountAmount(0);
 			setDiscountCode("");
+			// Remove B1T1 take-1 items if discount cleared
+			setCart(prev => prev.filter(i => !i.isB1T1));
 		}
 	}, [cart, appliedDiscount]);
 
@@ -629,6 +670,7 @@ export default function StoreScreen() {
 		setDiscountCode("");
 		setDiscountAmount(0);
 		setAppliedDiscount(null);
+		setB1T1PickerTarget(null);
 	};
 
 	// Function to handle closing the success toast
@@ -649,6 +691,7 @@ export default function StoreScreen() {
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
+			const orderDiscountAmount = appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount;
 			const { id: orderId, orderNumber: orderNum, error: orderError } = await createOrder(
 				currentBranch.id,
 				user.id,
@@ -664,14 +707,21 @@ export default function StoreScreen() {
 					originalStock: item.originalStock,
 					type: item.type,
 					components: item.components,
+					isPriceOverride: item.isPriceOverride,
+					originalPrice: item.originalPrice,
 				})),
 				subtotal,
 				total,
 				appliedDiscount?.id,
-				discountAmount,
+				orderDiscountAmount,
 				paymentMethod,
 				paymentMethod === 'cash' ? orderNote : undefined,
-				paymentMethod === 'gcash' || paymentMethod === 'grab' ? gcashTransactionNumber : undefined
+				paymentMethod === 'gcash' || paymentMethod === 'grab' ? gcashTransactionNumber : undefined,
+				paymentMethod === 'debit_credit'
+					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
+					: paymentMethod === 'employee_charge'
+					? { employee_name: employeeChargeName }
+					: null
 			);
 
 			if (orderError) {
@@ -689,15 +739,19 @@ export default function StoreScreen() {
 				items: cart.map((item) => {
 					const itemPrice = paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
 					return {
-						name: item.name,
+						name: item.isB1T1 ? `${item.name} [B1T1]` : item.name,
 						qty: item.quantity,
 						price: itemPrice,
 						total: itemPrice * item.quantity,
+						isPriceOverride: item.isPriceOverride,
+						originalPrice: item.originalPrice,
 					};
 				}),
 				subtotal,
-				discount: discountAmount,
+				discount: appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount,
 				appliedDiscountCode: appliedDiscount?.name || "",
+				isB1T1Promo: appliedDiscount?.type === 'b1t1',
+				discountType: appliedDiscount?.type,
 				grabUplift: 0,
 				total,
 				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
@@ -714,6 +768,11 @@ export default function StoreScreen() {
 				paymentMethod,
 				orderType,
 				transactionNumber: (paymentMethod === 'gcash' || paymentMethod === 'grab') ? gcashTransactionNumber : undefined,
+				paymentDetails: paymentMethod === 'debit_credit'
+					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
+					: paymentMethod === 'employee_charge'
+					? { employee_name: employeeChargeName }
+					: undefined,
 			};
 
 			// Print receipt via Bluetooth printer using context
@@ -741,6 +800,7 @@ export default function StoreScreen() {
 			setDiscountCode("");
 			setDiscountAmount(0);
 			setAppliedDiscount(null);
+			setB1T1PickerTarget(null);
 			setPaymentMethod('cash');
 			setTenderedAmount("");
 			setOrderNote("");
@@ -1153,9 +1213,15 @@ export default function StoreScreen() {
 																	<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
 																		{item.name}
 																	</span>
+																	{item.isB1T1 && (
+																		<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded'>B1T1</span>
+																	)}
 																	{item.is_custom && (
 																		<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
 																	)}
+														{item.isPriceOverride && (
+															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded'>Price adj.</span>
+														)}
 																</div>
 																<div className='flex flex-row items-center justify-between w-full'>
 																	<span className='space-x-2 flex items-center'>
@@ -1203,6 +1269,15 @@ export default function StoreScreen() {
 																)}
 															</div>
 
+															{appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom && (
+															<div className='flex flex-row justify-end w-full mt-1'>
+																<button
+																	onClick={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+																	className='text-xs font-bold px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'>
+																	Mark as B1T1
+																</button>
+															</div>
+															)}
 															{!item.is_custom && (
 															<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
 																<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-light-accent rounded-3xl'>
@@ -1259,8 +1334,8 @@ export default function StoreScreen() {
 									<span>{formatCurrency(subtotal)}</span>
 								</div>
 								<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
-									<span>Discount</span>
-									<span>-{formatCurrency(discountAmount)}</span>
+									<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
+									<span>-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}</span>
 								</div>
 
 								<div className='gap-2 p-2'>
@@ -1429,9 +1504,15 @@ export default function StoreScreen() {
 														<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
 															{item.name}
 														</span>
+														{item.isB1T1 && (
+															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded'>B1T1</span>
+														)}
 														{item.is_custom && (
 															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
 														)}
+											{item.isPriceOverride && (
+												<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded'>Price adj.</span>
+											)}
 													</div>
 													{/* Price and Subtotal Row */}
 													<div className='flex flex-row items-center justify-between w-full'>
@@ -1479,6 +1560,15 @@ export default function StoreScreen() {
 												</div>
 
 												{/* Controls Section */}
+												{appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom && (
+												<div className='flex flex-row justify-end w-full mt-1'>
+													<button
+														onClick={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+														className='text-xs font-bold px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'>
+														Mark as B1T1
+													</button>
+												</div>
+												)}
 												{!item.is_custom && (
 												<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
 													{/* Quantity Controls */}
@@ -1534,8 +1624,8 @@ export default function StoreScreen() {
 						<span>{formatCurrency(subtotal)}</span>
 					</div>
 					<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
-						<span>Discount</span>
-						<span>-{formatCurrency(discountAmount)}</span>
+						<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
+						<span>-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}</span>
 					</div>
 
 					<div className='gap-2 p-2'>
@@ -1612,9 +1702,10 @@ export default function StoreScreen() {
 								<span className='text-xs font-medium text-secondary block mb-2'>
 									Payment Method:
 								</span>
-								<div className='flex gap-2'>
-									{(['cash', 'gcash', 'grab'] as const).map((method) => {
+								<div className='flex flex-wrap gap-2'>
+									{(['cash', 'gcash', 'grab', 'debit_credit', 'employee_charge'] as const).map((method) => {
 										const grabDisabled = method === 'grab' && !cart.some(item => item.grab_price && item.grab_price > 0);
+										const label = method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : method === 'grab' ? 'Grab' : method === 'debit_credit' ? 'Debit/Credit' : 'Employee Charge';
 										return (
 										<button
 											key={method}
@@ -1627,7 +1718,7 @@ export default function StoreScreen() {
 													? 'bg-accent text-primary border-accent'
 													: 'bg-white text-secondary border-gray-200 hover:border-secondary/40'
 											}`}>
-											{method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : 'Grab'}
+											{label}
 										</button>
 										);
 									})}
@@ -1717,11 +1808,11 @@ export default function StoreScreen() {
 											</div>
 										) : null;
 									})()}
-									{discountAmount > 0 && (
+									{(discountAmount > 0 || b1t1SavingsAmount > 0) && (
 										<div className='flex justify-between text-xs'>
 											<span className='text-secondary'>
-												Discount
-												{appliedDiscount && (
+												{appliedDiscount?.type === 'b1t1' ? 'Buy 1 Take 1 Savings' : 'Discount'}
+												{appliedDiscount && appliedDiscount.type !== 'b1t1' && (
 													<span className='font-medium ml-1'>
 														({appliedDiscount.name} -{" "}
 														{appliedDiscount.type === "percentage"
@@ -1733,7 +1824,7 @@ export default function StoreScreen() {
 												:
 											</span>
 											<span className='font-medium text-green-600'>
-												-{formatCurrency(discountAmount)}
+												-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}
 											</span>
 										</div>
 									)}
@@ -1769,28 +1860,66 @@ export default function StoreScreen() {
 									)}
 								</div>
 							</div>
-							{/* Note / Transaction # */}
-							<div className='mt-3 pt-3 border-t border-gray-200 space-y-1'>
-								<label className='text-xs text-secondary/70'>
-									{paymentMethod === 'gcash' || paymentMethod === 'grab' ? 'Transaction #' : 'Note'}{' '}
-									<span className='text-secondary/40'>(optional)</span>
-								</label>
+							{/* Note / Transaction # / Payment Details */}
+							<div className='mt-3 pt-3 border-t border-gray-200 space-y-2'>
 								{paymentMethod === 'gcash' || paymentMethod === 'grab' ? (
-									<input
-										type='text'
-										value={gcashTransactionNumber}
-										onChange={e => setGcashTransactionNumber(e.target.value)}
-										placeholder='e.g. 123456789'
-										className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-									/>
+									<>
+										<label className='text-xs text-secondary/70'>Transaction # <span className='text-secondary/40'>(optional)</span></label>
+										<input
+											type='text'
+											value={gcashTransactionNumber}
+											onChange={e => setGcashTransactionNumber(e.target.value)}
+											placeholder='e.g. 123456789'
+											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										/>
+									</>
+								) : paymentMethod === 'debit_credit' ? (
+									<>
+										<p className='text-xs font-medium text-secondary/70'>Card Details <span className='text-secondary/40'>(optional)</span></p>
+										<input
+											type='text'
+											value={debitReferenceNo}
+											onChange={e => setDebitReferenceNo(e.target.value)}
+											placeholder='Reference No.'
+											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										/>
+										<input
+											type='text'
+											value={debitTransactionNo}
+											onChange={e => setDebitTransactionNo(e.target.value)}
+											placeholder='Transaction No.'
+											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										/>
+										<input
+											type='text'
+											value={debitApprovalCode}
+											onChange={e => setDebitApprovalCode(e.target.value)}
+											placeholder='Approval Code'
+											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										/>
+									</>
+								) : paymentMethod === 'employee_charge' ? (
+									<>
+										<label className='text-xs text-secondary/70'>Employee Name <span className='text-secondary/40'>(optional)</span></label>
+										<input
+											type='text'
+											value={employeeChargeName}
+											onChange={e => setEmployeeChargeName(e.target.value)}
+											placeholder='Employee name'
+											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										/>
+									</>
 								) : (
-									<textarea
-										value={orderNote}
-										onChange={e => setOrderNote(e.target.value)}
-										placeholder='Add a note...'
-										rows={2}
-										className='w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none'
-									/>
+									<>
+										<label className='text-xs text-secondary/70'>Note <span className='text-secondary/40'>(optional)</span></label>
+										<textarea
+											value={orderNote}
+											onChange={e => setOrderNote(e.target.value)}
+											placeholder='Add a note...'
+											rows={2}
+											className='w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none'
+										/>
+									</>
 								)}
 							</div>
 						</div>
@@ -1824,8 +1953,19 @@ export default function StoreScreen() {
 				<CustomBundlePickerModal
 					bundle={customBundleTarget}
 					inventory={inventoryItems}
-					onConfirm={(selections) => handleCustomBundleConfirm(customBundleTarget, selections)}
+					onConfirm={(selections, overridePrice) => handleCustomBundleConfirm(customBundleTarget, selections, overridePrice)}
 					onClose={() => setCustomBundleTarget(null)}
+				/>
+			)}
+
+			{/* B1T1 Picker Modal */}
+			{b1t1PickerTarget && (
+				<B1T1PickerModal
+					buyItemName={b1t1PickerTarget.name}
+					maxUnits={b1t1PickerTarget.quantity}
+					inventory={inventoryItems}
+					onConfirm={handleB1T1Confirm}
+					onClose={() => setB1T1PickerTarget(null)}
 				/>
 			)}
 

@@ -16,6 +16,8 @@ import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts, voidOrder } from "@/services/orderService";
+import { subscribeToDiscounts } from "@/services/discountService";
+import type { Discount } from "@/types/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import type { OrderWithItems, OrderItem, WastageItemSummary, WastageLog } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
@@ -241,6 +243,13 @@ export default function SalesScreen() {
 	const { printReceipt } = useBluetoothPrinter();
 	const { user, isManager, isUserOwner } = useAuth();
 	const [isPrinting, setIsPrinting] = useState(false);
+	const [discounts, setDiscounts] = useState<Discount[]>([]);
+
+	// Subscribe to discounts for B1T1 detection in reprint
+	useEffect(() => {
+		if (!currentBranch?.id) return;
+		return subscribeToDiscounts(currentBranch.id, setDiscounts);
+	}, [currentBranch?.id]);
 
 	// ── Void order state ──────────────────────────────────────────────────────
 	const [showVoidConfirm, setShowVoidConfirm] = useState(false);
@@ -328,6 +337,8 @@ export default function SalesScreen() {
 			const isGrabOrder = order.payment_method === 'grab';
 			const grabUplift = isGrabOrder ? order.subtotal - baseSubtotal : 0;
 
+			const appliedDiscount = order.discount_id ? discounts.find(d => d.id === order.discount_id) : null;
+			const isB1T1Order = appliedDiscount?.type === 'b1t1';
 			const receiptData = {
 				orderId: order.order_number || order.id,
 				date: new Date(order.created_at),
@@ -351,6 +362,9 @@ export default function SalesScreen() {
 				}),
 				subtotal: order.subtotal,
 				discount: order.discount_amount,
+				appliedDiscountCode: appliedDiscount?.name,
+				isB1T1Promo: isB1T1Order,
+				discountType: appliedDiscount?.type,
 				grabUplift: 0,
 				total: order.total,
 				payment: order.total,
@@ -358,6 +372,8 @@ export default function SalesScreen() {
 				storeName: "FREDELECACIES",
 				branchName: currentBranch?.name,
 				paymentMethod: order.payment_method,
+				transactionNumber: order.transaction_number || undefined,
+				paymentDetails: order.payment_details || undefined,
 			};
 			const bytes = await formatReceiptWithLogo(receiptData);
 			await printReceipt(bytes);
@@ -657,6 +673,7 @@ export default function SalesScreen() {
 			topWastedItems,
 			totalWastageCost,
 			peakEntry,
+			discounts,
 		});
 	};
 

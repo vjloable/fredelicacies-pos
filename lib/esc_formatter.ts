@@ -8,6 +8,8 @@ export interface ReceiptOrderItem {
 	qty: number;
 	price: number;
 	total: number;
+	isPriceOverride?: boolean;
+	originalPrice?: number;
 }
 
 export interface ReceiptOrderData {
@@ -25,9 +27,12 @@ export interface ReceiptOrderData {
 	storeName?: string;
 	branchName?: string;
 	appliedDiscountCode?: string;
-	paymentMethod?: 'cash' | 'gcash' | 'grab';
+	isB1T1Promo?: boolean;
+	discountType?: 'percentage' | 'fixed' | 'b1t1' | 'sc_pwd' | string;
+	paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
 	orderType?: string;
 	transactionNumber?: string;
+	paymentDetails?: Record<string, string> | null;
 }
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -57,6 +62,8 @@ function formatPayment(method?: string): string {
 	if (!method) return "Cash";
 	if (method === "gcash") return "GCash";
 	if (method === "grab") return "GrabFood";
+	if (method === "debit_credit") return "Debit/Credit";
+	if (method === "employee_charge") return "Employee Charge";
 	return "Cash";
 }
 function formatDate(date: Date): string {
@@ -152,6 +159,14 @@ async function buildCopy(
 	if (order.transactionNumber) {
 		lines.push(t(`Txn#:  ${order.transactionNumber}\n`));
 	}
+	if (order.paymentMethod === 'debit_credit' && order.paymentDetails) {
+		if (order.paymentDetails.reference_no) lines.push(t(`Ref#:  ${order.paymentDetails.reference_no}\n`));
+		if (order.paymentDetails.transaction_no) lines.push(t(`Txn#:  ${order.paymentDetails.transaction_no}\n`));
+		if (order.paymentDetails.approval_code) lines.push(t(`Appr:  ${order.paymentDetails.approval_code}\n`));
+	}
+	if (order.paymentMethod === 'employee_charge' && order.paymentDetails?.employee_name) {
+		lines.push(t(`Emp:   ${order.paymentDetails.employee_name}\n`));
+	}
 	if (order.cashier) {
 		const byLine = copyType === "establishment" && order.cashierEmployeeId
 			? `By:    ${order.cashier} (${order.cashierEmployeeId})\n`
@@ -167,19 +182,35 @@ async function buildCopy(
 
 	for (const item of order.items) {
 		lines.push(t(itemLine(item.qty, item.name, item.total)));
+		if (item.isPriceOverride) {
+			// Compact note: "  *Price adj. (orig: 0.00)"
+			const orig = item.originalPrice !== undefined ? ` orig:${formatAmount(item.originalPrice)}` : '';
+			lines.push(t(`  *Price adjusted${orig}\n`));
+		}
 	}
 	lines.push(t(divider()));
 
 	// ── Totals ────────────────────────────────────────────────────────────────
-	if (order.discount && order.discount > 0) {
-		lines.push(t(totalRow("Discount:", `-${formatAmount(order.discount)}`)));
-		if (order.appliedDiscountCode) {
-			lines.push(t(center(`(${order.appliedDiscountCode})`) + "\n"));
+	const hasDiscount = order.discount && order.discount > 0;
+	if (hasDiscount) {
+		lines.push(t(totalRow("Subtotal:", formatAmount(order.subtotal))));
+		// Build a compact discount label
+		let discLabel: string;
+		if (order.discountType === 'b1t1' || order.isB1T1Promo) {
+			discLabel = "B1T1 Savings:";
+		} else if (order.discountType === 'sc_pwd') {
+			discLabel = "SC/PWD Disc:";
+		} else if (order.appliedDiscountCode) {
+			// Truncate code so the whole label fits within 22 chars: "Disc(CODE):" max
+			const maxCode = 22 - "Disc():".length;
+			const code = order.appliedDiscountCode.slice(0, maxCode);
+			discLabel = `Disc(${code}):`;
+		} else {
+			discLabel = "Discount:";
 		}
-		lines.push(t(divider("=")));
-	} else {
-		lines.push(t(divider("=")));
+		lines.push(t(totalRow(discLabel, `-${formatAmount(order.discount!)}`)));
 	}
+	lines.push(t(divider("=")));
 	lines.push(BOLD_ON);
 	lines.push(t(totalRow("TOTAL:", formatAmount(order.total))));
 	lines.push(BOLD_OFF);
