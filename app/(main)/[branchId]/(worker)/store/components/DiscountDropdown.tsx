@@ -75,7 +75,7 @@ export default function DiscountDropdown({
 
   const getPreview = (discount: Discount) => {
     const sub = calculateEligibleSubtotal(discount, cartItems);
-    return calculateDiscountAmount(discount, sub);
+    return calculateDiscountAmount(discount, sub, cartItems);
   };
 
   const handleSelect = (discount: Discount) => {
@@ -218,6 +218,19 @@ export default function DiscountDropdown({
                         <div className="text-xs text-secondary/50 mt-0.5">
                           {discount.type === "percentage"
                             ? `${discount.value}% off`
+                            : discount.type === "b1t1"
+                            ? "Buy 1 Take 1 promo"
+                            : discount.type === "sc_pwd"
+                            ? (() => {
+                                const pct = discount.metadata?.discount_pct ?? 20;
+                                const vat = discount.metadata?.vat_rate ?? 12;
+                                const applyVat = discount.metadata?.apply_vat !== false;
+                                const mostExp = discount.metadata?.most_expensive_only !== false;
+                                const parts = [`SC/PWD — ${pct}% off`];
+                                if (applyVat) parts.push(`VAT exempt (${vat}%)`);
+                                if (mostExp) parts.push('most expensive item');
+                                return parts.join(' · ');
+                              })()
                             : `₱${discount.value} off`}
                           {discountEligible && preview > 0 && (
                             <span className="text-success font-medium ml-1">

@@ -92,6 +92,8 @@ export default function DiscountsScreen() {
 	};
 
 	const formatValue = (discount: Discount) => {
+		if (discount.type === 'b1t1') return 'Buy 1 Take 1';
+		if (discount.type === 'sc_pwd') return 'SC/PWD (28.57% off top item)';
 		return discount.type === "percentage"
 			? `${discount.value}% OFF`
 			: `-${formatCurrency(discount.value)}`;
@@ -300,6 +302,10 @@ export default function DiscountsScreen() {
 																	className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium bg-secondary/10`}>
 																	{discount.type === "percentage"
 																		? "Percentage"
+																		: discount.type === "b1t1"
+																		? "Buy 1 Take 1"
+																		: discount.type === "sc_pwd"
+																		? "SC/PWD"
 																		: "Flat Amount"}
 																</span>
 															</div>

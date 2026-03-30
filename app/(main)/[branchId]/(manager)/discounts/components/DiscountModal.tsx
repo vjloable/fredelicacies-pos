@@ -23,11 +23,16 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
   const { currentBranch } = useBranch();
   const [loading, setLoading] = useState(false);
   const [valueInput, setValueInput] = useState('');
+  const [scPwdDiscountPct, setScPwdDiscountPct] = useState('20');
+  const [scPwdVatRate, setScPwdVatRate] = useState('12');
+  const [scPwdApplyVat, setScPwdApplyVat] = useState(true);
+  const [scPwdMostExpensive, setScPwdMostExpensive] = useState(true);
+  const [scPwdTooltipOpen, setScPwdTooltipOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    type: 'fixed' as 'percentage' | 'fixed',
+    type: 'fixed' as 'percentage' | 'fixed' | 'b1t1' | 'sc_pwd',
     value: 0,
     status: 'active' as 'active' | 'inactive'
   });
@@ -56,11 +61,15 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
     if (discount) {
       setFormData({
         name: discount.name,
-        type: discount.type,
+        type: discount.type as 'percentage' | 'fixed' | 'b1t1' | 'sc_pwd',
         value: discount.value,
         status: discount.status
       });
       setValueInput(discount.value > 0 ? discount.value.toString() : '');
+      setScPwdDiscountPct(discount.metadata?.discount_pct?.toString() ?? '20');
+      setScPwdVatRate(discount.metadata?.vat_rate?.toString() ?? '12');
+      setScPwdApplyVat(discount.metadata?.apply_vat !== false);
+      setScPwdMostExpensive(discount.metadata?.most_expensive_only !== false);
       setFilterMode(discount.category_filter_mode ?? 'all');
       setFilterCategoryIds(discount.category_filter_ids ?? []);
     } else {
@@ -71,6 +80,10 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
         status: 'active'
       });
       setValueInput('');
+      setScPwdDiscountPct('20');
+      setScPwdVatRate('12');
+      setScPwdApplyVat(true);
+      setScPwdMostExpensive(true);
       setFilterMode('all');
       setFilterCategoryIds([]);
     }
@@ -94,7 +107,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
       return;
     }
 
-    if (formData.value <= 0) {
+    if (formData.type !== 'b1t1' && formData.type !== 'sc_pwd' && formData.value <= 0) {
       alert('Please enter a valid discount value');
       return;
     }
@@ -118,6 +131,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
           status: formData.status,
           category_filter_mode: categoryFilterMode,
           category_filter_ids: categoryFilterIds,
+          metadata: formData.type === 'sc_pwd' ? { discount_pct: parseFloat(scPwdDiscountPct) || 20, vat_rate: parseFloat(scPwdVatRate) || 12, apply_vat: scPwdApplyVat, most_expensive_only: scPwdMostExpensive } : null,
         });
         if (error) throw error;
         void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'discount_updated', entityType: 'discount', entityId: discount.id, details: { name: formData.name.trim(), type: formData.type, value: formData.value } });
@@ -129,6 +143,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
           status: formData.status,
           category_filter_mode: categoryFilterMode,
           category_filter_ids: categoryFilterIds,
+          metadata: formData.type === 'sc_pwd' ? { discount_pct: parseFloat(scPwdDiscountPct) || 20, vat_rate: parseFloat(scPwdVatRate) || 12, apply_vat: scPwdApplyVat, most_expensive_only: scPwdMostExpensive } : null,
         });
         if (error) throw error;
         void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'discount_created', entityType: 'discount', entityId: id ?? undefined, details: { name: formData.name.trim(), type: formData.type, value: formData.value } });
@@ -189,13 +204,13 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               Discount Type <span className="text-error">*</span>
             </label>
             <DropdownField
-              options={["FIXED AMOUNT", "PERCENTAGE"]}
+              options={["FIXED AMOUNT", "PERCENTAGE", "BUY 1 TAKE 1", "SC/PWD"]}
               hasAllOptionsVisible={false}
-              defaultValue={formData.type === 'percentage' ? "PERCENTAGE" : "FIXED AMOUNT"}
+              defaultValue={formData.type === 'percentage' ? "PERCENTAGE" : formData.type === 'b1t1' ? "BUY 1 TAKE 1" : formData.type === 'sc_pwd' ? "SC/PWD" : "FIXED AMOUNT"}
               dropdownPosition='bottom-right'
               dropdownOffset={{ top: 2, right: 0 }}
               onChange={(e) => {
-                const type = e === "PERCENTAGE" ? 'percentage' : 'fixed';
+                const type = e === "PERCENTAGE" ? 'percentage' : e === "BUY 1 TAKE 1" ? 'b1t1' : e === "SC/PWD" ? 'sc_pwd' : 'fixed';
                 handleInputChange('type', type);
               }}
               roundness="8"
@@ -234,7 +249,121 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
             </p>
           </div>
 
-          {/* Value */}
+          {/* SC/PWD fields */}
+          {formData.type === 'sc_pwd' && (
+            <div className="space-y-3">
+              {/* Tooltip banner — always visible */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setScPwdTooltipOpen(o => !o)}
+                  className="w-full flex items-start gap-2 px-3 py-2.5 bg-accent/10 border border-accent/30 rounded-lg text-left"
+                >
+                  <svg className="w-4 h-4 text-accent shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs text-accent font-medium leading-snug">
+                    SC/PWD computation uses VAT exemption + percentage off.
+                    <span className="underline ml-1">Tap to see formula.</span>
+                  </span>
+                </button>
+                {scPwdTooltipOpen && (
+                  <div className="mt-1 px-3 py-2.5 bg-secondary/5 border border-secondary/15 rounded-lg text-xs text-secondary/70 space-y-1 leading-relaxed">
+                    {scPwdApplyVat && scPwdMostExpensive && (
+                      <>
+                        <p className="font-semibold text-secondary">Most expensive item · VAT-exempt + {scPwdDiscountPct || 20}% off</p>
+                        <p>1. Remove VAT: price ÷ (1 + {scPwdVatRate || 12}%)</p>
+                        <p>2. Discount savings: ex-VAT price × {scPwdDiscountPct || 20}%</p>
+                        <p>3. VAT exemption savings: price − ex-VAT price</p>
+                        <p className="font-medium">Total = VAT exemption + discount savings</p>
+                        <p className="text-secondary/50 italic">e.g. ₱186 ÷ 1.12 × 0.32 = ₱53.14</p>
+                      </>
+                    )}
+                    {scPwdApplyVat && !scPwdMostExpensive && (
+                      <>
+                        <p className="font-semibold text-secondary">All items · VAT-exempt + {scPwdDiscountPct || 20}% off each</p>
+                        <p>Each item: price ÷ (1 + {scPwdVatRate || 12}%) × ({scPwdVatRate || 12}% + {scPwdDiscountPct || 20}%)</p>
+                        <p>Total savings = sum across all items</p>
+                      </>
+                    )}
+                    {!scPwdApplyVat && scPwdMostExpensive && (
+                      <>
+                        <p className="font-semibold text-secondary">Most expensive item · {scPwdDiscountPct || 20}% off (no VAT exemption)</p>
+                        <p>Savings = most expensive item price × {scPwdDiscountPct || 20}%</p>
+                      </>
+                    )}
+                    {!scPwdApplyVat && !scPwdMostExpensive && (
+                      <>
+                        <p className="font-semibold text-secondary">All items · {scPwdDiscountPct || 20}% off (no VAT exemption)</p>
+                        <p>Savings = subtotal × {scPwdDiscountPct || 20}%</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Numeric inputs */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-secondary/70 mb-1">Discount %</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={scPwdDiscountPct}
+                      onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setScPwdDiscountPct(e.target.value); }}
+                      onFocus={e => e.target.select()}
+                      className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                      placeholder="20"
+                      inputMode="decimal"
+                    />
+                    <span className="absolute right-3 top-2 text-secondary/50">%</span>
+                  </div>
+                </div>
+                {scPwdApplyVat && (
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-secondary/70 mb-1">VAT Rate %</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={scPwdVatRate}
+                        onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setScPwdVatRate(e.target.value); }}
+                        onFocus={e => e.target.select()}
+                        className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                        placeholder="12"
+                        inputMode="decimal"
+                      />
+                      <span className="absolute right-3 top-2 text-secondary/50">%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Checkboxes */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={scPwdApplyVat}
+                    onChange={e => setScPwdApplyVat(e.target.checked)}
+                    className="w-4 h-4 rounded accent-accent shrink-0"
+                  />
+                  <span className="text-xs text-secondary">Apply VAT exemption</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={scPwdMostExpensive}
+                    onChange={e => setScPwdMostExpensive(e.target.checked)}
+                    className="w-4 h-4 rounded accent-accent shrink-0"
+                  />
+                  <span className="text-xs text-secondary">Apply only to the most expensive item</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Value — hidden for b1t1/sc_pwd since price is set interactively at checkout */}
+          {formData.type !== 'b1t1' && formData.type !== 'sc_pwd' && (
           <div>
             <label className="block text-xs font-medium text-secondary/70 mb-1">
               Discount Value <span className="text-error">*</span>
@@ -284,6 +413,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               </span>
             </div>
           </div>
+          )}
 
           {/* Category Filter */}
           {categories.length > 0 && (

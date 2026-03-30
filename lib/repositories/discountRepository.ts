@@ -15,6 +15,7 @@ export const discountRepository = {
         status: data.status || 'active',
         category_filter_mode: data.category_filter_mode ?? null,
         category_filter_ids: data.category_filter_ids ?? null,
+        metadata: data.metadata ?? null,
       })
       .select()
       .single();
