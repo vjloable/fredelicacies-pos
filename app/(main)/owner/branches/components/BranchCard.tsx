@@ -1,7 +1,6 @@
 import React from "react";
 import BranchStatusIcon from "./icons/BranchStatusIcon";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
-import styles from "../page.module.css";
 import ViewBranchIcon from "./icons/ViewBranchIcon";
 import DeleteBranchIcon from "./icons/DeleteBranchIcon";
 import EditBranchIcon from "./icons/EditBranchIcon";
@@ -45,10 +44,8 @@ const BranchCard: React.FC<BranchCardProps> = ({
 		<div
 			key={branch.branchId}
 			onClick={handleCardClick}
-			className={`bg-white rounded-2xl shadow border border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ${
-				styles.cartoonCard
-			} ${onClick ? "cursor-pointer" : ""}`}>
-			<div className='relative h-32 sm:h-40 w-full bg-accent flex items-center justify-center overflow-hidden'>
+			className={`group bg-white rounded-2xl shadow border-2 border-gray-200 flex flex-col overflow-hidden transition-all duration-200 hover:border-accent hover:shadow-md active:scale-95 ${onClick ? "cursor-pointer" : ""}`}>
+			<div className='relative h-32 sm:h-40 w-full bg-accent flex items-center justify-center overflow-hidden group-hover:bg-accent/10 transition-all duration-200'>
 				{branch.imgUrl ? (
 					<Image
 						src={branch.imgUrl}
