@@ -288,6 +288,7 @@ export default function SalesScreen() {
 	const paymentBreakdown = useMemo(() => {
 		const map = { cash: { orders: 0, total: 0 }, gcash: { orders: 0, total: 0 }, grab: { orders: 0, total: 0 } };
 		analyticsOrders.forEach(o => {
+			if (o.status === 'voided') return;
 			const method = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof map;
 			if (map[method]) { map[method].orders++; map[method].total += o.total; }
 		});
@@ -375,6 +376,7 @@ export default function SalesScreen() {
 				transactionNumber: order.transaction_number || undefined,
 				paymentDetails: order.payment_details || undefined,
 			};
+      
 			const bytes = await formatReceiptWithLogo(receiptData);
 			await printReceipt(bytes);
 		} catch (e) {
@@ -464,9 +466,10 @@ export default function SalesScreen() {
 				: await getOrdersByBranch(currentBranch.id, startDate, endDate);
 		setAnalyticsOrders(orders);
 		setTimeSeriesData(buildTimeSeriesData(orders, viewMode, startDate, endDate, selYear));
-		const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
-		const totalOrders = orders.length;
-		const totalProfit = orders.reduce((s, o) => s + calculateOrderProfit(o), 0);
+		const activeOrders = orders.filter(o => o.status !== 'voided');
+		const totalRevenue = activeOrders.reduce((s, o) => s + o.total, 0);
+		const totalOrders = activeOrders.length;
+		const totalProfit = activeOrders.reduce((s, o) => s + calculateOrderProfit(o), 0);
 		const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 		setCurrentPeriodStats({ totalRevenue, totalOrders, totalProfit, profitMargin });
 
@@ -478,10 +481,11 @@ export default function SalesScreen() {
 				new Date(`${prior.startStr}T00:00:00`),
 				new Date(`${prior.endStr}T23:59:59`)
 			);
+			const priorActive = priorOrders.filter(o => o.status !== 'voided');
 			setPriorPeriodStats({
-				totalRevenue: priorOrders.reduce((s, o) => s + o.total, 0),
-				totalOrders: priorOrders.length,
-				totalProfit: priorOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+				totalRevenue: priorActive.reduce((s, o) => s + o.total, 0),
+				totalOrders: priorActive.length,
+				totalProfit: priorActive.reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
 		} else {
 			setPriorPeriodStats(null);
