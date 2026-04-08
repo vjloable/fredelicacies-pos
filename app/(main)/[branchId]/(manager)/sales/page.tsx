@@ -161,8 +161,8 @@ const buildTimeSeriesData = (
 				label: `${hour.toString().padStart(2, "0")}:00`,
 				date: hourStart.toISOString(),
 				orders: hourOrders.length,
-				revenue: hourOrders.reduce((s, o) => s + o.total, 0),
-				profit: hourOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+				revenue: hourOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderRevenue(o), 0),
+				profit: hourOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
 		}
 	} else if (mode === "week" || mode === "month") {
@@ -182,8 +182,8 @@ const buildTimeSeriesData = (
 				label: dayStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
 				date: dayStart.toISOString(),
 				orders: dayOrders.length,
-				revenue: dayOrders.reduce((s, o) => s + o.total, 0),
-				profit: dayOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+				revenue: dayOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderRevenue(o), 0),
+				profit: dayOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
 		}
 	} else if (mode === "year") {
@@ -199,8 +199,8 @@ const buildTimeSeriesData = (
 				label: MONTHS_SHORT[m],
 				date: monthStart.toISOString(),
 				orders: monthOrders.length,
-				revenue: monthOrders.reduce((s, o) => s + o.total, 0),
-				profit: monthOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+				revenue: monthOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderRevenue(o), 0),
+				profit: monthOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
 		}
 	} else {
@@ -223,8 +223,8 @@ const buildTimeSeriesData = (
 				label: monthStart.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
 				date: monthStart.toISOString(),
 				orders: monthOrders.length,
-				revenue: monthOrders.reduce((s, o) => s + o.total, 0),
-				profit: monthOrders.reduce((s, o) => s + calculateOrderProfit(o), 0),
+				revenue: monthOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderRevenue(o), 0),
+				profit: monthOrders.filter(o => o.status !== 'voided').reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
 			cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
 		}
@@ -232,10 +232,22 @@ const buildTimeSeriesData = (
 	return data;
 };
 
+// Net revenue per order: post-discount sales. Cash/GCash use order.total as-is;
+// Grab realizes only 73% (the remaining 27% is the platform fee).
+// Voided orders are filtered upstream.
+const calculateOrderRevenue = (order: OrderWithItems): number => {
+	const method = ((order.payment_method as string) || 'cash').toLowerCase();
+	return method === 'grab' ? order.total * 0.73 : order.total;
+};
+
+// Total cost of goods sold for an order (snapshot cost × qty per line item).
+const calculateOrderCost = (order: OrderWithItems): number => {
+	return order.items.reduce((sum, item) => sum + (item.cost || 0) * item.quantity, 0);
+};
+
+// Gross profit = net revenue − COGS, computed per order.
 const calculateOrderProfit = (order: OrderWithItems): number => {
-	return order.items.reduce((sum, item) => {
-		return sum + (item.price - (item.cost || 0)) * item.quantity;
-	}, 0);
+	return calculateOrderRevenue(order) - calculateOrderCost(order);
 };
 
 export default function SalesScreen() {
@@ -290,7 +302,10 @@ export default function SalesScreen() {
 		analyticsOrders.forEach(o => {
 			if (o.status === 'voided') return;
 			const method = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof map;
-			if (map[method]) { map[method].orders++; map[method].total += o.total; }
+			if (map[method]) {
+				map[method].orders++;
+				map[method].total += method === 'grab' ? o.total * 0.73 : o.total;
+			}
 		});
 		return [
 			{ name: 'Cash', ...map.cash, color: 'var(--accent)' },
@@ -467,7 +482,7 @@ export default function SalesScreen() {
 		setAnalyticsOrders(orders);
 		setTimeSeriesData(buildTimeSeriesData(orders, viewMode, startDate, endDate, selYear));
 		const activeOrders = orders.filter(o => o.status !== 'voided');
-		const totalRevenue = activeOrders.reduce((s, o) => s + o.total, 0);
+		const totalRevenue = activeOrders.reduce((s, o) => s + calculateOrderRevenue(o), 0);
 		const totalOrders = activeOrders.length;
 		const totalProfit = activeOrders.reduce((s, o) => s + calculateOrderProfit(o), 0);
 		const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
@@ -483,7 +498,7 @@ export default function SalesScreen() {
 			);
 			const priorActive = priorOrders.filter(o => o.status !== 'voided');
 			setPriorPeriodStats({
-				totalRevenue: priorActive.reduce((s, o) => s + o.total, 0),
+				totalRevenue: priorActive.reduce((s, o) => s + calculateOrderRevenue(o), 0),
 				totalOrders: priorActive.length,
 				totalProfit: priorActive.reduce((s, o) => s + calculateOrderProfit(o), 0),
 			});
@@ -645,7 +660,7 @@ export default function SalesScreen() {
 	const formatTooltipValue = (value: number | undefined, name: string | undefined) => {
 		if (value === undefined || name === undefined) return [0, ""];
 		if (name === "revenue" || name === "profit") {
-			return [formatCurrency(value), name === "revenue" ? "Revenue" : "Profit"];
+			return [formatCurrency(value), name === "revenue" ? "Net Revenue" : "Gross Profit"];
 		}
 		return [value, name === "orders" ? "Orders" : name];
 	};
@@ -793,7 +808,7 @@ export default function SalesScreen() {
 						{/* Revenue */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
 							<div className='flex items-center justify-between'>
-								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Revenue</p>
+								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Net Revenue</p>
 								{priorPeriodStats && priorPeriodStats.totalRevenue > 0 && (() => {
 									const pct = ((currentPeriodStats.totalRevenue - priorPeriodStats.totalRevenue) / priorPeriodStats.totalRevenue) * 100;
 									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>₱{Math.abs(pct).toFixed(0)}%</span>;
@@ -822,7 +837,7 @@ export default function SalesScreen() {
 						{/* Profit */}
 						<div className='bg-primary rounded-xl p-4 shadow-sm'>
 							<div className='flex items-center justify-between'>
-								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Profit</p>
+								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Gross Profit</p>
 								{priorPeriodStats && priorPeriodStats.totalProfit > 0 && (() => {
 									const pct = ((currentPeriodStats.totalProfit - priorPeriodStats.totalProfit) / priorPeriodStats.totalProfit) * 100;
 									return <span className={`text-2.5 font-medium ${pct >= 0 ? 'text-success' : 'text-error'}`}>₱{Math.abs(pct).toFixed(0)}%</span>;
@@ -884,7 +899,7 @@ export default function SalesScreen() {
 										</span>
 										<span className='flex items-center gap-1 text-2.5 text-secondary/40'>
 											<span className='w-2 h-2 rounded-full bg-accent inline-block' />
-											Revenue
+											Net Revenue
 										</span>
 									</div>
 								</div>
@@ -1511,7 +1526,7 @@ export default function SalesScreen() {
 							<div className='border-t border-dashed border-secondary/20 my-4' />
 
 							<div className='flex justify-between text-xs font-sans'>
-								<span className='text-secondary/40 uppercase tracking-wide text-2.5'>Profit</span>
+								<span className='text-secondary/40 uppercase tracking-wide text-2.5'>Gross Profit</span>
 								<span className='text-success font-semibold tabular-nums'>
 									{formatCurrency(calculateOrderProfit(selectedOrder))}
 								</span>

@@ -32,7 +32,6 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		branchName,
 		period,
 		periodLabel,
-		currentPeriodStats,
 		analyticsOrders,
 		topWastedItems,
 		totalWastageCost,
@@ -42,12 +41,14 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 
 	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-	const avgOrderValue = currentPeriodStats.totalOrders > 0
-		? currentPeriodStats.totalRevenue / currentPeriodStats.totalOrders
-		: 0;
-	const totalPieces = analyticsOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+	// ── Independent calculation (do not rely on currentPeriodStats) ───
+	// Rules:
+	//   - Voided orders are excluded regardless of payment method.
+	//   - Revenue per order = order.total, except Grab which is order.total × 0.73.
+	//   - COGS per order = Σ (item.cost × item.quantity).
+	//   - Profit = Revenue − COGS.
+	const activeOrders = analyticsOrders.filter(o => o.status !== 'voided');
 
-	// Payment method breakdown — all 5 methods
 	type PmKey = 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
 	const pmMap: Record<PmKey, { orders: number; pieces: number; revenue: number }> = {
 		cash: { orders: 0, pieces: 0, revenue: 0 },
@@ -56,18 +57,43 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		debit_credit: { orders: 0, pieces: 0, revenue: 0 },
 		employee_charge: { orders: 0, pieces: 0, revenue: 0 },
 	};
-	analyticsOrders.forEach(o => {
+
+	let totalPieces = 0;
+	let totalCogs = 0;
+	let grabGrossRevenue = 0;
+
+	// GROSS revenue: pre-discount sales, Grab at 100%.
+	// order.subtotal is the pre-discount value (already includes Grab uplift for Grab orders).
+	let grossRevenue = 0;
+
+	// NET revenue: post-discount sales, Grab netted to 73%.
+	let netRevenue = 0;
+
+	activeOrders.forEach(o => {
 		const m = ((o.payment_method as string) || 'cash').toLowerCase() as PmKey;
+		const pieces = o.items.reduce((s, i) => s + i.quantity, 0);
+		const cogs = o.items.reduce((s, i) => s + (i.cost || 0) * i.quantity, 0);
+
+		const orderGross = o.subtotal;
+		const orderNet = m === 'grab' ? o.total * 0.73 : o.total;
+		if (m === 'grab') grabGrossRevenue += o.total;
+
+		totalPieces += pieces;
+		totalCogs += cogs;
+		grossRevenue += orderGross;
+		netRevenue += orderNet;
+
 		if (pmMap[m]) {
 			pmMap[m].orders++;
-			pmMap[m].pieces += o.items.reduce((s, i) => s + i.quantity, 0);
-			pmMap[m].revenue += o.total;
+			pmMap[m].pieces += pieces;
+			pmMap[m].revenue += orderNet;
 		}
 	});
 
-	const grabNetRevenue = pmMap.grab.revenue * 0.73;
-	const netTotalRevenue = pmMap.cash.revenue + pmMap.gcash.revenue + grabNetRevenue
-		+ pmMap.debit_credit.revenue + pmMap.employee_charge.revenue;
+	const totalOrders = activeOrders.length;
+	const grossProfit = netRevenue - totalCogs;
+	const profitMargin = netRevenue > 0 ? (grossProfit / netRevenue) * 100 : 0;
+	const avgOrderValue = totalOrders > 0 ? netRevenue / totalOrders : 0;
 
 	const peso = (n: number) => `PHP ${n.toFixed(2)}`;
 	let y = 12;
@@ -97,10 +123,11 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		startY: y,
 		head: [['Metric', 'Value']],
 		body: [
-			['Total Revenue (net)', peso(netTotalRevenue)],
-			['Total Profit', peso(currentPeriodStats.totalProfit)],
-			['Profit Margin', `${currentPeriodStats.profitMargin.toFixed(1)}%`],
-			['Total Orders', currentPeriodStats.totalOrders.toString()],
+			['Gross Revenue', peso(grossRevenue)],
+			['Net Revenue', peso(netRevenue)],
+			['Gross Profit', peso(grossProfit)],
+			['Profit Margin', `${profitMargin.toFixed(1)}%`],
+			['Total Orders', totalOrders.toString()],
 			['Total Pieces Sold', totalPieces.toString()],
 			['Avg Order Value', peso(avgOrderValue)],
 			['Wastage Cost', peso(totalWastageCost)],
@@ -125,14 +152,23 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	const pmLabels: [PmKey, string][] = [
 		['cash', 'Cash'],
 		['gcash', 'GCash'],
-		['grab', 'Grab (net 73%)'],
+		['grab', 'Grab'],
 		['debit_credit', 'Debit / Credit'],
 		['employee_charge', 'Employee Charge'],
 	];
 	for (const [key, label] of pmLabels) {
 		if (pmMap[key].orders === 0) continue;
-		const revenue = key === 'grab' ? grabNetRevenue : pmMap[key].revenue;
-		pmRows.push([label, pmMap[key].orders.toString(), pmMap[key].pieces.toString(), peso(revenue)]);
+		if (key === 'grab') {
+			const fee = grabGrossRevenue - pmMap.grab.revenue;
+			pmRows.push([
+				label,
+				pmMap[key].orders.toString(),
+				pmMap[key].pieces.toString(),
+				`${peso(grabGrossRevenue)}\n- ${peso(fee)} (27% fee)\n= ${peso(pmMap.grab.revenue)}`,
+			]);
+		} else {
+			pmRows.push([label, pmMap[key].orders.toString(), pmMap[key].pieces.toString(), peso(pmMap[key].revenue)]);
+		}
 	}
 
 	autoTable(doc, {
