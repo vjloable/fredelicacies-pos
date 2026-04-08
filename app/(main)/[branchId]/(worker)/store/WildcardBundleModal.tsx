@@ -37,7 +37,7 @@ const SIZES: { key: SizeKey; pieces: number; w: number; h: number }[] = [
   { key: 'XL',     pieces: 110, w: 42, h: 31 },
 ];
 
-const KAKANIN_CATEGORY_NAME = 'KAKANIN';
+const ALLOWED_CATEGORY_NAMES = ['KAKANIN', 'TUBS'];
 
 export default function WildcardBundleModal({
   inventory,
@@ -64,10 +64,10 @@ export default function WildcardBundleModal({
     [picks]
   );
 
-  // Hardcoded KAKANIN category lookup
-  const kakaninCategoryIds = useMemo(
+  // Hardcoded allow-list category lookup (KAKANIN + TUBS)
+  const allowedCategoryIds = useMemo(
     () => categories
-      .filter(c => c.name.trim().toUpperCase() === KAKANIN_CATEGORY_NAME)
+      .filter(c => ALLOWED_CATEGORY_NAMES.includes(c.name.trim().toUpperCase()))
       .map(c => c.id),
     [categories]
   );
@@ -81,9 +81,9 @@ export default function WildcardBundleModal({
         : item.category_id
         ? [item.category_id]
         : [];
-      return itemCatIds.some(id => kakaninCategoryIds.includes(id));
+      return itemCatIds.some(id => allowedCategoryIds.includes(id));
     });
-  }, [inventory, search, kakaninCategoryIds]);
+  }, [inventory, search, allowedCategoryIds]);
 
   const selectSize = (key: SizeKey) => {
     setSelectedSize(key);
@@ -290,9 +290,9 @@ export default function WildcardBundleModal({
             <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
               <p className="text-xs">Pick a bilao size to begin</p>
             </div>
-          ) : kakaninCategoryIds.length === 0 ? (
+          ) : allowedCategoryIds.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
-              <p className="text-xs">No KAKANIN category found</p>
+              <p className="text-xs">No KAKANIN or TUBS category found</p>
             </div>
           ) : filteredInventory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
