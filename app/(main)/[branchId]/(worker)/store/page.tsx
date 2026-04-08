@@ -19,7 +19,7 @@ import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
-import { isDiscountEligible } from "@/services/discountService";
+import { isDiscountEligible, calculateEligibleSubtotal, calculateDiscountAmount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
 import PlusIcon from "@/components/icons/PlusIcon";
@@ -33,6 +33,7 @@ import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
+import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
 import HelpButton from "@/components/HelpButton";
 import { storeSteps } from "@/components/TutorialSteps";
 
@@ -141,10 +142,11 @@ export default function StoreScreen() {
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
 	const [customBundleTarget, setCustomBundleTarget] = useState<BundleWithComponents | null>(null);
+	const [showWildcardModal, setShowWildcardModal] = useState(false);
 	const [cart, setCart] = useState<
 		Array<{
 			id: string;
-			bundleId?: string;
+			bundleId?: string | null;
 			name: string;
 			price: number;
 			grab_price?: number | null;
@@ -569,6 +571,35 @@ export default function StoreScreen() {
 		setCustomBundleTarget(null);
 	};
 
+	const handleWildcardConfirm = (result: WildcardBundleResult) => {
+		const cost = result.selections.reduce((s, p) => s + p.cost, 0);
+		const components: BundleComponent[] = result.selections.map(p => ({
+			id: '',
+			bundle_id: '',
+			inventory_item_id: p.inventoryItemId,
+			quantity: p.quantity,
+			created_at: '',
+			inventory_item: p.item,
+		}));
+		setCart(prev => [...prev, {
+			id: `wildcard_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+			bundleId: null,
+			name: `Wildcard Bundle (${result.maxPieces} pcs)`,
+			price: result.sellingPrice,
+			grab_price: result.grabPrice,
+			cost,
+			quantity: 1,
+			originalStock: 999,
+			imgUrl: undefined,
+			categoryId: 0,
+			categoryIds: [],
+			type: 'bundle',
+			is_custom: true,
+			components,
+		}]);
+		setShowWildcardModal(false);
+	};
+
 	const handleB1T1Confirm = (selections: B1T1PickedItem[], b1t1Price: number) => {
 		const newItems = selections.map(s => ({
 			id: `b1t1_${s.inventoryItemId}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -618,6 +649,18 @@ export default function StoreScreen() {
 			setCart(prev => prev.filter(i => !i.isB1T1));
 		}
 	}, [cart, appliedDiscount]);
+
+	// Recalculate discount amount when payment method changes (e.g. Grab uses grab_price)
+	useEffect(() => {
+		if (!appliedDiscount || appliedDiscount.type === 'b1t1') return;
+		const cartItemsForDiscount = cart.map(i => ({
+			price: paymentMethod === 'grab' ? (i.grab_price ?? i.price) : i.price,
+			quantity: i.quantity,
+			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
+		}));
+		const sub = calculateEligibleSubtotal(appliedDiscount, cartItemsForDiscount);
+		setDiscountAmount(calculateDiscountAmount(appliedDiscount, sub, cartItemsForDiscount));
+	}, [paymentMethod]);
 
 	// Handle discount application
 	const handleDiscountApplied = (discount: Discount | null, amount: number) => {
@@ -991,6 +1034,28 @@ export default function StoreScreen() {
 						</div>
 					) : (
 					<div className='space-y-4'>
+						{/* Wildcard Bundle quick-action card */}
+						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
+							<div
+								onClick={() => setShowWildcardModal(true)}
+								className='group bg-primary rounded-xl border-2 border-bundle/40 overflow-hidden cursor-pointer hover:border-bundle hover:shadow-md active:scale-95 transition-all duration-200'>
+								<div className='relative w-full h-24 bg-bundle/5 overflow-hidden flex items-center justify-center group-hover:bg-bundle/10 transition-all duration-200'>
+									<svg className='w-10 h-10 text-bundle' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.8} d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' />
+									</svg>
+								</div>
+								<div className='px-1.5 py-1'>
+									<p className='font-semibold text-secondary text-xs leading-snug line-clamp-2'>
+										Wildcard Bundle
+									</p>
+									<div className='flex items-center justify-between gap-1 mt-1'>
+										<span className='text-bundle font-bold text-xs'>Build your own</span>
+										<span className='text-xs font-medium px-1.5 py-0.5 rounded select-none bg-bundle/10 text-bundle'>Mix</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
 						{groupedItems.map(group => (
 							<div key={group.id}>
 								<div className='flex items-center gap-2 mb-2'>
@@ -1343,7 +1408,7 @@ export default function StoreScreen() {
 										value={discountCode}
 										onChange={setDiscountCode}
 										onDiscountApplied={handleDiscountApplied}
-										cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
+										cartItems={cart.map(i => ({ price: paymentMethod === "grab" ? (i.grab_price ?? i.price) : i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 									/>
 								</div>
 
@@ -1633,7 +1698,7 @@ export default function StoreScreen() {
 							value={discountCode}
 							onChange={setDiscountCode}
 							onDiscountApplied={handleDiscountApplied}
-							cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
+							cartItems={cart.map(i => ({ price: paymentMethod === "grab" ? (i.grab_price ?? i.price) : i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 						/>
 					</div>
 
@@ -1946,6 +2011,16 @@ export default function StoreScreen() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Wildcard Bundle Modal */}
+			{showWildcardModal && (
+				<WildcardBundleModal
+					inventory={inventoryItems}
+					categories={categories}
+					onConfirm={handleWildcardConfirm}
+					onClose={() => setShowWildcardModal(false)}
+				/>
 			)}
 
 			{/* Custom Bundle Picker Modal */}

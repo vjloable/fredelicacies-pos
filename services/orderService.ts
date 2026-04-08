@@ -21,7 +21,7 @@ export const createOrder = async (
   userId: string,
   items: Array<{
     id: string;
-    bundleId?: string;
+    bundleId?: string | null;
     name: string;
     price: number;
     cost?: number;
@@ -62,7 +62,9 @@ export const createOrder = async (
   // Prepare order items
   const orderItems = items.map(item => ({
     item_id: (!item.type || item.type === 'item') ? item.id : null,
-    bundle_id: item.type === 'bundle' ? (item.bundleId ?? item.id) : null,
+    bundle_id: item.type === 'bundle'
+      ? (item.bundleId === null ? null : (item.bundleId ?? item.id))
+      : null,
     name: item.name,
     price: item.price,
     cost: item.cost || 0,
