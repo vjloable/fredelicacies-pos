@@ -16,10 +16,10 @@ export interface WildcardPickedItem {
 
 export interface WildcardBundleResult {
   maxPieces: number;
+  sizeLabel: string;
   sellingPrice: number;
   grabPrice: number;
   selections: WildcardPickedItem[];
-  selectedCategoryIds: string[];
 }
 
 interface WildcardBundleModalProps {
@@ -29,25 +29,33 @@ interface WildcardBundleModalProps {
   onClose: () => void;
 }
 
+type SizeKey = 'MINI' | 'SMALL' | 'MEDIUM' | 'XL';
+const SIZES: { key: SizeKey; pieces: number; w: number; h: number }[] = [
+  { key: 'MINI',   pieces: 25,  w: 24, h: 16 },
+  { key: 'SMALL',  pieces: 41,  w: 30, h: 19 },
+  { key: 'MEDIUM', pieces: 70,  w: 36, h: 25 },
+  { key: 'XL',     pieces: 110, w: 42, h: 31 },
+];
+
+const KAKANIN_CATEGORY_NAME = 'KAKANIN';
+
 export default function WildcardBundleModal({
   inventory,
   categories,
   onConfirm,
   onClose,
 }: WildcardBundleModalProps) {
-  const [maxPiecesInput, setMaxPiecesInput] = useState('');
+  const [selectedSize, setSelectedSize] = useState<SizeKey | null>(null);
   const [sellingPriceInput, setSellingPriceInput] = useState('');
   const [grabPriceInput, setGrabPriceInput] = useState('');
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
 
-  const maxPieces = parseInt(maxPiecesInput, 10);
+  const maxPieces = SIZES.find(s => s.key === selectedSize)?.pieces ?? 0;
   const sellingPrice = parseFloat(sellingPriceInput);
   const grabPrice = parseFloat(grabPriceInput);
 
-  const maxPiecesValid = !isNaN(maxPieces) && maxPieces > 0;
+  const sizeValid = selectedSize !== null;
   const sellingPriceValid = !isNaN(sellingPrice) && sellingPrice >= 0;
   const grabPriceValid = !isNaN(grabPrice) && grabPrice >= 0;
 
@@ -56,8 +64,11 @@ export default function WildcardBundleModal({
     [picks]
   );
 
-  const visibleCategories = useMemo(
-    () => categories.filter(c => !c.is_hidden),
+  // Hardcoded KAKANIN category lookup
+  const kakaninCategoryIds = useMemo(
+    () => categories
+      .filter(c => c.name.trim().toUpperCase() === KAKANIN_CATEGORY_NAME)
+      .map(c => c.id),
     [categories]
   );
 
@@ -65,42 +76,38 @@ export default function WildcardBundleModal({
     return inventory.filter(item => {
       if (item.stock <= 0) return false;
       if (!item.name.toLowerCase().includes(search.toLowerCase())) return false;
-      if (selectedCategoryIds.length === 0) return true;
       const itemCatIds: string[] = item.category_ids?.length
         ? item.category_ids
         : item.category_id
         ? [item.category_id]
         : [];
-      return itemCatIds.some(id => selectedCategoryIds.includes(id));
+      return itemCatIds.some(id => kakaninCategoryIds.includes(id));
     });
-  }, [inventory, search, selectedCategoryIds]);
+  }, [inventory, search, kakaninCategoryIds]);
 
-  const toggleCategory = (id: string) => {
-    setSelectedCategoryIds(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-    // Drop picks that no longer match the new filter
+  const selectSize = (key: SizeKey) => {
+    setSelectedSize(key);
+    // Trim picks down to new max if smaller
+    const newMax = SIZES.find(s => s.key === key)!.pieces;
     setPicks(prev => {
+      const total = Object.values(prev).reduce((s, q) => s + q, 0);
+      if (total <= newMax) return prev;
+      // Drop from end deterministically
+      const entries = Object.entries(prev);
+      let toRemove = total - newMax;
       const next: Record<string, number> = {};
-      Object.entries(prev).forEach(([itemId, qty]) => {
-        const item = inventory.find(i => i.id === itemId);
-        if (!item) return;
-        const itemCatIds: string[] = item.category_ids?.length
-          ? item.category_ids
-          : item.category_id
-          ? [item.category_id]
-          : [];
-        const newSel = prev[id] !== undefined ? selectedCategoryIds.filter(c => c !== id) : [...selectedCategoryIds, id];
-        if (newSel.length === 0 || itemCatIds.some(c => newSel.includes(c))) {
-          next[itemId] = qty;
-        }
-      });
+      for (const [id, qty] of entries) {
+        if (toRemove <= 0) { next[id] = qty; continue; }
+        if (qty <= toRemove) { toRemove -= qty; continue; }
+        next[id] = qty - toRemove;
+        toRemove = 0;
+      }
       return next;
     });
   };
 
   const increment = (item: InventoryItem) => {
-    if (!maxPiecesValid) return;
+    if (!sizeValid) return;
     if (totalPicked >= maxPieces) return;
     setPicks(prev => ({ ...prev, [item.id!]: (prev[item.id!] ?? 0) + 1 }));
   };
@@ -115,13 +122,13 @@ export default function WildcardBundleModal({
   };
 
   const allValid =
-    maxPiecesValid &&
+    sizeValid &&
     sellingPriceValid &&
     grabPriceValid &&
     totalPicked === maxPieces;
 
   const handleConfirm = () => {
-    if (!allValid) return;
+    if (!allValid || !selectedSize) return;
     const selections: WildcardPickedItem[] = Object.entries(picks)
       .filter(([, qty]) => qty > 0)
       .map(([itemId, qty]) => {
@@ -137,14 +144,14 @@ export default function WildcardBundleModal({
       });
     onConfirm({
       maxPieces,
+      sizeLabel: selectedSize,
       sellingPrice,
       grabPrice,
       selections,
-      selectedCategoryIds,
     });
   };
 
-  const progressPercent = maxPiecesValid
+  const progressPercent = sizeValid
     ? Math.min((totalPicked / maxPieces) * 100, 100)
     : 0;
 
@@ -161,13 +168,18 @@ export default function WildcardBundleModal({
         <div className="p-4 border-b border-secondary/10">
           <div className="flex items-center gap-3 mb-3">
             <div className="relative w-12 h-12 bg-bundle/10 rounded-lg shrink-0 overflow-hidden flex items-center justify-center">
-              <svg className="w-6 h-6 text-bundle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              <svg className="w-7 h-7 text-bundle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                <ellipse cx="12" cy="13" rx="9" ry="6" />
+                <ellipse cx="12" cy="11.5" rx="9" ry="6" />
+                <circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="13" cy="10" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="15.5" cy="12.5" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="10.5" cy="13" r="1.2" fill="currentColor" stroke="none" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-secondary truncate">Wildcard Bundle</h3>
-              <p className="text-xs text-secondary/50">Build a custom bundle on the fly</p>
+              <h3 className="text-sm font-bold text-secondary truncate">Wildcard Bilao</h3>
+              <p className="text-xs text-secondary/50">Pick a size, then fill with kakanin</p>
             </div>
             <button
               onClick={onClose}
@@ -179,20 +191,41 @@ export default function WildcardBundleModal({
             </button>
           </div>
 
-          {/* Inputs */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div>
-              <label className="text-3 text-secondary/60 font-medium">Max items</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={maxPiecesInput}
-                onChange={e => { if (/^\d*$/.test(e.target.value)) setMaxPiecesInput(e.target.value); }}
-                onFocus={e => e.target.select()}
-                placeholder="0"
-                className="w-full mt-1 px-2 py-1.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
-              />
+          {/* Size selector */}
+          <div className="mb-3">
+            <label className="text-3 text-secondary/60 font-medium block mb-1.5">Bilao size</label>
+            <div className="flex items-end justify-between gap-2">
+              {SIZES.map(s => {
+                const selected = selectedSize === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => selectSize(s.key)}
+                    className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all ${
+                      selected
+                        ? 'border-bundle bg-bundle/5'
+                        : 'border-secondary/15 bg-white hover:border-secondary/30'
+                    }`}
+                  >
+                    <div className="h-12 w-full flex items-end justify-center">
+                      <div
+                        className={`rounded-full border-2 transition-colors ${
+                          selected ? 'border-bundle bg-bundle/20' : 'border-secondary/30 bg-secondary/5'
+                        }`}
+                        style={{ width: `${s.w}px`, height: `${s.h}px` }}
+                      />
+                    </div>
+                    <span className={`text-3 font-bold ${selected ? 'text-bundle' : 'text-secondary'}`}>{s.key}</span>
+                    <span className="text-[10px] text-secondary/50">{s.pieces} pcs</span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Price inputs */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <div>
               <label className="text-3 text-secondary/60 font-medium">Sell price (₱)</label>
               <input
@@ -219,58 +252,9 @@ export default function WildcardBundleModal({
             </div>
           </div>
 
-          {/* Category chip dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setCategoryDropdownOpen(o => !o)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-xs border-2 border-secondary/20 rounded-lg bg-white hover:bg-secondary/5 transition-colors"
-            >
-              <span className="text-secondary/60">
-                {selectedCategoryIds.length === 0
-                  ? 'Filter by category (all)'
-                  : `${selectedCategoryIds.length} category${selectedCategoryIds.length === 1 ? '' : 's'} selected`}
-              </span>
-              <svg className={`w-3.5 h-3.5 text-secondary/40 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {categoryDropdownOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-secondary/20 rounded-lg shadow-lg p-2 max-h-40 overflow-y-auto">
-                <div className="flex flex-wrap gap-1.5">
-                  {visibleCategories.length === 0 ? (
-                    <span className="text-xs text-secondary/40 px-1">No categories</span>
-                  ) : (
-                    visibleCategories.map(cat => {
-                      const selected = selectedCategoryIds.includes(cat.id);
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => toggleCategory(cat.id)}
-                          className={`px-2 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
-                            selected
-                              ? 'bg-bundle text-white'
-                              : 'bg-secondary/10 text-secondary hover:bg-secondary/20'
-                          }`}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: cat.color?.trim() || '#9CA3AF' }}
-                          />
-                          {cat.name}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Progress bar */}
-          {maxPiecesValid && (
-            <div className="flex items-center gap-2 mt-3">
+          {sizeValid && (
+            <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-secondary/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-bundle rounded-full transition-all duration-200"
@@ -294,7 +278,7 @@ export default function WildcardBundleModal({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search items..."
+              placeholder="Search kakanin..."
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-secondary/20 focus:outline-none focus:ring-2 focus:ring-bundle/50"
             />
           </div>
@@ -302,13 +286,17 @@ export default function WildcardBundleModal({
 
         {/* Item Grid */}
         <div className="flex-1 overflow-y-auto p-3">
-          {!maxPiecesValid ? (
+          {!sizeValid ? (
             <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
-              <p className="text-xs">Set a maximum number of items to begin picking</p>
+              <p className="text-xs">Pick a bilao size to begin</p>
+            </div>
+          ) : kakaninCategoryIds.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
+              <p className="text-xs">No KAKANIN category found</p>
             </div>
           ) : filteredInventory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-secondary/40">
-              <p className="text-xs">No items found</p>
+              <p className="text-xs">No kakanin in stock</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -377,8 +365,8 @@ export default function WildcardBundleModal({
                   : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
               }`}
             >
-              {!maxPiecesValid
-                ? 'Set max items'
+              {!sizeValid
+                ? 'Pick a size'
                 : !sellingPriceValid || !grabPriceValid
                 ? 'Set prices'
                 : totalPicked !== maxPieces

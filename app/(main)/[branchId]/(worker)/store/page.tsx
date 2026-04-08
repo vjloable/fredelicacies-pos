@@ -584,7 +584,7 @@ export default function StoreScreen() {
 		setCart(prev => [...prev, {
 			id: `wildcard_${Date.now()}_${Math.random().toString(36).slice(2)}`,
 			bundleId: null,
-			name: `Wildcard Bundle (${result.maxPieces} pcs)`,
+			name: `Wildcard Bilao ${result.sizeLabel} (${result.maxPieces} pcs)`,
 			price: result.sellingPrice,
 			grab_price: result.grabPrice,
 			cost,
@@ -1040,8 +1040,13 @@ export default function StoreScreen() {
 								onClick={() => setShowWildcardModal(true)}
 								className='group bg-primary rounded-xl border-2 border-bundle/40 overflow-hidden cursor-pointer hover:border-bundle hover:shadow-md active:scale-95 transition-all duration-200'>
 								<div className='relative w-full h-24 bg-bundle/5 overflow-hidden flex items-center justify-center group-hover:bg-bundle/10 transition-all duration-200'>
-									<svg className='w-10 h-10 text-bundle' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.8} d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' />
+									<svg className='w-12 h-12 text-bundle' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
+										<ellipse cx='12' cy='13' rx='9' ry='6' />
+										<ellipse cx='12' cy='11.5' rx='9' ry='6' />
+										<circle cx='9' cy='11' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='13' cy='10' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='15.5' cy='12.5' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='10.5' cy='13' r='1.2' fill='currentColor' stroke='none' />
 									</svg>
 								</div>
 								<div className='px-1.5 py-1'>
