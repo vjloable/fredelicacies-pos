@@ -1902,7 +1902,7 @@ export default function StoreScreen() {
 									{paymentMethod === 'cash' && (
 										<>
 											<div className='flex justify-between items-center text-sm border-t border-gray-200 pt-2'>
-												<span className='text-secondary/70'>Tendered:</span>
+												<span className='text-secondary/70'>Tendered: <span className='text-secondary/40'>(optional)</span></span>
 												<div className='relative w-32'>
 													<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
 													<input
