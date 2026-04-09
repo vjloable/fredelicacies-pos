@@ -18,7 +18,6 @@ export interface WildcardBundleResult {
   maxPieces: number;
   sizeLabel: string;
   sellingPrice: number;
-  grabPrice: number;
   selections: WildcardPickedItem[];
 }
 
@@ -47,17 +46,14 @@ export default function WildcardBundleModal({
 }: WildcardBundleModalProps) {
   const [selectedSize, setSelectedSize] = useState<SizeKey | null>(null);
   const [sellingPriceInput, setSellingPriceInput] = useState('');
-  const [grabPriceInput, setGrabPriceInput] = useState('');
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
 
   const maxPieces = SIZES.find(s => s.key === selectedSize)?.pieces ?? 0;
   const sellingPrice = parseFloat(sellingPriceInput);
-  const grabPrice = parseFloat(grabPriceInput);
 
   const sizeValid = selectedSize !== null;
   const sellingPriceValid = !isNaN(sellingPrice) && sellingPrice >= 0;
-  const grabPriceValid = !isNaN(grabPrice) && grabPrice >= 0;
 
   const totalPicked = useMemo(
     () => Object.values(picks).reduce((s, q) => s + q, 0),
@@ -124,7 +120,6 @@ export default function WildcardBundleModal({
   const allValid =
     sizeValid &&
     sellingPriceValid &&
-    grabPriceValid &&
     totalPicked === maxPieces;
 
   const handleConfirm = () => {
@@ -146,7 +141,6 @@ export default function WildcardBundleModal({
       maxPieces,
       sizeLabel: selectedSize,
       sellingPrice,
-      grabPrice,
       selections,
     });
   };
@@ -225,31 +219,17 @@ export default function WildcardBundleModal({
           </div>
 
           {/* Price inputs */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <div>
-              <label className="text-3 text-secondary/60 font-medium">Sell price (₱)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={sellingPriceInput}
-                onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setSellingPriceInput(e.target.value); }}
-                onFocus={e => e.target.select()}
-                placeholder="0.00"
-                className="w-full mt-1 px-2 py-1.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="text-3 text-secondary/60 font-medium">Grab price (₱)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={grabPriceInput}
-                onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setGrabPriceInput(e.target.value); }}
-                onFocus={e => e.target.select()}
-                placeholder="0.00"
-                className="w-full mt-1 px-2 py-1.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
-              />
-            </div>
+          <div className="mb-3">
+            <label className="text-3 text-secondary/60 font-medium">Selling price (₱)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={sellingPriceInput}
+              onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setSellingPriceInput(e.target.value); }}
+              onFocus={e => e.target.select()}
+              placeholder="0.00"
+              className="w-full mt-1 px-2 py-1.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
+            />
           </div>
 
           {/* Progress bar */}
@@ -367,8 +347,8 @@ export default function WildcardBundleModal({
             >
               {!sizeValid
                 ? 'Pick a size'
-                : !sellingPriceValid || !grabPriceValid
-                ? 'Set prices'
+                : !sellingPriceValid
+                ? 'Set price'
                 : totalPicked !== maxPieces
                 ? `${maxPieces - totalPicked} more needed`
                 : 'Add to Order'}

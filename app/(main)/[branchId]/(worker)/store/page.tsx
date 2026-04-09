@@ -586,7 +586,7 @@ export default function StoreScreen() {
 			bundleId: null,
 			name: `Wildcard Bilao ${result.sizeLabel} (${result.maxPieces} pcs)`,
 			price: result.sellingPrice,
-			grab_price: result.grabPrice,
+			grab_price: result.sellingPrice,
 			cost,
 			quantity: 1,
 			originalStock: 999,
