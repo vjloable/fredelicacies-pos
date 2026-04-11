@@ -187,7 +187,7 @@ export const getOrdersPage = async (
     search?: string;
     startDate?: string;
     endDate?: string;
-    paymentMethod?: 'cash' | 'gcash' | 'grab';
+    paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit';
     status?: 'active' | 'voided';
   }
 ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> => {

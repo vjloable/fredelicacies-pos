@@ -298,10 +298,17 @@ export default function SalesScreen() {
 	});
 
 	const paymentBreakdown = useMemo(() => {
-		const map = { cash: { orders: 0, total: 0 }, gcash: { orders: 0, total: 0 }, grab: { orders: 0, total: 0 } };
+		const map = {
+			cash: { orders: 0, total: 0 },
+			gcash: { orders: 0, total: 0 },
+			grab: { orders: 0, total: 0 },
+			debit_credit: { orders: 0, total: 0 },
+		};
 		analyticsOrders.forEach(o => {
 			if (o.status === 'voided') return;
-			const method = ((o.payment_method as string) || 'cash').toLowerCase() as keyof typeof map;
+			const raw = ((o.payment_method as string) || 'cash').toLowerCase();
+			// employee_charge is bucketed as cash
+			const method = (raw === 'employee_charge' ? 'cash' : raw) as keyof typeof map;
 			if (map[method]) {
 				map[method].orders++;
 				map[method].total += method === 'grab' ? o.total * 0.73 : o.total;
@@ -311,6 +318,7 @@ export default function SalesScreen() {
 			{ name: 'Cash', ...map.cash, color: 'var(--accent)' },
 			{ name: 'GCash', ...map.gcash, color: '#007CFF' },
 			{ name: 'Grab', ...map.grab, color: '#02B150' },
+			{ name: 'Debit/Credit', ...map.debit_credit, color: '#8B5CF6' },
 		];
 	}, [analyticsOrders]);
 	const [wastageBarData, setWastageBarData] = useState<{ label: string; wastage: number }[]>([]);
@@ -325,7 +333,7 @@ export default function SalesScreen() {
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	// Orders table filters
-	const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gcash' | 'grab'>('all');
+	const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gcash' | 'grab' | 'debit_credit'>('all');
 	const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
 	// Actions dropdown
 	const [showActionsMenu, setShowActionsMenu] = useState(false);
@@ -1200,7 +1208,7 @@ export default function SalesScreen() {
 								</div>
 								{/* Filters */}
 								<div className='flex items-center gap-1.5 mt-2 flex-wrap'>
-									{(['all', 'cash', 'gcash', 'grab'] as const).map(m => (
+									{(['all', 'cash', 'gcash', 'grab', 'debit_credit'] as const).map(m => (
 										<button
 											key={m}
 											onClick={() => { setPaymentFilter(m); setTablePage(1); }}
@@ -1208,7 +1216,7 @@ export default function SalesScreen() {
 												paymentFilter === m ? 'bg-accent text-primary' : 'bg-secondary/5 text-secondary/50 hover:text-secondary'
 											}`}
 										>
-											{m === 'all' ? 'All' : m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : 'Cash'}
+											{m === 'all' ? 'All' : m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : m === 'debit_credit' ? 'Debit/Credit' : 'Cash'}
 										</button>
 									))}
 									<span className='text-secondary/20 mx-0.5'>|</span>
@@ -1445,12 +1453,16 @@ export default function SalesScreen() {
 											? "bg-blue-100 text-blue-700"
 											: selectedOrder.payment_method === "grab"
 											? "bg-green-100 text-green-700"
+											: selectedOrder.payment_method === "debit_credit"
+											? "bg-purple-100 text-purple-700"
 											: "bg-secondary/10 text-secondary"
 									}`}>
 									{selectedOrder.payment_method === "gcash"
 										? "GCash"
 										: selectedOrder.payment_method === "grab"
 										? "Grab"
+										: selectedOrder.payment_method === "debit_credit"
+										? "Debit/Credit"
 										: "Cash"}
 								</span>
 							</div>
