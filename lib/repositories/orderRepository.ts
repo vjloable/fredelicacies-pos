@@ -249,12 +249,15 @@ export const orderRepository = {
       query = query.or(`id.ilike.%${search}%,order_number.ilike.%${search}%`);
     }
 
+    // startDate/endDate are expected to be full ISO timestamps (UTC).
+    // Callers should produce them via Date.toISOString() on proper local-time
+    // boundaries so the day filter matches the user's wall clock, not UTC.
     if (startDate) {
-      query = query.gte('created_at', `${startDate}T00:00:00`);
+      query = query.gte('created_at', startDate);
     }
 
     if (endDate) {
-      query = query.lte('created_at', `${endDate}T23:59:59`);
+      query = query.lte('created_at', endDate);
     }
 
     if (paymentMethod) {

@@ -532,8 +532,12 @@ export default function SalesScreen() {
 		const { orders, totalCount } = await getOrdersPage(
 			currentBranch.id, tablePage, pageSize, {
 				search: searchTerm || undefined,
-				startDate: viewMode !== 'all' ? startDate.toISOString().slice(0, 10) : undefined,
-				endDate: viewMode !== 'all' ? endDate.toISOString().slice(0, 10) : undefined,
+				// Pass full ISO timestamps — computeDateRange returns Dates at local
+				// midnight / 23:59:59.999, so .toISOString() yields the correct UTC
+				// instant. Slicing to YYYY-MM-DD was dropping the timezone offset
+				// and bleeding orders across the day boundary in non-UTC zones.
+				startDate: viewMode !== 'all' ? startDate.toISOString() : undefined,
+				endDate: viewMode !== 'all' ? endDate.toISOString() : undefined,
 				paymentMethod: paymentFilter !== 'all' ? paymentFilter : undefined,
 				status: statusFilter !== 'all' ? statusFilter : undefined,
 			}
