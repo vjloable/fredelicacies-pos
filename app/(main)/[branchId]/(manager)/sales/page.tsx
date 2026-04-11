@@ -872,16 +872,22 @@ export default function SalesScreen() {
 						{/* Payment methods — inline compact */}
 						<div className='col-span-2 lg:col-span-1 bg-primary rounded-xl p-4 shadow-sm'>
 							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide mb-3'>Payments</p>
-							<div className='space-y-2'>
+							<div className='grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2'>
 								{paymentBreakdown.map(p => (
-									<div key={p.name} className='flex items-center gap-2'>
-										<span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
-										<span className='text-2.5 text-secondary/60 w-14 shrink-0'>{p.name}</span>
-										<div className='flex-1 h-1 rounded-full bg-secondary/10 overflow-hidden'>
-											<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
+									<React.Fragment key={p.name}>
+										<div className='flex items-center gap-1.5 min-w-0'>
+											<span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: p.color }} />
+											<span className={`${p.name === 'Debit/Credit' ? 'text-2 leading-tight' : 'text-2.5'} text-secondary/60`}>
+												{p.name === 'Debit/Credit' ? (<>Debit /<br />Credit</>) : p.name}
+											</span>
 										</div>
-										<span className='text-2.5 font-semibold text-secondary tabular-nums w-4 text-right shrink-0'>{p.orders}</span>
-									</div>
+										<div className='flex items-center gap-2 min-w-0'>
+											<div className='flex-1 h-1 rounded-full bg-secondary/10 overflow-hidden'>
+												<div className='h-full rounded-full transition-all' style={{ width: `${currentPeriodStats.totalOrders > 0 ? (p.orders / currentPeriodStats.totalOrders * 100) : 0}%`, backgroundColor: p.color }} />
+											</div>
+											<span className='text-2.5 font-semibold text-secondary tabular-nums w-4 text-right shrink-0'>{p.orders}</span>
+										</div>
+									</React.Fragment>
 								))}
 							</div>
 						</div>
