@@ -412,7 +412,11 @@ export default function SalesScreen() {
 			);
 			for (const order of sorted.filter(o => o.status !== 'voided')) {
 				const raw = ((order.payment_method as string) || 'cash').toLowerCase();
-				const method = raw === 'gcash' ? 'GCash' : raw === 'grab' ? 'Grab' : 'Cash';
+				const method =
+					raw === 'gcash' ? 'GCash'
+					: raw === 'grab' ? 'Grab'
+					: raw === 'debit_credit' ? 'Debit/Credit'
+					: 'Cash';
 				if (!groupMap.has(method)) groupMap.set(method, { orders: [], gross: 0 });
 				const group = groupMap.get(method)!;
 				group.gross += order.total;
@@ -445,7 +449,7 @@ export default function SalesScreen() {
 					transactionNumber: order.transaction_number || undefined,
 				});
 			}
-			const groups = (['Cash', 'GCash', 'Grab'] as const)
+			const groups = (['Cash', 'GCash', 'Grab', 'Debit/Credit'] as const)
 				.filter(m => groupMap.has(m))
 				.map(method => {
 					const { orders, gross } = groupMap.get(method)!;

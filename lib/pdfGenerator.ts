@@ -156,8 +156,12 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		['debit_credit', 'Debit / Credit'],
 		['employee_charge', 'Employee Charge'],
 	];
+	// Core methods (cash/gcash/grab/debit_credit) always render so the report shows
+	// the full payment-mix picture even for zero-count buckets. Employee charge is
+	// only shown when it actually occurred (it's a rare, tracked-separately case).
+	const alwaysShow: Set<PmKey> = new Set(['cash', 'gcash', 'grab', 'debit_credit']);
 	for (const [key, label] of pmLabels) {
-		if (pmMap[key].orders === 0) continue;
+		if (pmMap[key].orders === 0 && !alwaysShow.has(key)) continue;
 		if (key === 'grab') {
 			const fee = grabGrossRevenue - pmMap.grab.revenue;
 			pmRows.push([

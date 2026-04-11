@@ -308,7 +308,7 @@ export interface DailySalesOrder {
 }
 
 export interface DailySalesGroup {
-	method: 'Cash' | 'GCash' | 'Grab';
+	method: 'Cash' | 'GCash' | 'Grab' | 'Debit/Credit';
 	orders: DailySalesOrder[];
 	gross: number;
 	net?: number; // Grab only: gross * 0.73
