@@ -137,6 +137,7 @@ export default function StoreScreen() {
 	const [debitReferenceNo, setDebitReferenceNo] = useState("");
 	const [debitTransactionNo, setDebitTransactionNo] = useState("");
 	const [debitApprovalCode, setDebitApprovalCode] = useState("");
+	const [grabManualDiscount, setGrabManualDiscount] = useState("");
 	const [employeeChargeName, setEmployeeChargeName] = useState("");
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
@@ -629,7 +630,17 @@ export default function StoreScreen() {
 		() => cart.filter(i => i.isB1T1).reduce((s, i) => s + ((i.regularPrice ?? i.price) - i.price) * i.quantity, 0),
 		[cart]
 	);
-	const effectiveDiscountForTotal = appliedDiscount?.type === 'b1t1' ? 0 : discountAmount;
+	// Grab uses a cashier-entered manual discount instead of the DiscountDropdown.
+	const grabManualDiscountAmount = useMemo(() => {
+		if (paymentMethod !== 'grab') return 0;
+		const n = parseFloat(grabManualDiscount);
+		if (!Number.isFinite(n) || n <= 0) return 0;
+		// Clamp so the discount can never exceed the Grab subtotal.
+		return Math.min(n, subtotal);
+	}, [paymentMethod, grabManualDiscount, subtotal]);
+	const effectiveDiscountForTotal = paymentMethod === 'grab'
+		? grabManualDiscountAmount
+		: (appliedDiscount?.type === 'b1t1' ? 0 : discountAmount);
 	const total = subtotal - effectiveDiscountForTotal;
 
 
@@ -650,11 +661,22 @@ export default function StoreScreen() {
 		}
 	}, [cart, appliedDiscount]);
 
-	// Recalculate discount amount when payment method changes (e.g. Grab uses grab_price)
+	// Recalculate discount amount when payment method changes (e.g. Grab uses grab_price).
+	// Grab has its own flow: clear any applied Discount object + B1T1 items and let the
+	// cashier type the manual discount amount instead.
 	useEffect(() => {
+		if (paymentMethod === 'grab') {
+			setAppliedDiscount(null);
+			setDiscountAmount(0);
+			setDiscountCode("");
+			setCart(prev => prev.filter(i => !i.isB1T1));
+			return;
+		}
+		// Switching away from Grab — reset the manual discount input.
+		setGrabManualDiscount("");
 		if (!appliedDiscount || appliedDiscount.type === 'b1t1') return;
 		const cartItemsForDiscount = cart.map(i => ({
-			price: paymentMethod === 'grab' ? (i.grab_price ?? i.price) : i.price,
+			price: i.price,
 			quantity: i.quantity,
 			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
 		}));
@@ -734,7 +756,9 @@ export default function StoreScreen() {
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
-			const orderDiscountAmount = appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount;
+			const orderDiscountAmount = paymentMethod === 'grab'
+				? grabManualDiscountAmount
+				: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount);
 			const { id: orderId, orderNumber: orderNum, error: orderError } = await createOrder(
 				currentBranch.id,
 				user.id,
@@ -755,7 +779,7 @@ export default function StoreScreen() {
 				})),
 				subtotal,
 				total,
-				appliedDiscount?.id,
+				paymentMethod === 'grab' ? undefined : appliedDiscount?.id,
 				orderDiscountAmount,
 				paymentMethod,
 				paymentMethod === 'cash' ? orderNote : undefined,
@@ -791,10 +815,12 @@ export default function StoreScreen() {
 					};
 				}),
 				subtotal,
-				discount: appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount,
-				appliedDiscountCode: appliedDiscount?.name || "",
-				isB1T1Promo: appliedDiscount?.type === 'b1t1',
-				discountType: appliedDiscount?.type,
+				discount: paymentMethod === 'grab'
+					? grabManualDiscountAmount
+					: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount),
+				appliedDiscountCode: paymentMethod === 'grab' ? "" : (appliedDiscount?.name || ""),
+				isB1T1Promo: paymentMethod === 'grab' ? false : appliedDiscount?.type === 'b1t1',
+				discountType: paymentMethod === 'grab' ? undefined : appliedDiscount?.type,
 				grabUplift: 0,
 				total,
 				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
@@ -1405,17 +1431,19 @@ export default function StoreScreen() {
 								</div>
 								<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 									<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
-									<span>-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}</span>
+									<span>-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}</span>
 								</div>
 
-								<div className='gap-2 p-2'>
-									<DiscountDropdown
-										value={discountCode}
-										onChange={setDiscountCode}
-										onDiscountApplied={handleDiscountApplied}
-										cartItems={cart.map(i => ({ price: paymentMethod === "grab" ? (i.grab_price ?? i.price) : i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
-									/>
-								</div>
+								{paymentMethod !== 'grab' && (
+									<div className='gap-2 p-2'>
+										<DiscountDropdown
+											value={discountCode}
+											onChange={setDiscountCode}
+											onDiscountApplied={handleDiscountApplied}
+											cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
+										/>
+									</div>
+								)}
 
 								<div className='border-t border-dashed border-accent'>
 									<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
@@ -1695,17 +1723,19 @@ export default function StoreScreen() {
 					</div>
 					<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 						<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
-						<span>-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}</span>
+						<span>-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}</span>
 					</div>
 
-					<div className='gap-2 p-2'>
-						<DiscountDropdown
-							value={discountCode}
-							onChange={setDiscountCode}
-							onDiscountApplied={handleDiscountApplied}
-							cartItems={cart.map(i => ({ price: paymentMethod === "grab" ? (i.grab_price ?? i.price) : i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
-						/>
-					</div>
+					{paymentMethod !== 'grab' && (
+						<div className='gap-2 p-2'>
+							<DiscountDropdown
+								value={discountCode}
+								onChange={setDiscountCode}
+								onDiscountApplied={handleDiscountApplied}
+								cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
+							/>
+						</div>
+					)}
 
 					<div className='border-t border-dashed border-accent mb-4'>
 						<div className='flex justify-between font-semibold text-sm p-2.5 items-center'>
@@ -1878,11 +1908,13 @@ export default function StoreScreen() {
 											</div>
 										) : null;
 									})()}
-									{(discountAmount > 0 || b1t1SavingsAmount > 0) && (
+									{(discountAmount > 0 || b1t1SavingsAmount > 0 || grabManualDiscountAmount > 0) && (
 										<div className='flex justify-between text-xs'>
 											<span className='text-secondary'>
-												{appliedDiscount?.type === 'b1t1' ? 'Buy 1 Take 1 Savings' : 'Discount'}
-												{appliedDiscount && appliedDiscount.type !== 'b1t1' && (
+												{paymentMethod === 'grab'
+													? 'Grab Discount'
+													: appliedDiscount?.type === 'b1t1' ? 'Buy 1 Take 1 Savings' : 'Discount'}
+												{paymentMethod !== 'grab' && appliedDiscount && appliedDiscount.type !== 'b1t1' && (
 													<span className='font-medium ml-1'>
 														({appliedDiscount.name} -{" "}
 														{appliedDiscount.type === "percentage"
@@ -1894,8 +1926,24 @@ export default function StoreScreen() {
 												:
 											</span>
 											<span className='font-medium text-green-600'>
-												-{formatCurrency(appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount)}
+												-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}
 											</span>
+										</div>
+									)}
+									{paymentMethod === 'grab' && (
+										<div className='flex justify-between items-center text-xs'>
+											<span className='text-secondary/70'>Grab Discount: <span className='text-secondary/40'>(optional)</span></span>
+											<div className='relative w-32'>
+												<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
+												<input
+													type='text'
+													inputMode='decimal'
+													value={grabManualDiscount}
+													onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) setGrabManualDiscount(v); }}
+													placeholder='0.00'
+													className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+												/>
+											</div>
 										</div>
 									)}
 									<div className='flex justify-between text-base font-semibold border-t border-gray-200 pt-2'>

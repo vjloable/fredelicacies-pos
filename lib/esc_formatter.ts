@@ -196,7 +196,9 @@ async function buildCopy(
 		lines.push(t(totalRow("Subtotal:", formatAmount(order.subtotal))));
 		// Build a compact discount label
 		let discLabel: string;
-		if (order.discountType === 'b1t1' || order.isB1T1Promo) {
+		if (order.paymentMethod === 'grab') {
+			discLabel = "Grab Disc:";
+		} else if (order.discountType === 'b1t1' || order.isB1T1Promo) {
 			discLabel = "B1T1 Savings:";
 		} else if (order.discountType === 'sc_pwd') {
 			discLabel = "SC/PWD Disc:";

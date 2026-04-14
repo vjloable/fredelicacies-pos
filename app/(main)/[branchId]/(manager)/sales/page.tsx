@@ -1521,7 +1521,7 @@ export default function SalesScreen() {
 								</div>
 								{selectedOrder.discount_amount > 0 && (
 									<div className='flex justify-between'>
-										<span className='text-secondary/50'>Discount</span>
+										<span className='text-secondary/50'>{selectedOrder.payment_method === 'grab' ? 'Grab Discount' : 'Discount'}</span>
 										<span className='tabular-nums text-green-600'>
 											−{formatCurrency(selectedOrder.discount_amount)}
 										</span>

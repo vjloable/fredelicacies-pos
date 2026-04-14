@@ -202,7 +202,11 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	// Helper: build detailed discount cell text
 	const discountCell = (order: OrderWithItems): string => {
 		if (order.status === 'voided') return '—';
-		if (!order.discount_id || !order.discount_amount) return '—';
+		if (!order.discount_amount) return '—';
+		if (order.payment_method === 'grab') {
+			return `-${peso(order.discount_amount)}\nGrab Discount`;
+		}
+		if (!order.discount_id) return peso(order.discount_amount);
 		const disc = discounts.find(d => d.id === order.discount_id);
 		if (!disc) return peso(order.discount_amount);
 
