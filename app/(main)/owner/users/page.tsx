@@ -249,7 +249,7 @@ export default function WorkersPage() {
 	if (authLoading) {
 		return (
 			<div className='flex items-center justify-center h-full'>
-				<div className='text-center'>
+				<div className='flex flex-col items-center gap-2'>
 					<LoadingSpinner size="md" />
 					<p className='text-secondary'>Loading...</p>
 				</div>
