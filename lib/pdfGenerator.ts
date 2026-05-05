@@ -49,13 +49,14 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 	//   - Profit = Revenue − COGS.
 	const activeOrders = analyticsOrders.filter(o => o.status !== 'voided');
 
-	type PmKey = 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
+	type PmKey = 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split';
 	const pmMap: Record<PmKey, { orders: number; pieces: number; revenue: number }> = {
 		cash: { orders: 0, pieces: 0, revenue: 0 },
 		gcash: { orders: 0, pieces: 0, revenue: 0 },
 		grab: { orders: 0, pieces: 0, revenue: 0 },
 		debit_credit: { orders: 0, pieces: 0, revenue: 0 },
 		employee_charge: { orders: 0, pieces: 0, revenue: 0 },
+		split: { orders: 0, pieces: 0, revenue: 0 },
 	};
 
 	let totalPieces = 0;
@@ -155,10 +156,11 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		['grab', 'Grab'],
 		['debit_credit', 'Debit / Credit'],
 		['employee_charge', 'Employee Charge'],
+		['split', 'Split'],
 	];
 	// Core methods (cash/gcash/grab/debit_credit) always render so the report shows
-	// the full payment-mix picture even for zero-count buckets. Employee charge is
-	// only shown when it actually occurred (it's a rare, tracked-separately case).
+	// the full payment-mix picture even for zero-count buckets. Employee charge and
+	// split are shown only when they actually occurred.
 	const alwaysShow: Set<PmKey> = new Set(['cash', 'gcash', 'grab', 'debit_credit']);
 	for (const [key, label] of pmLabels) {
 		if (pmMap[key].orders === 0 && !alwaysShow.has(key)) continue;
@@ -247,6 +249,12 @@ export async function generateSalesReportPDF(data: SalesReportData): Promise<voi
 		}
 		if (pm === 'grab') {
 			return order.transaction_number ? `Grab\nTxn: ${order.transaction_number}` : 'Grab';
+		}
+		if (pm === 'split') {
+			const label = (m?: string) => m === 'gcash' ? 'GCash' : m === 'debit_credit' ? 'Debit/Credit' : m === 'grab' ? 'Grab' : m === 'employee_charge' ? 'Emp Charge' : 'Cash';
+			const a1 = parseFloat(d?.split_amount_1 || '0');
+			const a2 = parseFloat(d?.split_amount_2 || '0');
+			return `Split\n${label(d?.split_method_1)}: PHP ${a1.toFixed(2)}\n${label(d?.split_method_2)}: PHP ${a2.toFixed(2)}`;
 		}
 		return 'Cash';
 	};

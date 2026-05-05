@@ -29,7 +29,7 @@ export interface ReceiptOrderData {
 	appliedDiscountCode?: string;
 	isB1T1Promo?: boolean;
 	discountType?: 'percentage' | 'fixed' | 'b1t1' | 'sc_pwd' | string;
-	paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
+	paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split';
 	orderType?: string;
 	transactionNumber?: string;
 	paymentDetails?: Record<string, string> | null;
@@ -64,6 +64,16 @@ function formatPayment(method?: string): string {
 	if (method === "grab") return "GrabFood";
 	if (method === "debit_credit") return "Debit/Credit";
 	if (method === "employee_charge") return "Employee Charge";
+	if (method === "split") return "Split";
+	return "Cash";
+}
+
+function shortPaymentLabel(method?: string): string {
+	if (!method) return "Cash";
+	if (method === "gcash") return "GCash";
+	if (method === "grab") return "Grab";
+	if (method === "debit_credit") return "Debit/Credit";
+	if (method === "employee_charge") return "Emp Charge";
 	return "Cash";
 }
 function formatDate(date: Date): string {
@@ -166,6 +176,17 @@ async function buildCopy(
 	}
 	if (order.paymentMethod === 'employee_charge' && order.paymentDetails?.employee_name) {
 		lines.push(t(`Emp:   ${order.paymentDetails.employee_name}\n`));
+	}
+	if (order.paymentMethod === 'split' && order.paymentDetails) {
+		const d = order.paymentDetails;
+		const m1 = shortPaymentLabel(d.split_method_1);
+		const a1 = parseFloat(d.split_amount_1 || '0');
+		const m2 = shortPaymentLabel(d.split_method_2);
+		const a2 = parseFloat(d.split_amount_2 || '0');
+		lines.push(t(`  1) ${m1}: ${formatAmount(a1)}\n`));
+		if (d.split_txn_1) lines.push(t(`     Txn#: ${d.split_txn_1}\n`));
+		lines.push(t(`  2) ${m2}: ${formatAmount(a2)}\n`));
+		if (d.split_txn_2) lines.push(t(`     Txn#: ${d.split_txn_2}\n`));
 	}
 	if (order.cashier) {
 		const byLine = copyType === "establishment" && order.cashierEmployeeId
@@ -310,7 +331,7 @@ export interface DailySalesOrder {
 }
 
 export interface DailySalesGroup {
-	method: 'Cash' | 'GCash' | 'Grab' | 'Debit/Credit';
+	method: 'Cash' | 'GCash' | 'Grab' | 'Debit/Credit' | 'Split';
 	orders: DailySalesOrder[];
 	gross: number;
 	net?: number; // Grab only: gross * 0.73

@@ -39,7 +39,7 @@ export const createOrder = async (
   total: number,
   discountId?: string,
   discountAmount?: number,
-  paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge',
+  paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split',
   note?: string,
   transactionNumber?: string,
   paymentDetails?: Record<string, string> | null
@@ -187,7 +187,7 @@ export const getOrdersPage = async (
     search?: string;
     startDate?: string;
     endDate?: string;
-    paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit';
+    paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'split';
     status?: 'active' | 'voided';
   }
 ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> => {

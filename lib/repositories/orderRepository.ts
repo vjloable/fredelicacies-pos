@@ -13,7 +13,7 @@ export const orderRepository = {
       subtotal: number;
       discount_id?: string | null;
       discount_amount?: number;
-      payment_method?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge';
+      payment_method?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split';
       payment_details?: Record<string, string> | null;
       note?: string | null;
       transaction_number?: string | null;
@@ -231,7 +231,7 @@ export const orderRepository = {
       search?: string;
       startDate?: string;
       endDate?: string;
-      paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit';
+      paymentMethod?: 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'split';
       status?: 'active' | 'voided';
     }
   ): Promise<{ orders: OrderWithItems[]; totalCount: number; error: any }> {

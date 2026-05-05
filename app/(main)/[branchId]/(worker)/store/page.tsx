@@ -37,6 +37,9 @@ import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundle
 import HelpButton from "@/components/HelpButton";
 import { storeSteps } from "@/components/TutorialSteps";
 
+// Stable reference avoids DropdownField re-running its calcPosition effect each render.
+const SPLIT_DROPDOWN_OFFSET = { top: 2, left: 0 };
+
 // Toast notification component
 const SuccessToast = ({
 	show,
@@ -121,7 +124,14 @@ export default function StoreScreen() {
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
-	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge'>('cash');
+	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split'>('cash');
+	type SplitMethod = 'cash' | 'gcash' | 'debit_credit';
+	const [splitMethod1, setSplitMethod1] = useState<SplitMethod>('cash');
+	const [splitMethod2, setSplitMethod2] = useState<SplitMethod>('gcash');
+	const [splitAmount1, setSplitAmount1] = useState("");
+	const [splitAmount2, setSplitAmount2] = useState("");
+	const [splitTxn1, setSplitTxn1] = useState("");
+	const [splitTxn2, setSplitTxn2] = useState("");
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
@@ -643,6 +653,16 @@ export default function StoreScreen() {
 		: (appliedDiscount?.type === 'b1t1' ? 0 : discountAmount);
 	const total = subtotal - effectiveDiscountForTotal;
 
+	const splitAmount1Num = parseFloat(splitAmount1) || 0;
+	const splitAmount2Num = parseFloat(splitAmount2) || 0;
+	const splitSum = splitAmount1Num + splitAmount2Num;
+	const splitDiff = Math.round((total - splitSum) * 100) / 100;
+	const splitValid = paymentMethod !== 'split'
+		|| (splitMethod1 !== splitMethod2
+			&& splitAmount1Num > 0
+			&& splitAmount2Num > 0
+			&& Math.abs(splitDiff) < 0.005);
+
 
 	// Auto-clear applied discount when cart changes and discount is no longer eligible
 	useEffect(() => {
@@ -683,6 +703,20 @@ export default function StoreScreen() {
 		const sub = calculateEligibleSubtotal(appliedDiscount, cartItemsForDiscount);
 		setDiscountAmount(calculateDiscountAmount(appliedDiscount, sub, cartItemsForDiscount));
 	}, [paymentMethod]);
+
+	// Initialize split amounts when entering split mode; clear when leaving.
+	useEffect(() => {
+		if (paymentMethod === 'split') {
+			const half = Math.round((total / 2) * 100) / 100;
+			setSplitAmount1(half ? half.toFixed(2) : "");
+			setSplitAmount2(half ? (total - half).toFixed(2) : "");
+		} else {
+			setSplitAmount1("");
+			setSplitAmount2("");
+			setSplitTxn1("");
+			setSplitTxn2("");
+		}
+	}, [paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Handle discount application
 	const handleDiscountApplied = (discount: Discount | null, amount: number) => {
@@ -750,9 +784,22 @@ export default function StoreScreen() {
 		setShowOrderConfirmation(true);
 	};
 
+	const buildSplitPaymentDetails = (): Record<string, string> => {
+		const d: Record<string, string> = {
+			split_method_1: splitMethod1,
+			split_amount_1: splitAmount1Num.toFixed(2),
+			split_method_2: splitMethod2,
+			split_amount_2: splitAmount2Num.toFixed(2),
+		};
+		if (splitTxn1.trim()) d.split_txn_1 = splitTxn1.trim();
+		if (splitTxn2.trim()) d.split_txn_2 = splitTxn2.trim();
+		return d;
+	};
+
 	// Function to confirm and actually place the order
 	const confirmPlaceOrder = async () => {
 		if (cart.length === 0 || isPlacingOrder || !user || !currentBranch) return;
+		if (paymentMethod === 'split' && !splitValid) return;
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
@@ -788,6 +835,8 @@ export default function StoreScreen() {
 					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
 					: paymentMethod === 'employee_charge'
 					? { employee_name: employeeChargeName }
+					: paymentMethod === 'split'
+					? buildSplitPaymentDetails()
 					: null
 			);
 
@@ -841,6 +890,8 @@ export default function StoreScreen() {
 					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
 					: paymentMethod === 'employee_charge'
 					? { employee_name: employeeChargeName }
+					: paymentMethod === 'split'
+					? buildSplitPaymentDetails()
 					: undefined) as Record<string, string> | undefined,
 			};
 
@@ -1803,9 +1854,9 @@ export default function StoreScreen() {
 									Payment Method:
 								</span>
 								<div className='flex flex-wrap gap-2'>
-									{(['cash', 'gcash', 'grab', 'debit_credit', 'employee_charge'] as const).map((method) => {
+									{(['cash', 'gcash', 'grab', 'debit_credit', 'employee_charge', 'split'] as const).map((method) => {
 										const grabDisabled = method === 'grab' && !cart.some(item => item.grab_price && item.grab_price > 0);
-										const label = method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : method === 'grab' ? 'Grab' : method === 'debit_credit' ? 'Debit/Credit' : 'Employee Charge';
+										const label = method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : method === 'grab' ? 'Grab' : method === 'debit_credit' ? 'Debit/Credit' : method === 'employee_charge' ? 'Employee Charge' : 'Split';
 										return (
 										<button
 											key={method}
@@ -2027,6 +2078,94 @@ export default function StoreScreen() {
 											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 									</>
+								) : paymentMethod === 'split' ? (
+									<>
+										<p className='text-xs font-medium text-secondary/70'>Split Payment</p>
+										{(['1', '2'] as const).map(slot => {
+											const method = slot === '1' ? splitMethod1 : splitMethod2;
+											const setMethod = slot === '1' ? setSplitMethod1 : setSplitMethod2;
+											const amount = slot === '1' ? splitAmount1 : splitAmount2;
+											const txn = slot === '1' ? splitTxn1 : splitTxn2;
+											const setTxn = slot === '1' ? setSplitTxn1 : setSplitTxn2;
+											const otherMethod = slot === '1' ? splitMethod2 : splitMethod1;
+											const onAmountChange = (v: string) => {
+												if (!/^\d*\.?\d*$/.test(v)) return;
+												if (slot === '1') {
+													setSplitAmount1(v);
+													const n = parseFloat(v);
+													if (Number.isFinite(n)) {
+														const rem = Math.round((total - n) * 100) / 100;
+														setSplitAmount2(rem >= 0 ? rem.toFixed(2) : "");
+													}
+												} else {
+													setSplitAmount2(v);
+													const n = parseFloat(v);
+													if (Number.isFinite(n)) {
+														const rem = Math.round((total - n) * 100) / 100;
+														setSplitAmount1(rem >= 0 ? rem.toFixed(2) : "");
+													}
+												}
+											};
+											const labelOf = (k: SplitMethod) =>
+												k === 'cash' ? 'Cash' : k === 'gcash' ? 'GCash' : 'Debit/Credit';
+											const keyOf = (l: string): SplitMethod =>
+												l === 'GCash' ? 'gcash' : l === 'Debit/Credit' ? 'debit_credit' : 'cash';
+											const options = (['cash', 'gcash', 'debit_credit'] as const)
+												.filter(k => k !== otherMethod)
+												.map(labelOf);
+											return (
+												<div key={slot} className='bg-gray-50 border border-secondary/10 rounded-lg p-2.5 space-y-2'>
+													<div className='flex items-center gap-2'>
+														<span className='text-2.5 font-semibold text-secondary/60 w-3 shrink-0'>{slot}.</span>
+														<div className='flex-1 min-w-0'>
+															<DropdownField
+																key={`split-${slot}-${otherMethod}`}
+																options={options}
+																defaultValue={labelOf(method)}
+																onChange={l => setMethod(keyOf(l))}
+																heightClassName='h-9.5'
+																fontSize='12px'
+																padding='12px'
+																valueAlignment='left'
+																roundness='8'
+																shadow={false}
+																borderClassName='border-2 border-secondary/20 box-border'
+																dropdownOffset={SPLIT_DROPDOWN_OFFSET}
+															/>
+														</div>
+														<div className='relative w-28 shrink-0'>
+															<span className='absolute left-2.5 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
+															<input
+																type='text'
+																inputMode='decimal'
+																value={amount}
+																onChange={e => onAmountChange(e.target.value)}
+																placeholder='0.00'
+																className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-6 pr-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+															/>
+														</div>
+													</div>
+													{(method === 'gcash' || method === 'debit_credit') && (
+														<input
+															type='text'
+															value={txn}
+															onChange={e => setTxn(e.target.value)}
+															placeholder={method === 'gcash' ? 'GCash Transaction # (optional)' : 'Card Reference # (optional)'}
+															className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+														/>
+													)}
+												</div>
+											);
+										})}
+										<div className={`flex justify-between items-center text-2.5 mt-1 px-1 ${splitValid ? 'text-success' : 'text-error'}`}>
+											<span className='font-medium'>
+												{splitValid ? 'Amounts match total' : `Off by ${formatCurrency(Math.abs(splitDiff))}`}
+											</span>
+											<span className='font-medium tabular-nums'>
+												{formatCurrency(splitSum)} / {formatCurrency(total)}
+											</span>
+										</div>
+									</>
 								) : (
 									<>
 										<label className='text-xs text-secondary/70'>Note <span className='text-secondary/40'>(optional)</span></label>
@@ -2052,9 +2191,9 @@ export default function StoreScreen() {
 								</button>
 								<button
 									onClick={confirmPlaceOrder}
-									disabled={isPlacingOrder}
+									disabled={isPlacingOrder || !splitValid}
 									className={`flex-1 px-4 py-3 rounded-lg text-xs font-black transition-all ${
-										isPlacingOrder
+										isPlacingOrder || !splitValid
 											? "bg-gray-100 text-secondary/50 cursor-not-allowed"
 											: "bg-accent text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
 									}`}>

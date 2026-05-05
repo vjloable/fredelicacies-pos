@@ -303,6 +303,7 @@ export default function SalesScreen() {
 			gcash: { orders: 0, total: 0 },
 			grab: { orders: 0, total: 0 },
 			debit_credit: { orders: 0, total: 0 },
+			split: { orders: 0, total: 0 },
 		};
 		analyticsOrders.forEach(o => {
 			if (o.status === 'voided') return;
@@ -319,6 +320,7 @@ export default function SalesScreen() {
 			{ name: 'GCash', ...map.gcash, color: '#007CFF' },
 			{ name: 'Grab', ...map.grab, color: '#02B150' },
 			{ name: 'Debit/Credit', ...map.debit_credit, color: '#8B5CF6' },
+			{ name: 'Split', ...map.split, color: '#F59E0B' },
 		];
 	}, [analyticsOrders]);
 	const [wastageBarData, setWastageBarData] = useState<{ label: string; wastage: number }[]>([]);
@@ -333,7 +335,7 @@ export default function SalesScreen() {
 	const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	// Orders table filters
-	const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gcash' | 'grab' | 'debit_credit'>('all');
+	const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gcash' | 'grab' | 'debit_credit' | 'split'>('all');
 	const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
 	// Actions dropdown
 	const [showActionsMenu, setShowActionsMenu] = useState(false);
@@ -424,6 +426,7 @@ export default function SalesScreen() {
 					raw === 'gcash' ? 'GCash'
 					: raw === 'grab' ? 'Grab'
 					: raw === 'debit_credit' ? 'Debit/Credit'
+					: raw === 'split' ? 'Split'
 					: 'Cash';
 				if (!groupMap.has(method)) groupMap.set(method, { orders: [], gross: 0 });
 				const group = groupMap.get(method)!;
@@ -1218,7 +1221,7 @@ export default function SalesScreen() {
 								</div>
 								{/* Filters */}
 								<div className='flex items-center gap-1.5 mt-2 flex-wrap'>
-									{(['all', 'cash', 'gcash', 'grab', 'debit_credit'] as const).map(m => (
+									{(['all', 'cash', 'gcash', 'grab', 'debit_credit', 'split'] as const).map(m => (
 										<button
 											key={m}
 											onClick={() => { setPaymentFilter(m); setTablePage(1); }}
@@ -1226,7 +1229,7 @@ export default function SalesScreen() {
 												paymentFilter === m ? 'bg-accent text-primary' : 'bg-secondary/5 text-secondary/50 hover:text-secondary'
 											}`}
 										>
-											{m === 'all' ? 'All' : m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : m === 'debit_credit' ? 'Debit/Credit' : 'Cash'}
+											{m === 'all' ? 'All' : m === 'gcash' ? 'GCash' : m === 'grab' ? 'Grab' : m === 'debit_credit' ? 'Debit/Credit' : m === 'split' ? 'Split' : 'Cash'}
 										</button>
 									))}
 									<span className='text-secondary/20 mx-0.5'>|</span>
@@ -1465,6 +1468,8 @@ export default function SalesScreen() {
 											? "bg-green-100 text-green-700"
 											: selectedOrder.payment_method === "debit_credit"
 											? "bg-purple-100 text-purple-700"
+											: selectedOrder.payment_method === "split"
+											? "bg-amber-100 text-amber-700"
 											: "bg-secondary/10 text-secondary"
 									}`}>
 									{selectedOrder.payment_method === "gcash"
@@ -1473,6 +1478,8 @@ export default function SalesScreen() {
 										? "Grab"
 										: selectedOrder.payment_method === "debit_credit"
 										? "Debit/Credit"
+										: selectedOrder.payment_method === "split"
+										? "Split"
 										: "Cash"}
 								</span>
 							</div>
@@ -1548,6 +1555,29 @@ export default function SalesScreen() {
 									{formatCurrency(selectedOrder.total)}
 								</span>
 							</div>
+
+							{selectedOrder.payment_method === 'split' && selectedOrder.payment_details && (() => {
+								const d = selectedOrder.payment_details;
+								const label = (m?: string) => m === 'gcash' ? 'GCash' : m === 'debit_credit' ? 'Debit/Credit' : m === 'grab' ? 'Grab' : m === 'employee_charge' ? 'Emp Charge' : 'Cash';
+								return (
+									<div className='mt-3 pt-3 border-t border-dashed border-secondary/20 space-y-1'>
+										<span className='text-secondary/40 uppercase tracking-wide text-2.5 font-sans'>Split Payment</span>
+										{(['1', '2'] as const).map(slot => {
+											const m = d[`split_method_${slot}`];
+											const a = parseFloat(d[`split_amount_${slot}`] || '0');
+											const txn = d[`split_txn_${slot}`];
+											return (
+												<div key={slot} className='text-xs flex justify-between gap-2'>
+													<span className='text-secondary/70'>
+														{slot}. {label(m)}{txn ? <span className='text-secondary/40'> · {txn}</span> : null}
+													</span>
+													<span className='tabular-nums'>{formatCurrency(a)}</span>
+												</div>
+											);
+										})}
+									</div>
+								);
+							})()}
 
 							<div className='border-t border-dashed border-secondary/20 my-4' />
 
