@@ -260,6 +260,90 @@ export const voidOrder = async (
   return { error };
 };
 
+// Refund a completed order (manager/owner only — enforced in UI; logged for audit)
+// Unlike void, refund returns stock to inventory
+export const refundOrder = async (
+  orderId: string,
+  userId: string,
+  branchId: string,
+  reason: string,
+  orderNumber: string,
+): Promise<{ error: any }> => {
+  log.info('Order refund initiated', { branchId, userId, orderId, orderNumber, reason });
+
+  // Fetch the order with items to know what stock to return
+  const { order, error: fetchError } = await orderRepository.getById(orderId);
+  if (fetchError || !order) {
+    log.error('Refund failed: order not found', new Error(fetchError?.message || 'Not found'), { orderId });
+    return { error: fetchError || { message: 'Order not found' } };
+  }
+
+  if (order.status !== 'completed') {
+    return { error: { message: `Cannot refund order with status: ${order.status}` } };
+  }
+
+  // Update order status to refunded
+  const { error } = await supabase
+    .from('orders')
+    .update({
+      status: 'refunded',
+      refunded_by: userId,
+      refund_reason: reason.trim() || null,
+    })
+    .eq('id', orderId);
+
+  if (error) {
+    log.error('Order refund failed', new Error(error.message), { orderId });
+    return { error };
+  }
+
+  // Return stock to inventory
+  const regularItems = order.items.filter(i => !i.is_bundle && i.item_id);
+  const regularStockUpdates = regularItems.map(item => ({
+    id: item.item_id!,
+    stock: item.quantity,
+  }));
+
+  const bundleItems = order.items.filter(i => i.is_bundle);
+  const bundleStockMap = new Map<string, number>();
+  bundleItems.forEach(bundle => {
+    const components = bundle.bundle_components;
+    if (Array.isArray(components)) {
+      components.forEach((comp: BundleComponent) => {
+        const current = bundleStockMap.get(comp.inventory_item_id) || 0;
+        bundleStockMap.set(comp.inventory_item_id, current + (comp.quantity * bundle.quantity));
+      });
+    } else if (components?.items && Array.isArray(components.items)) {
+      components.items.forEach((comp: BundleComponent) => {
+        const current = bundleStockMap.get(comp.inventory_item_id) || 0;
+        bundleStockMap.set(comp.inventory_item_id, current + (comp.quantity * bundle.quantity));
+      });
+    }
+  });
+
+  const bundleStockUpdates = Array.from(bundleStockMap.entries()).map(
+    ([itemId, delta]) => ({ id: itemId, stock: delta })
+  );
+
+  const allStockUpdates = [...regularStockUpdates, ...bundleStockUpdates];
+  if (allStockUpdates.length > 0) {
+    await inventoryRepository.bulkUpdateStock(allStockUpdates);
+  }
+
+  log.info('Order refunded successfully', { branchId, userId, orderId, orderNumber });
+
+  void logActivity({
+    branchId,
+    userId,
+    action: 'order_refunded',
+    entityType: 'order',
+    entityId: orderId,
+    details: { order_number: orderNumber, reason: reason.trim() || null, total: order.total },
+  });
+
+  return { error: null };
+};
+
 // Calculate sales statistics
 export const calculateSalesStats = (orders: OrderWithItems[]) => {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);

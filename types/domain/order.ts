@@ -15,6 +15,8 @@ export interface Order {
   payment_details: Record<string, string> | null;
   voided_by: string | null;
   void_reason: string | null;
+  refunded_by: string | null;
+  refund_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,4 +69,6 @@ export interface UpdateOrderData {
   total?: number;
   voided_by?: string | null;
   void_reason?: string | null;
+  refunded_by?: string | null;
+  refund_reason?: string | null;
 }

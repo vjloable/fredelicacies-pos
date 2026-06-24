@@ -15,7 +15,7 @@ import {
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts, voidOrder } from "@/services/orderService";
+import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts, voidOrder, refundOrder } from "@/services/orderService";
 import { subscribeToDiscounts } from "@/services/discountService";
 import type { Discount } from "@/types/domain";
 import { useAuth } from "@/contexts/AuthContext";
@@ -267,6 +267,11 @@ export default function SalesScreen() {
 	const [showVoidConfirm, setShowVoidConfirm] = useState(false);
 	const [voidReason, setVoidReason] = useState('');
 	const [isVoiding, setIsVoiding] = useState(false);
+
+	// ── Refund order state ────────────────────────────────────────────────────
+	const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+	const [refundReason, setRefundReason] = useState('');
+	const [isRefunding, setIsRefunding] = useState(false);
 
 	// ── Date selection state ──────────────────────────────────────────────────
 	const [viewMode, setViewMode] = useState<ViewMode>("day");
@@ -587,6 +592,26 @@ export default function SalesScreen() {
 		if (!error) {
 			setShowVoidConfirm(false);
 			setVoidReason('');
+			setSelectedOrder(null);
+			fetchTablePage();
+		}
+	};
+
+	// ── Refund order ──────────────────────────────────────────────────────────
+	const handleRefundOrder = async () => {
+		if (!selectedOrder || !user || !currentBranch) return;
+		setIsRefunding(true);
+		const { error } = await refundOrder(
+			selectedOrder.id,
+			user.uid,
+			currentBranch.id,
+			refundReason,
+			selectedOrder.order_number,
+		);
+		setIsRefunding(false);
+		if (!error) {
+			setShowRefundConfirm(false);
+			setRefundReason('');
 			setSelectedOrder(null);
 			fetchTablePage();
 		}
@@ -1624,6 +1649,15 @@ export default function SalesScreen() {
 							</div>
 						)}
 
+						{selectedOrder.status === 'refunded' && (
+							<div className='mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center'>
+								<p className='text-xs font-semibold text-amber-600'>REFUNDED</p>
+								{selectedOrder.refund_reason && (
+									<p className='text-2.5 text-amber-600/70 mt-0.5'>{selectedOrder.refund_reason}</p>
+								)}
+							</div>
+						)}
+
 						<div className='flex gap-2 mt-5'>
 							{selectedOrder.status !== 'voided' && (
 								<button
@@ -1640,7 +1674,14 @@ export default function SalesScreen() {
 									{isPrinting ? 'Printing...' : 'Reprint'}
 								</button>
 							)}
-							{canVoid && selectedOrder.status !== 'voided' && (
+							{canVoid && selectedOrder.status === 'completed' && (
+								<button
+									onClick={() => setShowRefundConfirm(true)}
+									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors'>
+									Refund
+								</button>
+							)}
+							{canVoid && selectedOrder.status !== 'voided' && selectedOrder.status !== 'refunded' && (
 								<button
 									onClick={() => setShowVoidConfirm(true)}
 									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-error/10 text-error hover:bg-error/20 transition-colors'>
@@ -1678,6 +1719,34 @@ export default function SalesScreen() {
 										disabled={isVoiding}
 										className='flex-1 py-2 text-xs font-semibold bg-error text-white rounded-lg hover:bg-(--error)/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5'>
 										{isVoiding ? <><LoadingSpinner size='sm' />Voiding...</> : 'Confirm Void'}
+									</button>
+								</div>
+							</div>
+						)}
+
+						{showRefundConfirm && (
+							<div className='mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3'>
+								<p className='text-xs font-semibold text-amber-600'>Confirm Refund</p>
+								<p className='text-2.5 text-secondary/60'>This will refund the entire order and return stock to inventory. The action is logged and cannot be undone.</p>
+								<input
+									type='text'
+									value={refundReason}
+									onChange={(e) => setRefundReason(e.target.value)}
+									placeholder='Reason (optional)'
+									className='w-full px-3 py-2 text-xs border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/40 bg-white'
+								/>
+								<div className='flex gap-2'>
+									<button
+										onClick={() => { setShowRefundConfirm(false); setRefundReason(''); }}
+										disabled={isRefunding}
+										className='flex-1 py-2 text-xs font-medium text-secondary border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50'>
+										Cancel
+									</button>
+									<button
+										onClick={handleRefundOrder}
+										disabled={isRefunding}
+										className='flex-1 py-2 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5'>
+										{isRefunding ? <><LoadingSpinner size='sm' />Refunding...</> : 'Confirm Refund'}
 									</button>
 								</div>
 							</div>

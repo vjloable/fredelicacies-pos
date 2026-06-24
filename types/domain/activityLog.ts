@@ -25,7 +25,20 @@ export type LogAction =
   | 'worker_removed'
   | 'eod_lock_item'
   | 'eod_unlock_item'
-  | 'eod_submit';
+  | 'eod_submit'
+  | 'transfer_created'
+  | 'transfer_fulfilled'
+  | 'transfer_received'
+  | 'transfer_cancelled'
+  | 'catalog_synced'
+  | 'main_branch_elected'
+  | 'bundle_marked_inactive'
+  | 'order_voided'
+  | 'order_refunded'
+  | 'shift_opened'
+  | 'shift_closed'
+  | 'safe_drop'
+  | 'write_off_created';
 
 export interface ActivityLog {
   id: string;
