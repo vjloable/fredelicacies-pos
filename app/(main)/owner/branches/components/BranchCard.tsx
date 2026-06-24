@@ -1,5 +1,6 @@
 import React from "react";
 import BranchStatusIcon from "./icons/BranchStatusIcon";
+import BranchMainIcon from "./icons/BranchMainIcon";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
 import ViewBranchIcon from "./icons/ViewBranchIcon";
 import DeleteBranchIcon from "./icons/DeleteBranchIcon";
@@ -13,6 +14,7 @@ interface BranchCardProps {
 		createdAt: Date;
 		updatedAt: Date;
 		isActive: boolean;
+		isMain?: boolean;
 		imgUrl?: string;
 	};
 	formatDate: (date: Date) => string;
@@ -20,6 +22,7 @@ interface BranchCardProps {
 	onEdit?: (branchId: string) => void;
 	onDelete?: (branchId: string) => void;
 	onClick?: (branchId: string) => void;
+	onMakeMain?: (branchId: string) => void;
 }
 
 const BranchCard: React.FC<BranchCardProps> = ({
@@ -29,6 +32,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 	onEdit,
 	onDelete,
 	onClick,
+	onMakeMain,
 }) => {
 	const handleCardClick = () => {
 		if (onClick) {
@@ -67,7 +71,8 @@ const BranchCard: React.FC<BranchCardProps> = ({
 						<HorizontalLogo className='max-w-full max-h-full object-contain drop-shadow-lg' />
 					</div>
 				)}
-				<span className='absolute top-3 right-3'>
+				<span className='absolute top-3 right-3 flex items-center gap-1.5'>
+					{branch.isMain && <BranchMainIcon />}
 					<BranchStatusIcon isActive={branch.isActive} />
 				</span>
 			</div>
@@ -90,9 +95,19 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			</div>
 
 			{/* Footer Section with Buttons */}
-			{(onView || onEdit || onDelete) && (
-				<div className='px-3 py-3 bg-gray-50 border-t border-gray-100'>
-					<div className='flex flex-row gap-2 justify-end'>
+			{(onView || onEdit || onDelete || onMakeMain) && (
+				<div className='px-3 py-3 bg-gray-50 border-t border-gray-100 flex flex-row items-center gap-2'>
+					{onMakeMain && !branch.isMain && (
+						<button
+							onClick={(e) =>
+								handleActionClick(e, () => onMakeMain(branch.branchId))
+							}
+							className='px-3 py-1 rounded-md text-1 font-light border border-accent/20 bg-accent/5 text-secondary/50 hover:text-accent hover:bg-accent/10 transition-colors'
+							title='Set this as the main branch'>
+							Set as Main Branch
+						</button>
+					)}
+					<div className='flex flex-row gap-2 justify-end ml-auto'>
 						{onDelete && (
 							<button
 								onClick={(e) =>

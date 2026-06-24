@@ -11,10 +11,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
 import UsersIcon from "./icons/SidebarNav/UsersIcon";
+import DistributionIcon from "./icons/SidebarNav/DistributionIcon";
 import VersionDisplay from "./VersionDisplay";
+import {
+  getBranchTransfers,
+  subscribeToBranchTransfers,
+} from "@/services/transferService";
 
 // Import icons for new sections (create if they don't exist)
 interface NavItem {
@@ -23,15 +28,53 @@ interface NavItem {
 	icon: React.ComponentType<{ className?: string }>;
 	ownerOnly?: boolean;
 	managerOnly?: boolean;
+	badge?: number;
 }
 
 export default function SidebarNav() {
 	const { logout, isUserOwner, getUserRoleForBranch } = useAuth();
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const [transferActionable, setTransferActionable] = useState(0);
 	const router = useRouter();
 
 	const pathname = usePathname();
+
+	// Live count of actionable transfers for the current branch:
+	//   - incoming where this branch is dest and status=sent (push OR fulfilled-pull)
+	//   - outgoing pulls where this branch is source and not yet fulfilled
+	useEffect(() => {
+		if (!currentBranch?.id) {
+			setTransferActionable(0);
+			return;
+		}
+		const branchId = currentBranch.id;
+		let cancelled = false;
+		const refresh = () => {
+			getBranchTransfers(branchId, { status: "sent" }).then(({ transfers }) => {
+				if (cancelled) return;
+				let actionable = 0;
+				for (const t of transfers) {
+					if (t.destination_branch_id === branchId && (t.direction === "push" || !!t.fulfilled_at)) {
+						actionable++;
+					} else if (
+						t.source_branch_id === branchId &&
+						t.direction === "pull" &&
+						!t.fulfilled_at
+					) {
+						actionable++;
+					}
+				}
+				setTransferActionable(actionable);
+			});
+		};
+		refresh();
+		const unsub = subscribeToBranchTransfers(branchId, refresh);
+		return () => {
+			cancelled = true;
+			unsub();
+		};
+	}, [currentBranch?.id]);
 
 	// Check if user is manager for current branch
 	const isManagerForCurrentBranch = currentBranch
@@ -63,6 +106,15 @@ export default function SidebarNav() {
 			label: "Sales",
 			icon: SalesIcon,
 		},
+		// Workers see Distribution only when there's an actionable item to receive.
+		...(isWorkerOnly && transferActionable > 0
+			? [{
+				href: "transfers",
+				label: "Distribution",
+				icon: DistributionIcon,
+				badge: transferActionable,
+			} as NavItem]
+			: []),
 		...(isWorkerOnly ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
 	];
 
@@ -79,6 +131,13 @@ export default function SidebarNav() {
 			label: "Discounts",
 			icon: DiscountsIcon,
 			managerOnly: true,
+		},
+		{
+			href: "transfers",
+			label: "Distribution",
+			icon: DistributionIcon,
+			managerOnly: true,
+			badge: transferActionable > 0 ? transferActionable : undefined,
 		},
 		{
 			href: "settings",
@@ -100,6 +159,12 @@ export default function SidebarNav() {
 			href: "/owner/users",
 			label: "Users",
 			icon: UsersIcon,
+			ownerOnly: true,
+		},
+		{
+			href: "/owner/transfers",
+			label: "Distribution",
+			icon: DistributionIcon,
 			ownerOnly: true,
 		},
 		{
@@ -137,6 +202,13 @@ export default function SidebarNav() {
 						<span className='w-auto opacity-100 transition-all duration-300'>
 							{item.label}
 						</span>
+						{item.badge !== undefined && item.badge > 0 && (
+							<span className={`ml-auto mr-3 px-1.5 py-0.5 rounded-full text-2.5 font-bold tabular-nums ${
+								isActive ? "bg-primary text-accent" : "bg-error text-primary"
+							}`}>
+								{item.badge}
+							</span>
+						)}
 					</div>
 				</Link>
 			</li>

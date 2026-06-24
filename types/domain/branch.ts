@@ -8,6 +8,7 @@ export interface Branch {
   logo_url: string | null;
   branch_code: string | null;
   audit_category_id: string | null;
+  is_main: boolean;
   owner_id: string;
   created_at: string;
   updated_at: string;
@@ -29,4 +30,5 @@ export interface UpdateBranchData {
   logo_url?: string;
   branch_code?: string;
   audit_category_id?: string | null;
+  is_main?: boolean;
 }

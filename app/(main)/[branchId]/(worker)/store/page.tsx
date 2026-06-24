@@ -6,7 +6,7 @@ import TopBar from "@/components/TopBar";
 import MinusIcon from "./icons/MinusIcon";
 import OrderCartIcon from "./icons/OrderCartIcon";
 import type { InventoryItem, Category, Discount, BundleWithComponents, BundleComponent } from "@/types/domain";
-import { subscribeToInventoryItems } from "@/services/inventoryService";
+import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock } from "@/services/inventoryService";
 import { subscribeToCategories } from "@/services/categoryService";
 import { subscribeToBundles, calculateBundleAvailability } from "@/services/bundleService";
 import SearchIcon from "./icons/SearchIcon";
@@ -332,7 +332,7 @@ export default function StoreScreen() {
 			itemCategoryIds.some(catId => selectedCategories.includes(getCategoryName(catId)));
 
 		// Filter out out-of-stock items if hideOutOfStock is enabled
-		const usableStock = item.stock - (item.uncarried_stock ?? 0);
+		const usableStock = getAvailableInventoryStock(item);
 		const hasStock = hideOutOfStock ? usableStock > 0 : true;
 
 		return isVisible && matchesSearch && matchesCategory && hasStock;
@@ -359,7 +359,7 @@ export default function StoreScreen() {
 		const items: DisplayItem[] = filteredItems.map(item => ({
 			...item,
 			type: 'item' as const,
-			availability: item.stock - (item.uncarried_stock ?? 0)
+			availability: getAvailableInventoryStock(item)
 		}));
 
 		const bundleItems = bundles
@@ -453,17 +453,15 @@ export default function StoreScreen() {
 		);
 	};
 
-	// Function to calculate available stock (original stock minus cart quantity)
+	// Function to calculate available stock (available-to-sell minus cart quantity)
 	const getAvailableStock = (itemId: string) => {
 		const item = inventoryItems.find((inv) => inv.id === itemId);
 		const cartItem = cart.find((cartItem) => cartItem.id === itemId);
 
 		if (!item) return 0;
 
-		const originalStock = item.stock;
-		const reservedQuantity = cartItem ? cartItem.quantity : 0;
-
-		return Math.max(0, originalStock - reservedQuantity);
+		const cartQuantity = cartItem ? cartItem.quantity : 0;
+		return Math.max(0, getAvailableInventoryStock(item) - cartQuantity);
 	};
 
 	const addToCart = (item: DisplayItem) => {
@@ -529,7 +527,7 @@ export default function StoreScreen() {
 						grab_price: item.grab_price ?? null,
 						cost: item.cost ?? undefined,
 						quantity: 1,
-						originalStock: item.stock,
+						originalStock: getAvailableInventoryStock(item),
 						imgUrl: item.img_url ?? undefined,
 						categoryId: item.category_id ?? "",
 						categoryIds: item.category_ids?.length ? item.category_ids : item.category_id ? [item.category_id] : [],
@@ -619,7 +617,7 @@ export default function StoreScreen() {
 			grab_price: b1t1Price,
 			cost: s.item.cost ?? undefined,
 			quantity: s.quantity,
-			originalStock: s.item.stock - (s.item.uncarried_stock ?? 0),
+			originalStock: getAvailableInventoryStock(s.item),
 			imgUrl: s.itemImgUrl ?? undefined,
 			categoryId: s.item.category_id ?? "",
 			categoryIds: s.item.category_ids?.length ? s.item.category_ids : s.item.category_id ? [s.item.category_id] : [],
@@ -1113,29 +1111,44 @@ export default function StoreScreen() {
 					<div className='space-y-4'>
 						{/* Wildcard Bundle quick-action card */}
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
-							<div
+							<button
+								type='button'
 								onClick={() => setShowWildcardModal(true)}
-								className='group bg-primary rounded-xl border-2 border-bundle/40 overflow-hidden cursor-pointer hover:border-bundle hover:shadow-md active:scale-95 transition-all duration-200'>
-								<div className='relative w-full h-24 bg-bundle/5 overflow-hidden flex items-center justify-center group-hover:bg-bundle/10 transition-all duration-200'>
-									<svg className='w-12 h-12 text-bundle' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
-										<ellipse cx='12' cy='13' rx='9' ry='6' />
-										<ellipse cx='12' cy='11.5' rx='9' ry='6' />
-										<circle cx='9' cy='11' r='1.2' fill='currentColor' stroke='none' />
-										<circle cx='13' cy='10' r='1.2' fill='currentColor' stroke='none' />
-										<circle cx='15.5' cy='12.5' r='1.2' fill='currentColor' stroke='none' />
-										<circle cx='10.5' cy='13' r='1.2' fill='currentColor' stroke='none' />
+								className='group relative text-left w-full rounded-xl overflow-hidden cursor-pointer bg-primary border-2 border-dashed border-bundle/40 hover:border-bundle hover:shadow-md active:scale-95 transition-all duration-200'>
+								<div className='relative w-full h-24 flex items-center justify-center overflow-hidden bg-bundle/5 group-hover:bg-bundle/10 transition-colors duration-200'>
+									{/* sparkle accent */}
+									<svg className='absolute top-2.5 right-3 w-3 h-3 text-bundle/50 group-hover:text-bundle group-hover:scale-125 transition-all duration-300' viewBox='0 0 24 24' fill='currentColor'>
+										<path d='M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6z' />
+									</svg>
+									{/* round bilao tray you build yourself */}
+									<svg className='w-11 h-11 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
+										{/* tray rim + inner lip */}
+										<circle cx='10.5' cy='10.5' r='8' strokeWidth={1.5} />
+										<circle cx='10.5' cy='10.5' r='5.4' strokeWidth={1} strokeOpacity={0.3} />
+										{/* pieces already on the tray */}
+										<circle cx='10.5' cy='6.4' r='1.5' fill='currentColor' stroke='none' />
+										<circle cx='6.9' cy='12.6' r='1.5' fill='currentColor' stroke='none' />
+										<circle cx='14.1' cy='12.6' r='1.5' fill='currentColor' stroke='none' />
+										{/* add-your-own badge */}
+										<circle cx='18' cy='18' r='4.3' fill='currentColor' stroke='var(--primary)' strokeWidth={1.5} />
+										<path d='M18 16.1v3.8M16.1 18h3.8' stroke='var(--primary)' strokeWidth={1.6} />
 									</svg>
 								</div>
-								<div className='px-1.5 py-1'>
-									<p className='font-semibold text-secondary text-xs leading-snug line-clamp-2'>
+								<div className='px-2 py-1.5 border-t border-bundle/15'>
+									<p className='font-bold text-secondary text-xs leading-snug line-clamp-1'>
 										Wildcard Bundle
 									</p>
-									<div className='flex items-center justify-between gap-1 mt-1'>
-										<span className='text-bundle font-bold text-xs'>Build your own</span>
-										<span className='text-xs font-medium px-1.5 py-0.5 rounded select-none bg-bundle/10 text-bundle'>Mix</span>
+									<div className='flex items-center justify-between gap-1 mt-0.5'>
+										<span className='text-bundle font-semibold text-2.5'>Build your own</span>
+										<span className='inline-flex items-center gap-0.5 text-2.5 font-bold px-1.5 py-0.5 rounded-full select-none bg-bundle/15 text-bundle'>
+											<svg className='w-2.5 h-2.5' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={3} strokeLinecap='round'>
+												<path d='M12 5v14M5 12h14' />
+											</svg>
+											Mix
+										</span>
 									</div>
 								</div>
-							</div>
+							</button>
 						</div>
 
 						{groupedItems.map(group => (

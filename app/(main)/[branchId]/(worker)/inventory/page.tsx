@@ -12,6 +12,7 @@ import BundlesView from "./components/BundlesView";
 import LockItemModal from "./components/LockItemModal";
 import SubmitEODModal from "./components/SubmitEODModal";
 import AuditConfigModal from "./components/AuditConfigModal";
+import PublishMenuModal from "./components/PublishMenuModal";
 import type { InventoryItem, Category } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
@@ -54,7 +55,7 @@ function CategoriesIcon({ className }: { className?: string }) {
 }
 
 export default function InventoryScreen() {
-	const { currentBranch, refreshBranches } = useBranch();
+	const { currentBranch, refreshBranches, availableBranches } = useBranch();
 	const { user } = useAuth();
 	const { date: todayFormatted } = useDateTime();
 	const [categories, setCategories] = useState<Category[]>([]);
@@ -92,6 +93,7 @@ export default function InventoryScreen() {
 	const [resolving, setResolving] = useState(false);
 	// Audit config & inline audit state
 	const [showAuditConfigModal, setShowAuditConfigModal] = useState(false);
+	const [showPublishModal, setShowPublishModal] = useState(false);
 	const [auditMode, setAuditMode] = useState(false);
 	const [auditInputs, setAuditInputs] = useState<Record<string, string>>({});
 	const [auditResolutions, setAuditResolutions] = useState<Record<string, { type: 'force_carryover' | 'force_wastage'; reason: string } | null>>({});
@@ -662,6 +664,22 @@ export default function InventoryScreen() {
 															<span>{lockingAudit ? 'LOCKING…' : 'LOCK ALL'}</span>
 														</button>
 													)}
+													{/* Publish Menu (owner, main branch only) — copy catalog to sub-branches */}
+													{isOwner && currentBranch?.is_main && (
+														<button
+															onClick={() => setShowPublishModal(true)}
+															disabled={auditMode}
+															className={`h-8 px-4 flex items-center gap-2 rounded-lg shadow-sm font-black text-3 transition-all hover:scale-105 active:scale-95 bg-bundle/10 text-bundle hover:bg-bundle/20
+																${!canAccessPOS ? "blur-[1px] pointer-events-none" : ""}
+																${auditMode ? "opacity-40 cursor-not-allowed" : ""}`}
+															title='Copy this branch’s menu to other branches'
+														>
+															<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 19V5m0 0l-5 5m5-5l5 5' />
+															</svg>
+															<span>PUBLISH MENU</span>
+														</button>
+													)}
 													<button
 														onClick={() => setShowItemForm(true)}
 														disabled={auditMode}
@@ -1165,6 +1183,21 @@ export default function InventoryScreen() {
 								onClose={() => setShowAuditConfigModal(false)}
 								onSaved={() => { setShowAuditConfigModal(false); refreshBranches(); }}
 								onError={handleError}
+							/>
+						)}
+
+						{/* Publish Menu (owner, main branch only) */}
+						{currentBranch && user && (
+							<PublishMenuModal
+								isOpen={showPublishModal}
+								onClose={() => setShowPublishModal(false)}
+								userId={user.id}
+								sourceBranchId={currentBranch.id}
+								sourceBranchName={currentBranch.name}
+								items={items}
+								subBranches={availableBranches
+									.filter((b) => b.id !== currentBranch.id)
+									.map((b) => ({ id: b.id, name: b.name }))}
 							/>
 						)}
 

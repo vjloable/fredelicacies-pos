@@ -12,6 +12,7 @@ export interface Bundle {
   category_id?: string | null;
   category_ids?: string[]; // populated from bundle_categories junction table
   status: 'active' | 'inactive';
+  needs_attention: boolean;
   created_at: string;
   updated_at: string;
 }

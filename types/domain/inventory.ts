@@ -11,6 +11,8 @@ export interface InventoryItem {
   grab_price: number | null;
   stock: number;
   uncarried_stock: number;
+  reserved_stock: number;
+  synced_from_main_at: string | null;
   barcode: string | null;
   img_url: string | null;
   status: 'active' | 'inactive';

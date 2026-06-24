@@ -102,12 +102,20 @@ export const getLowStockItems = async (
   threshold: number = 5
 ): Promise<{ items: InventoryItem[]; error: any }> => {
   const { items, error } = await getInventoryItems(branchId);
-  
+
   if (error || !items) {
     return { items: [], error };
   }
-  
-  const lowStockItems = items.filter(item => item.stock <= threshold);
-  
+
+  const lowStockItems = items.filter(item => getAvailableStock(item) <= threshold);
+
   return { items: lowStockItems, error: null };
+};
+
+// Available-to-sell stock = current stock minus reserved (transfers in flight)
+// minus uncarried (flagged at EOD as carryover/destock pending).
+export const getAvailableStock = (
+  item: Pick<InventoryItem, 'stock' | 'reserved_stock' | 'uncarried_stock'>
+): number => {
+  return Math.max(0, item.stock - (item.reserved_stock ?? 0) - (item.uncarried_stock ?? 0));
 };

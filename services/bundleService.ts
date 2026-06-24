@@ -1,8 +1,10 @@
 import { bundleRepository } from '@/lib/repositories';
 import type { BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain';
 import type { InventoryItem } from '@/types/domain';
+import { getAvailableStock } from '@/services/inventoryService';
 
-// Calculate bundle availability based on inventory stock
+// Calculate bundle availability based on each component's available-to-sell stock
+// (subtracts reserved transfers + uncarried EOD flags).
 export const calculateBundleAvailability = (
   bundle: BundleWithComponents,
   inventory: InventoryItem[]
@@ -11,12 +13,12 @@ export const calculateBundleAvailability = (
   if (bundle.is_custom) return 999;
   if (!bundle.components || bundle.components.length === 0) return 0;
 
-  const stockById = new Map(inventory.map((item) => [item.id, item.stock]));
+  const availableById = new Map(inventory.map((item) => [item.id, getAvailableStock(item)]));
 
   const availabilityPerComponent = bundle.components.map((component) => {
-    const stock = stockById.get(component.inventory_item_id) ?? 0;
+    const available = availableById.get(component.inventory_item_id) ?? 0;
     if (!component.quantity || component.quantity <= 0) return 0;
-    return Math.floor(stock / component.quantity);
+    return Math.floor(available / component.quantity);
   });
 
   return Math.max(Math.min(...availabilityPerComponent), 0);
