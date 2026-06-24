@@ -420,17 +420,14 @@ export default function SalesScreen() {
 			const sorted = [...analyticsOrders].sort(
 				(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
 			);
+			const toMethodLabel = (raw: string) =>
+				raw === 'gcash' ? 'GCash'
+				: raw === 'grab' ? 'Grab'
+				: raw === 'debit_credit' ? 'Debit/Credit'
+				: 'Cash';
+
 			for (const order of sorted.filter(o => o.status !== 'voided')) {
 				const raw = ((order.payment_method as string) || 'cash').toLowerCase();
-				const method =
-					raw === 'gcash' ? 'GCash'
-					: raw === 'grab' ? 'Grab'
-					: raw === 'debit_credit' ? 'Debit/Credit'
-					: raw === 'split' ? 'Split'
-					: 'Cash';
-				if (!groupMap.has(method)) groupMap.set(method, { orders: [], gross: 0 });
-				const group = groupMap.get(method)!;
-				group.gross += order.total;
 				const shortId = order.order_number
 					? order.order_number.replace('ORD-', '')
 					: order.id.slice(-8).toUpperCase();
@@ -439,26 +436,44 @@ export default function SalesScreen() {
 				const baseOrderSubtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 				const grabUplift = isGrabOrder ? order.subtotal - baseOrderSubtotal : 0;
 
-				group.orders.push({
+				const orderEntry = {
 					orderId: shortId,
 					items: order.items.map((item: OrderItem) => {
 						const baseItemTotal = item.price * item.quantity;
 						let itemTotal = baseItemTotal;
-
 						if (isGrabOrder && grabUplift > 0.01 && baseOrderSubtotal > 0) {
 							const proportionalUplift = (baseItemTotal / baseOrderSubtotal) * grabUplift;
 							itemTotal = baseItemTotal + proportionalUplift;
 						}
-
-						return {
-							name: item.name,
-							qty: item.quantity,
-							total: itemTotal,
-						};
+						return { name: item.name, qty: item.quantity, total: itemTotal };
 					}),
 					total: order.total,
 					transactionNumber: order.transaction_number || undefined,
-				});
+				};
+
+				if (raw === 'split' && order.payment_details) {
+					const d = order.payment_details;
+					const m1 = toMethodLabel((d.split_method_1 || 'cash').toLowerCase());
+					const a1 = parseFloat(d.split_amount_1 || '0');
+					const m2 = toMethodLabel((d.split_method_2 || 'cash').toLowerCase());
+					const a2 = parseFloat(d.split_amount_2 || '0');
+
+					if (!groupMap.has(m1)) groupMap.set(m1, { orders: [], gross: 0 });
+					const g1 = groupMap.get(m1)!;
+					g1.gross += a1;
+					g1.orders.push({ ...orderEntry, total: a1 });
+
+					if (!groupMap.has(m2)) groupMap.set(m2, { orders: [], gross: 0 });
+					const g2 = groupMap.get(m2)!;
+					g2.gross += a2;
+					g2.orders.push({ ...orderEntry, total: a2 });
+				} else {
+					const method = toMethodLabel(raw);
+					if (!groupMap.has(method)) groupMap.set(method, { orders: [], gross: 0 });
+					const group = groupMap.get(method)!;
+					group.gross += order.total;
+					group.orders.push(orderEntry);
+				}
 			}
 			const groups = (['Cash', 'GCash', 'Grab', 'Debit/Credit'] as const)
 				.filter(m => groupMap.has(m))
