@@ -432,3 +432,154 @@ export async function formatDailySalesESC(data: DailySalesData): Promise<Uint8Ar
 
 	return assembleBytes(lines);
 }
+
+// ─── Shift Report ──────────────────────────────────────────────────────────
+
+export interface ShiftReportPrintData {
+	shiftDetails: {
+		cashierName: string;
+		beginningCash: number;
+		openedAt: string;
+		closedAt: string;
+	};
+	salesSummary: {
+		totalCash: number;
+		totalGCash: number;
+		totalGrab: number;
+		totalDebitCredit: number;
+		totalEmployeeCharge: number;
+		totalSales: number;
+	};
+	adjustments: {
+		voidCount: number;
+		voidTotal: number;
+		refundCount: number;
+		refundTotal: number;
+		employeeDiscountCount: number;
+		employeeDiscountTotal: number;
+		scPwdDiscountCount: number;
+		scPwdDiscountTotal: number;
+		freeCount: number;
+		freeTotal: number;
+		nearExpiryCount: number;
+		nearExpiryTotal: number;
+	};
+	cashMonitoring: {
+		beginningCash: number;
+		cashSales: number;
+		cashRefunds: number;
+		safeDrops: number;
+		payout: number;
+		expectedCash: number;
+		actualCash: number;
+		overShort: number;
+	};
+	others: {
+		safeDropTotal: number;
+		safeDropCount: number;
+		payoutTotal: number;
+		transactionCount: number;
+		remarks: string | null;
+	};
+	storeName: string;
+	branchName: string;
+}
+
+export async function formatShiftReportESC(data: ShiftReportPrintData): Promise<Uint8Array> {
+	const enc = new TextEncoder();
+	const t = (s: string) => enc.encode(s);
+	const lines: (string | Uint8Array)[] = [];
+
+	lines.push(INIT, FONT_A);
+
+	// Header
+	lines.push(ALIGN_CTR);
+	lines.push(BOLD_ON, SIZE_TALL);
+	lines.push(t(center(data.storeName) + "\n"));
+	lines.push(SIZE_NORMAL, BOLD_OFF);
+	lines.push(t(center(data.branchName) + "\n"));
+	lines.push(t(divider("=")));
+	lines.push(BOLD_ON);
+	lines.push(t(center("SHIFT REPORT") + "\n"));
+	lines.push(BOLD_OFF);
+	lines.push(t(divider("=")));
+
+	// Shift Details
+	lines.push(ALIGN_LEFT);
+	lines.push(BOLD_ON);
+	lines.push(t("-- SHIFT DETAILS --\n"));
+	lines.push(BOLD_OFF);
+	lines.push(t(`Cashier: ${data.shiftDetails.cashierName}\n`));
+	lines.push(t(totalRow("Change Fund:", formatAmount(data.shiftDetails.beginningCash))));
+	lines.push(t(`Opened: ${formatDate(new Date(data.shiftDetails.openedAt))}\n`));
+	lines.push(t(`Closed: ${formatDate(new Date(data.shiftDetails.closedAt))}\n`));
+	lines.push(t(divider()));
+
+	// Sales Summary
+	lines.push(BOLD_ON);
+	lines.push(t("-- SALES SUMMARY --\n"));
+	lines.push(BOLD_OFF);
+	const ss = data.salesSummary;
+	lines.push(t(totalRow("Total Cash:", formatAmount(ss.totalCash))));
+	lines.push(t(totalRow("Total GCash:", formatAmount(ss.totalGCash))));
+	lines.push(t(totalRow("Total Grab:", formatAmount(ss.totalGrab))));
+	lines.push(t(totalRow("Total Debit/Credit:", formatAmount(ss.totalDebitCredit))));
+	if (ss.totalEmployeeCharge > 0) {
+		lines.push(t(totalRow("Employee Charge:", formatAmount(ss.totalEmployeeCharge))));
+	}
+	lines.push(t(divider()));
+	lines.push(BOLD_ON);
+	lines.push(t(totalRow("TOTAL SALES:", formatAmount(ss.totalSales))));
+	lines.push(BOLD_OFF);
+	lines.push(t(divider()));
+
+	// Adjustments
+	lines.push(BOLD_ON);
+	lines.push(t("-- ADJUSTMENTS --\n"));
+	lines.push(BOLD_OFF);
+	const adj = data.adjustments;
+	lines.push(t(totalRow(`Void(${adj.voidCount}):`, formatAmount(adj.voidTotal))));
+	lines.push(t(totalRow(`Refunds(${adj.refundCount}):`, formatAmount(adj.refundTotal))));
+	lines.push(t(totalRow(`Emp Disc(${adj.employeeDiscountCount}):`, formatAmount(adj.employeeDiscountTotal))));
+	lines.push(t(totalRow(`SC/PWD(${adj.scPwdDiscountCount}):`, formatAmount(adj.scPwdDiscountTotal))));
+	lines.push(t(totalRow(`Free(${adj.freeCount}):`, formatAmount(adj.freeTotal))));
+	lines.push(t(totalRow(`Near Exp(${adj.nearExpiryCount}):`, formatAmount(adj.nearExpiryTotal))));
+	lines.push(t(divider()));
+
+	// Cash Monitoring
+	lines.push(BOLD_ON);
+	lines.push(t("-- CASH MONITORING --\n"));
+	lines.push(BOLD_OFF);
+	const cm = data.cashMonitoring;
+	lines.push(t(totalRow("Beginning Cash:", formatAmount(cm.beginningCash))));
+	lines.push(t(totalRow("(+) Cash Sales:", formatAmount(cm.cashSales))));
+	lines.push(t(totalRow("(-) Cash Refunds:", formatAmount(cm.cashRefunds))));
+	lines.push(t(totalRow("(-) Safe Drops:", formatAmount(cm.safeDrops))));
+	lines.push(t(totalRow("(-) Payout:", formatAmount(cm.payout))));
+	lines.push(t(divider()));
+	lines.push(BOLD_ON);
+	lines.push(t(totalRow("= Expected Cash:", formatAmount(cm.expectedCash))));
+	lines.push(t(totalRow("Actual Cash:", formatAmount(cm.actualCash))));
+	const osSign = cm.overShort >= 0 ? "+" : "";
+	lines.push(t(totalRow("Over/Short:", `${osSign}${formatAmount(cm.overShort)}`)));
+	lines.push(BOLD_OFF);
+	lines.push(t(divider()));
+
+	// Others
+	lines.push(BOLD_ON);
+	lines.push(t("-- OTHERS --\n"));
+	lines.push(BOLD_OFF);
+	const oth = data.others;
+	lines.push(t(totalRow(`Safe Drop(${oth.safeDropCount}):`, formatAmount(oth.safeDropTotal))));
+	lines.push(t(totalRow("Payout/Expenses:", formatAmount(oth.payoutTotal))));
+	lines.push(t(totalRow("Transactions:", oth.transactionCount.toString())));
+	if (oth.remarks) {
+		lines.push(t(`Remarks: ${oth.remarks}\n`));
+	}
+	lines.push(t(divider("=")));
+
+	lines.push(t("\n\n\n"));
+	lines.push(CUT);
+
+	return assembleBytes(lines);
+}
