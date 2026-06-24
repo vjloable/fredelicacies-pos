@@ -6,6 +6,7 @@ import { authService } from '@/services/authService';
 import { uploadToSupabase } from '@/lib/supabaseStorage';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import SafeImage from '@/components/SafeImage';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [showChangePassword, setShowChangePassword] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -250,6 +252,18 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         />
                     </div>
 
+                    {/* Change Password */}
+                    <div className='pt-1 border-t border-secondary/10'>
+                        <button
+                            type='button'
+                            onClick={() => setShowChangePassword(true)}
+                            disabled={loading}
+                            className='w-full py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors disabled:opacity-50 text-left'
+                        >
+                            Change Password
+                        </button>
+                    </div>
+
                     {/* Read-only info */}
                     <div className='pt-1 border-t border-secondary/10 space-y-3'>
                         <div className='flex items-center justify-between'>
@@ -294,6 +308,11 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         </button>
                     </div>
                 </form>
+
+                <ChangePasswordModal
+                    isOpen={showChangePassword}
+                    onClose={() => setShowChangePassword(false)}
+                />
             </div>
         </div>
     );

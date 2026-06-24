@@ -131,6 +131,29 @@ export const authService = {
     }
   },
 
+  // Change password — verifies current password first by re-authenticating
+  changePassword: async (
+    email: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ error: any }> => {
+    const { error: verifyError } = await authRepository.signIn({
+      email,
+      password: currentPassword,
+    });
+    if (verifyError) {
+      return { error: { message: 'Current password is incorrect.' } };
+    }
+
+    const { error: updateError } = await authRepository.updatePassword(newPassword);
+    return { error: updateError };
+  },
+
+  // Request password reset email
+  resetPassword: async (email: string): Promise<{ error: any }> => {
+    return await authRepository.resetPasswordForEmail(email);
+  },
+
   // Subscribe to auth state changes
   onAuthStateChange: (callback: (session: any) => void) => {
     return authRepository.onAuthStateChange(callback);

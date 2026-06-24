@@ -94,6 +94,24 @@ export const authRepository = {
     return { session, error: null };
   },
 
+  // Update authenticated user's password
+  async updatePassword(newPassword: string): Promise<{ error: any }> {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error };
+  },
+
+  // Send password reset email
+  async resetPasswordForEmail(email: string): Promise<{ error: any }> {
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/auth/reset-password`
+      : `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    return { error };
+  },
+
   // Subscribe to auth state changes
   onAuthStateChange(callback: (session: AuthSession | null) => void) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

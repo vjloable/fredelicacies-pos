@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { authService } from "@/services/authService";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
@@ -16,6 +17,10 @@ function LoginContent() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
+	const [showForgotPassword, setShowForgotPassword] = useState(false);
+	const [resetEmail, setResetEmail] = useState("");
+	const [resetLoading, setResetLoading] = useState(false);
+	const [resetSent, setResetSent] = useState(false);
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { user, login, isUserOwner } = useAuth();
@@ -117,6 +122,19 @@ function LoginContent() {
 		}
 	};
 
+	const handleForgotPassword = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!resetEmail.trim()) {
+			setError("Please enter your email address.");
+			return;
+		}
+		setResetLoading(true);
+		setError("");
+		await authService.resetPassword(resetEmail.trim());
+		setResetLoading(false);
+		setResetSent(true);
+	};
+
 	const handleInputChange =
 		(field: "email" | "password") =>
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,9 +168,87 @@ function LoginContent() {
 						</div>
 					</div>
 					<p className='text-center text-3.5 font-medium text-secondary'>
-						Sign in to your account
+						{showForgotPassword ? 'Reset your password' : 'Sign in to your account'}
 					</p>
 					<div className='p-8'>
+						{showForgotPassword ? (
+							<>
+								{resetSent ? (
+									<div className='space-y-6'>
+										<div className='bg-green-50 border border-green-200 rounded-xl p-4 text-center'>
+											<svg className='w-8 h-8 text-green-600 mx-auto mb-2' fill='currentColor' viewBox='0 0 20 20'>
+												<path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' clipRule='evenodd' />
+											</svg>
+											<p className='text-xs text-green-700 font-medium'>Check your email</p>
+											<p className='text-xs text-green-600 mt-1'>If an account exists with that email, a reset link has been sent.</p>
+										</div>
+										<button
+											type='button'
+											onClick={() => { setShowForgotPassword(false); setResetSent(false); setResetEmail(''); }}
+											className='w-full py-3 rounded-md font-semibold bg-accent hover:bg-accent/90 text-white transition-all shadow-lg'
+										>
+											Back to Sign In
+										</button>
+									</div>
+								) : (
+									<form onSubmit={handleForgotPassword} className='space-y-6'>
+										<div>
+											<label className='block text-xs font-medium text-secondary mb-2'>Email</label>
+											<input
+												type='email'
+												value={resetEmail}
+												onChange={(e) => { setResetEmail(e.target.value); setError(''); }}
+												className='w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
+												placeholder='Enter your email'
+												disabled={resetLoading}
+												autoComplete='email'
+											/>
+										</div>
+
+										{error && (
+											<div className='bg-red-50 border border-red-200 rounded-xl p-3'>
+												<div className='flex items-center gap-2'>
+													<svg className='w-5 h-5 text-error' fill='currentColor' viewBox='0 0 20 20'>
+														<path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z' clipRule='evenodd' />
+													</svg>
+													<span className='text-xs text-error'>{error}</span>
+												</div>
+											</div>
+										)}
+
+										<button
+											type='submit'
+											disabled={resetLoading}
+											className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
+												resetLoading
+													? "bg-gray-300 text-gray-500 cursor-not-allowed"
+													: "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
+											}`}
+										>
+											{resetLoading ? (
+												<div className='flex items-center justify-center gap-2'>
+													<LoadingSpinner className="border-secondary/30" />
+													Sending...
+												</div>
+											) : (
+												"Send Reset Link"
+											)}
+										</button>
+
+										<div className='text-center'>
+											<button
+												type='button'
+												onClick={() => { setShowForgotPassword(false); setError(''); }}
+												className='text-xs font-medium text-accent hover:text-accent/80 transition-colors'
+											>
+												Back to Sign In
+											</button>
+										</div>
+									</form>
+								)}
+							</>
+						) : (
+						<>
 						<form onSubmit={handleSubmit} className='space-y-6'>
 							{/* Email Field */}
 							<div>
@@ -184,6 +280,15 @@ function LoginContent() {
 									disabled={isLoading}
 									autoComplete='current-password'
 								/>
+								<div className='text-right mt-1.5'>
+									<button
+										type='button'
+										onClick={() => { setShowForgotPassword(true); setResetEmail(credentials.email); setError(''); }}
+										className='text-xs text-accent hover:text-accent/80 transition-colors'
+									>
+										Forgot Password?
+									</button>
+								</div>
 							</div>
 
 							{/* Success Message */}
@@ -262,6 +367,8 @@ function LoginContent() {
 							Fredelicacies Point-of-Sales System <VersionDisplay variant="simple" />
 							</p>
 						</div>
+						</>
+						)}
 					</div>
 				</div>
 			</div>
