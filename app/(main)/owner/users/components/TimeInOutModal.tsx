@@ -67,20 +67,30 @@ export default function TimeInOutModal({
 		setError(null);
 
 		try {
+			// Resolve the workers table ID (attendance uses this, not auth UID)
+			const workersTableId = worker.roleAssignments
+				.find(a => a.branchId === (selectedBranchId || worker.currentBranchId) && a.isActive)
+				?.workersTableId
+				|| worker.roleAssignments.find(a => a.isActive)?.workersTableId;
+
+			if (!workersTableId) {
+				throw new Error("No active branch assignment found for this worker");
+			}
+
 			if (action === "time_in") {
-				const { id, error } = await attendanceService.clockIn(
+				const { error } = await attendanceService.clockIn(
 					selectedBranchId,
-					worker.id
+					workersTableId
 				);
 				if (error) {
 					throw error;
 				}
 			} else {
-				const { attendance: activeAttendance, error: getError } = await attendanceService.getActiveAttendance(
-					worker.id
-				);
-				if (getError) {
-					throw getError;
+				// Try by workersTableId first, then fallback to auth UID for older records
+				let { attendance: activeAttendance } = await attendanceService.getActiveAttendance(workersTableId);
+				if (!activeAttendance) {
+					const fallback = await attendanceService.getActiveAttendanceByUserId(worker.id);
+					activeAttendance = fallback.attendance;
 				}
 				if (activeAttendance) {
 					const { error: clockOutError } = await attendanceService.clockOut(
@@ -90,7 +100,9 @@ export default function TimeInOutModal({
 						throw clockOutError;
 					}
 				} else {
-					throw new Error("No active attendance found");
+					setError("This worker is already clocked out.");
+					setLoading(false);
+					return;
 				}
 			}
 
