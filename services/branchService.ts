@@ -1,4 +1,5 @@
 import { branchRepository } from '@/lib/repositories';
+import { supabase } from '@/lib/supabase';
 import type { Branch, CreateBranchData, UpdateBranchData } from '@/types/domain';
 
 // Re-export types for convenience
@@ -44,5 +45,17 @@ export const branchService = {
   // Real-time listener for branches
   subscribeToBranches: (callback: (branches: Branch[]) => void): (() => void) => {
     return branchRepository.subscribe(callback);
+  },
+
+  // Reset branch data (owner only — calls Supabase RPC)
+  resetBranchData: async (
+    branchId: string,
+    mode: 'sales' | 'inventory' | 'everything'
+  ): Promise<{ error: any }> => {
+    const { error } = await supabase.rpc('reset_branch_data', {
+      p_branch_id: branchId,
+      p_mode: mode,
+    });
+    return { error };
   },
 };

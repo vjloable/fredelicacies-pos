@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { branchService, Branch } from '@/services/branchService';
 import ImageUpload from '@/components/ImageUpload';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ResetBranchDataModal from '@/components/ResetBranchDataModal';
 
 interface EditBranchModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function EditBranchModal({
   onError
 }: EditBranchModalProps) {
   const [loading, setLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [branchData, setBranchData] = useState({
     name: '',
     address: '',
@@ -148,7 +150,7 @@ export default function EditBranchModal({
                   type="text"
                   value={branchData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch name"
                   maxLength={100}
                 />
@@ -162,7 +164,7 @@ export default function EditBranchModal({
                   type="text"
                   value={branchData.branch_code}
                   onChange={(e) => handleInputChange('branch_code', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
-                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
+                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
                   placeholder="e.g. MNL"
                   maxLength={3}
                 />
@@ -179,7 +181,7 @@ export default function EditBranchModal({
                   type="text"
                   value={branchData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Enter branch location"
                   maxLength={200}
                 />
@@ -287,7 +289,29 @@ export default function EditBranchModal({
                 {hasChanges ? 'Update Branch' : 'No Changes'}
               </button>
             </div>
+
+            {/* Danger Zone */}
+            <div className="mt-6 pt-4 border-t border-error/20">
+              <p className="text-xs font-semibold text-error mb-2">Danger Zone</p>
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="w-full py-2.5 border border-error/30 text-error text-xs font-semibold rounded-xl hover:bg-error/5 transition-all"
+              >
+                Reset Branch Data
+              </button>
+            </div>
           </>
+        )}
+
+        {/* Reset Branch Data Modal */}
+        {branch && (
+          <ResetBranchDataModal
+            isOpen={showResetModal}
+            branch={branch}
+            onClose={() => setShowResetModal(false)}
+            onReset={() => { setShowResetModal(false); onSuccess(); }}
+            onError={onError}
+          />
         )}
       </div>
     </div>
