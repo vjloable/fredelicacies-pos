@@ -15,7 +15,9 @@ import { useEffect, useState } from "react";
 import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
 import UsersIcon from "./icons/SidebarNav/UsersIcon";
 import DistributionIcon from "./icons/SidebarNav/DistributionIcon";
+import DashboardIcon from "./icons/SidebarNav/DashboardIcon";
 import VersionDisplay from "./VersionDisplay";
+import WhatsNewModal from "./WhatsNewModal";
 import {
   getBranchTransfers,
   subscribeToBranchTransfers,
@@ -36,6 +38,7 @@ export default function SidebarNav() {
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [transferActionable, setTransferActionable] = useState(0);
+	const [showWhatsNew, setShowWhatsNew] = useState(false);
 	const router = useRouter();
 
 	const pathname = usePathname();
@@ -87,8 +90,6 @@ export default function SidebarNav() {
 		(!isUserOwner() && (isManagerForCurrentBranch || isUserOwner())) ||
 		(isUserOwner() && currentBranch);
 
-	const isWorkerOnly = !isUserOwner() && !isManagerForCurrentBranch;
-
 	// Worker Section - Available to all users (workers, managers, owners)
 	const workerNavItems: NavItem[] = [
 		{
@@ -106,8 +107,8 @@ export default function SidebarNav() {
 			label: "Sales",
 			icon: SalesIcon,
 		},
-		// Workers see Distribution only when there's an actionable item to receive.
-		...(isWorkerOnly && transferActionable > 0
+		// Workers see Distribution only when there's an actionable item AND they're not a manager/owner.
+		...(!isUserOwner() && !isManagerForCurrentBranch && transferActionable > 0
 			? [{
 				href: "transfers",
 				label: "Distribution",
@@ -115,7 +116,8 @@ export default function SidebarNav() {
 				badge: transferActionable,
 			} as NavItem]
 			: []),
-		...(isWorkerOnly ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
+		// Workers see Settings only if not manager/owner
+		...(!isUserOwner() && !isManagerForCurrentBranch ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
 	];
 
 	// Manager Section - Available to managers and owners
@@ -132,23 +134,31 @@ export default function SidebarNav() {
 			icon: DiscountsIcon,
 			managerOnly: true,
 		},
-		{
+		// Manager sees Distribution only if NOT owner (owner has it in owner section)
+		...(!isUserOwner() ? [{
 			href: "transfers",
 			label: "Distribution",
 			icon: DistributionIcon,
 			managerOnly: true,
 			badge: transferActionable > 0 ? transferActionable : undefined,
-		},
-		{
+		} as NavItem] : []),
+		// Manager sees Settings only if NOT owner (owner has it in owner section)
+		...(!isUserOwner() ? [{
 			href: "settings",
 			label: "Settings",
 			icon: SettingsIcon,
 			managerOnly: true,
-		},
+		} as NavItem] : []),
 	];
 
 	// Owner Section - Available to owners only
 	const ownerNavItems: NavItem[] = [
+		{
+			href: "/owner/dashboard",
+			label: "Dashboard",
+			icon: DashboardIcon,
+			ownerOnly: true,
+		},
 		{
 			href: "/owner/branches",
 			label: "Branches",
@@ -171,6 +181,12 @@ export default function SidebarNav() {
 			href: "/owner/logs",
 			label: "Logs",
 			icon: LogsIcon,
+			ownerOnly: true,
+		},
+		{
+			href: "settings",
+			label: "Settings",
+			icon: SettingsIcon,
 			ownerOnly: true,
 		},
 	];
@@ -360,12 +376,27 @@ export default function SidebarNav() {
 						</li>
 					</ul>
 				</nav>
-			{/* Version */}
+			{/* Version + What's New */}
 			<div className='shrink-0 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-gray-200'>
-				<p className='text-2.5 text-secondary/30 text-center'>
-					<VersionDisplay variant="simple" /> 
-				</p>
+				<div className='flex items-center justify-center gap-1.5'>
+					<p className='text-2.5 text-secondary/30'>
+						<VersionDisplay variant="simple" />
+					</p>
+					<span className='text-secondary/20'>·</span>
+					<button
+						onClick={() => setShowWhatsNew(true)}
+						className='text-2.5 text-accent/60 hover:text-accent transition-colors'
+					>
+						What&apos;s New
+					</button>
+				</div>
 			</div>
+
+			{/* Auto-show on version change + manual re-open */}
+			<WhatsNewModal
+				forceOpen={showWhatsNew}
+				onClose={() => setShowWhatsNew(false)}
+			/>
 			</div>
 		</div>
 	);
