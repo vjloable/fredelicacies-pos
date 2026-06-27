@@ -720,8 +720,8 @@ export default function InventoryScreen() {
 												</div>
 											</div>
 
-											{/* EOD Audit Panel (owner only) */}
-											{isOwner && canAccessPOS && (
+											{/* EOD Audit Panel (owner only, hidden when no locks or session) */}
+											{isOwner && canAccessPOS && (eodLocks.length > 0 || eodSession) && (
 												<div className='mb-3 border border-secondary/15 rounded-xl overflow-hidden'>
 													<button
 														onClick={() => setEodPanelOpen(p => !p)}

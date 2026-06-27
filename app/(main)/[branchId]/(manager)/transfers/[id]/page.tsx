@@ -449,7 +449,7 @@ function ReceiveShipmentModal({
                           }));
                         }}
                         disabled={!matched}
-                        className="w-20 text-right border-2 border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 disabled:text-secondary/40"
+                        className="w-20 text-right border border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 disabled:text-secondary/40"
                       />
                     </div>
                   </div>
@@ -553,7 +553,7 @@ function CancelTransferModal({
             onChange={e => setReason(e.target.value)}
             rows={2}
             placeholder="e.g. wrong items selected"
-            className="w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            className="w-full border border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
           />
           {error && (
             <div className="bg-error/10 border border-error/20 text-error text-2.5 px-3 py-2 rounded-lg">

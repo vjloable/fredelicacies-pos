@@ -155,7 +155,7 @@ export default function DiscountDropdown({
 
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-white border-2 border-secondary/20 rounded-lg shadow-lg">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-white border border-secondary/20 rounded-lg shadow-lg">
           {/* Search */}
           <div className="p-2 border-b border-secondary/10">
             <div className="relative">
@@ -168,7 +168,7 @@ export default function DiscountDropdown({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search discounts..."
-                className="w-full pl-8 pr-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                className="w-full pl-8 pr-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
               />
             </div>
           </div>

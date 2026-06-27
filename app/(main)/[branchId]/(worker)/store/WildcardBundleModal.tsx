@@ -228,7 +228,7 @@ export default function WildcardBundleModal({
               onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setSellingPriceInput(e.target.value); }}
               onFocus={e => e.target.select()}
               placeholder="0.00"
-              className="w-full mt-1 px-2 py-1.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
+              className="w-full mt-1 px-2 py-1.5 text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent"
             />
           </div>
 

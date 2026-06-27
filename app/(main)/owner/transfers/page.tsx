@@ -146,7 +146,7 @@ export default function OwnerTransfersPage() {
             <select
               value={sourceFilter}
               onChange={e => setSourceFilter(e.target.value)}
-              className="border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
+              className="border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
               <option value="">Any</option>
               {allBranches.map(b => (
                 <option key={b.id} value={b.id}>
@@ -160,7 +160,7 @@ export default function OwnerTransfersPage() {
             <select
               value={destFilter}
               onChange={e => setDestFilter(e.target.value)}
-              className="border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
+              className="border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
               <option value="">Any</option>
               {allBranches.map(b => (
                 <option key={b.id} value={b.id}>

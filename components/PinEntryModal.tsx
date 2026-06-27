@@ -253,7 +253,7 @@ export default function PinEntryModal({
 					<button
 						onClick={onCancel}
 						disabled={loading}
-						className="flex-1 h-12 rounded-xl border-2 border-secondary/20 text-secondary font-semibold hover:bg-background transition-all cursor-pointer disabled:opacity-50">
+						className="flex-1 h-12 rounded-xl border border-secondary/20 text-secondary font-semibold hover:bg-background transition-all cursor-pointer disabled:opacity-50">
 						Cancel
 					</button>
 					<button

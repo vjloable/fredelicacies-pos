@@ -242,7 +242,7 @@ export default function AddBundleModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                     placeholder="Enter bundle name"
                   />
                 </div>
@@ -267,7 +267,7 @@ export default function AddBundleModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -301,7 +301,7 @@ export default function AddBundleModal({
                           setGrabPriceInput('');
                         }
                       }}
-                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="0.00"
                       inputMode="decimal"
                     />
@@ -318,7 +318,7 @@ export default function AddBundleModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+                  className="w-full px-3 py-2 text-3 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                   placeholder="Enter bundle description"
                   rows={3}
                 />
@@ -344,7 +344,7 @@ export default function AddBundleModal({
                     <button
                       type="button"
                       onClick={() => setCategoryDropdownOpen(o => !o)}
-                      className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+                      className="w-full min-h-9.5 px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
                     >
                       {selectedCategoryIds.length === 0 ? (
                         <span className="text-secondary/40 text-3">Select categories...</span>
@@ -369,7 +369,7 @@ export default function AddBundleModal({
                       </svg>
                     </button>
                     {categoryDropdownOpen && (
-                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
                         {categories.map(cat => (
                           <label
                             key={cat.id}
@@ -435,7 +435,7 @@ export default function AddBundleModal({
                         }
                       }}
                       min="1"
-                      className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border-2 border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
                       placeholder="e.g. 5"
                     />
                     <p className="text-xs text-secondary/50 mt-1">
@@ -526,7 +526,7 @@ export default function AddBundleModal({
                               value={component.quantity}
                               onChange={(e) => handleUpdateQuantity(component.inventoryItemId, parseInt(e.target.value) || 1)}
                               min="1"
-                              className="w-16 px-2 py-1 text-center text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                              className="w-16 px-2 py-1 text-center text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                           </div>
 
@@ -607,7 +607,7 @@ export default function AddBundleModal({
                             value={ai.quantity}
                             onChange={e => handleUpdateAdditionalQty(ai.inventoryItemId, parseInt(e.target.value) || 1)}
                             min="1"
-                            className="w-14 px-2 py-1 text-center text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="w-14 px-2 py-1 text-center text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                           />
                         </div>
                         <button onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">

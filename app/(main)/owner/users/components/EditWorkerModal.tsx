@@ -426,7 +426,7 @@ export default function EditWorkerModal({
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter full name'
 										required
 									/>
@@ -440,7 +440,7 @@ export default function EditWorkerModal({
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter email address'
 										required
 									/>
@@ -457,7 +457,7 @@ export default function EditWorkerModal({
 										name='phoneNumber'
 										value={formData.phoneNumber}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter phone number'
 									/>
 								</div>
@@ -470,7 +470,7 @@ export default function EditWorkerModal({
 										name='employeeId'
 										value={formData.employeeId}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										placeholder='Enter employee ID (optional)'
 									/>
 								</div>
@@ -501,7 +501,7 @@ export default function EditWorkerModal({
 										</label>
 										{!isOwner || availableBranches.length === 1 ? (
 											// For managers - show readonly branch name (no changes allowed)
-											<div className='w-full px-3 py-2 h-9.5 flex items-center text-3 bg-secondary/5 border-2 border-secondary/20 rounded-lg text-secondary/50'>
+											<div className='w-full px-3 py-2 h-9.5 flex items-center text-3 bg-secondary/5 border border-secondary/20 rounded-lg text-secondary/50'>
 												{availableBranches[0]?.name || selectedBranchId}
 											</div>
 										) : (
@@ -566,7 +566,7 @@ export default function EditWorkerModal({
 											/>
 										) : (
 											// Show readonly role for managers or when cannot demote
-											<div className='w-full px-3 py-2 h-9.5 text-3 bg-secondary/5 border-2 border-secondary/20 rounded-lg text-secondary/50 flex items-center justify-between'>
+											<div className='w-full px-3 py-2 h-9.5 text-3 bg-secondary/5 border border-secondary/20 rounded-lg text-secondary/50 flex items-center justify-between'>
 												<span>{selectedRole === "worker" ? "Worker" : "Manager"}</span>
 												{!isOwner && (
 													<span className='text-xs text-secondary/40'>(Only owners can change roles)</span>

@@ -190,7 +190,7 @@ export default function LockItemModal({
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-full px-3 py-2 h-9.5 text-sm border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                      className="w-full px-3 py-2 h-9.5 text-sm border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       placeholder="0"
                     />
                   </div>
@@ -248,21 +248,21 @@ export default function LockItemModal({
                   <div className="space-y-2">
                     <button
                       onClick={() => setDiscrepancyStep('idle')}
-                      className="w-full text-left px-3 py-2.5 bg-white border-2 border-secondary/20 hover:border-accent rounded-lg text-xs font-medium text-secondary transition-all"
+                      className="w-full text-left px-3 py-2.5 bg-white border border-secondary/20 hover:border-accent rounded-lg text-xs font-medium text-secondary transition-all"
                     >
                       <span className="font-semibold text-accent">Resolve</span>
                       <span className="text-secondary/60 ml-1">— unlock to fix expected stock</span>
                     </button>
                     <button
                       onClick={() => setDiscrepancyStep('force_carryover_reason')}
-                      className="w-full text-left px-3 py-2.5 bg-white border-2 border-secondary/20 hover:border-accent rounded-lg text-xs font-medium text-secondary transition-all"
+                      className="w-full text-left px-3 py-2.5 bg-white border border-secondary/20 hover:border-accent rounded-lg text-xs font-medium text-secondary transition-all"
                     >
                       <span className="font-semibold text-accent">Force Carry-Over</span>
                       <span className="text-secondary/60 ml-1">— requires reason</span>
                     </button>
                     <button
                       onClick={() => handleLock({ type: 'force_wastage' })}
-                      className="w-full text-left px-3 py-2.5 bg-white border-2 border-secondary/20 hover:border-error rounded-lg text-xs font-medium text-secondary transition-all"
+                      className="w-full text-left px-3 py-2.5 bg-white border border-secondary/20 hover:border-error rounded-lg text-xs font-medium text-secondary transition-all"
                     >
                       <span className="font-semibold text-error">Send to Wastage</span>
                       <span className="text-secondary/60 ml-1">— log discrepancy as wastage</span>
@@ -294,7 +294,7 @@ export default function LockItemModal({
                     value={carryoverReason}
                     onChange={(e) => setCarryoverReason(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
                     placeholder="e.g. Items were transferred to another branch, miscounted earlier…"
                   />
                 </div>

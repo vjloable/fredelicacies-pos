@@ -113,7 +113,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                             placeholder='Enter current password'
                             disabled={loading}
                             autoComplete='current-password'
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                     </div>
 
@@ -126,7 +126,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                             placeholder='Enter new password (min 6 characters)'
                             disabled={loading}
                             autoComplete='new-password'
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                     </div>
 
@@ -139,7 +139,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                             placeholder='Re-enter new password'
                             disabled={loading}
                             autoComplete='new-password'
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                     </div>
 

@@ -211,7 +211,7 @@ export default function NewTransferPage() {
             <select
               value={otherBranchId}
               onChange={e => setOtherBranchId(e.target.value)}
-              className="w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
+              className="w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
               <option value="">— Select branch —</option>
               {otherBranches.map(b => (
                 <option key={b.id} value={b.id}>
@@ -243,7 +243,7 @@ export default function NewTransferPage() {
                 : "Pick a source branch first"
             }
             disabled={mode === "pull" && !sourceBranchId}
-            className="w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 mb-3"
+            className="w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 mb-3"
           />
 
           {loadingItems ? (
@@ -288,7 +288,7 @@ export default function NewTransferPage() {
                         updateQty(item.id, Math.min(Math.max(0, n), available));
                       }}
                       placeholder="0"
-                      className="w-20 text-right border-2 border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent shrink-0"
+                      className="w-20 text-right border border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent shrink-0"
                     />
                   </div>
                 );
@@ -307,7 +307,7 @@ export default function NewTransferPage() {
             onChange={e => setNote(e.target.value)}
             placeholder="Anything the other branch should know…"
             rows={2}
-            className="w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            className="w-full border border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
           />
         </div>
 

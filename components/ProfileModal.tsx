@@ -215,7 +215,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                             onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
                             placeholder='Your full name'
                             disabled={loading}
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                     </div>
 
@@ -230,7 +230,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                             onChange={(e) => setFormData((p) => ({ ...p, display_name: e.target.value }))}
                             placeholder={formData.name.trim().split(' ')[0] || 'Nickname or alias'}
                             disabled={loading}
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                         <p className='mt-1 text-2.5 text-secondary/40'>
                             Shown in the top bar and on receipts. Leave blank to use your first name.
@@ -248,7 +248,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                             onChange={(e) => setFormData((p) => ({ ...p, phone_number: e.target.value }))}
                             placeholder='+63 9xx xxx xxxx'
                             disabled={loading}
-                            className='w-full h-9.5 px-3 border-2 border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
+                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
                         />
                     </div>
 

@@ -250,7 +250,7 @@ export default function EditItemModal({
               type="text"
               value={localEditingItem.name}
               onChange={(e) => setLocalEditingItem({...localEditingItem, name: e.target.value})}
-              className="w-full px-3 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              className="w-full px-3 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="Enter item name"
             />
           </div>
@@ -265,7 +265,7 @@ export default function EditItemModal({
               <button
                 type="button"
                 onClick={() => setCategoryDropdownOpen(o => !o)}
-                className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+                className="w-full min-h-9.5 px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
               >
                 {selectedCategoryIds.length === 0 ? (
                   <span className="text-secondary/40 text-3">Select categories...</span>
@@ -290,7 +290,7 @@ export default function EditItemModal({
                 </svg>
               </button>
               {categoryDropdownOpen && (
-                <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
                   {categories.map(cat => (
                     <label
                       key={cat.id}
@@ -324,7 +324,7 @@ export default function EditItemModal({
             <textarea
               value={localEditingItem.description || ''}
               onChange={(e) => setLocalEditingItem({...localEditingItem, description: e.target.value})}
-              className="w-full px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
+              className="w-full px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
               placeholder="Enter item description"
               rows={3}
             />
@@ -370,7 +370,7 @@ export default function EditItemModal({
                         setPriceInput('');
                       }
                     }}
-                    className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                    className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                     placeholder="0.00"
                     inputMode="decimal"
                   />
@@ -414,7 +414,7 @@ export default function EditItemModal({
                       setCostInput('');
                     }
                   }}
-                  className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="0.00"
                   inputMode="decimal"
                 />
@@ -451,7 +451,7 @@ export default function EditItemModal({
                     setGrabPriceInput('');
                   }
                 }}
-                className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="0.00"
                 inputMode="decimal"
               />
@@ -459,7 +459,7 @@ export default function EditItemModal({
           </div>
 
           {/* Stock Adjustment Section */}
-          <div className="bg-primary rounded-xl p-4 border-2 border-secondary/20">
+          <div className="bg-primary rounded-xl p-4 border border-secondary/20">
             <h4 className="text-xs font-semibold text-secondary mb-2 flex items-center gap-2">
               Add Stock
             </h4>
@@ -504,7 +504,7 @@ export default function EditItemModal({
               <input
                 type="text"
                 placeholder="Custom amount"
-                className="flex-1 px-3 py-2 h-9.5 text-xs border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                className="flex-1 px-3 py-2 h-9.5 text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '' || /^[0-9]*$/.test(value)) {

@@ -81,7 +81,7 @@ export default function ImageUpload({
         {currentImageUrl ? (
           // Image Preview
           <div className="relative group">
-            <div className={`w-full ${compact ? 'h-45' : 'h-75'} bg-secondary/5 rounded-xl overflow-hidden border-2 border-secondary/20 relative`}>
+            <div className={`w-full ${compact ? 'h-45' : 'h-75'} bg-secondary/5 rounded-xl overflow-hidden border border-secondary/20 relative`}>
               <Image
                 src={currentImageUrl}
                 alt="Item preview"

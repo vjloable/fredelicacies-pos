@@ -120,7 +120,7 @@ export default function B1T1PickerModal({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search items..."
-            className="w-full px-3 py-2 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+            className="w-full px-3 py-2 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
           />
         </div>
 
@@ -192,7 +192,7 @@ export default function B1T1PickerModal({
                 if (v === '' || /^\d*\.?\d*$/.test(v)) setPriceInput(v);
               }}
               placeholder="0"
-              className="w-full pl-7 pr-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              className="w-full pl-7 pr-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
             />
           </div>
           {priceInput !== '' && !isPriceValid && (

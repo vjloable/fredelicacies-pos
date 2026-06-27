@@ -192,7 +192,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              className="w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="e.g., SAVE20, WELCOME10"
               required
             />
@@ -218,7 +218,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               valueAlignment={"left"}
               padding='12px'
               shadow={false}
-              borderClassName="border-2 border-secondary/20"
+              borderClassName="border border-secondary/20"
             />
           </div>
 
@@ -242,7 +242,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               valueAlignment={"left"}
               padding='12px'
               shadow={false}
-              borderClassName="border-2 border-secondary/20"
+              borderClassName="border border-secondary/20"
             />
             <p className="text-xs text-secondary/50 mt-1">
               Active discounts are available for use at checkout
@@ -312,7 +312,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                       value={scPwdDiscountPct}
                       onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setScPwdDiscountPct(e.target.value); }}
                       onFocus={e => e.target.select()}
-                      className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                      className="w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       placeholder="20"
                       inputMode="decimal"
                     />
@@ -328,7 +328,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                         value={scPwdVatRate}
                         onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setScPwdVatRate(e.target.value); }}
                         onFocus={e => e.target.select()}
-                        className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                        className="w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         placeholder="12"
                         inputMode="decimal"
                       />
@@ -403,7 +403,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                     setValueInput('');
                   }
                 }}
-                className="w-full px-3 py-2 text-3 h-9.5 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                className="w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder={formData.type === 'percentage' ? '10' : '100'}
                 inputMode="decimal"
                 required
@@ -423,7 +423,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
               </label>
 
               {/* Mode toggle */}
-              <div className="flex rounded-lg border-2 border-secondary/20 overflow-hidden mb-2">
+              <div className="flex rounded-lg border border-secondary/20 overflow-hidden mb-2">
                 {(['all', 'include', 'exclude'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -447,7 +447,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                   <button
                     type="button"
                     onClick={() => setCategoryDropdownOpen(o => !o)}
-                    className="w-full min-h-9.5 px-3 py-1.5 text-3 border-2 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
+                    className="w-full min-h-9.5 px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
                   >
                     {filterCategoryIds.length === 0 ? (
                       <span className="text-secondary/40 text-3">
@@ -474,7 +474,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                     </svg>
                   </button>
                   {categoryDropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border-2 border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                    <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
                       {categories.map(cat => (
                         <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none">
                           <input

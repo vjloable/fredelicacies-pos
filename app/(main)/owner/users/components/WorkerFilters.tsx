@@ -71,7 +71,7 @@ export default function WorkerFilters({
 						value={localFilters.searchQuery || ""}
 						onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
 						placeholder='Search workers by name, email, or ID...'
-						className={`w-full h-full text-3 px-4 pr-12 bg-white rounded-lg border-2 border-secondary/20 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
+						className={`w-full h-full text-3 px-4 pr-12 bg-white rounded-lg border border-secondary/20 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent ${
 							localFilters.searchQuery ? "animate-pulse transition-all" : ""
 						}`}
 					/>

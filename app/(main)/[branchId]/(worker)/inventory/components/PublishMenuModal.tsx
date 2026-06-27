@@ -169,7 +169,7 @@ export default function PublishMenuModal({
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 							placeholder="Search items…"
-							className="w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent mb-2"
+							className="w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent mb-2"
 						/>
 
 						{filteredItems.length === 0 ? (
