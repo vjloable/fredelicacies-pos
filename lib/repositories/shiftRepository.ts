@@ -17,12 +17,11 @@ export const shiftRepository = {
     return { shift, error };
   },
 
-  async getOpenShift(branchId: string, cashierId: string): Promise<{ shift: Shift | null; error: any }> {
+  async getOpenShift(branchId: string): Promise<{ shift: Shift | null; error: any }> {
     const { data, error } = await supabase
       .from('shifts')
       .select('*')
       .eq('branch_id', branchId)
-      .eq('cashier_id', cashierId)
       .eq('status', 'open')
       .order('opened_at', { ascending: false })
       .limit(1)

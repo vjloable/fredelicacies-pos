@@ -29,6 +29,9 @@ import { formatReceiptWithLogo } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
 import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingContext";
+import { useShift } from "@/contexts/ShiftContext";
+import SafeDropModal from "@/components/shift/SafeDropModal";
+import WriteOffModal from "@/components/shift/WriteOffModal";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
@@ -115,6 +118,9 @@ export default function StoreScreen() {
 	const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
 	const timeTracking = useTimeTracking({ autoRefresh: true }); // Get time tracking state
 	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id); // Get POS access control
+	const shiftCtx = useShift();
+	const [showSafeDropModal, setShowSafeDropModal] = useState(false);
+	const [showWriteOffModal, setShowWriteOffModal] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
 	const [searchQuery, setSearchQuery] = useState("");
@@ -1138,15 +1144,7 @@ export default function StoreScreen() {
 									<p className='font-bold text-secondary text-xs leading-snug line-clamp-1'>
 										Wildcard Bundle
 									</p>
-									<div className='flex items-center justify-between gap-1 mt-0.5'>
-										<span className='text-bundle font-semibold text-2.5'>Build your own</span>
-										<span className='inline-flex items-center gap-0.5 text-2.5 font-bold px-1.5 py-0.5 rounded-full select-none bg-bundle/15 text-bundle'>
-											<svg className='w-2.5 h-2.5' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={3} strokeLinecap='round'>
-												<path d='M12 5v14M5 12h14' />
-											</svg>
-											Mix
-										</span>
-									</div>
+									<span className='text-bundle font-semibold text-2.5'>Build your own</span>
 								</div>
 							</button>
 						</div>
@@ -1312,6 +1310,24 @@ export default function StoreScreen() {
 									/>
 								</div>
 							</div>
+
+							{/* Shift Actions (Mobile) */}
+							{shiftCtx.hasActiveShift && !shiftCtx.isExempt && (
+								<div className='flex gap-2 px-3 py-2 border-b border-gray-100'>
+									<button
+										onClick={() => { setShowOrderMenu(false); setShowSafeDropModal(true); }}
+										className='flex-1 py-2 text-xs font-bold rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'
+									>
+										Safe Drop
+									</button>
+									<button
+										onClick={() => { setShowOrderMenu(false); setShowWriteOffModal(true); }}
+										className='flex-1 py-2 text-xs font-bold rounded-lg bg-error/10 text-error border border-error/30 hover:bg-error hover:text-primary transition-all'
+									>
+										Write Off
+									</button>
+								</div>
+							)}
 
 							{/* Cart Items - Scrollable */}
 							<div className='flex-1 overflow-y-auto px-3 py-3'>
@@ -1604,6 +1620,24 @@ export default function StoreScreen() {
 							/>
 						</div>
 					</div>
+
+					{/* Shift Actions */}
+					{shiftCtx.hasActiveShift && !shiftCtx.isExempt && (
+						<div className='flex gap-2 p-2 border-b border-gray-100'>
+							<button
+								onClick={() => setShowSafeDropModal(true)}
+								className='flex-1 py-2 text-xs font-bold rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'
+							>
+								Safe Drop
+							</button>
+							<button
+								onClick={() => setShowWriteOffModal(true)}
+								className='flex-1 py-2 text-xs font-bold rounded-lg bg-error/10 text-error border border-error/30 hover:bg-error hover:text-primary transition-all'
+							>
+								Write Off
+							</button>
+						</div>
+					)}
 				</div>
 
 				{/* Cart Items - Scrollable middle section */}
@@ -2005,7 +2039,7 @@ export default function StoreScreen() {
 													value={grabManualDiscount}
 													onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) setGrabManualDiscount(v); }}
 													placeholder='0.00'
-													className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+													className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 												/>
 											</div>
 										</div>
@@ -2028,7 +2062,7 @@ export default function StoreScreen() {
 														value={tenderedAmount}
 														onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) setTenderedAmount(v); }}
 														placeholder={String(total)}
-														className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+														className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 													/>
 												</div>
 											</div>
@@ -2052,7 +2086,7 @@ export default function StoreScreen() {
 											value={gcashTransactionNumber}
 											onChange={e => setGcashTransactionNumber(e.target.value)}
 											placeholder='e.g. 123456789'
-											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 									</>
 								) : paymentMethod === 'debit_credit' ? (
@@ -2063,21 +2097,21 @@ export default function StoreScreen() {
 											value={debitReferenceNo}
 											onChange={e => setDebitReferenceNo(e.target.value)}
 											placeholder='Reference No.'
-											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 										<input
 											type='text'
 											value={debitTransactionNo}
 											onChange={e => setDebitTransactionNo(e.target.value)}
 											placeholder='Transaction No.'
-											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 										<input
 											type='text'
 											value={debitApprovalCode}
 											onChange={e => setDebitApprovalCode(e.target.value)}
 											placeholder='Approval Code'
-											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 									</>
 								) : paymentMethod === 'employee_charge' ? (
@@ -2088,7 +2122,7 @@ export default function StoreScreen() {
 											value={employeeChargeName}
 											onChange={e => setEmployeeChargeName(e.target.value)}
 											placeholder='Employee name'
-											className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 										/>
 									</>
 								) : paymentMethod === 'split' ? (
@@ -2142,7 +2176,7 @@ export default function StoreScreen() {
 																valueAlignment='left'
 																roundness='8'
 																shadow={false}
-																borderClassName='border-2 border-secondary/20 box-border'
+																borderClassName='border border-secondary/20 box-border'
 																dropdownOffset={SPLIT_DROPDOWN_OFFSET}
 															/>
 														</div>
@@ -2154,7 +2188,7 @@ export default function StoreScreen() {
 																value={amount}
 																onChange={e => onAmountChange(e.target.value)}
 																placeholder='0.00'
-																className='w-full text-right border-2 border-secondary/20 rounded-lg h-9.5 pl-6 pr-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+																className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-6 pr-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 															/>
 														</div>
 													</div>
@@ -2164,7 +2198,7 @@ export default function StoreScreen() {
 															value={txn}
 															onChange={e => setTxn(e.target.value)}
 															placeholder={method === 'gcash' ? 'GCash Transaction # (optional)' : 'Card Reference # (optional)'}
-															className='w-full border-2 border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+															className='w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 														/>
 													)}
 												</div>
@@ -2187,7 +2221,7 @@ export default function StoreScreen() {
 											onChange={e => setOrderNote(e.target.value)}
 											placeholder='Add a note...'
 											rows={2}
-											className='w-full border-2 border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none'
+											className='w-full border border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none'
 										/>
 									</>
 								)}
@@ -2275,6 +2309,19 @@ export default function StoreScreen() {
 					</div>
 				</div>
 			</button>
+
+			{/* Safe Drop Modal */}
+			<SafeDropModal
+				isOpen={showSafeDropModal}
+				onClose={() => setShowSafeDropModal(false)}
+			/>
+
+			{/* Write Off Modal */}
+			<WriteOffModal
+				isOpen={showWriteOffModal}
+				onClose={() => setShowWriteOffModal(false)}
+				inventoryItems={inventoryItems}
+			/>
 		</div>
 	);
 }

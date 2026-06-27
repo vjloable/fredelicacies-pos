@@ -6,34 +6,35 @@ import { log } from '@/lib/logging';
 import { supabase } from '@/lib/supabase';
 import type { Shift, ShiftReportData } from '@/types/domain/shift';
 
+// Open a branch-level shift. userId is the person opening it (stored in cashier_id for DB compat).
 export async function openShift(
   branchId: string,
-  cashierId: string,
+  userId: string,
   beginningCash: number,
 ): Promise<{ shift: Shift | null; error: any }> {
-  log.info('Opening shift', { branchId, cashierId, beginningCash });
+  log.info('Opening shift', { branchId, userId, beginningCash });
 
-  const { shift: existing } = await shiftRepository.getOpenShift(branchId, cashierId);
+  const { shift: existing } = await shiftRepository.getOpenShift(branchId);
   if (existing) {
-    return { shift: existing, error: { message: 'You already have an open shift at this branch.' } };
+    return { shift: existing, error: { message: 'This branch already has an open shift.' } };
   }
 
   const { shift, error } = await shiftRepository.create({
     branch_id: branchId,
-    cashier_id: cashierId,
+    cashier_id: userId,
     beginning_cash: beginningCash,
   });
 
   if (error || !shift) {
-    log.error('Failed to open shift', new Error(error?.message || 'Unknown'), { branchId, cashierId });
+    log.error('Failed to open shift', new Error(error?.message || 'Unknown'), { branchId, userId });
     return { shift: null, error };
   }
 
-  log.info('Shift opened', { branchId, cashierId, shiftId: shift.id });
+  log.info('Shift opened', { branchId, userId, shiftId: shift.id });
 
   void logActivity({
     branchId,
-    userId: cashierId,
+    userId,
     action: 'shift_opened',
     entityType: 'shift',
     entityId: shift.id,
@@ -43,21 +44,21 @@ export async function openShift(
   return { shift, error: null };
 }
 
+// Get the active (open) shift for a branch — not tied to a specific worker.
 export async function getActiveShift(
   branchId: string,
-  cashierId: string,
 ): Promise<{ shift: Shift | null; error: any }> {
-  return shiftRepository.getOpenShift(branchId, cashierId);
+  return shiftRepository.getOpenShift(branchId);
 }
 
 export async function closeShift(
   shiftId: string,
   branchId: string,
-  cashierId: string,
+  userId: string,
   actualCash: number,
   remarks?: string,
 ): Promise<{ shift: Shift | null; reportData: ShiftReportData | null; error: any }> {
-  log.info('Closing shift', { shiftId, branchId, cashierId, actualCash });
+  log.info('Closing shift', { shiftId, branchId, userId, actualCash });
 
   const { shift: currentShift, error: fetchError } = await shiftRepository.getById(shiftId);
   if (fetchError || !currentShift) {
@@ -79,7 +80,7 @@ export async function closeShift(
   }
 
   log.info('Shift closed', {
-    shiftId, branchId, cashierId,
+    shiftId, branchId, userId,
     expectedCash: reportData.cashMonitoring.expectedCash,
     actualCash,
     overShort: reportData.cashMonitoring.overShort,
@@ -87,7 +88,7 @@ export async function closeShift(
 
   void logActivity({
     branchId,
-    userId: cashierId,
+    userId,
     action: 'shift_closed',
     entityType: 'shift',
     entityId: shiftId,
@@ -146,7 +147,6 @@ export async function computeShiftReportData(
       const d = o.payment_details;
       if (d.split_method_1 === 'cash') splitCashPortion += parseFloat(d.split_amount_1 || '0');
       if (d.split_method_2 === 'cash') splitCashPortion += parseFloat(d.split_amount_2 || '0');
-      // Count non-cash split portions to their respective methods
       if (d.split_method_1 === 'gcash') gcashSales += parseFloat(d.split_amount_1 || '0');
       if (d.split_method_2 === 'gcash') gcashSales += parseFloat(d.split_amount_2 || '0');
       if (d.split_method_1 === 'grab') grabSales += parseFloat(d.split_amount_1 || '0');
@@ -192,14 +192,14 @@ export async function computeShiftReportData(
   const expectedCash = shift.beginning_cash + totalCashInflow - cashRefunds - safeDropTotal;
   const overShort = actualCash - expectedCash;
 
-  // Fetch branch and cashier names
+  // Fetch branch and opener names
   const { data: branch } = await supabase
     .from('branches')
     .select('name')
     .eq('id', branchId)
     .single();
 
-  const { data: cashierProfile } = await supabase
+  const { data: openerProfile } = await supabase
     .from('user_profiles')
     .select('name')
     .eq('id', shift.cashier_id)
@@ -207,7 +207,7 @@ export async function computeShiftReportData(
 
   return {
     shiftDetails: {
-      cashierName: cashierProfile?.name || 'Unknown',
+      cashierName: openerProfile?.name || 'Unknown',
       beginningCash: shift.beginning_cash,
       openedAt,
       closedAt,

@@ -16,6 +16,10 @@ import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { workerService } from "@/services/workerService";
 import PinEntryModal from "@/components/PinEntryModal";
+import { useShift } from "@/contexts/ShiftContext";
+import OpenShiftModal from "@/components/shift/OpenShiftModal";
+import CloseShiftModal from "@/components/shift/CloseShiftModal";
+import ShiftReportModal from "@/components/shift/ShiftReportModal";
 
 interface MobileTopBarProps {
 	title?: string;
@@ -38,6 +42,7 @@ export default function MobileTopBar({
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
 	const { user, isUserOwner } = useAuth();
 	const { currentBranch } = useBranch();
+	const shift = useShift();
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
 	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
@@ -138,6 +143,11 @@ export default function MobileTopBar({
 
 	return (
 		<>
+			{/* Shift Modals */}
+			<OpenShiftModal />
+			<CloseShiftModal />
+			<ShiftReportModal />
+
 			{/* PIN Verification Modal */}
 			{showPinModal && user && (
 				<PinEntryModal
@@ -239,6 +249,35 @@ export default function MobileTopBar({
 							)}
 						</button>
 					)}
+
+				{/* Shift Control */}
+				{!shift.isExempt && (
+					shift.activeShift ? (
+						shift.canManageShift ? (
+							<button
+								onClick={() => shift.requestCloseShift()}
+								className='h-12 px-3 py-2 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-xs border border-success/30 cursor-pointer hover:bg-secondary/10 hover:text-secondary transition-all'
+								title='Close shift'
+							>
+								<span className='w-2 h-2 bg-success rounded-full animate-pulse' />
+								<span className='font-bold'>Shift</span>
+							</button>
+						) : (
+							<div className='h-12 px-3 py-2 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-xs border border-success/30'>
+								<span className='w-2 h-2 bg-success rounded-full animate-pulse' />
+								<span className='font-bold'>Shift</span>
+							</div>
+						)
+					) : shift.canManageShift ? (
+						<button
+							onClick={() => shift.requestOpenShift()}
+							className='h-12 px-3 py-2 flex bg-accent/10 rounded-xl text-accent gap-2 items-center font-medium text-xs border border-accent/30 cursor-pointer hover:bg-accent hover:text-primary transition-all'
+							title='Open shift'
+						>
+							<span className='font-bold'>+ Shift</span>
+						</button>
+					) : null
+				)}
 
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
 					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center'>

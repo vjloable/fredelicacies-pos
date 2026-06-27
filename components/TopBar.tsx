@@ -15,6 +15,10 @@ import { workerService } from "@/services/workerService";
 import PinEntryModal from "@/components/PinEntryModal";
 import ProfileModal from "@/components/ProfileModal";
 import SafeImage from "@/components/SafeImage";
+import { useShift } from "@/contexts/ShiftContext";
+import OpenShiftModal from "@/components/shift/OpenShiftModal";
+import CloseShiftModal from "@/components/shift/CloseShiftModal";
+import ShiftReportModal from "@/components/shift/ShiftReportModal";
 
 
 interface TopBarProps {
@@ -38,6 +42,7 @@ export default function TopBar({
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
 	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
 	
+	const shift = useShift();
 	const [showProfileModal, setShowProfileModal] = useState(false);
 
 	// PIN verification states
@@ -138,6 +143,11 @@ export default function TopBar({
 		<>
 			<ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
 
+			{/* Shift Modals */}
+			<OpenShiftModal />
+			<CloseShiftModal />
+			<ShiftReportModal />
+
 			{/* PIN Verification Modal */}
 			{showPinModal && user && (
 				<PinEntryModal
@@ -161,9 +171,9 @@ export default function TopBar({
 					<button
 						type='button'
 						onClick={() => setShowProfileModal(true)}
-						className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3 hover:opacity-80 transition-opacity cursor-pointer'
+						className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3 hover:bg-light-accent transition-all cursor-pointer group'
 					>
-						<span className='my-6 w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary overflow-hidden relative'>
+						<span className='my-6 w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary overflow-hidden relative ring-2 ring-accent/0 group-hover:ring-accent/40 transition-all'>
 							{user?.profile_picture ? (
 								<SafeImage src={user.profile_picture} alt={userDisplayName} />
 							) : (
@@ -171,6 +181,9 @@ export default function TopBar({
 							)}
 						</span>
 						<span>{userDisplayName}</span>
+						<svg className='w-3.5 h-3.5 text-secondary/40 group-hover:text-secondary transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+							<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M19 9l-7 7-7-7' />
+						</svg>
 					</button>
 
 					{/* Owner Badge */}
@@ -276,6 +289,40 @@ export default function TopBar({
 								</button>
 							</div>
 						)}
+
+					{/* Shift Control */}
+					{!shift.isExempt && (
+						<div className='shrink-0'>
+							{shift.activeShift ? (
+								shift.canManageShift ? (
+									<button
+										onClick={() => shift.requestCloseShift()}
+										className='h-14 px-3 py-3 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-3 border border-success/30 cursor-pointer hover:bg-secondary/10 hover:text-secondary hover:border-secondary transition-all hover:scale-105'
+										title='Click to close shift'
+									>
+										<span className='w-2 h-2 bg-success rounded-full animate-pulse' />
+										<span className='font-semibold'>On Shift</span>
+									</button>
+								) : (
+									<div className='h-14 px-3 py-3 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-3 border border-success/30'>
+										<span className='w-2 h-2 bg-success rounded-full animate-pulse' />
+										<span className='font-semibold'>On Shift</span>
+									</div>
+								)
+							) : shift.canManageShift ? (
+								<button
+									onClick={() => shift.requestOpenShift()}
+									className='h-14 px-3 py-3 flex bg-accent/10 rounded-xl text-accent gap-2 items-center font-medium text-3 border border-accent/30 cursor-pointer hover:bg-accent hover:text-primary transition-all hover:scale-105'
+									title='Click to open shift'
+								>
+									<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+									</svg>
+									<span className='font-semibold'>Open Shift</span>
+								</button>
+							) : null}
+						</div>
+					)}
 
 					<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
 						<span className='w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary'>
