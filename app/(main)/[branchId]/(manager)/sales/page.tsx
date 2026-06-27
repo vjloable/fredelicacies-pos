@@ -33,7 +33,8 @@ import SearchIcon from "../../(worker)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(worker)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
-import { formatReceiptWithLogo, formatDailySalesESC } from "@/lib/esc_formatter";
+import { formatReceiptWithLogo, formatDailySalesESC, formatShiftReportESC } from "@/lib/esc_formatter";
+import { getActiveShift, getShiftsByBranch, computeShiftReportData } from "@/services/shiftService";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 import { generateSalesReportPDF } from "@/lib/pdfGenerator";
 
@@ -505,6 +506,31 @@ export default function SalesScreen() {
 		}
 	};
 
+	const handlePrintShiftReport = async () => {
+		if (isPrinting || !currentBranch) return;
+		setIsPrinting(true);
+		try {
+			// Try active shift first, fall back to last closed shift
+			let shift = (await getActiveShift(currentBranch.id)).shift;
+			if (!shift) {
+				const { shifts } = await getShiftsByBranch(currentBranch.id, { status: 'closed' });
+				shift = shifts?.[0] ?? null;
+			}
+			if (!shift) {
+				alert('No shift found for this branch.');
+				return;
+			}
+			const actualCash = shift.actual_cash ?? shift.beginning_cash;
+			const reportData = await computeShiftReportData(shift, currentBranch.id, actualCash, shift.remarks ?? null);
+			const bytes = await formatShiftReportESC(reportData);
+			await printReceipt(bytes);
+		} catch (e) {
+			console.error("Shift report print failed:", e);
+		} finally {
+			setIsPrinting(false);
+		}
+	};
+
 	// ── Analytics fetch ───────────────────────────────────────────────────────
 
 	const fetchAnalytics = useCallback(async () => {
@@ -844,6 +870,16 @@ export default function SalesScreen() {
 											<rect x='6' y='14' width='12' height='8' />
 										</svg>
 										{isPrinting ? 'Printing...' : 'Print Report'}
+									</button>
+									<button
+										onClick={() => { setShowActionsMenu(false); handlePrintShiftReport(); }}
+										disabled={isPrinting}
+										className='w-full flex items-center gap-3 px-4 py-2.5 text-xs text-secondary hover:bg-secondary/5 disabled:opacity-40 disabled:pointer-events-none transition-colors'
+									>
+										<svg className='w-3.5 h-3.5 shrink-0' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+											<path d='M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+										</svg>
+										{isPrinting ? 'Printing...' : 'Print Shift Report'}
 									</button>
 									<button
 										onClick={() => { setShowActionsMenu(false); generatePDF(); }}

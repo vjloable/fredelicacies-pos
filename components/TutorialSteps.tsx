@@ -5,7 +5,7 @@ import {
   IllDiscountAllItems, IllDiscountInclude, IllDiscountExclude,
   IllSalesVoidButton, IllSalesVoidReason, IllSalesCannotUndo,
   IllInventoryDestockBtn, IllInventoryDestockMode,
-  IllEODPanel, IllEODLockItem, IllEODDiscrepancy, IllEODSubmit,
+  IllEODPanel, IllEODDiscrepancy,
   IllUncarriedItems, IllResolveUncarried,
   IllAuditConfig, IllAuditMode, IllCarryOverAll,
 } from './TutorialIllustrations';
@@ -26,6 +26,18 @@ export const storeSteps: TutorialStep[] = [
     title: 'In the Cart',
     description: "Custom bundles appear as a single line item. You can't adjust the quantity — to add another, tap the bundle again and build a new one.",
     illustration: <IllMixMatchCart />,
+  },
+  {
+    title: 'Safe Drop',
+    description: 'Move cash from the register to the safe during your shift. Open the order panel and tap "Safe Drop". Enter the amount and select who received it. The amount is subtracted from the expected cash at the end of the shift.',
+  },
+  {
+    title: 'Write Off',
+    description: 'Record items given away for free or items nearing expiry. Open the order panel and tap "Write Off". Choose the type, pick the item, and set the quantity. Stock is automatically reduced.',
+  },
+  {
+    title: 'Refunding an Order',
+    description: 'Go to the Sales page, find the order, and tap Refund. Unlike voiding, a refund returns the stock back to inventory. The refunded amount is deducted from cash sales in the shift report.',
   },
 ];
 
@@ -62,6 +74,14 @@ export const salesSteps: TutorialStep[] = [
     title: 'Cannot Be Undone',
     description: 'Once confirmed, the void cannot be reversed. Double-check the order number before confirming.',
     illustration: <IllSalesCannotUndo />,
+  },
+  {
+    title: 'Refunding an Order',
+    description: 'Unlike void, a refund returns the items back to inventory. The refunded amount is tracked separately and deducted from the shift report\'s cash monitoring section.',
+  },
+  {
+    title: 'Shift Report',
+    description: 'When a manager closes the shift, a report shows total sales by payment method, discounts given, voids and refunds, and cash monitoring (beginning cash + cash sales - refunds - safe drops = expected vs actual).',
   },
 ];
 
