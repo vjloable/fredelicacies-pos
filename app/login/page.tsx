@@ -46,9 +46,9 @@ function LoginContent() {
 		// If user is already logged in, redirect based on their role
 		if (user) {
 			if (isUserOwner()) {
-				// Owner redirects to branch management
+				// Owner redirects to dashboard
 				setIsLoading(false);
-				router.push("/owner/branches");
+				router.push("/owner/dashboard");
 			} else if (user.roleAssignments.length > 0) {
 				// Check if user has valid branch assignmentsgit
 				const branchId = user?.roleAssignments?.[0]?.branchId;

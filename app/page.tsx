@@ -14,7 +14,7 @@ export default function RootPage() {
 			if (isAuthenticated && user) {
 				// Check if user is owner
 				if (isUserOwner()) {
-					router.push("/owner/branches");
+					router.push("/owner/dashboard");
 					return;
 				}
 
