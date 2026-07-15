@@ -154,6 +154,8 @@ export default function StoreScreen() {
 	const [debitTransactionNo, setDebitTransactionNo] = useState("");
 	const [debitApprovalCode, setDebitApprovalCode] = useState("");
 	const [grabManualDiscount, setGrabManualDiscount] = useState("");
+	// Cashier-entered manual discount (₱ off) for non-Grab payments. Exclusive with the DiscountDropdown.
+	const [manualDiscount, setManualDiscount] = useState("");
 	const [employeeChargeName, setEmployeeChargeName] = useState("");
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
@@ -652,9 +654,27 @@ export default function StoreScreen() {
 		// Clamp so the discount can never exceed the Grab subtotal.
 		return Math.min(n, subtotal);
 	}, [paymentMethod, grabManualDiscount, subtotal]);
+	// Non-grab manual discount: cashier types a ₱ amount that subtracts straight from the total.
+	// Exclusive with the DiscountDropdown — applying one clears the other (see handleManualDiscountChange / handleDiscountApplied).
+	const manualDiscountAmount = useMemo(() => {
+		if (paymentMethod === 'grab') return 0;
+		const n = parseFloat(manualDiscount);
+		if (!Number.isFinite(n) || n <= 0) return 0;
+		// Clamp so the discount can never exceed the subtotal.
+		return Math.min(n, subtotal);
+	}, [paymentMethod, manualDiscount, subtotal]);
 	const effectiveDiscountForTotal = paymentMethod === 'grab'
 		? grabManualDiscountAmount
-		: (appliedDiscount?.type === 'b1t1' ? 0 : discountAmount);
+		: (manualDiscountAmount > 0
+			? manualDiscountAmount
+			: (appliedDiscount?.type === 'b1t1' ? 0 : discountAmount));
+	// Discount amount shown on the summary/receipt and recorded on the sale.
+	// Manual takes precedence over a dropdown discount (they are mutually exclusive).
+	const displayDiscount = paymentMethod === 'grab'
+		? grabManualDiscountAmount
+		: (manualDiscountAmount > 0
+			? manualDiscountAmount
+			: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount));
 	const total = subtotal - effectiveDiscountForTotal;
 
 	const splitAmount1Num = parseFloat(splitAmount1) || 0;
@@ -726,6 +746,8 @@ export default function StoreScreen() {
 	const handleDiscountApplied = (discount: Discount | null, amount: number) => {
 		setAppliedDiscount(discount);
 		setDiscountAmount(amount);
+		// Exclusive with the manual discount: picking a dropdown discount clears any typed manual amount.
+		if (discount) setManualDiscount("");
 		if (discount) {
 			console.log(
 				"Discount applied:",
@@ -735,6 +757,19 @@ export default function StoreScreen() {
 			);
 		} else {
 			console.log("Discount cleared");
+		}
+	};
+
+	// Manual discount input handler. Only accepts a numeric ₱ amount, and applying it
+	// clears any dropdown discount / B1T1 items so the two never stack.
+	const handleManualDiscountChange = (v: string) => {
+		if (!/^\d*\.?\d*$/.test(v)) return;
+		setManualDiscount(v);
+		if (parseFloat(v) > 0 && (appliedDiscount || discountAmount > 0)) {
+			setAppliedDiscount(null);
+			setDiscountAmount(0);
+			setDiscountCode("");
+			setCart(prev => prev.filter(i => !i.isB1T1));
 		}
 	};
 
@@ -773,6 +808,7 @@ export default function StoreScreen() {
 		setDiscountCode("");
 		setDiscountAmount(0);
 		setAppliedDiscount(null);
+		setManualDiscount("");
 		setB1T1PickerTarget(null);
 	};
 
@@ -807,9 +843,7 @@ export default function StoreScreen() {
 		setIsPlacingOrder(true);
 		try {
 			// Create order using the new service signature
-			const orderDiscountAmount = paymentMethod === 'grab'
-				? grabManualDiscountAmount
-				: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount);
+			const orderDiscountAmount = displayDiscount;
 			const { id: orderId, orderNumber: orderNum, error: orderError } = await createOrder(
 				currentBranch.id,
 				user.id,
@@ -868,12 +902,14 @@ export default function StoreScreen() {
 					};
 				}),
 				subtotal,
-				discount: paymentMethod === 'grab'
-					? grabManualDiscountAmount
-					: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount),
-				appliedDiscountCode: paymentMethod === 'grab' ? "" : (appliedDiscount?.name || ""),
-				isB1T1Promo: paymentMethod === 'grab' ? false : appliedDiscount?.type === 'b1t1',
-				discountType: paymentMethod === 'grab' ? undefined : appliedDiscount?.type,
+				discount: displayDiscount,
+				appliedDiscountCode: paymentMethod === 'grab'
+					? ""
+					: (manualDiscountAmount > 0 ? "Manual Discount" : (appliedDiscount?.name || "")),
+				isB1T1Promo: paymentMethod === 'grab' ? false : (manualDiscountAmount === 0 && appliedDiscount?.type === 'b1t1'),
+				discountType: paymentMethod === 'grab'
+					? undefined
+					: (manualDiscountAmount > 0 ? 'fixed' : appliedDiscount?.type),
 				grabUplift: 0,
 				total,
 				payment: paymentMethod === 'cash' ? (parseFloat(tenderedAmount) || total) : total,
@@ -1511,7 +1547,7 @@ export default function StoreScreen() {
 								</div>
 								<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 									<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
-									<span>-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}</span>
+									<span>-{formatCurrency(displayDiscount)}</span>
 								</div>
 
 								{paymentMethod !== 'grab' && (
@@ -1821,7 +1857,7 @@ export default function StoreScreen() {
 					</div>
 					<div className='flex justify-between h-8.25 text-secondary text-3 font-medium px-3 py-1.5'>
 						<span>{appliedDiscount?.type === 'b1t1' ? 'B1T1 Savings' : 'Discount'}</span>
-						<span>-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}</span>
+						<span>-{formatCurrency(displayDiscount)}</span>
 					</div>
 
 					{paymentMethod !== 'grab' && (
@@ -1832,6 +1868,21 @@ export default function StoreScreen() {
 								onDiscountApplied={handleDiscountApplied}
 								cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 							/>
+							<div className='flex justify-between items-center mt-2 text-3'>
+								<span className='text-secondary/70'>Manual Discount <span className='text-secondary/40'>(optional)</span></span>
+								<div className='relative w-32'>
+									<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
+									<input
+										type='text'
+										inputMode='decimal'
+										value={manualDiscount}
+										onChange={e => handleManualDiscountChange(e.target.value)}
+										onFocus={e => e.target.select()}
+										placeholder='0.00'
+										className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+									/>
+								</div>
+							</div>
 						</div>
 					)}
 
@@ -2006,7 +2057,7 @@ export default function StoreScreen() {
 											</div>
 										) : null;
 									})()}
-									{(discountAmount > 0 || b1t1SavingsAmount > 0 || grabManualDiscountAmount > 0) && (
+									{displayDiscount > 0 && (
 										<div className='flex justify-between text-xs'>
 											<span className='text-secondary'>
 												{paymentMethod === 'grab'
@@ -2021,10 +2072,13 @@ export default function StoreScreen() {
 														)
 													</span>
 												)}
+												{paymentMethod !== 'grab' && manualDiscountAmount > 0 && (
+													<span className='font-medium ml-1'>(Manual)</span>
+												)}
 												:
 											</span>
 											<span className='font-medium text-green-600'>
-												-{formatCurrency(paymentMethod === 'grab' ? grabManualDiscountAmount : (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount))}
+												-{formatCurrency(displayDiscount)}
 											</span>
 										</div>
 									)}
