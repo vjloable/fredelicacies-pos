@@ -1,0 +1,30 @@
+name: CI
+
+# Runs on every PR targeting main (the merge gate) and on main itself
+# (so the "test" check is registered and visible in branch-protection settings).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest # Linux runners bill at 1x; stay off macOS (10x)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
