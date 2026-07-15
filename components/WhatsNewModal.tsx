@@ -22,6 +22,9 @@ const illustrationMap: Record<string, ReactNode> = {
 };
 
 const STORAGE_KEY = 'whats-new-version';
+const DAILY_KEY = 'whats-new-day';
+// Local calendar-day key (e.g. "Tue Jul 15 2026"); changes at local midnight.
+const todayKey = () => new Date().toDateString();
 
 interface WhatsNewModalProps {
   forceOpen?: boolean;
@@ -46,20 +49,24 @@ export default function WhatsNewModal({ forceOpen, onClose }: WhatsNewModalProps
     }
     if (!entry) return;
     try {
-      const dismissed = localStorage.getItem(STORAGE_KEY);
-      if (dismissed !== VERSION_INFO.app) {
-        setCardIndex(0);
-        setVisible(true);
-      }
+      // Suppressed until the next app version (user ticked "don't show again").
+      if (localStorage.getItem(STORAGE_KEY) === VERSION_INFO.app) return;
+      // Already shown today — stay closed until the next local day (resets at midnight).
+      if (localStorage.getItem(DAILY_KEY) === todayKey()) return;
+      setCardIndex(0);
+      setVisible(true);
     } catch {
       setVisible(true);
     }
   }, [forceOpen, entry]);
 
   const dismiss = useCallback(() => {
-    if (dontShowAgain) {
-      try { localStorage.setItem(STORAGE_KEY, VERSION_INFO.app); } catch {}
-    }
+    try {
+      // Mark as seen today so it won't reappear until the next day (even across reloads).
+      localStorage.setItem(DAILY_KEY, todayKey());
+      // If opted out, also suppress until the next app version.
+      if (dontShowAgain) localStorage.setItem(STORAGE_KEY, VERSION_INFO.app);
+    } catch {}
     setVisible(false);
     setCardIndex(0);
     onClose?.();
