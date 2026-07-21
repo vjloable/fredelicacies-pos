@@ -1868,21 +1868,6 @@ export default function StoreScreen() {
 								onDiscountApplied={handleDiscountApplied}
 								cartItems={cart.map(i => ({ price: i.price, quantity: i.quantity, categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []) }))}
 							/>
-							<div className='flex justify-between items-center mt-2 text-3'>
-								<span className='text-secondary/70'>Manual Discount <span className='text-secondary/40'>(optional)</span></span>
-								<div className='relative w-32'>
-									<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
-									<input
-										type='text'
-										inputMode='decimal'
-										value={manualDiscount}
-										onChange={e => handleManualDiscountChange(e.target.value)}
-										onFocus={e => e.target.select()}
-										placeholder='0.00'
-										className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-									/>
-								</div>
-							</div>
 						</div>
 					)}
 
@@ -2080,6 +2065,23 @@ export default function StoreScreen() {
 											<span className='font-medium text-green-600'>
 												-{formatCurrency(displayDiscount)}
 											</span>
+										</div>
+									)}
+									{paymentMethod !== 'grab' && (
+										<div className='flex justify-between items-center text-xs'>
+											<span className='text-secondary/70'>Manual Discount: <span className='text-secondary/40'>(optional)</span></span>
+											<div className='relative w-32'>
+												<span className='absolute left-3 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
+												<input
+													type='text'
+													inputMode='decimal'
+													value={manualDiscount}
+													onChange={e => handleManualDiscountChange(e.target.value)}
+													onFocus={e => e.target.select()}
+													placeholder='0.00'
+													className='w-full text-right border border-secondary/20 rounded-lg h-9.5 pl-7 pr-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+												/>
+											</div>
 										</div>
 									)}
 									{paymentMethod === 'grab' && (
