@@ -13,6 +13,7 @@ import { logActivity } from '@/services/activityLogService';
 interface AddItemModalProps {
   isOpen: boolean;
   categories: Category[];
+  initialCategoryId?: string;
   onClose: () => void;
   onError: (error: string) => void;
 }
@@ -20,6 +21,7 @@ interface AddItemModalProps {
 export default function AddItemModal({
   isOpen,
   categories,
+  initialCategoryId,
   onClose,
   onError
 }: AddItemModalProps) {
@@ -52,6 +54,13 @@ export default function AddItemModal({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [categoryDropdownOpen]);
+
+  // Pre-seed category when opening from inside a folder
+  useEffect(() => {
+    if (isOpen && initialCategoryId) {
+      setSelectedCategoryIds([initialCategoryId]);
+    }
+  }, [isOpen, initialCategoryId]);
 
   if (!isOpen) return null;
 
