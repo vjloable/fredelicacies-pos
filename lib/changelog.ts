@@ -26,6 +26,53 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.1.0',
+    features: [
+      {
+        title: 'Request Items from Commissary',
+        description: 'Branches can now send item requests directly to the commissary.',
+        iconPath: 'M12 5v14m0 0l-5-5m5 5l5-5',
+        steps: [
+          'Go to Distribution and tap "Request from Commissary"',
+          'Browse by category, pick the items you need, and set how many',
+          'Review your request and submit — the commissary will be notified',
+        ],
+      },
+      {
+        title: 'Commissary Can Send Partial Amounts',
+        description: 'The commissary can fulfill part of a request and add a note explaining why.',
+        iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+        steps: [
+          'When a request comes in, the commissary manager opens the request',
+          'Adjust the quantity for any item — e.g. send 5 instead of 10',
+          'Add a short note explaining the reason, then confirm',
+          'The branch will see the adjusted amounts and the note',
+        ],
+      },
+      {
+        title: 'Easier Item Selection',
+        description: 'Picking items for a transfer now feels like browsing a menu.',
+        iconPath: 'M4 6h16M4 10h16M4 14h16M4 18h16',
+        steps: [
+          'Tap a category to see only the items inside it',
+          'Tap an item to set the quantity on a simple +/− sheet',
+          'Your selected items appear as a list below — easy to review and remove',
+          'Use the search bar to find any item by name across all categories',
+        ],
+      },
+      {
+        title: 'Inventory Folders',
+        description: 'Items in the inventory are now grouped inside category folders.',
+        iconPath: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
+        steps: [
+          'Tap a folder to open a category and see its items',
+          'Tap the back arrow to go back to all folders',
+          'Items load faster since only one category is shown at a time',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.0.2',
     features: [
       {
