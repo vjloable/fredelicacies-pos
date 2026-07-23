@@ -7,12 +7,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import {
   cancelTransfer,
-  createItemFromSnapshot,
   fulfillPullRequest,
   getTransferById,
   matchDestinationItem,
   receiveTransfer,
 } from "@/services/transferService";
+import { syncCatalog } from "@/services/catalogSyncService";
+import { getInventoryItems as getSourceInventory, getAvailableStock } from "@/services/inventoryService";
 import type { TransferWithItems, SettleLineCount } from "@/types/domain/transfer";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import TopBar from "@/components/TopBar";
@@ -32,7 +33,13 @@ function formatDate(iso?: string | null): string {
 
 function uxLabel(t: TransferWithItems): { label: string; color: string } {
   if (t.status === "received") return { label: "Received", color: "bg-success/15 text-success" };
-  if (t.status === "cancelled") return { label: "Cancelled", color: "bg-secondary/15 text-secondary/70" };
+  if (t.status === "cancelled") {
+    if (t.direction === "pull" && t.cancel_type === "source")
+      return { label: "Declined by commissary", color: "bg-red-100 text-red-700" };
+    if (t.direction === "pull" && t.cancel_type === "requester")
+      return { label: "Request cancelled", color: "bg-secondary/15 text-secondary/70" };
+    return { label: "Cancelled", color: "bg-secondary/15 text-secondary/70" };
+  }
   if (t.direction === "pull" && !t.fulfilled_at) {
     return { label: "Awaiting fulfillment", color: "bg-amber-100 text-amber-700" };
   }
@@ -266,6 +273,8 @@ export default function TransferDetailPage() {
       {showCancel && (
         <CancelTransferModal
           transfer={transfer}
+          isAtSource={isAtSource}
+          isAtDest={isAtDest}
           onClose={() => setShowCancel(false)}
           onDone={() => {
             setShowCancel(false);
@@ -332,25 +341,38 @@ function ReceiveShipmentModal({
   }, [transfer]);
 
   const unresolved = transfer.items.filter(line => !destItemIds[line.id]);
-  const [adding, setAdding] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  const handleAddToCatalog = async (lineId: string) => {
-    const line = transfer.items.find(l => l.id === lineId);
-    if (!line) return;
-    setAdding(lineId);
+  const handleSyncFromCommissary = async () => {
+    if (!user) return;
+    const unresolvedLines = transfer.items.filter(line => !destItemIds[line.id]);
+    const sourceItemIds = unresolvedLines
+      .map(l => l.source_item_id)
+      .filter((id): id is string => !!id);
+    if (!sourceItemIds.length) return;
+    setSyncing(true);
     setError(null);
-    const { id, error } = await createItemFromSnapshot(transfer.destination_branch_id, {
-      name: line.item_name,
-      cost: line.item_cost,
-      price: line.item_price,
-      category_names: line.category_names ?? [],
-    });
-    setAdding(null);
-    if (error || !id) {
-      setError(`Failed to add "${line.item_name}" to catalog: ${error?.message ?? "unknown"}`);
+    const { error: syncErr } = await syncCatalog(
+      user.id,
+      transfer.source_branch_id,
+      transfer.destination_branch_id,
+      { itemIds: sourceItemIds, includeBundles: false }
+    );
+    if (syncErr) {
+      setError(`Sync failed: ${syncErr.message ?? "unknown"}`);
+      setSyncing(false);
       return;
     }
-    setDestItemIds(prev => ({ ...prev, [lineId]: id }));
+    // Re-match all previously unresolved lines now that they exist in the catalog.
+    const rematch: Record<string, string | null> = {};
+    await Promise.all(
+      unresolvedLines.map(async line => {
+        const match = await matchDestinationItem(transfer.destination_branch_id, line.item_name);
+        rematch[line.id] = match?.id ?? null;
+      })
+    );
+    setDestItemIds(prev => ({ ...prev, ...rematch }));
+    setSyncing(false);
   };
 
   const handleSubmit = async () => {
@@ -403,71 +425,71 @@ function ReceiveShipmentModal({
               <p className="text-secondary text-xs">Matching catalog…</p>
             </div>
           ) : (
-            transfer.items.map(line => {
-              const matched = !!destItemIds[line.id];
-              const isAdding = adding === line.id;
-              return (
-                <div
-                  key={line.id}
-                  className={`border rounded-lg p-3 ${
-                    matched ? "border-secondary/15" : "border-amber-300 bg-amber-50/40"
-                  }`}>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-secondary">{line.item_name}</p>
-                      {matched ? (
-                        <p className="text-2.5 text-success mt-0.5">Matched dest catalog</p>
-                      ) : (
-                        <p className="text-2.5 text-amber-700 mt-0.5">
-                          Not in this branch's catalog yet
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-2.5 text-secondary/40">of {line.quantity_sent}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={line.quantity_sent}
-                        value={counts[line.id] ?? 0}
-                        onChange={e => {
-                          const n = parseInt(e.target.value || "0", 10);
-                          if (!Number.isFinite(n)) return;
-                          setCounts(c => ({
-                            ...c,
-                            [line.id]: Math.max(0, Math.min(line.quantity_sent, n)),
-                          }));
-                        }}
-                        disabled={!matched}
-                        className="w-20 text-right border border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 disabled:text-secondary/40"
-                      />
+            <>
+              {unresolved.length > 0 && (
+                <div className="border border-amber-300 bg-amber-50/50 rounded-lg p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-amber-800">
+                      {unresolved.length} item{unresolved.length === 1 ? "" : "s"} not in your catalog
+                    </p>
+                    <p className="text-2.5 text-amber-700 mt-0.5">
+                      Sync from commissary to copy the items and their categories into this branch.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSyncFromCommissary}
+                    disabled={syncing}
+                    className={`shrink-0 px-3 py-1.5 rounded-lg text-2.5 font-bold transition-all ${
+                      syncing
+                        ? "bg-gray-100 text-secondary/50 cursor-not-allowed"
+                        : "bg-amber-600 text-white hover:bg-amber-700 active:scale-95"
+                    }`}>
+                    {syncing ? "Syncing…" : "Sync from commissary"}
+                  </button>
+                </div>
+              )}
+              {transfer.items.map(line => {
+                const matched = !!destItemIds[line.id];
+                return (
+                  <div
+                    key={line.id}
+                    className={`border rounded-lg p-3 ${
+                      matched ? "border-secondary/15" : "border-amber-200 bg-amber-50/30"
+                    }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-secondary">{line.item_name}</p>
+                        {matched ? (
+                          <p className="text-2.5 text-(--success) mt-0.5">In catalog ✓</p>
+                        ) : (
+                          <p className="text-2.5 text-amber-700 mt-0.5">Not in catalog yet</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-2.5 text-secondary/40">of {line.quantity_sent}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={line.quantity_sent}
+                          value={counts[line.id] ?? 0}
+                          onChange={e => {
+                            const n = parseInt(e.target.value || "0", 10);
+                            if (!Number.isFinite(n)) return;
+                            setCounts(c => ({
+                              ...c,
+                              [line.id]: Math.max(0, Math.min(line.quantity_sent, n)),
+                            }));
+                          }}
+                          disabled={!matched}
+                          className="w-20 text-right border border-secondary/20 rounded-lg h-9.5 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-gray-50 disabled:text-secondary/40"
+                        />
+                      </div>
                     </div>
                   </div>
-                  {!matched && (
-                    <div className="mt-2 pt-2 border-t border-amber-200/60 flex items-center justify-between gap-2">
-                      <p className="text-2.5 text-secondary/60 flex-1 min-w-0">
-                        Add it as new — name, price{line.item_cost != null ? ", cost" : ""}
-                        {line.category_names && line.category_names.length > 0
-                          ? `, ${line.category_names.length} categor${line.category_names.length === 1 ? "y" : "ies"}`
-                          : ""}{" "}
-                        will be copied from the source.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleAddToCatalog(line.id)}
-                        disabled={isAdding}
-                        className={`px-3 py-1.5 rounded-md text-2.5 font-semibold shrink-0 ${
-                          isAdding
-                            ? "bg-gray-100 text-secondary/50 cursor-not-allowed"
-                            : "bg-accent/15 text-accent hover:bg-accent/25"
-                        }`}>
-                        {isAdding ? "Adding..." : "Add to catalog"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                );
+              })}
+            </>
           )}
           {error && (
             <div className="bg-error/10 border border-error/20 text-error text-2.5 px-3 py-2 rounded-lg">
@@ -514,6 +536,35 @@ function FulfillRequestModal({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceStock, setSourceStock] = useState<Map<string, number>>(new Map());
+  const [loadingStock, setLoadingStock] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSourceInventory(transfer.source_branch_id).then(({ items }) => {
+      if (cancelled) return;
+      const map = new Map<string, number>();
+      for (const item of items) {
+        map.set(item.id, getAvailableStock(item));
+      }
+      setSourceStock(map);
+      setLoadingStock(false);
+    });
+    return () => { cancelled = true; };
+  }, [transfer.source_branch_id]);
+
+  useEffect(() => {
+    if (loadingStock) return;
+    setQtys(prev => {
+      const next = { ...prev };
+      for (const line of transfer.items) {
+        const avail = sourceStock.get(line.source_item_id ?? '') ?? Infinity;
+        if (next[line.id] > avail) next[line.id] = avail;
+      }
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingStock]);
 
   const isPartial = transfer.items.some(it => qtys[it.id] < it.quantity_sent);
   const noteRequired = isPartial && !note.trim();
@@ -560,9 +611,18 @@ function FulfillRequestModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {loadingStock && (
+            <div className="flex items-center gap-2 px-1 py-2 text-2.5 text-secondary/50">
+              <LoadingSpinner size="sm" />
+              <span>Checking commissary stock…</span>
+            </div>
+          )}
           {transfer.items.map(line => {
             const qty = qtys[line.id] ?? 0;
             const reduced = qty < line.quantity_sent;
+            const avail = line.source_item_id ? (sourceStock.get(line.source_item_id) ?? null) : null;
+            const exceedsStock = avail !== null && line.quantity_sent > avail;
+            const cap = avail !== null ? Math.min(line.quantity_sent, avail) : line.quantity_sent;
             return (
               <div key={line.id} className={`border rounded-lg p-3 ${reduced ? "border-amber-300 bg-amber-50/40" : "border-secondary/15"}`}>
                 <div className="flex items-center gap-3">
@@ -570,7 +630,17 @@ function FulfillRequestModal({
                     <p className="text-xs font-medium text-secondary">{line.item_name}</p>
                     <p className="text-2.5 text-secondary/40 mt-0.5">
                       Requested: {line.quantity_sent} pcs
+                      {avail !== null && !loadingStock && (
+                        <span className={`ml-1.5 ${exceedsStock ? "text-amber-600 font-semibold" : "text-(--success)"}`}>
+                          · {avail} in stock
+                        </span>
+                      )}
                     </p>
+                    {exceedsStock && !loadingStock && (
+                      <p className="text-2.5 text-amber-600 mt-0.5">
+                        Only {avail} available — quantity capped
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
@@ -581,18 +651,18 @@ function FulfillRequestModal({
                     <input
                       type="number"
                       min={0}
-                      max={line.quantity_sent}
+                      max={cap}
                       value={qty}
                       onChange={e => {
                         const n = parseInt(e.target.value || "0", 10);
                         if (!Number.isFinite(n)) return;
-                        setQtys(q => ({ ...q, [line.id]: Math.max(0, Math.min(line.quantity_sent, n)) }));
+                        setQtys(q => ({ ...q, [line.id]: Math.max(0, Math.min(cap, n)) }));
                       }}
                       className="w-16 text-center border border-secondary/20 rounded-lg h-9 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                     <button
                       type="button"
-                      onClick={() => setQtys(q => ({ ...q, [line.id]: Math.min(line.quantity_sent, (q[line.id] ?? 0) + 1) }))}
+                      onClick={() => setQtys(q => ({ ...q, [line.id]: Math.min(cap, (q[line.id] ?? 0) + 1) }))}
                       className="size-7 flex items-center justify-center rounded-lg border border-secondary/20 text-secondary hover:bg-secondary/10 font-bold text-sm"
                     >+</button>
                   </div>
@@ -650,10 +720,14 @@ function FulfillRequestModal({
 // ─── Cancel modal ───────────────────────────────────────────────────────────
 function CancelTransferModal({
   transfer,
+  isAtSource,
+  isAtDest,
   onClose,
   onDone,
 }: {
   transfer: TransferWithItems;
+  isAtSource: boolean;
+  isAtDest: boolean;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -666,7 +740,13 @@ function CancelTransferModal({
     if (!user) return;
     setBusy(true);
     setError(null);
-    const { error } = await cancelTransfer(user.id, transfer.id, reason);
+    const cancelType =
+      transfer.direction === "pull" && isAtSource
+        ? "source"
+        : transfer.direction === "pull" && isAtDest
+        ? "requester"
+        : undefined;
+    const { error } = await cancelTransfer(user.id, transfer.id, reason, cancelType);
     setBusy(false);
     if (error) {
       setError(error.message ?? String(error));

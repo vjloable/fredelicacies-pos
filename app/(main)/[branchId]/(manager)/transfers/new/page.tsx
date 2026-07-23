@@ -37,19 +37,31 @@ function ItemRow({
   onPick: () => void;
 }) {
   const available = getAvailableStock(item);
+  const outOfStock = showStock && available === 0;
   return (
     <button
-      onClick={onPick}
+      onClick={outOfStock ? undefined : onPick}
+      disabled={outOfStock}
       className={`w-full mx-1 my-0.5 px-2 py-2.5 rounded-lg border border-transparent flex items-center gap-3 text-left transition-colors ${
-        qty > 0 ? "bg-accent/5 border-accent/20" : "hover:bg-secondary/5"
+        outOfStock
+          ? "opacity-40 cursor-not-allowed"
+          : qty > 0
+          ? "bg-accent/5 border-accent/20"
+          : "hover:bg-secondary/5"
       }`}>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-secondary truncate">{item.name}</p>
         {showStock && (
           <p className="text-2.5 text-secondary/50">
-            Available: <span className="tabular-nums">{available}</span>
-            {item.reserved_stock > 0 && (
-              <span className="ml-1 text-secondary/30">({item.reserved_stock} reserved)</span>
+            {outOfStock ? (
+              <span className="text-(--error)">Out of stock</span>
+            ) : (
+              <>
+                Available: <span className="tabular-nums">{available}</span>
+                {item.reserved_stock > 0 && (
+                  <span className="ml-1 text-secondary/30">({item.reserved_stock} reserved)</span>
+                )}
+              </>
             )}
           </p>
         )}
@@ -57,6 +69,10 @@ function ItemRow({
       {qty > 0 ? (
         <span className="h-7 min-w-7 px-2 shrink-0 inline-flex items-center justify-center rounded-lg bg-accent text-primary text-2.5 font-bold tabular-nums">
           {qty}
+        </span>
+      ) : outOfStock ? (
+        <span className="h-7 px-2.5 shrink-0 inline-flex items-center rounded-lg bg-secondary/5 text-secondary/40 text-2.5 font-bold">
+          Out of stock
         </span>
       ) : (
         <span className="h-7 px-2.5 shrink-0 inline-flex items-center rounded-lg bg-secondary/10 text-secondary text-2.5 font-bold">

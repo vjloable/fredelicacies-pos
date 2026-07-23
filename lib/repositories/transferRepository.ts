@@ -57,6 +57,7 @@ function mapRow(row: any): TransferWithItems {
     cancelled_at: row.cancelled_at,
     cancelled_by: row.cancelled_by,
     cancel_reason: row.cancel_reason,
+    cancel_type: row.cancel_type ?? null,
     fulfill_note: row.fulfill_note,
     note: row.note,
     created_at: row.created_at,
@@ -174,6 +175,7 @@ export const transferRepository = {
       cancelled_at?: string | null;
       cancelled_by?: string | null;
       cancel_reason?: string | null;
+      cancel_type?: 'requester' | 'source' | null;
     }
   ): Promise<{ error: any }> {
     const { error } = await supabase.from('transfers').update(update).eq('id', id);

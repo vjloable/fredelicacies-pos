@@ -95,7 +95,7 @@ function KanbanCard({
     if (!userId) return;
     setBusy(true);
     setErr(null);
-    const { error } = await cancelTransfer(userId, t.id, reason);
+    const { error } = await cancelTransfer(userId, t.id, reason, "source");
     setBusy(false);
     if (error) {
       setErr(error.message ?? "Failed to decline");
@@ -141,11 +141,24 @@ function KanbanCard({
         {isCompleted && t.status === "received" && (
           <span className="px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-(--success)/10 text-(--success)">Received</span>
         )}
-        {isCompleted && t.status === "cancelled" && (
-          <span className="px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-secondary/10 text-secondary/50" title={t.cancel_reason ?? undefined}>
-            Cancelled{t.cancel_reason ? ` · ${t.cancel_reason}` : ""}
-          </span>
-        )}
+        {isCompleted && t.status === "cancelled" && (() => {
+          const isPull = t.direction === "pull";
+          const label =
+            isPull && t.cancel_type === "source"
+              ? "Declined by commissary"
+              : isPull && t.cancel_type === "requester"
+              ? "Request cancelled"
+              : "Cancelled";
+          const cls =
+            isPull && t.cancel_type === "source"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-secondary/10 text-secondary/50";
+          return (
+            <span className={`px-1.5 py-0.5 rounded-full text-2.5 font-bold ${cls}`} title={t.cancel_reason ?? undefined}>
+              {label}{t.cancel_reason ? ` · ${t.cancel_reason}` : ""}
+            </span>
+          );
+        })()}
         {isActionableRequest && isManager && !declining && (
           <>
             <button

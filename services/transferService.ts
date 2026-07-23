@@ -397,7 +397,8 @@ export async function receiveTransfer(
 export async function cancelTransfer(
   userId: string,
   transferId: string,
-  reason: string
+  reason: string,
+  cancelType?: 'requester' | 'source'
 ): Promise<{ error: any }> {
   log.info('cancelTransfer started', { userId, transferId, reason });
 
@@ -420,6 +421,7 @@ export async function cancelTransfer(
     cancelled_at: nowIso,
     cancelled_by: userId,
     cancel_reason: reason.trim() || null,
+    cancel_type: cancelType ?? null,
   });
 
   if (!error) {
