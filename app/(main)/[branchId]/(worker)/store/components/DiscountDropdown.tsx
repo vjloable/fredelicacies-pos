@@ -106,10 +106,10 @@ export default function DiscountDropdown({
       <button
         type="button"
         onClick={() => setIsOpen((o) => !o)}
-        className={`w-full flex items-center justify-between px-3 py-2 h-9.5 text-3 border-2 rounded-lg transition-all ${
+        className={`w-full flex items-center justify-between px-4 h-12 text-3.5 border rounded-lg transition-all ${
           appliedDiscount && eligible
-            ? "border-accent bg-accent/10 text-secondary"
-            : "border-secondary/20 bg-light-accent/40 text-secondary/50"
+            ? "border-accent/60 bg-accent/10 text-secondary"
+            : "border-secondary/15 bg-light-accent/40 text-secondary/50"
         } focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent`}
       >
         <span className={appliedDiscount && eligible ? "font-medium text-secondary" : ""}>
@@ -134,12 +134,15 @@ export default function DiscountDropdown({
             </>
           )}
           <svg
-            className={`w-4 h-4 text-secondary/40 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            viewBox="0 0 43 42"
             fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            className={`w-8 h-8 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              d="M21.0985 22.8117L17.4756 19.1888H24.7214L21.0985 22.8117Z"
+              stroke="var(--secondary)"
+              strokeWidth="3"
+            />
           </svg>
         </div>
       </button>

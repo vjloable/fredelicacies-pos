@@ -119,7 +119,7 @@ export default function CustomBundlePickerModal({
               <h3 className="text-sm font-bold text-secondary truncate">{bundle.name}</h3>
               <p className="text-xs text-secondary/50">Choose exactly {maxPieces} {maxPieces === 1 ? 'piece' : 'pieces'}</p>
             </div>
-            <button
+            <button aria-label="Close"
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
             >

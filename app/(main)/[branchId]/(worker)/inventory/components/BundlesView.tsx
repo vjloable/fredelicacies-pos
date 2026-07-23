@@ -17,6 +17,9 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import AddBundleModal from './AddBundleModal';
 import EditBundleModal from './EditBundleModal';
 
+// Sentinel folder id for bundles that have no category.
+const UNCAT = '__uncategorized__';
+
 interface BundlesViewProps {
   categoryFilter: string | null;
   categories: Category[];
@@ -28,9 +31,13 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
   const [bundles, setBundles] = useState<BundleWithComponents[]>([]);
   const [reactivating, setReactivating] = useState<string | null>(null);
   const [reactivationError, setReactivationError] = useState<string | null>(null);
-  const filteredBundles = categoryFilter
-    ? bundles.filter(b => b.category_id === categoryFilter)
-    : bundles;
+  // Bundles get their own category selection; seed from the parent folder selection.
+  const [selectedCat, setSelectedCat] = useState<string | null>(categoryFilter);
+  useEffect(() => { setSelectedCat(categoryFilter); }, [categoryFilter]);
+  const filteredBundles =
+    selectedCat === null ? [] :
+    selectedCat === UNCAT ? bundles.filter(b => !b.category_id) :
+    bundles.filter(b => b.category_id === selectedCat);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -139,6 +146,16 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
     // Bundle list will refresh via realtime subscription.
   };
 
+  // Folder data: categories that actually contain bundles, plus an uncategorized bucket.
+  const catCounts = new Map<string, number>();
+  let uncatCount = 0;
+  bundles.forEach(b => { if (b.category_id) catCounts.set(b.category_id, (catCounts.get(b.category_id) || 0) + 1); else uncatCount++; });
+  const folderCats = categories.filter(c => catCounts.has(c.id));
+  const currentCatName = selectedCat === UNCAT ? 'Uncategorized'
+    : selectedCat ? (categories.find(c => c.id === selectedCat)?.name ?? 'Category')
+    : 'Bundles';
+  const currentDot = selectedCat === UNCAT ? '#9CA3AF' : selectedCat ? getCategoryColor(categories, selectedCat) : '#9CA3AF';
+
   return (
     <>
       {/* Bundles needing fix (from catalog sync conflicts) */}
@@ -186,53 +203,100 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-xs font-bold text-secondary uppercase tracking-wide">
-          Bundles
-          <span className="ml-2 text-xs font-normal text-secondary/50 normal-case tracking-normal">
-            {filteredBundles.length} {filteredBundles.length === 1 ? 'bundle' : 'bundles'}
-          </span>
-        </h2>
-        <button
+{/* Level 0: category folder grid */}
+      {selectedCat === null ? (
+        <>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-2.5 font-bold uppercase tracking-wide text-secondary/45">Bundles</h2>
+              <p className="text-2.5 text-secondary/40 mt-0.5">
+                {bundles.length} {bundles.length === 1 ? 'bundle' : 'bundles'}
+              </p>
+            </div>
+            <button
           onClick={() => setShowAddModal(true)}
-          className="bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
+          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
         >
           <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
-            <div className="size-4">
-              <PlusIcon className="drop-shadow-lg" />
-            </div>
+            <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
             <span className="mt-0.5">ADD BUNDLE</span>
           </div>
         </button>
-      </div>
-
-      {/* Bundles List */}
-      {filteredBundles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10">
-          <div className="w-20 h-20 bg-bundle/20 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-bundle/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
           </div>
-          <h3 className="text-lg font-bold text-secondary mb-1">No Bundles Yet</h3>
-          <p className="text-secondary/60 text-xs text-center max-w-xs mb-4">
-            Combine multiple items into special offers or combo deals
-          </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
-          >
-            <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
-              <div className="size-4">
-                <PlusIcon className="drop-shadow-lg" />
+
+          {bundles.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="w-20 h-20 rounded-full border border-bundle/40 flex items-center justify-center text-bundle/80 mb-4">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
               </div>
-              <span className="mt-0.5">ADD BUNDLE</span>
+              <h3 className="text-lg font-bold text-secondary mb-1">No Bundles Yet</h3>
+              <p className="text-secondary/60 text-xs text-center max-w-xs">
+                Combine multiple items into special offers or combo deals
+              </p>
             </div>
-          </button>
-        </div>
+          ) : (
+            <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+              {folderCats.map((cat) => (
+                <button key={cat.id} onClick={() => setSelectedCat(cat.id ?? null)}
+                className="group relative aspect-square rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                <span className="w-5 sm:w-6 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                <span className="text-3 sm:text-3.5 font-semibold leading-tight line-clamp-3 text-secondary">{cat.name}</span>
+                <span className="text-2.5 text-secondary/40 tabular-nums">{catCounts.get(cat.id!)}</span>
+              </button>
+              ))}
+              {uncatCount > 0 && (
+                <button onClick={() => setSelectedCat(UNCAT)}
+                  className="group relative aspect-square rounded-xl border border-dashed border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                  <span className="w-5 sm:w-6 h-1.5 rounded-full shrink-0 bg-gray-300" />
+                  <span className="text-3 sm:text-3.5 font-semibold leading-tight line-clamp-3 text-secondary/70">Uncategorized</span>
+                  <span className="text-2.5 text-secondary/40 tabular-nums">{uncatCount}</span>
+                </button>
+              )}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="space-y-1">
+        <>
+          {/* Level 1: back + breadcrumb + list */}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button onClick={() => setSelectedCat(null)} aria-label="Back to bundle folders" title="Back to folders"
+                className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="min-w-0">
+                <nav aria-label="Breadcrumb" className="flex items-center gap-1.5">
+                  <button onClick={() => setSelectedCat(null)} className="shrink-0 text-2.5 font-bold uppercase tracking-wide text-secondary/45 hover:text-secondary transition-colors">Bundles</button>
+                  <svg className="w-3 h-3 shrink-0 text-secondary/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: currentDot }} />
+                  <span className="text-sm font-bold text-secondary truncate">{currentCatName}</span>
+                </nav>
+                <p className="text-2.5 text-secondary/40 mt-0.5">
+                  {filteredBundles.length} {filteredBundles.length === 1 ? 'bundle' : 'bundles'}
+                </p>
+              </div>
+            </div>
+            <button
+          onClick={() => setShowAddModal(true)}
+          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 shadow-sm transition-all font-semibold hover:scale-105 active:scale-95"
+        >
+          <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
+            <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
+            <span className="mt-0.5">ADD BUNDLE</span>
+          </div>
+        </button>
+          </div>
+
+          {filteredBundles.length === 0 ? (
+            <div className="py-12 text-center text-xs text-secondary/50">No bundles in this category.</div>
+          ) : (
+            <div className="space-y-1">
           {filteredBundles.map((bundle) => {
             const availability = bundleAvailability.get(bundle.id) || 0;
             const isExpanded = expandedBundles.has(bundle.id);
@@ -308,9 +372,11 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
             );
           })}
         </div>
+          )}
+        </>
       )}
 
-      {/* Modals */}
+            {/* Modals */}
       <AddBundleModal
         isOpen={showAddModal}
         inventory={inventory}

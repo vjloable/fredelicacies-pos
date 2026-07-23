@@ -116,7 +116,7 @@ export default function WaitingRoomPage() {
           <div className="p-8 text-center">
             {/* Waiting Icon with Animation */}
             <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-light-accent rounded-full flex items-center justify-center relative">
+              <div className="mx-auto w-14 h-14 rounded-full border border-accent/30 flex items-center justify-center text-accent relative">
                 <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>

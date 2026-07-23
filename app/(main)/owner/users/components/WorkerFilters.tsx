@@ -65,7 +65,7 @@ export default function WorkerFilters({
 		<div className='flex flex-col lg:flex-row lg:items-center gap-4'>
 			{/* Search Bar - Full width on mobile/tablet, flex-1 on PC */}
 			<div className='w-full lg:flex-1 lg:min-w-64'>
-				<div className='relative h-10.5'>
+				<div className='relative h-14'>
 					<input
 						type='text'
 						value={localFilters.searchQuery || ""}
@@ -103,10 +103,12 @@ export default function WorkerFilters({
 								onChange={(e) =>
 									handleFilterChange("branchId", e || undefined)
 								}
-								roundness="lg"
+								roundness="8"
 								height={42}
 								valueAlignment={"left"}
 								padding=''
+								fontSize="12px"
+								borderClassName="border border-secondary/20"
 								shadow={false}
 							/>
 						</div>
@@ -127,10 +129,12 @@ export default function WorkerFilters({
 									(e as UserRole) || undefined
 								)
 							}
-							roundness="lg"
+							roundness="8"
 							height={42}
 							valueAlignment={"left"}
 							padding=''
+							fontSize="12px"
+							borderClassName="border border-secondary/20"
 							shadow={false}
 						/>
 					</div>
@@ -147,10 +151,12 @@ export default function WorkerFilters({
 							onChange={(e) =>
 								handleFilterChange("status", e || undefined)
 							}
-							roundness="lg"
+							roundness="8"
 							height={42}
 							valueAlignment={"left"}
 							padding=''
+							fontSize="12px"
+							borderClassName="border border-secondary/20"
 							shadow={false}
 						/>
 					</div>
@@ -160,7 +166,7 @@ export default function WorkerFilters({
 				{hasActiveFilters && (
 					<button
 						onClick={clearFilters}
-						className='h-10.5 hover:cursor-pointer sm:w-auto px-4 text-xs text-error bg-error/10 border border-error/20 hover:bg-(--error)/50 hover:border-error hover:text-white rounded-lg transition-colors'>
+						className='h-14 hover:cursor-pointer sm:w-auto px-4 text-xs text-error bg-error/10 border border-error/20 hover:bg-(--error)/50 hover:border-error hover:text-white rounded-lg transition-colors'>
 						CLEAR
 					</button>
 				)}

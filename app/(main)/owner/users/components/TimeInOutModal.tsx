@@ -195,7 +195,7 @@ export default function TimeInOutModal({
 									</p>
 								</div>
 							</div>
-							<button
+							<button aria-label="Close"
 								onClick={handleClose}
 								className='text-gray-400 hover:text-gray-600 p-2'>
 								<svg

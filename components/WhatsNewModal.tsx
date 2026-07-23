@@ -115,7 +115,7 @@ export default function WhatsNewModal({ forceOpen, onClose }: WhatsNewModalProps
             <h2 className="text-base font-bold text-secondary">What&apos;s New</h2>
             <p className="text-xs text-secondary/40 mt-0.5">Version {VERSION_INFO.app} — {cardIndex + 1} of {features.length}</p>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={dismiss}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-secondary/40 hover:text-secondary"
           >

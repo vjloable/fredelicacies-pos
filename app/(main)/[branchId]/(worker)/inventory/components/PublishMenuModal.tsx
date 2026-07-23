@@ -116,7 +116,7 @@ export default function PublishMenuModal({
 								<span className="font-semibold">{sourceBranchName}</span> to other branches.
 							</p>
 						</div>
-						<button
+						<button aria-label="Close"
 							onClick={handleClose}
 							className="shrink-0 p-1.5 rounded-lg text-secondary/40 hover:text-secondary hover:bg-secondary/10 transition-colors">
 							<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

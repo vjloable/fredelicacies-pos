@@ -79,7 +79,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                         <h2 className='text-xl font-bold text-secondary'>Change Password</h2>
                         <p className='text-xs text-secondary/70 mt-1'>Enter your current password and choose a new one</p>
                     </div>
-                    <button
+                    <button aria-label="Close"
                         type='button'
                         onClick={handleClose}
                         disabled={loading}

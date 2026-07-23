@@ -692,7 +692,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								<h3 className='text-base font-semibold text-gray-900'>
 									Performance Details: {selectedWorker.name}
 								</h3>
-								<button
+								<button aria-label="Close"
 									onClick={() => setSelectedWorker(null)}
 									className='text-gray-400 hover:text-gray-600'>
 									<svg

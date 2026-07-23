@@ -126,7 +126,7 @@ export default function AssignBranchModal({
 			<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
 				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl'>
 					<div className='text-center py-8'>
-						<div className='w-16 h-16 mx-auto mb-4 bg-light-accent rounded-full flex items-center justify-center'>
+						<div className='w-14 h-14 mx-auto mb-4 rounded-full border border-accent/30 flex items-center justify-center text-accent'>
 							<svg
 								className='w-8 h-8 text-accent'
 								fill='none'
@@ -202,7 +202,7 @@ export default function AssignBranchModal({
 									</p>
 								</div>
 							</div>
-							<button
+							<button aria-label="Close"
 								onClick={handleClose}
 								className='text-secondary/40 hover:text-secondary/60 p-2'>
 								<svg

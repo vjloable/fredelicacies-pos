@@ -71,7 +71,7 @@ export default function WorkersTable({
 	if (workers.length === 0) {
 		return (
 			<div className='bg-white rounded-lg shadow-md p-12 text-center'>
-				<div className='w-16 h-16 mx-auto mb-4 bg-light-accent rounded-full flex items-center justify-center'>
+				<div className='w-14 h-14 mx-auto mb-4 rounded-full border border-accent/30 flex items-center justify-center text-accent'>
 					<ManagementIcon className="text-accent"/>
 				</div>
 				<h3 className='text-base font-medium text-secondary mb-2'>

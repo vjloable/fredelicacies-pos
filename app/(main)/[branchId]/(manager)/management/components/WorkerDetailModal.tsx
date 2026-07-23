@@ -203,7 +203,7 @@ export default function WorkerDetailModal({
 							</span>
 						)}
 					</div>
-					<button
+					<button aria-label="Close"
 						onClick={onClose}
 						className='text-secondary hover:text-secondary/60 transition-colors'>
 						<svg

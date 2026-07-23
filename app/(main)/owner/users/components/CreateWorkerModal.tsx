@@ -224,7 +224,7 @@ export default function CreateWorkerModal({
 									Create a new worker account with role assignments
 								</p>
 							</div>
-							<button
+							<button aria-label="Close"
 								onClick={handleClose}
 								className='text-secondary/40 hover:text-secondary/60 p-2'>
 								<svg

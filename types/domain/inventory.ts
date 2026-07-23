@@ -1,3 +1,9 @@
+// Measurement family for commissary custom items.
+export type InventoryUnitType = 'liquid' | 'solid' | 'piece';
+
+// Commissary classification of an inventory row.
+export type InventoryItemKind = 'item' | 'product' | 'ingredient';
+
 // Domain entity for Inventory Item
 export interface InventoryItem {
   id: string;
@@ -15,6 +21,12 @@ export interface InventoryItem {
   synced_from_main_at: string | null;
   barcode: string | null;
   img_url: string | null;
+  // Commissary custom production goods measured by a unit of measure (NULL for sellable items).
+  kind: InventoryItemKind;
+  is_custom: boolean;
+  unit_type: InventoryUnitType | null;
+  unit: string | null;
+  measurement: number | null;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -22,24 +34,25 @@ export interface InventoryItem {
 
 export interface CreateInventoryItemData {
   name: string;
-  price: number;
+  price?: number;
   category_id?: string;
   category_ids?: string[];
   description?: string;
-  cost?: number;
-  grab_price?: number | null;
   stock?: number;
   barcode?: string;
   img_url?: string;
   status?: 'active' | 'inactive';
+  kind?: InventoryItemKind;
+  is_custom?: boolean;
+  unit_type?: InventoryUnitType | null;
+  unit?: string | null;
+  measurement?: number | null;
 }
 
 export interface UpdateInventoryItemData {
   name?: string;
   description?: string;
   price?: number;
-  cost?: number;
-  grab_price?: number | null;
   stock?: number;
   uncarried_stock?: number;
   category_id?: string;
@@ -47,4 +60,9 @@ export interface UpdateInventoryItemData {
   barcode?: string;
   img_url?: string;
   status?: 'active' | 'inactive';
+  kind?: InventoryItemKind;
+  is_custom?: boolean;
+  unit_type?: InventoryUnitType | null;
+  unit?: string | null;
+  measurement?: number | null;
 }

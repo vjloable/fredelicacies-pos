@@ -28,15 +28,18 @@ export const inventoryRepository = {
       .insert({
         branch_id: branchId,
         name: data.name,
-        price: data.price,
+        price: data.price ?? 0,
         category_id: categoryIds[0] ?? null,
         description: data.description || null,
-        cost: data.cost || null,
-        grab_price: data.grab_price ?? null,
         stock: data.stock || 0,
         barcode: data.barcode || null,
         img_url: data.img_url || null,
         status: data.status || 'active',
+        kind: data.kind ?? 'item',
+        is_custom: data.is_custom ?? false,
+        unit_type: data.unit_type ?? null,
+        unit: data.unit ?? null,
+        measurement: data.measurement ?? null,
       })
       .select()
       .single();

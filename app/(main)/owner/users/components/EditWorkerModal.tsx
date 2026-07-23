@@ -376,7 +376,7 @@ export default function EditWorkerModal({
 									Update worker information and role assignments
 								</p>
 							</div>
-							<button
+							<button aria-label="Close"
 								onClick={handleClose}
 								className='text-secondary/40 hover:text-secondary/60 p-2'>
 								<svg

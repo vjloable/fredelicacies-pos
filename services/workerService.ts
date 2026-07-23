@@ -343,7 +343,11 @@ export const workerService = {
   // Promote to owner
   promoteToOwner: async (userId: string): Promise<void> => {
     try {
-      await userProfileRepository.update(userId, { is_owner: true });
+      const { profile, error } = await userProfileRepository.update(userId, { is_owner: true });
+      if (error) throw error;
+      if (!profile || !profile.is_owner) {
+        throw new Error('Failed to grant admin privileges — the update was not applied. Only owners can change admin status.');
+      }
     } catch (error) {
       console.error('Error promoting to owner:', error);
       throw error;
@@ -353,7 +357,11 @@ export const workerService = {
   // Demote from owner
   demoteFromOwner: async (userId: string): Promise<void> => {
     try {
-      await userProfileRepository.update(userId, { is_owner: false });
+      const { profile, error } = await userProfileRepository.update(userId, { is_owner: false });
+      if (error) throw error;
+      if (!profile || profile.is_owner) {
+        throw new Error('Failed to revoke admin privileges — the update was not applied. Only owners can change admin status.');
+      }
     } catch (error) {
       console.error('Error demoting from owner:', error);
       throw error;

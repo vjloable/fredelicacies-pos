@@ -171,7 +171,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
         <h2 className="text-lg font-semibold mb-4">
         </h2>
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl border border-accent/30 flex items-center justify-center text-accent">
             <DiscountsIcon className='text-accent'/>
           </div>
           <h3 className="text-lg font-bold text-secondary mb-2">

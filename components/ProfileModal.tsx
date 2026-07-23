@@ -122,7 +122,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         <h2 className='text-xl font-bold text-secondary'>My Profile</h2>
                         <p className='text-xs text-secondary/70 mt-1'>Update your name, photo, and contact info</p>
                     </div>
-                    <button
+                    <button aria-label="Close"
                         type='button'
                         onClick={onClose}
                         disabled={loading}

@@ -53,7 +53,7 @@ export default function TutorialModal({ isOpen, steps, onClose }: TutorialModalP
               <h3 className="text-sm font-bold text-secondary">{step.title}</h3>
             </div>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={handleClose}
             className="text-secondary/30 hover:text-secondary/60 transition-colors shrink-0 mt-0.5"
           >

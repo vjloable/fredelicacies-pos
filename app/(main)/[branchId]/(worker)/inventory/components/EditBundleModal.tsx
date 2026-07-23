@@ -617,7 +617,7 @@ export default function EditBundleModal({
                           </div>
 
                           {/* Remove Button */}
-                          <button
+                          <button aria-label="Close"
                             onClick={() => handleRemoveComponent(component.inventoryItemId)}
                             className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
                           >
@@ -684,7 +684,7 @@ export default function EditBundleModal({
                             className="w-14 px-2 py-1 text-center text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                           />
                         </div>
-                        <button onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">
+                        <button aria-label="Close" onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>

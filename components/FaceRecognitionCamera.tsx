@@ -208,7 +208,7 @@ export default function FaceRecognitionCamera({
 								: 'Verify your identity to clock in/out'}
 						</p>
 					</div>
-					<button
+					<button aria-label="Close"
 						onClick={onCancel}
 						disabled={isProcessing}
 						className="text-secondary/40 hover:text-secondary/60 p-2 disabled:opacity-50">

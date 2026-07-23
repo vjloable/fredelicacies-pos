@@ -274,7 +274,7 @@ export default function EditFaceEmbeddingModal({
                             Manage face recognition for {worker.name}
                         </p>
                     </div>
-                    <button
+                    <button aria-label="Close"
                         onClick={onClose}
                         className="text-secondary/40 hover:text-secondary/60 p-2">
                         <svg

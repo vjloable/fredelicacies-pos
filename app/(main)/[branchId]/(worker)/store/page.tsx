@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
-import MinusIcon from "./icons/MinusIcon";
 import OrderCartIcon from "./icons/OrderCartIcon";
 import type { InventoryItem, Category, Discount, BundleWithComponents, BundleComponent } from "@/types/domain";
 import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock } from "@/services/inventoryService";
@@ -22,7 +21,6 @@ import DiscountDropdown from "./components/DiscountDropdown";
 import { isDiscountEligible, calculateEligibleSubtotal, calculateDiscountAmount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import { AnimatePresence, motion } from "motion/react";
-import PlusIcon from "@/components/icons/PlusIcon";
 
 import { formatCurrency } from "@/lib/currency_formatter";
 import { formatReceiptWithLogo } from "@/lib/esc_formatter";
@@ -37,11 +35,38 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
+import CartItemEditor from "./CartItemEditor";
+import CartLine from "./CartLine";
 import HelpButton from "@/components/HelpButton";
 import { storeSteps } from "@/components/TutorialSteps";
 
 // Stable reference avoids DropdownField re-running its calcPosition effect each render.
 const SPLIT_DROPDOWN_OFFSET = { top: 2, left: 0 };
+
+// A "cashier-priced" line is a plain inventory item (not a bundle / custom bundle / B1T1).
+// Regular items no longer carry a stored price — the cashier types the selling price into
+// the cart line at the point of sale, and the Grab price into the order-confirmation modal.
+type CartLineLike = { type?: 'item' | 'bundle'; isB1T1?: boolean; is_custom?: boolean; price: number; grab_price?: number | null };
+const isCashierPriced = (item: CartLineLike) => (item.type ?? 'item') !== 'bundle' && !item.isB1T1 && !item.is_custom;
+const effectiveUnitPrice = (item: CartLineLike, paymentMethod: string) =>
+	paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
+
+// Inline numeric price editor used on cashier-priced cart lines.
+const InlinePriceInput = ({ value, onChange, placeholder = '0.00' }: { value: number | null | undefined; onChange: (n: number) => void; placeholder?: string }) => (
+	<span className='inline-flex items-center gap-1' onClick={e => e.stopPropagation()}>
+		<span className='text-xs text-secondary/50 font-poppins'>₱</span>
+		<input
+			type='text'
+			inputMode='decimal'
+			value={value ? String(value) : ''}
+			placeholder={placeholder}
+			onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) onChange(parseFloat(v) || 0); }}
+			onFocus={e => e.target.select()}
+			onClick={e => e.stopPropagation()}
+			className='w-16 text-right border border-accent/40 rounded h-7 px-2 text-xs text-secondary focus:outline-none focus:ring-1 focus:ring-accent'
+		/>
+	</span>
+);
 
 // Toast notification component
 const SuccessToast = ({
@@ -91,7 +116,7 @@ const SuccessToast = ({
 				</div>
 
 				{/* Close Button */}
-				<button
+				<button aria-label="Close"
 					onClick={onClose}
 					className='shrink-0 text-white hover:text-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 					<svg
@@ -123,6 +148,7 @@ export default function StoreScreen() {
 	const [showWriteOffModal, setShowWriteOffModal] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
+	const [activeStoreCategory, setActiveStoreCategory] = useState<string | null>(null); // folder-directory: null = folder grid
 	const [searchQuery, setSearchQuery] = useState("");
 	const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 	const [categories, setCategories] = useState<Category[]>([]);
@@ -162,6 +188,7 @@ export default function StoreScreen() {
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
 	const [customBundleTarget, setCustomBundleTarget] = useState<BundleWithComponents | null>(null);
 	const [showWildcardModal, setShowWildcardModal] = useState(false);
+	const [editingCartId, setEditingCartId] = useState<string | null>(null);
 	const [cart, setCart] = useState<
 		Array<{
 			id: string;
@@ -440,6 +467,11 @@ export default function StoreScreen() {
 	// Determine if we're showing search results
 	const isSearching = searchQuery.trim() !== "";
 
+	// Folder-directory navigation for the store menu.
+	const showFolders = !isSearching && activeStoreCategory === null;
+	const activeGroup = activeStoreCategory ? groupedItems.find(g => g.id === activeStoreCategory) : null;
+	const visibleGroups = isSearching ? groupedItems : (activeStoreCategory ? groupedItems.filter(g => g.id === activeStoreCategory) : []);
+
 	// Helper function to highlight search terms
 	const highlightSearchTerm = (text: string, searchTerm: string) => {
 		if (!searchTerm || !text) return text;
@@ -531,8 +563,10 @@ export default function StoreScreen() {
 					{
 						id: itemId,
 						name: item.name,
-						price: item.price,
-						grab_price: item.grab_price ?? null,
+						// Regular items have no stored price — the cashier enters the selling
+						// price on the cart line (and the Grab price in the confirmation modal).
+						price: 0,
+						grab_price: null,
 						cost: item.cost ?? undefined,
 						quantity: 1,
 						originalStock: getAvailableInventoryStock(item),
@@ -545,6 +579,12 @@ export default function StoreScreen() {
 			}
 		}
 	};
+
+	// Cashier-entered pricing for regular cart lines.
+	const updateCartItemPrice = (id: string, price: number) =>
+		setCart(prev => prev.map(i => (i.id === id ? { ...i, price } : i)));
+	const updateCartItemGrabPrice = (id: string, grab: number) =>
+		setCart(prev => prev.map(i => (i.id === id ? { ...i, grab_price: grab > 0 ? grab : null } : i)));
 
 	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[], overridePrice?: number) => {
 		const cost = selections.reduce((s, p) => s + p.cost, 0);
@@ -676,6 +716,9 @@ export default function StoreScreen() {
 			? manualDiscountAmount
 			: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount));
 	const total = subtotal - effectiveDiscountForTotal;
+
+	// Regular items require a cashier-entered selling price before the order can be placed.
+	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && (!i.price || i.price <= 0)).length;
 
 	const splitAmount1Num = parseFloat(splitAmount1) || 0;
 	const splitAmount2Num = parseFloat(splitAmount2) || 0;
@@ -851,7 +894,7 @@ export default function StoreScreen() {
 					id: item.id,
 					bundleId: item.bundleId,
 					name: item.name,
-					price: item.price,
+					price: effectiveUnitPrice(item, paymentMethod),
 					cost: item.cost || 0,
 					quantity: item.quantity,
 					imgUrl: item.imgUrl || "",
@@ -1042,34 +1085,7 @@ export default function StoreScreen() {
 					</div>
 				</div>
 
-				{/* Category Selector - Fixed */}
-				<div className={`px-4 py-1.5 flex gap-1.5 overflow-x-auto flex-wrap ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
-					{displayCategories.map((category) => (
-						<button
-							key={category.id}
-							onClick={() => toggleCategory(category.name)}
-							className={`px-3 py-1 rounded-lg font-medium text-3 whitespace-nowrap transition-all ${
-								isCategorySelected(category.name)
-									? !category.isSpecial
-										? "bg-secondary/20 text-secondary shadow-none"
-										: "bg-accent text-primary shadow-none"
-									: "bg-white text-secondary hover:bg-gray-200"
-							}`}>
-							<div className="flex items-center">
-								{!category.isSpecial && <span className="w-2 h-2 rounded-full shrink-0 mr-1.5" style={{backgroundColor: getCategoryColor(category.id)}}/>}
-								{category.name}
-								{!category.isSpecial && (
-									<span className='ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-secondary/10 text-secondary/50 text-[9px] font-medium'>
-										{inventoryItems.filter((item) => {
-										const ids = item.category_ids?.length ? item.category_ids : item.category_id ? [item.category_id] : [];
-										return ids.includes(category.id);
-									}).length + bundles.filter(b => b.category_id === category.id).length}
-									</span>
-								)}
-							</div>
-						</button>
-					))}
-				</div>
+				{/* Category selection now uses the folder grid below */}
 
 				{/* Menu Items - Scrollable */}
 				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
@@ -1104,7 +1120,7 @@ export default function StoreScreen() {
 					) : displayItems.length === 0 ? (
 						// Filtered Results Empty State
 						<div className='flex flex-col items-center justify-center py-12'>
-							<div className='w-16 h-16 bg-light-accent rounded-full flex items-center justify-center mb-4'>
+							<div className='w-14 h-14 rounded-full border border-accent/30 flex items-center justify-center text-accent mb-4'>
 								{isSearching ? (
 									<svg
 										className='w-8 h-8 text-accent'
@@ -1151,7 +1167,9 @@ export default function StoreScreen() {
 						</div>
 					) : (
 					<div className='space-y-4'>
-						{/* Wildcard Bundle quick-action card */}
+						{showFolders && (
+        <>
+        {/* Wildcard Bundle quick-action card */}
 						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
 							<button
 								type='button'
@@ -1185,13 +1203,43 @@ export default function StoreScreen() {
 							</button>
 						</div>
 
-						{groupedItems.map(group => (
+						{/* Category folders */}
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
+          {groupedItems.map(group => (
+            <button key={group.id} onClick={() => setActiveStoreCategory(group.id)}
+              className='group relative aspect-square rounded-xl border-2 border-gray-200 bg-primary hover:border-accent hover:shadow-md active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-2 p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+              <span className='w-6 h-1.5 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
+              <span className='text-3.5 font-semibold text-secondary leading-tight line-clamp-3'>{group.name}</span>
+              <span className='text-2.5 text-secondary/40 tabular-nums'>{group.items.length} {group.items.length === 1 ? 'item' : 'items'}</span>
+            </button>
+          ))}
+        </div>
+        </>
+        )}
+        {activeStoreCategory && !isSearching && (
+          <div className='flex items-center gap-3'>
+            <button onClick={() => setActiveStoreCategory(null)} aria-label='Back to categories' title='Back to categories'
+              className='h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' /></svg>
+            </button>
+            <nav aria-label='Breadcrumb' className='flex items-center gap-1.5 min-w-0'>
+              <button onClick={() => setActiveStoreCategory(null)} className='shrink-0 text-2.5 font-bold uppercase tracking-wide text-secondary/45 hover:text-secondary transition-colors'>Menu</button>
+              <svg className='w-3 h-3 shrink-0 text-secondary/30' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' /></svg>
+              <span className='w-1.5 h-1.5 rounded-full shrink-0' style={{ backgroundColor: activeGroup?.color ?? '#9CA3AF' }} />
+              <span className='text-sm font-bold text-secondary truncate'>{activeGroup?.name ?? 'Category'}</span>
+            </nav>
+          </div>
+        )}
+
+        {visibleGroups.map(group => (
 							<div key={group.id}>
-								<div className='flex items-center gap-2 mb-2'>
+								{isSearching && (
+<div className='flex items-center gap-2 mb-2'>
 									<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
 									<span className='text-2.5 font-bold text-secondary/60 uppercase tracking-widest'>{group.name}</span>
 									<span className='inline-flex items-center justify-center w-4 h-4 rounded-full bg-secondary/10 text-secondary/40 text-[9px] font-medium'>{group.items.length}</span>
 								</div>
+)}
 								<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
 									{group.items.map((item, index) => {
 										const isBundle = item.type === 'bundle';
@@ -1256,9 +1304,13 @@ export default function StoreScreen() {
 														</div>
 													)}
 													<div className='flex items-center justify-between gap-1 mt-1'>
-														<span className='text-accent font-bold text-xs'>
-															{formatCurrency(item.price)}
-														</span>
+														{isBundle ? (
+															<span className='text-accent font-bold text-xs'>
+																{formatCurrency(item.price)}
+															</span>
+														) : (
+															<span />
+														)}
 														{isBundle && item.is_custom ? (
 															<span className='text-xs font-medium px-1.5 py-0.5 rounded select-none bg-bundle/10 text-bundle'>
 																Mix & Match
@@ -1307,7 +1359,7 @@ export default function StoreScreen() {
 								<h2 className='text-lg font-bold text-secondary'>
 									Current Order
 								</h2>
-								<button
+								<button aria-label="Close"
 									onClick={() => setShowOrderMenu(false)}
 									className='w-10 h-10 flex items-center justify-center bg-light-accent rounded-full hover:bg-accent transition-all'>
 									<svg
@@ -1403,119 +1455,20 @@ export default function StoreScreen() {
 													}}
 													layout
 													layoutId={`mobile-cart-item-${item.id}`}
+																
 													className='flex flex-col w-full bg-white py-1.5'>
-													<div className='flex flex-row items-start gap-3 w-full'>
-														<div className='flex-none w-14 h-14 bg-gray-100 rounded-md relative overflow-hidden'>
-															{item.imgUrl ? (
-																<SafeImage
-																	src={item.imgUrl}
-																	alt={item.name}
-																/>
-															) : null}
-															{!item.imgUrl && (
-																<div className='w-full h-full flex items-center justify-center'>
-																	<LogoIcon className='w-10 h-10' />
-																</div>
-															)}
-														</div>
-
-														<div className='flex flex-col items-start gap-1 w-full grow'>
-															<div className='flex flex-col items-start gap-1 w-full grow'>
-																<div className='flex flex-row items-center justify-between gap-2 w-full'>
-																	<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
-																		{item.name}
-																	</span>
-																	{item.isB1T1 && (
-																		<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded'>B1T1</span>
-																	)}
-																	{item.is_custom && (
-																		<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
-																	)}
-														{item.isPriceOverride && (
-															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded'>Price adj.</span>
-														)}
-																</div>
-																<div className='flex flex-row items-center justify-between w-full'>
-																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
-																			{formatCurrency(item.price)}
-																		</span>
-																		{!item.is_custom && (
-																		<span className="font-bold text-xs text-shadow-lg leading-5.25 text-primary font-poppins bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
-																			×{item.quantity}
-																		</span>
-																		)}
-																	</span>
-																	<span className='space-x-2 flex items-center'>
-																		<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
-																			=
-																		</span>
-																		<span className="font-bold text-xs leading-5.25 text-secondary font-poppins">
-																			{formatCurrency(
-																				item.price * item.quantity
-																			)}
-																		</span>
-																	</span>
-																</div>
-
-																{/* Bundle Component Details */}
-																{item.type === 'bundle' && item.components && (
-																	<div className='mt-1'>
-																		<button
-																			onClick={(e) => { e.stopPropagation(); toggleBundle(item.id); }}
-																			className='flex items-center gap-1 text-xs text-bundle font-medium hover:text-bundle transition-colors'>
-																				<span>{item.components.length} item{item.components.length !== 1 ? 's' : ''}</span>
-																				<svg className={`w-3 h-3 transition-transform ${expandedBundles.has(item.id) ? 'rotate-180' : ''}`} viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5'><path d='M2 4l4 4 4-4'/></svg>
-																		</button>
-																		{expandedBundles.has(item.id) && (
-																			<div className='flex flex-wrap gap-1 mt-1'>
-																				{item.components.map((comp) => (
-																					<span key={comp.id || comp.inventory_item_id} className='inline-flex items-center gap-0.5 bg-bundle/10 border border-bundle/40 text-bundle text-xs font-medium px-1 py-0.5 rounded'>
-																						<span>{comp.inventory_item?.name || 'Item'}</span>
-																						<span className='shrink-0 opacity-60'>×{comp.quantity}</span>
-																					</span>
-																				))}
-																			</div>
-																		)}
-																	</div>
-																)}
-															</div>
-
-															{appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom && (
-															<div className='flex flex-row justify-end w-full mt-1'>
-																<button
-																	onClick={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
-																	className='text-xs font-bold px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'>
-																	Mark as B1T1
-																</button>
-															</div>
-															)}
-															{!item.is_custom && (
-															<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
-																<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-light-accent rounded-3xl'>
-																	<button
-																		onClick={() =>
-																			updateQuantity(item.id, -1, item.type || 'item')
-																		}
-																		className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
-																		<MinusIcon />
-																	</button>
-
-																	<span className="font-bold text-sm leading-5.25 text-secondary font-poppins">
-																		{item.quantity}
-																	</span>
-
-																	<button
-																		onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
-																		className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
-																		<PlusIcon />
-																	</button>
-																</div>
-															</div>
-															)}
-														</div>
-													</div>
-													<AnimatePresence>
+													<CartLine
+											item={item}
+											openable={isCashierPriced(item)}
+											expanded={expandedBundles.has(item.id)}
+											showB1T1={appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom}
+											onOpen={() => setEditingCartId(item.id)}
+											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
+											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
+											onToggleExpand={() => toggleBundle(item.id)}
+											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+										/>
+										<AnimatePresence>
 														<motion.div
 															key={`mobile-divider-${index}`}
 															initial={{ opacity: 0 }}
@@ -1602,7 +1555,7 @@ export default function StoreScreen() {
 			</AnimatePresence>
 
 			{/* Right Side Panel - Order Summary - Desktop only (≥ 1280px) */}
-			<div className='hidden xl:flex flex-col h-full bg-primary border-l border-gray-200 overflow-hidden w-90 shrink-0'>
+			<div className='hidden xl:flex flex-col h-full bg-primary border-l border-gray-200 overflow-hidden w-110 shrink-0'>
 				{/* Header Section - Fixed at top (154px total) */}
 				<div className='shrink-0'>
 					<div className='w-full h-22.5 bg-primary border-b border-secondary/20 border-dashed'>
@@ -1715,116 +1668,19 @@ export default function StoreScreen() {
 										}}
 										layout
 										layoutId={`cart-item-${item.id}`}
+												
 										className='flex flex-col w-full bg-white py-1.5'>
-										<div className='flex flex-row items-start gap-3 w-full'>
-											<div className='flex-none w-14 h-14 bg-gray-100 rounded-md relative overflow-hidden'>
-												{item.imgUrl ? (
-													<SafeImage src={item.imgUrl} alt={item.name} />
-												) : null}
-												{!item.imgUrl && (
-													<div className='w-full h-full flex items-center justify-center'>
-														<LogoIcon className='w-10 h-10 opacity-25' />
-													</div>
-												)}
-											</div>
-
-											<div className='flex flex-col items-start gap-1 w-full grow'>
-												{/* Item Info Section */}
-												<div className='flex flex-col items-start gap-1 w-full grow'>
-													{/* Title and Quantity Row */}
-													<div className='flex flex-row items-center justify-between gap-2 w-full'>
-														<span className="font-normal text-sm leading-5.25 text-secondary font-poppins truncate">
-															{item.name}
-														</span>
-														{item.isB1T1 && (
-															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded'>B1T1</span>
-														)}
-														{item.is_custom && (
-															<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded'>Custom</span>
-														)}
-											{item.isPriceOverride && (
-												<span className='shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded'>Price adj.</span>
-											)}
-													</div>
-													{/* Price and Subtotal Row */}
-													<div className='flex flex-row items-center justify-between w-full'>
-														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-xs text-secondary font-poppins">
-																{formatCurrency(item.price)}
-															</span>
-															{!item.is_custom && (
-																<span className="font-bold text-xs text-primary font-poppins bg-accent/80 px-2 py-1 rounded-full min-w-6 text-center">
-																	×{item.quantity}
-																</span>
-															)}
-														</span>
-														<span className='space-x-2 flex items-center'>
-															<span className="font-normal text-xs leading-5.25 text-secondary font-poppins">
-																=
-															</span>
-															<span className="font-bold text-xs leading-5.25 text-secondary font-poppins">
-																{formatCurrency(item.price * item.quantity)}
-															</span>
-														</span>
-													</div>
-
-													{/* Bundle Component Details */}
-													{item.type === 'bundle' && item.components && (
-														<div className='mt-1'>
-															<button
-																onClick={(e) => { e.stopPropagation(); toggleBundle(item.id); }}
-																className='flex items-center gap-1 text-xs text-bundle font-medium hover:text-bundle transition-colors'>
-																	<span>{item.components.length} item{item.components.length !== 1 ? 's' : ''}</span>
-																	<svg className={`w-3 h-3 transition-transform ${expandedBundles.has(item.id) ? 'rotate-180' : ''}`} viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5'><path d='M2 4l4 4 4-4'/></svg>
-															</button>
-															{expandedBundles.has(item.id) && (
-																<div className='flex flex-wrap gap-1 mt-1'>
-																	{item.components.map((comp) => (
-																		<span key={comp.id || comp.inventory_item_id} className='inline-flex items-center gap-0.5 bg-bundle/10 border border-bundle/40 text-bundle text-xs font-medium px-1 py-0.5 rounded'>
-																			<span>{comp.inventory_item?.name || 'Item'}</span>
-																			<span className='shrink-0 opacity-60'>×{comp.quantity}</span>
-																		</span>
-																	))}
-																</div>
-															)}
-														</div>
-													)}
-												</div>
-
-												{/* Controls Section */}
-												{appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom && (
-												<div className='flex flex-row justify-end w-full mt-1'>
-													<button
-														onClick={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
-														className='text-xs font-bold px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-primary transition-all'>
-														Mark as B1T1
-													</button>
-												</div>
-												)}
-												{!item.is_custom && (
-												<div className='flex flex-row justify-end items-end gap-3 w-full h-8.75'>
-													{/* Quantity Controls */}
-													<div className='flex flex-row justify-between items-center px-1.5 w-30 h-8.75 bg-light-accent rounded-3xl'>
-														<button
-															onClick={() => updateQuantity(item.id, -1, item.type || 'item')}
-															className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
-															<MinusIcon />
-														</button>
-
-														<span className="font-bold text-sm leading-5.25 text-secondary font-poppins">
-															{item.quantity}
-														</span>
-
-														<button
-															onClick={() => updateQuantity(item.id, 1, item.type || 'item')}
-															className='flex flex-col justify-center items-center p-1.5 gap-5 w-5.75 h-5.75 bg-white rounded-3xl hover:scale-110 hover:bg-accent transition-all'>
-															<PlusIcon />
-														</button>
-													</div>
-												</div>
-												)}
-											</div>
-										</div>
+										<CartLine
+											item={item}
+											openable={isCashierPriced(item)}
+											expanded={expandedBundles.has(item.id)}
+											showB1T1={appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom}
+											onOpen={() => setEditingCartId(item.id)}
+											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
+											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
+											onToggleExpand={() => toggleBundle(item.id)}
+											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+										/>
 										<AnimatePresence>
 											<motion.div
 												key={`divider-${index}`}
@@ -1938,7 +1794,7 @@ export default function StoreScreen() {
 								</span>
 								<div className='flex flex-wrap gap-2'>
 									{(['cash', 'gcash', 'grab', 'debit_credit', 'employee_charge', 'split'] as const).map((method) => {
-										const grabDisabled = method === 'grab' && !cart.some(item => item.grab_price && item.grab_price > 0);
+										const grabDisabled = method === 'grab' && cart.length === 0;
 										const label = method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : method === 'grab' ? 'Grab' : method === 'debit_credit' ? 'Debit/Credit' : method === 'employee_charge' ? 'Employee Charge' : 'Split';
 										return (
 										<button
@@ -1990,13 +1846,22 @@ export default function StoreScreen() {
 													{item.name}
 												</h4>
 												<div className='flex items-center gap-1.5 flex-wrap'>
-													<p className='text-xs text-secondary'>
-														{formatCurrency(paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price)}
-													</p>
-													{paymentMethod === 'grab' && item.grab_price && item.grab_price !== item.price && (
-														<span className='text-[9px] font-semibold px-1 py-0.5 rounded bg-[#02B150]/10 text-[#02B150]'>
-															+{formatCurrency(item.grab_price - item.price)}
+													{paymentMethod === 'grab' && isCashierPriced(item) ? (
+														<span className='inline-flex items-center gap-1'>
+															<span className='text-[9px] font-semibold text-[#02B150]'>Grab</span>
+															<InlinePriceInput value={item.grab_price ?? undefined} placeholder={String(item.price)} onChange={(n) => updateCartItemGrabPrice(item.id, n)} />
 														</span>
+													) : (
+														<>
+															<p className='text-xs text-secondary'>
+																{formatCurrency(paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price)}
+															</p>
+															{paymentMethod === 'grab' && item.grab_price && item.grab_price !== item.price && (
+																<span className='text-[9px] font-semibold px-1 py-0.5 rounded bg-[#02B150]/10 text-[#02B150]'>
+																	+{formatCurrency(item.grab_price - item.price)}
+																</span>
+															)}
+														</>
 													)}
 												</div>
 												{appliedDiscount?.category_filter_mode && (appliedDiscount.category_filter_ids?.length ?? 0) > 0 && (() => {
@@ -2286,6 +2151,11 @@ export default function StoreScreen() {
 
 						{/* Modal Footer */}
 						<div className='p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-200 bg-gray-50'>
+							{unpricedItemCount > 0 && (
+								<p className='mb-3 text-xs font-medium text-error text-center'>
+									Enter a selling price for {unpricedItemCount} item{unpricedItemCount !== 1 ? 's' : ''} before placing the order.
+								</p>
+							)}
 							<div className='flex gap-3'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
@@ -2294,9 +2164,9 @@ export default function StoreScreen() {
 								</button>
 								<button
 									onClick={confirmPlaceOrder}
-									disabled={isPlacingOrder || !splitValid}
+									disabled={isPlacingOrder || !splitValid || unpricedItemCount > 0}
 									className={`flex-1 px-4 py-3 rounded-lg text-xs font-black transition-all ${
-										isPlacingOrder || !splitValid
+										isPlacingOrder || !splitValid || unpricedItemCount > 0
 											? "bg-gray-100 text-secondary/50 cursor-not-allowed"
 											: "bg-accent text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
 									}`}>
@@ -2308,7 +2178,22 @@ export default function StoreScreen() {
 				</div>
 			)}
 
-			{/* Wildcard Bundle Modal */}
+			{editingCartId && (() => {
+					const it = cart.find(i => i.id === editingCartId);
+					if (!it) return null;
+					return (
+						<CartItemEditor
+							name={it.name}
+							price={it.price}
+							quantity={it.quantity}
+							onPriceChange={(v) => updateCartItemPrice(it.id, v)}
+							onQuantityChange={(d) => updateQuantity(it.id, d, it.type || 'item')}
+							onClose={() => setEditingCartId(null)}
+						/>
+					);
+				})()}
+
+				{/* Wildcard Bundle Modal */}
 			{showWildcardModal && (
 				<WildcardBundleModal
 					inventory={inventoryItems}

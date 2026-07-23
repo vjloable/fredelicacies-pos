@@ -117,6 +117,21 @@ export default function WildcardBundleModal({
     });
   };
 
+  // Directly set a typed quantity, clamped to the remaining bilao capacity.
+  const setQty = (item: InventoryItem, value: number) => {
+    if (!sizeValid) return;
+    const id = item.id!;
+    const others = totalPicked - (picks[id] ?? 0);
+    const roomLeft = Math.max(0, maxPieces - others);
+    const capped = Math.min(Math.max(0, Math.floor(value || 0)), roomLeft);
+    setPicks(prev => {
+      const next = { ...prev };
+      if (capped <= 0) delete next[id];
+      else next[id] = capped;
+      return next;
+    });
+  };
+
   const allValid =
     sizeValid &&
     sellingPriceValid &&
@@ -175,7 +190,7 @@ export default function WildcardBundleModal({
               <h3 className="text-sm font-bold text-secondary truncate">Wildcard Bilao</h3>
               <p className="text-xs text-secondary/50">Pick a size, then fill with kakanin</p>
             </div>
-            <button
+            <button aria-label="Close"
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
             >
@@ -309,9 +324,15 @@ export default function WildcardBundleModal({
                       >
                         −
                       </button>
-                      <span className={`text-sm font-bold tabular-nums ${qty > 0 ? 'text-bundle' : 'text-secondary/30'}`}>
-                        {qty}
-                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={qty === 0 ? '' : String(qty)}
+                        onChange={(e) => { if (/^\d*$/.test(e.target.value)) setQty(item, parseInt(e.target.value || '0', 10)); }}
+                        onFocus={(e) => e.target.select()}
+                        placeholder="0"
+                        className={`w-12 h-7 text-center text-sm font-bold tabular-nums bg-transparent border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle ${qty > 0 ? 'text-bundle' : 'text-secondary/30'}`}
+                      />
                       <button
                         onClick={() => increment(item)}
                         disabled={!canAdd}

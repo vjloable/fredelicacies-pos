@@ -74,12 +74,13 @@ export default function DropdownField({
 		setMounted(true);
 	}, []);
 
+	const offsetTop = dropdownOffset.top ?? 1;
+	const offsetLeft = dropdownOffset.left ?? 0;
+	const offsetRight = dropdownOffset.right ?? 0;
+
 	const calcPosition = useCallback(() => {
 		if (!triggerRef.current) return;
 		const rect = triggerRef.current.getBoundingClientRect();
-		const offsetTop = dropdownOffset.top ?? 1;
-		const offsetLeft = dropdownOffset.left ?? 0;
-		const offsetRight = dropdownOffset.right ?? 0;
 
 		const maxH = maxDropdownHeight
 			?? (maxVisibleOptions
@@ -117,7 +118,7 @@ export default function DropdownField({
 		}
 
 		setListStyle(style);
-	}, [dropdownOffset, dropdownPosition, maxVisibleOptions, maxDropdownHeight, constrainWidth, hasAllOptionsVisible, autoDirection]);
+	}, [offsetTop, offsetLeft, offsetRight, dropdownPosition, maxVisibleOptions, maxDropdownHeight, constrainWidth, hasAllOptionsVisible, autoDirection]);
 
 	useEffect(() => {
 		if (!isOpen) return;

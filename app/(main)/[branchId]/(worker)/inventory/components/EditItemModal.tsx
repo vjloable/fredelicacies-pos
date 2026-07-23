@@ -42,9 +42,6 @@ export default function EditItemModal({
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [priceInput, setPriceInput] = useState('');
-  const [costInput, setCostInput] = useState('');
-  const [grabPriceInput, setGrabPriceInput] = useState('');
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -64,9 +61,6 @@ export default function EditItemModal({
   useEffect(() => {
     if (editingItem) {
       setLocalEditingItem({ ...editingItem });
-      setPriceInput(editingItem.price > 0 ? editingItem.price.toString() : '');
-      setCostInput(editingItem.cost ? editingItem.cost.toString() : '');
-      setGrabPriceInput(editingItem.grab_price ? editingItem.grab_price.toString() : '');
       setSelectedCategoryIds(
         editingItem.category_ids?.length
           ? editingItem.category_ids
@@ -90,54 +84,18 @@ export default function EditItemModal({
       onError('Item name is required');
       return;
     }
-    
-    // Validate price
-    const finalPrice = priceInput === '' ? 0 : parseFloat(priceInput);
-    if (isNaN(finalPrice) || finalPrice < 0) {
-      onError('Please enter a valid selling price');
-      return;
-    }
-    
-    // Validate cost (optional field)
-    let finalCost: number | undefined = undefined;
-    if (costInput !== '') {
-      finalCost = parseFloat(costInput);
-      if (isNaN(finalCost) || finalCost < 0) {
-        onError('Please enter a valid cost price');
-        return;
-      }
-    }
 
-    // Validate grab price (optional field)
-    let finalGrabPrice: number | null = null;
-    if (grabPriceInput !== '') {
-      finalGrabPrice = parseFloat(grabPriceInput);
-      if (isNaN(finalGrabPrice) || finalGrabPrice < 0) {
-        onError('Please enter a valid grab price');
-        return;
-      }
-    }
-
-    // Ensure price is greater than 0 for selling
-    if (finalPrice <= 0) {
-      onError('Selling price must be greater than 0');
-      return;
-    }
-    
     setLoading(true);
     try {
       const updates: UpdateInventoryItemData = {
         name: localEditingItem.name,
-        price: finalPrice,
-        cost: finalCost,
-        grab_price: finalGrabPrice,
         stock: localEditingItem.stock,
         description: localEditingItem.description || undefined,
         category_ids: selectedCategoryIds,
         category_id: selectedCategoryIds[0] || undefined,
         img_url: localEditingItem.img_url || undefined
       };
-      
+
       await updateInventoryItem(localEditingItem.id, updates);
 
       if (editingItem && currentBranch) {
@@ -146,8 +104,6 @@ export default function EditItemModal({
         const newName = updates.name ?? editingItem.name;
         if (updates.name !== undefined && updates.name !== editingItem.name)
           void logActivity({ branchId, userId, action: 'item_renamed', entityType: 'inventory', entityId: localEditingItem.id, details: { old_name: editingItem.name, new_name: updates.name } });
-        if (updates.price !== undefined && updates.price !== editingItem.price)
-          void logActivity({ branchId, userId, action: 'item_price_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName, old_price: editingItem.price, new_price: updates.price } });
         if (updates.img_url !== undefined && (updates.img_url || null) !== editingItem.img_url)
           void logActivity({ branchId, userId, action: 'item_photo_changed', entityType: 'inventory', entityId: localEditingItem.id, details: { item_name: newName } });
         const prevCategoryIds = editingItem.category_ids?.length
@@ -330,134 +286,6 @@ export default function EditItemModal({
             />
           </div>
 
-          {/* Price, Cost, and Stock Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-secondary mb-2">
-                Selling Price <span className='text-error'>*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
-                  <input
-                    type="number"
-                    value={priceInput}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      
-                      // Only allow digits and one decimal point
-                      if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                        setPriceInput(value);
-                        
-                        // Update the actual price if it's a valid number
-                        if (value !== '' && !isNaN(parseFloat(value))) {
-                          setLocalEditingItem({...localEditingItem, price: parseFloat(value)});
-                        }
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      // Prevent scientific notation
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onFocus={(e) => {
-                      e.target.select();
-                    }}
-                    onBlur={() => {
-                      // If empty or invalid, set to 0
-                      if (priceInput === '' || isNaN(parseFloat(priceInput))) {
-                        setLocalEditingItem({...localEditingItem, price: 0});
-                        setPriceInput('');
-                      }
-                    }}
-                    className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                  />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-secondary mb-2">
-                Cost Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
-                <input
-                  type="number"
-                  value={costInput}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    
-                    // Only allow digits and one decimal point
-                    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                      setCostInput(value);
-                      
-                      // Update the actual cost if it's a valid number
-                      if (value !== '' && !isNaN(parseFloat(value))) {
-                        setLocalEditingItem({...localEditingItem, cost: parseFloat(value)});
-                      }
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Prevent scientific notation
-                    if (['e', 'E', '+', '-'].includes(e.key)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  onFocus={(e) => {
-                    e.target.select();
-                  }}
-                  onBlur={() => {
-                    // If empty or invalid, set to null
-                    if (costInput === '' || isNaN(parseFloat(costInput))) {
-                      setLocalEditingItem({...localEditingItem, cost: null});
-                      setCostInput('');
-                    }
-                  }}
-                  className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="0.00"
-                  inputMode="decimal"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Grab Price */}
-          <div>
-            <label className="block text-xs font-medium text-secondary mb-2">
-              Grab Price <span className="text-xs text-gray-400 ml-1">(Optional)</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary font-thin">₱</span>
-              <input
-                type="number"
-                value={grabPriceInput}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                    setGrabPriceInput(value);
-                    if (value !== '' && !isNaN(parseFloat(value))) {
-                      setLocalEditingItem({...localEditingItem, grab_price: parseFloat(value)});
-                    }
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
-                }}
-                onFocus={(e) => e.target.select()}
-                onBlur={() => {
-                  if (grabPriceInput === '' || isNaN(parseFloat(grabPriceInput))) {
-                    setLocalEditingItem({...localEditingItem, grab_price: null});
-                    setGrabPriceInput('');
-                  }
-                }}
-                className="w-full pl-8 pr-4 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                placeholder="0.00"
-                inputMode="decimal"
-              />
-            </div>
-          </div>
-
           {/* Stock Adjustment Section */}
           <div className="bg-primary rounded-xl p-4 border border-secondary/20">
             <h4 className="text-xs font-semibold text-secondary mb-2 flex items-center gap-2">
@@ -568,19 +396,9 @@ export default function EditItemModal({
           </button>
           <button
             onClick={saveItemEdit}
-            disabled={
-              !localEditingItem.name.trim() ||
-              priceInput === '' ||
-              isNaN(parseFloat(priceInput)) ||
-              parseFloat(priceInput) <= 0 ||
-              (costInput !== '' && (isNaN(parseFloat(costInput)) || parseFloat(costInput) < 0))
-            }
+            disabled={!localEditingItem.name.trim()}
             className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
-              localEditingItem.name.trim() &&
-              priceInput !== '' &&
-              !isNaN(parseFloat(priceInput)) &&
-              parseFloat(priceInput) > 0 &&
-              (costInput === '' || (!isNaN(parseFloat(costInput)) && parseFloat(costInput) >= 0))
+              localEditingItem.name.trim()
                 ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                 : 'bg-gray-100 text-secondary/50 hover:scale-100 cursor-not-allowed'
             }`}

@@ -314,7 +314,7 @@ export default function WorkScheduleManagement({
 								<h3 className='text-base font-semibold text-gray-900'>
 									{selectedWorker ? "Edit" : "Add"} Schedule Target
 								</h3>
-								<button
+								<button aria-label="Close"
 									onClick={() => {
 										setIsEditingSchedule(false);
 										setSelectedWorker(null);
