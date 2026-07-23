@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+type PricingMode = "per_piece" | "whole";
+
 // Touch-friendly editor for a cart line: calculator keypad for the selling price + a quantity stepper.
+// Supports two pricing modes:
+//   per_piece — the keypad sets the price for one piece; total = price × qty
+//   whole     — the keypad sets the total for all pieces; per-piece = total ÷ qty
+// onPriceChange always receives the per-piece price regardless of mode.
 export default function CartItemEditor({
 	name,
 	price,
@@ -18,6 +24,8 @@ export default function CartItemEditor({
 	onQuantityChange: (delta: number) => void;
 	onClose: () => void;
 }) {
+	const [mode, setMode] = useState<PricingMode>("per_piece");
+	// priceStr holds the raw keypad value — per-piece when mode=per_piece, total when mode=whole
 	const [priceStr, setPriceStr] = useState(price ? String(price) : "");
 
 	// Editable quantity that stays in sync with the ± stepper.
@@ -30,9 +38,25 @@ export default function CartItemEditor({
 		if (Number.isFinite(n) && n >= 1 && n !== quantity) onQuantityChange(n - quantity);
 	};
 
+	const switchMode = (next: PricingMode) => {
+		if (next === mode) return;
+		const current = parseFloat(priceStr) || 0;
+		if (next === "whole") {
+			// Convert per-piece → total
+			setPriceStr(current > 0 ? String(+(current * quantity).toFixed(2)) : "");
+		} else {
+			// Convert total → per-piece
+			const perPiece = quantity > 0 ? current / quantity : 0;
+			setPriceStr(perPiece > 0 ? String(+perPiece.toFixed(2)) : "");
+		}
+		setMode(next);
+	};
+
 	const apply = (next: string) => {
 		setPriceStr(next);
-		onPriceChange(parseFloat(next) || 0);
+		const v = parseFloat(next) || 0;
+		const perPiece = mode === "whole" ? (quantity > 0 ? v / quantity : 0) : v;
+		onPriceChange(+perPiece.toFixed(2));
 	};
 
 	const pressKey = (k: string) => {
@@ -44,7 +68,10 @@ export default function CartItemEditor({
 	};
 
 	const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "back"];
-	const total = (parseFloat(priceStr) || 0) * quantity;
+
+	const rawValue = parseFloat(priceStr) || 0;
+	const perPiece = mode === "whole" ? (quantity > 0 ? rawValue / quantity : 0) : rawValue;
+	const total = mode === "whole" ? rawValue : rawValue * quantity;
 
 	return (
 		<div className="fixed inset-0 z-60 bg-secondary/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
@@ -64,17 +91,49 @@ export default function CartItemEditor({
 					</button>
 				</div>
 
-				{/* Amount */}
+				{/* Mode toggle */}
+				<div className="px-6 pb-3">
+					<div className="flex rounded-xl bg-secondary/8 p-0.5 gap-0.5">
+						<button
+							onClick={() => switchMode("per_piece")}
+							className={`flex-1 h-8 rounded-lg text-2.5 font-bold transition-all ${
+								mode === "per_piece"
+									? "bg-white shadow-sm text-secondary"
+									: "text-secondary/40 hover:text-secondary/60"
+							}`}
+						>
+							Per piece
+						</button>
+						<button
+							onClick={() => switchMode("whole")}
+							className={`flex-1 h-8 rounded-lg text-2.5 font-bold transition-all ${
+								mode === "whole"
+									? "bg-white shadow-sm text-secondary"
+									: "text-secondary/40 hover:text-secondary/60"
+							}`}
+						>
+							Whole price
+						</button>
+					</div>
+				</div>
+
+				{/* Amount display */}
 				<div className="px-6">
 					<div className="flex items-baseline justify-between border-b border-secondary/10 pb-3">
-						<span className="text-2.5 uppercase tracking-widest text-secondary/35">Selling price</span>
+						<span className="text-2.5 uppercase tracking-widest text-secondary/35">
+							{mode === "whole" ? `Total for ${quantity} pc${quantity !== 1 ? "s" : ""}` : "Selling price"}
+						</span>
 						<span className="flex items-baseline gap-1">
 							<span className="text-xl font-semibold text-secondary/30">₱</span>
 							<span className="text-4xl font-bold text-secondary tabular-nums leading-none">{priceStr || "0"}</span>
 						</span>
 					</div>
 					<p className="text-right text-2.5 text-secondary/40 pt-2 tabular-nums">
-						× {quantity} = <span className="font-semibold text-secondary/70">₱{total.toFixed(2)}</span>
+						{mode === "whole" ? (
+							<>= <span className="font-semibold text-secondary/70">₱{perPiece.toFixed(2)}</span> / pc</>
+						) : (
+							<>× {quantity} = <span className="font-semibold text-secondary/70">₱{total.toFixed(2)}</span></>
+						)}
 					</p>
 				</div>
 
