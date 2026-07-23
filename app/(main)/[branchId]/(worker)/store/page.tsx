@@ -208,6 +208,7 @@ export default function StoreScreen() {
 			isB1T1?: boolean;
 			regularPrice?: number;
 			isPriceOverride?: boolean;
+			isPriced?: boolean;
 			originalPrice?: number;
 		}>
 	>([]);
@@ -566,6 +567,7 @@ export default function StoreScreen() {
 						// Regular items have no stored price — the cashier enters the selling
 						// price on the cart line (and the Grab price in the confirmation modal).
 						price: 0,
+						isPriced: false,
 						grab_price: null,
 						cost: item.cost ?? undefined,
 						quantity: 1,
@@ -582,7 +584,7 @@ export default function StoreScreen() {
 
 	// Cashier-entered pricing for regular cart lines.
 	const updateCartItemPrice = (id: string, price: number) =>
-		setCart(prev => prev.map(i => (i.id === id ? { ...i, price } : i)));
+		setCart(prev => prev.map(i => (i.id === id ? { ...i, price, isPriced: true } : i)));
 	const updateCartItemGrabPrice = (id: string, grab: number) =>
 		setCart(prev => prev.map(i => (i.id === id ? { ...i, grab_price: grab > 0 ? grab : null } : i)));
 
@@ -718,7 +720,7 @@ export default function StoreScreen() {
 	const total = subtotal - effectiveDiscountForTotal;
 
 	// Regular items require a cashier-entered selling price before the order can be placed.
-	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && (!i.price || i.price <= 0)).length;
+	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && i.isPriced === false).length;
 
 	const splitAmount1Num = parseFloat(splitAmount1) || 0;
 	const splitAmount2Num = parseFloat(splitAmount2) || 0;

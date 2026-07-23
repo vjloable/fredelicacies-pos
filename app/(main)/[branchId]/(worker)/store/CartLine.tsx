@@ -15,6 +15,7 @@ export interface CartLineItem {
 	is_custom?: boolean;
 	isB1T1?: boolean;
 	isPriceOverride?: boolean;
+	isPriced?: boolean;
 	components?: BundleComponent[];
 }
 
@@ -86,7 +87,7 @@ export default function CartLine({
 						<span className="flex items-center gap-2 min-w-0">
 							{openable ? (
 								<span className="font-semibold text-xs text-secondary font-poppins truncate">
-									{item.price > 0 ? formatCurrency(item.price) : <span className="text-accent">Set price</span>}
+									{item.isPriced !== false ? formatCurrency(item.price) : <span className="text-accent">Set price</span>}
 								</span>
 							) : (
 								<span className="font-normal text-xs text-secondary font-poppins">{formatCurrency(item.price)}</span>
