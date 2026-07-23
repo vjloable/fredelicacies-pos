@@ -26,6 +26,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.1.1',
+    features: [
+      {
+        title: 'Small fixes',
+        description: 'A few things polished after 5.1.0.',
+        iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+        steps: [
+          'Items priced at ₱0.00 can now be added to an order — no longer blocked at checkout',
+          'The price editor now has a Per Piece / Whole Price toggle for bulk pricing',
+          'Cancelled requests now show "Declined by commissary" or "Request cancelled" so it\'s clear who cancelled',
+          'Receiving a commissary shipment now has a single "Sync from commissary" button instead of adding items one by one',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.1.0',
     features: [
       {
