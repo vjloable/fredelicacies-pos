@@ -31,7 +31,6 @@ export type LogAction =
   | 'transfer_received'
   | 'transfer_cancelled'
   | 'catalog_synced'
-  | 'main_branch_elected'
   | 'bundle_marked_inactive'
   | 'order_voided'
   | 'order_refunded'

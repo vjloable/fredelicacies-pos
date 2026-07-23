@@ -2,6 +2,7 @@
 
 import DrawerProvider from "@/components/DrawerProvider";
 import AuthGuard from "@/components/AuthGuard";
+import CommissaryRouteGuard from "@/components/CommissaryRouteGuard";
 import { BluetoothProvider } from "@/contexts/BluetoothContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import { ShiftProvider } from "@/contexts/ShiftContext";
@@ -20,6 +21,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 			<BluetoothProvider>
 				<BranchProvider initialBranchId={branchId}>
 					<ShiftProvider>
+					<CommissaryRouteGuard />
 					<DrawerProvider>
 						<div className='flex flex-col h-full overflow-hidden'>
 							<main className='flex-1 overflow-y-auto overflow-x-hidden bg-gray-50'>

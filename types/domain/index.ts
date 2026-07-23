@@ -10,6 +10,7 @@ export type {
 
 export type {
   Branch,
+  BranchType,
   CreateBranchData,
   UpdateBranchData,
 } from './branch';
@@ -22,6 +23,8 @@ export type {
 
 export type {
   InventoryItem,
+  InventoryUnitType,
+  InventoryItemKind,
   CreateInventoryItemData,
   UpdateInventoryItemData,
 } from './inventory';

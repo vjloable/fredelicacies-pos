@@ -36,6 +36,7 @@ function uxLabel(t: TransferWithItems): { label: string; color: string } {
 export default function OwnerTransfersPage() {
   const { user, isUserOwner } = useAuth();
   const { allBranches } = useBranch();
+  const transferableBranches = allBranches;
 
   const [statusFilter, setStatusFilter] = useState<"all" | TransferStatus>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("");
@@ -148,7 +149,7 @@ export default function OwnerTransfersPage() {
               onChange={e => setSourceFilter(e.target.value)}
               className="border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
               <option value="">Any</option>
-              {allBranches.map(b => (
+              {transferableBranches.map(b => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
@@ -162,7 +163,7 @@ export default function OwnerTransfersPage() {
               onChange={e => setDestFilter(e.target.value)}
               className="border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent">
               <option value="">Any</option>
-              {allBranches.map(b => (
+              {transferableBranches.map(b => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>

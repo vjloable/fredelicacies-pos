@@ -1,5 +1,5 @@
 // Catalog sync service.
-// Syncs items + categories + bundles from the main branch to a sub-branch.
+// Syncs items + categories + bundles from the commissary (catalog source) to a sub-branch.
 // See plan: /Users/vincejaphethloable/.claude/plans/help-plan-out-the-eager-nest.md
 //
 // Bundle conflict rule: if a bundle's components aren't all present at dest after item
@@ -15,47 +15,6 @@ export interface SyncReport {
   categories: { created: number; skipped: number };
   bundles: { created: number; skipped: number; needs_attention: number };
   warnings: string[];
-}
-
-// ─── Main-branch election ───────────────────────────────────────────────────
-export async function electMainBranch(
-  userId: string,
-  branchId: string
-): Promise<{ error: any }> {
-  log.info('electMainBranch', { userId, branchId });
-
-  // Clear is_main on every other branch first to satisfy the partial unique index.
-  const { error: clearErr } = await supabase
-    .from('branches')
-    .update({ is_main: false })
-    .neq('id', branchId);
-  if (clearErr) return { error: clearErr };
-
-  const { error } = await supabase
-    .from('branches')
-    .update({ is_main: true })
-    .eq('id', branchId);
-
-  if (!error) {
-    void logActivity({
-      branchId,
-      userId,
-      action: 'main_branch_elected',
-      entityType: 'branch',
-      entityId: branchId,
-      details: {},
-    });
-  }
-  return { error };
-}
-
-export async function getMainBranch(): Promise<{ branchId: string | null; error: any }> {
-  const { data, error } = await supabase
-    .from('branches')
-    .select('id')
-    .eq('is_main', true)
-    .maybeSingle();
-  return { branchId: (data as any)?.id ?? null, error };
 }
 
 // Re-check a bundle's components after edits. If all referenced inventory_item_ids

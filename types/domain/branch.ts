@@ -1,3 +1,7 @@
+// Branch kind. 'branch' = regular store, 'commissary' = production hub and catalog source
+// (ships inventory + publishes the menu, no store/sales), 'event' = pop-up store.
+export type BranchType = 'branch' | 'commissary' | 'event';
+
 // Domain entity for Branch
 export interface Branch {
   id: string;
@@ -8,7 +12,7 @@ export interface Branch {
   logo_url: string | null;
   branch_code: string | null;
   audit_category_id: string | null;
-  is_main: boolean;
+  type: BranchType;
   owner_id: string;
   created_at: string;
   updated_at: string;
@@ -20,6 +24,7 @@ export interface CreateBranchData {
   contact_number?: string;
   logo_url?: string;
   branch_code?: string;
+  type?: BranchType;
 }
 
 export interface UpdateBranchData {
@@ -30,5 +35,5 @@ export interface UpdateBranchData {
   logo_url?: string;
   branch_code?: string;
   audit_category_id?: string | null;
-  is_main?: boolean;
+  type?: BranchType;
 }

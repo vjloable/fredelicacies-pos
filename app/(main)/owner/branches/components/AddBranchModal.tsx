@@ -3,9 +3,17 @@
 import { useState } from 'react';
 import PlusIcon from '@/components/icons/PlusIcon';
 import { branchService } from '@/services/branchService';
+import type { BranchType } from '@/types/domain';
 import ImageUpload from '@/components/ImageUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
+
+// Owners can create these kinds.
+const BRANCH_TYPE_OPTIONS: { value: BranchType; label: string; hint: string }[] = [
+  { value: 'branch', label: 'Branch', hint: 'Regular store with sales' },
+  { value: 'commissary', label: 'Commissary', hint: 'Production hub, no store' },
+  { value: 'event', label: 'Event', hint: 'Pop-up / bazaar store' },
+];
 
 interface AddBranchModalProps {
   isOpen: boolean;
@@ -22,6 +30,7 @@ export default function AddBranchModal({
 }: AddBranchModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [branchType, setBranchType] = useState<BranchType>('branch');
   const [branchData, setBranchData] = useState({
     name: '',
     address: '',
@@ -30,6 +39,9 @@ export default function AddBranchModal({
   });
 
   if (!isOpen) return null;
+
+  // Commissary has no store/sales, so it needs no order-number branch code.
+  const codeRequired = branchType !== 'commissary';
 
   const validateForm = () => {
     if (!branchData.name.trim()) {
@@ -40,13 +52,15 @@ export default function AddBranchModal({
       onError('Branch location is required');
       return false;
     }
-    if (!branchData.branch_code.trim()) {
-      onError('Branch code is required');
-      return false;
-    }
-    if (!/^[A-Z]{3}$/.test(branchData.branch_code)) {
-      onError('Branch code must be exactly 3 uppercase letters');
-      return false;
+    if (codeRequired) {
+      if (!branchData.branch_code.trim()) {
+        onError('Branch code is required');
+        return false;
+      }
+      if (!/^[A-Z]{3}$/.test(branchData.branch_code)) {
+        onError('Branch code must be exactly 3 uppercase letters');
+        return false;
+      }
     }
     return true;
   };
@@ -64,10 +78,12 @@ export default function AddBranchModal({
         name: branchData.name.trim(),
         address: branchData.address.trim(),
         logo_url: branchData.logo_url,
-        branch_code: branchData.branch_code.toUpperCase(),
+        branch_code: branchData.branch_code ? branchData.branch_code.toUpperCase() : undefined,
+        type: branchType,
       });
 
       // Reset form
+      setBranchType('branch');
       setBranchData({
         name: '',
         address: '',
@@ -98,13 +114,13 @@ export default function AddBranchModal({
       onClick={!loading ? onClose : undefined}
     >
       <div 
-        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
           /* Loading Screen */
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl border border-accent/30 flex items-center justify-center text-accent">
               <LoadingSpinner size="lg" />
             </div>
             <h3 className="text-lg font-bold text-secondary mb-2">
@@ -118,7 +134,7 @@ export default function AddBranchModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-light-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl border border-accent/30 flex items-center justify-center text-accent">
                 <PlusIcon className='size-6 text-accent'/>
               </div>
               <h3 className="text-lg font-bold text-secondary mb-2">
@@ -133,6 +149,32 @@ export default function AddBranchModal({
             <div className="space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-xs font-medium text-secondary mb-2">
+                  Type <span className="text-error">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {BRANCH_TYPE_OPTIONS.map((opt) => {
+                    const selected = branchType === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setBranchType(opt.value)}
+                        className={`flex flex-col items-center gap-0.5 p-2 rounded-lg border-2 transition-all ${
+                          selected
+                            ? 'border-accent bg-accent/5'
+                            : 'border-secondary/15 bg-white hover:border-secondary/30'
+                        }`}
+                      >
+                        <span className={`text-3 font-bold ${selected ? 'text-accent' : 'text-secondary'}`}>{opt.label}</span>
+                        <span className="text-2.5 text-secondary/50 text-center leading-tight">{opt.hint}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-secondary mb-2">
                   Branch Name <span className="text-error">*</span>
                 </label>
                 <input
@@ -145,22 +187,24 @@ export default function AddBranchModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-secondary mb-2">
-                  Branch Code <span className="text-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={branchData.branch_code}
-                  onChange={(e) => handleInputChange('branch_code', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
-                  className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
-                  placeholder="e.g. MNL"
-                  maxLength={3}
-                />
-                <p className="mt-1 text-2.5 text-secondary/40">
-                  3 letters used in order numbers: <span className="font-mono">{branchData.branch_code || 'XXX'}-2025-000001</span>
-                </p>
-              </div>
+              {codeRequired && (
+                <div>
+                  <label className="block text-xs font-medium text-secondary mb-2">
+                    Branch Code <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={branchData.branch_code}
+                    onChange={(e) => handleInputChange('branch_code', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent font-mono tracking-widest uppercase"
+                    placeholder="e.g. MNL"
+                    maxLength={3}
+                  />
+                  <p className="mt-1 text-2.5 text-secondary/40">
+                    3 letters used in order numbers: <span className="font-mono">{branchData.branch_code || 'XXX'}-2025-000001</span>
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-secondary mb-2">
@@ -224,14 +268,14 @@ export default function AddBranchModal({
               </button>
               <button
                 onClick={handleCreateBranch}
-                disabled={!branchData.name.trim() || !branchData.address.trim() || branchData.branch_code.length !== 3}
+                disabled={!branchData.name.trim() || !branchData.address.trim() || (codeRequired && branchData.branch_code.length !== 3)}
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-xs sm:text-sm ${
-                  branchData.name.trim() && branchData.address.trim() && branchData.branch_code.length === 3
+                  branchData.name.trim() && branchData.address.trim() && (!codeRequired || branchData.branch_code.length === 3)
                     ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
                 }`}
               >
-                Create Branch
+                Create {branchType === 'commissary' ? 'Commissary' : branchType === 'event' ? 'Event' : 'Branch'}
               </button>
             </div>
           </>

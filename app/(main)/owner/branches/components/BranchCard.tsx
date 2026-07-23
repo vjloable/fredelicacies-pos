@@ -1,11 +1,17 @@
 import React from "react";
 import BranchStatusIcon from "./icons/BranchStatusIcon";
-import BranchMainIcon from "./icons/BranchMainIcon";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
 import ViewBranchIcon from "./icons/ViewBranchIcon";
 import DeleteBranchIcon from "./icons/DeleteBranchIcon";
 import EditBranchIcon from "./icons/EditBranchIcon";
 import Image from "next/image";
+import type { BranchType } from "@/types/domain";
+
+const TYPE_BADGE: Partial<Record<BranchType, { label: string; className: string }>> = {
+	commissary: { label: "Commissary", className: "bg-bundle/15 text-bundle" },
+	event: { label: "Event", className: "bg-(--success)/15 text-(--success)" },
+};
+
 interface BranchCardProps {
 	branch: {
 		branchId: string;
@@ -14,7 +20,7 @@ interface BranchCardProps {
 		createdAt: Date;
 		updatedAt: Date;
 		isActive: boolean;
-		isMain?: boolean;
+		type?: BranchType;
 		imgUrl?: string;
 	};
 	formatDate: (date: Date) => string;
@@ -22,7 +28,6 @@ interface BranchCardProps {
 	onEdit?: (branchId: string) => void;
 	onDelete?: (branchId: string) => void;
 	onClick?: (branchId: string) => void;
-	onMakeMain?: (branchId: string) => void;
 }
 
 const BranchCard: React.FC<BranchCardProps> = ({
@@ -32,7 +37,6 @@ const BranchCard: React.FC<BranchCardProps> = ({
 	onEdit,
 	onDelete,
 	onClick,
-	onMakeMain,
 }) => {
 	const handleCardClick = () => {
 		if (onClick) {
@@ -72,17 +76,21 @@ const BranchCard: React.FC<BranchCardProps> = ({
 					</div>
 				)}
 				<span className='absolute top-3 right-3 flex items-center gap-1.5'>
-					{branch.isMain && <BranchMainIcon />}
 					<BranchStatusIcon isActive={branch.isActive} />
 				</span>
 			</div>
 			{/* Content Section */}
 			<div className='flex-1 flex flex-col justify-between px-4 sm:px-5 py-3 sm:py-4'>
 				<div className='space-y-2 sm:space-y-3'>
-					<div className='flex items-center gap-2'>
+					<div className='flex items-center gap-2 flex-wrap'>
 						<h2 className='text-sm sm:text-base font-bold text-secondary'>
 							{branch.name}
 						</h2>
+						{branch.type && TYPE_BADGE[branch.type] && (
+							<span className={`px-2 py-0.5 rounded-full text-2.5 font-bold ${TYPE_BADGE[branch.type]!.className}`}>
+								{TYPE_BADGE[branch.type]!.label}
+							</span>
+						)}
 					</div>
 					<div className='text-xs text-secondary opacity-80'>
 						{branch.location}
@@ -95,19 +103,9 @@ const BranchCard: React.FC<BranchCardProps> = ({
 			</div>
 
 			{/* Footer Section with Buttons */}
-			{(onView || onEdit || onDelete || onMakeMain) && (
+			{(onView || onEdit || onDelete) && (
 				<div className='px-3 py-3 bg-gray-50 border-t border-gray-100 flex flex-row items-center gap-2'>
-					{onMakeMain && !branch.isMain && (
-						<button
-							onClick={(e) =>
-								handleActionClick(e, () => onMakeMain(branch.branchId))
-							}
-							className='px-3 py-1 rounded-md text-1 font-light border border-accent/20 bg-accent/5 text-secondary/50 hover:text-accent hover:bg-accent/10 transition-colors'
-							title='Set this as the main branch'>
-							Set as Main Branch
-						</button>
-					)}
-					<div className='flex flex-row gap-2 justify-end ml-auto'>
+				<div className='flex flex-row gap-2 justify-end ml-auto'>
 						{onDelete && (
 							<button
 								onClick={(e) =>

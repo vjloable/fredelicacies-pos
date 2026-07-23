@@ -6,10 +6,8 @@ import AddBranchModal from "./components/AddBranchModal";
 import EditBranchModal from "./components/EditBranchModal";
 import ViewBranchModal from "./components/ViewBranchModal";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
-import MakeMainConfirmationModal from "./components/MakeMainConfirmationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { branchService, Branch } from "@/services/branchService";
-import { electMainBranch } from "@/services/catalogSyncService";
 import { useRouter } from "next/navigation";
 import PlusIcon from "@/components/icons/PlusIcon";
 import TopBar from "@/components/TopBar";
@@ -35,7 +33,6 @@ export default function BranchesPage() {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [isMakeMainModalOpen, setIsMakeMainModalOpen] = useState(false);
 	const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 	const [modalError, setModalError] = useState<string | null>(null);
 
@@ -96,8 +93,10 @@ export default function BranchesPage() {
 	}
 
 	const handleBranchClick = (branchId: string) => {
-		// Navigate to the branch's store page
-		router.push(`/${branchId}/store`);
+		// Commissary has no store — it lands on its dashboard instead.
+		const branch = branches.find(b => b.id === branchId);
+		const landing = branch?.type === 'commissary' ? 'dashboard' : 'store';
+		router.push(`/${branchId}/${landing}`);
 	};
 
 	const handleAddBranch = () => {
@@ -142,30 +141,6 @@ export default function BranchesPage() {
 		}
 	};
 
-	const handleMakeMain = (branchId: string) => {
-		const branch = branches.find((b) => b.id === branchId);
-		if (!branch) return;
-		setSelectedBranch(branch);
-		setError(null);
-		setIsMakeMainModalOpen(true);
-	};
-
-	const handleConfirmMakeMain = async () => {
-		if (!user || !selectedBranch) return;
-		const { error } = await electMainBranch(user.id, selectedBranch.id);
-		if (error) {
-			setIsMakeMainModalOpen(false);
-			setSelectedBranch(null);
-			setError(error.message ?? "Failed to set main branch");
-			return;
-		}
-		// Refresh
-		const { branches: refreshed } = await branchService.getAllBranches();
-		setBranches(refreshed);
-		setIsMakeMainModalOpen(false);
-		setSelectedBranch(null);
-	};
-
 	const handleDeleteBranch = (branchId: string) => {
 		const branch = branches.find((b) => b.id === branchId);
 		if (branch) {
@@ -180,7 +155,6 @@ export default function BranchesPage() {
 		setIsEditModalOpen(false);
 		setIsViewModalOpen(false);
 		setIsDeleteModalOpen(false);
-		setIsMakeMainModalOpen(false);
 		setSelectedBranch(null);
 		setModalError(null);
 	};
@@ -301,7 +275,7 @@ export default function BranchesPage() {
 
 				{!loading && !error && branches.length === 0 && (
 					<div className='text-center py-12'>
-						<div className='w-16 h-16 bg-light-accent rounded-full flex items-center justify-center mx-auto mb-4'>
+						<div className='w-14 h-14 rounded-full border border-accent/30 flex items-center justify-center text-accent mx-auto mb-4'>
 							<BranchesIcon className="text-accent" />
 						</div>
 						<h3 className='text-base font-medium text-secondary mb-2'>
@@ -337,7 +311,7 @@ export default function BranchesPage() {
 									createdAt: new Date(branch.created_at),
 									updatedAt: new Date(branch.updated_at),
 									isActive: branch.status === 'active',
-									isMain: branch.is_main,
+									type: branch.type,
 									imgUrl: branch.logo_url || '', // Default image
 									}}
 									formatDate={formatDate}
@@ -345,7 +319,6 @@ export default function BranchesPage() {
 									onView={handleViewBranch}
 									onEdit={handleEditBranch}
 									onDelete={handleDeleteBranch}
-									onMakeMain={handleMakeMain}
 								/>
 							))}
 						</div>
@@ -388,14 +361,6 @@ export default function BranchesPage() {
 				onError={handleModalError}
 			/>
 
-			{/* Make Main Confirmation Modal */}
-			<MakeMainConfirmationModal
-				isOpen={isMakeMainModalOpen}
-				branch={selectedBranch}
-				currentMainName={branches.find((b) => b.is_main)?.name ?? null}
-				onClose={handleCloseAllModals}
-				onConfirm={handleConfirmMakeMain}
-			/>
 		</div>
 	);
 }

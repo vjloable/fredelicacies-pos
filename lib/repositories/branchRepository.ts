@@ -13,6 +13,8 @@ export const branchRepository = {
         address: data.address || null,
         contact_number: data.contact_number || null,
         logo_url: data.logo_url || null,
+        branch_code: data.branch_code || null,
+        type: data.type || 'branch',
       })
       .select()
       .single();

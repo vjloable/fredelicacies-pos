@@ -84,6 +84,9 @@ export default function SidebarNav() {
 		? getUserRoleForBranch(currentBranch.id) === "manager"
 		: false;
 
+	// The commissary is a production hub: inventory + distribution + dashboard, no store/sales.
+	const isCommissary = currentBranch?.type === "commissary";
+
 	// For owners, only show owner section if no branch is selected
 	const shouldShowWorkerSection = !isUserOwner() || currentBranch;
 	const shouldShowManagerSection =
@@ -91,7 +94,17 @@ export default function SidebarNav() {
 		(isUserOwner() && currentBranch);
 
 	// Worker Section - Available to all users (workers, managers, owners)
-	const workerNavItems: NavItem[] = [
+	const workerNavItems: NavItem[] = isCommissary
+		? [
+			{ href: "dashboard", label: "Dashboard", icon: DashboardIcon },
+			{ href: "inventory", label: "Inventory", icon: InventoryIcon },
+			// Commissary is the distribution hub, so workers always see it.
+			...(!isUserOwner() && !isManagerForCurrentBranch
+				? [{ href: "transfers", label: "Distribution", icon: DistributionIcon, badge: transferActionable || undefined } as NavItem]
+				: []),
+			...(!isUserOwner() && !isManagerForCurrentBranch ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
+		  ]
+		: [
 		{
 			href: "store",
 			label: "Store",
@@ -128,20 +141,23 @@ export default function SidebarNav() {
 			icon: ManagementIcon,
 			managerOnly: true,
 		},
-		{
+		// Discounts are sales-only — hidden on the commissary.
+		...(!isCommissary ? [{
 			href: "discounts",
 			label: "Discounts",
 			icon: DiscountsIcon,
 			managerOnly: true,
-		},
-		// Manager sees Distribution only if NOT owner (owner has it in owner section)
-		...(!isUserOwner() ? [{
+		} as NavItem] : []),
+		// Distribution — the per-branch request/send page. Shown to managers and to the
+		// owner while they have a branch selected (the owner's global Distribution page is
+		// monitoring-only and can't initiate a transfer).
+		{
 			href: "transfers",
 			label: "Distribution",
 			icon: DistributionIcon,
 			managerOnly: true,
 			badge: transferActionable > 0 ? transferActionable : undefined,
-		} as NavItem] : []),
+		} as NavItem,
 		// Manager sees Settings only if NOT owner (owner has it in owner section)
 		...(!isUserOwner() ? [{
 			href: "settings",
@@ -275,12 +291,19 @@ export default function SidebarNav() {
 				{currentBranch && (
 					<div className='px-4 py-3 border-b border-gray-200 bg-primary'>
 						<div className='text-left'>
-							<h3 className='text-3 font-bold text-secondary'>
-								{currentBranch.name}
-							</h3>
-							<p className='text-[12px] text-secondary/70 mt-1 leading-tight'>
-								{currentBranch.address}
-							</p>
+							<div className='flex items-center gap-1.5 flex-wrap'>
+									<h3 className='text-3 font-bold text-secondary'>
+										{currentBranch.name}
+									</h3>
+									{currentBranch.type && currentBranch.type !== 'branch' && (
+										<span className='px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-accent/15 text-accent capitalize'>
+											{currentBranch.type}
+										</span>
+									)}
+								</div>
+								<p className='text-[12px] text-secondary/70 mt-1 leading-tight'>
+									{currentBranch.address}
+								</p>
 						</div>
 					</div>
 				)}
