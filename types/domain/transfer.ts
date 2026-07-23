@@ -19,6 +19,7 @@ export interface Transfer {
   cancelled_at: string | null;
   cancelled_by: string | null;
   cancel_reason: string | null;
+  fulfill_note: string | null;
   note: string | null;
   created_at: string;
   updated_at: string;

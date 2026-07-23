@@ -80,6 +80,22 @@ async function snapshotLines(
   return { map, error: null };
 }
 
+// Central transfer-eligibility guard. The commissary is the universal producer — it only
+// ships inventory OUT, so it can never be a transfer destination. Guards both entry points
+// regardless of what the UI sent.
+async function assertTransferAllowed(_sourceId: string, destId: string): Promise<Error | null> {
+  const { data, error } = await supabase
+    .from('branches')
+    .select('id, type')
+    .eq('id', destId);
+  if (error) return error;
+
+  if ((data ?? []).some(b => b.type === 'commissary')) {
+    return new Error('The commissary only sends inventory — it cannot receive transfers.');
+  }
+  return null;
+}
+
 export async function createPushTransfer(
   userId: string,
   data: CreatePushTransferData
@@ -98,6 +114,9 @@ export async function createPushTransfer(
   if (data.items.length === 0) {
     return { id: null, error: new Error('At least one line item is required') };
   }
+
+  const guardErr = await assertTransferAllowed(data.source_branch_id, data.destination_branch_id);
+  if (guardErr) return { id: null, error: guardErr };
 
   const { map: snapshot, error: snapErr } = await snapshotLines(
     data.items.map(i => i.source_item_id)
@@ -184,6 +203,11 @@ export async function createPullRequest(
     return { id: null, error: new Error('At least one line item is required') };
   }
 
+  // A pull makes the requester the destination — so the commissary can never pull, and a
+  // branch can only pull from the commissary (not from the main branch).
+  const guardErr = await assertTransferAllowed(data.source_branch_id, data.destination_branch_id);
+  if (guardErr) return { id: null, error: guardErr };
+
   const { map: snapshot, error: snapErr } = await snapshotLines(
     data.items.map(i => i.source_item_id)
   );
@@ -239,9 +263,16 @@ export async function createPullRequest(
 
 export async function fulfillPullRequest(
   userId: string,
-  transferId: string
+  transferId: string,
+  options?: {
+    // Per-line amounts the source can actually give. A line set to 0 is dropped entirely.
+    // Omit to fulfil the request exactly as asked.
+    adjustments?: { transfer_item_id: string; quantity: number }[];
+    // Short reason shown to the requester when giving less than asked.
+    note?: string;
+  }
 ): Promise<{ error: any }> {
-  log.info('fulfillPullRequest started', { userId, transferId });
+  log.info('fulfillPullRequest started', { userId, transferId, adjusted: options?.adjustments?.length ?? 0 });
 
   // Ensure it's a pull awaiting fulfillment.
   const { transfer, error: getErr } = await transferRepository.getById(transferId);
@@ -250,7 +281,36 @@ export async function fulfillPullRequest(
   if (transfer.status !== 'sent') return { error: new Error(`Cannot fulfill in status ${transfer.status}`) };
   if (transfer.fulfilled_at) return { error: new Error('Already fulfilled') };
 
-  // Reserve source stock.
+  // Apply partial-fulfillment adjustments before reserving so the reservation matches what's
+  // actually being sent. A zero (or negative) quantity removes the line.
+  if (options?.adjustments && options.adjustments.length > 0) {
+    for (const adj of options.adjustments) {
+      if (adj.quantity <= 0) {
+        const { error: delErr } = await supabase
+          .from('transfer_items')
+          .delete()
+          .eq('id', adj.transfer_item_id)
+          .eq('transfer_id', transferId);
+        if (delErr) return { error: delErr };
+      } else {
+        const { error: updErr } = await supabase
+          .from('transfer_items')
+          .update({ quantity_sent: adj.quantity })
+          .eq('id', adj.transfer_item_id)
+          .eq('transfer_id', transferId);
+        if (updErr) return { error: updErr };
+      }
+    }
+    const { count } = await supabase
+      .from('transfer_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('transfer_id', transferId);
+    if (!count) {
+      return { error: new Error('At least one item must be fulfilled. To reject the whole request, decline it instead.') };
+    }
+  }
+
+  // Reserve source stock (now reflects any adjusted quantities).
   const { error: reserveErr } = await supabase.rpc('transfer_reserve', { p_transfer_id: transferId });
   if (reserveErr) return { error: reserveErr };
 
@@ -258,6 +318,7 @@ export async function fulfillPullRequest(
   const { error } = await transferRepository.updateStatus(transferId, {
     fulfilled_at: nowIso,
     fulfilled_by: userId,
+    fulfill_note: options?.note?.trim() || null,
   });
 
   if (!error) {
@@ -268,7 +329,11 @@ export async function fulfillPullRequest(
       action: 'transfer_fulfilled',
       entityType: 'transfer',
       entityId: transferId,
-      details: { transfer_number: transfer.transfer_number },
+      details: {
+        transfer_number: transfer.transfer_number,
+        partial: !!(options?.adjustments && options.adjustments.length > 0),
+        note: options?.note?.trim() || null,
+      },
     });
   }
   return { error };

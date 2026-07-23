@@ -43,7 +43,7 @@ export default function TransferDetailPage() {
   const params = useParams();
   const branchId = typeof params.branchId === "string" ? params.branchId : "";
   const transferId = typeof params.id === "string" ? params.id : "";
-  const { user, getUserRoleForBranch, isUserOwner } = useAuth();
+  const { getUserRoleForBranch, isUserOwner } = useAuth();
   const { availableBranches } = useBranch();
 
   const [loading, setLoading] = useState(true);
@@ -52,8 +52,7 @@ export default function TransferDetailPage() {
 
   const [showReceive, setShowReceive] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [showFulfill, setShowFulfill] = useState(false);
 
   useEffect(() => {
     if (!transferId) return;
@@ -116,18 +115,7 @@ export default function TransferDetailPage() {
 
   const ux = uxLabel(transfer);
 
-  const handleFulfill = async () => {
-    if (!user) return;
-    setBusy(true);
-    setActionError(null);
-    const { error } = await fulfillPullRequest(user.id, transfer.id);
-    setBusy(false);
-    if (error) {
-      setActionError(error.message ?? String(error));
-      return;
-    }
-    setReload(x => x + 1);
-  };
+  const handleFulfill = () => setShowFulfill(true);
 
   return (
     <div className="flex flex-col h-full">
@@ -228,11 +216,8 @@ export default function TransferDetailPage() {
           {canFulfill && (
             <button
               onClick={handleFulfill}
-              disabled={busy}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold ${
-                busy ? "bg-gray-100 text-secondary/50 cursor-not-allowed" : "bg-accent text-primary hover:bg-accent/90"
-              }`}>
-              {busy ? "Fulfilling..." : "Fulfill request"}
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-accent text-primary hover:bg-accent/90">
+              Fulfill request
             </button>
           )}
           {canReceive && (
@@ -251,16 +236,21 @@ export default function TransferDetailPage() {
           )}
         </div>
 
-        {actionError && (
-          <div className="mt-3 bg-error/10 border border-error/20 text-error text-2.5 px-3 py-2 rounded-lg">
-            {actionError}
-          </div>
-        )}
-
         {!availableBranches.length && (
           <p className="mt-3 text-2.5 text-secondary/40">Branch list still loading…</p>
         )}
       </div>
+
+      {showFulfill && transfer && (
+        <FulfillRequestModal
+          transfer={transfer}
+          onClose={() => setShowFulfill(false)}
+          onDone={() => {
+            setShowFulfill(false);
+            setReload(x => x + 1);
+          }}
+        />
+      )}
 
       {showReceive && (
         <ReceiveShipmentModal
@@ -500,6 +490,156 @@ function ReceiveShipmentModal({
                 : "bg-accent text-primary hover:bg-accent/90"
             }`}>
             {busy ? "Saving..." : "Confirm receive"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Fulfill modal ──────────────────────────────────────────────────────────
+function FulfillRequestModal({
+  transfer,
+  onClose,
+  onDone,
+}: {
+  transfer: TransferWithItems;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const { user } = useAuth();
+  const [qtys, setQtys] = useState<Record<string, number>>(
+    Object.fromEntries(transfer.items.map(it => [it.id, it.quantity_sent]))
+  );
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isPartial = transfer.items.some(it => qtys[it.id] < it.quantity_sent);
+  const noteRequired = isPartial && !note.trim();
+  const allZero = transfer.items.every(it => (qtys[it.id] ?? 0) === 0);
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    if (noteRequired) {
+      setError("Please add a note explaining the partial fulfillment.");
+      return;
+    }
+    if (allZero) {
+      setError("All lines are 0. Use Decline instead to reject the request.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const adjustments = transfer.items
+      .filter(it => qtys[it.id] !== it.quantity_sent)
+      .map(it => ({ transfer_item_id: it.id, quantity: qtys[it.id] ?? 0 }));
+    const { error } = await fulfillPullRequest(user.id, transfer.id, {
+      adjustments: adjustments.length ? adjustments : undefined,
+      note: note.trim() || undefined,
+    });
+    setBusy(false);
+    if (error) {
+      setError(error.message ?? String(error));
+      return;
+    }
+    onDone();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl max-w-lg w-full max-h-[85dvh] overflow-hidden flex flex-col">
+        <div className="px-5 py-4 border-b border-secondary/10 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-secondary">Fulfill request</h2>
+            <p className="text-2.5 text-secondary/50 mt-0.5">
+              Adjust quantities if you can only send a partial amount. A note is required for any reduction.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-secondary/50 text-lg hover:text-secondary" aria-label="Close">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {transfer.items.map(line => {
+            const qty = qtys[line.id] ?? 0;
+            const reduced = qty < line.quantity_sent;
+            return (
+              <div key={line.id} className={`border rounded-lg p-3 ${reduced ? "border-amber-300 bg-amber-50/40" : "border-secondary/15"}`}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-secondary">{line.item_name}</p>
+                    <p className="text-2.5 text-secondary/40 mt-0.5">
+                      Requested: {line.quantity_sent} pcs
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setQtys(q => ({ ...q, [line.id]: Math.max(0, (q[line.id] ?? 0) - 1) }))}
+                      className="size-7 flex items-center justify-center rounded-lg border border-secondary/20 text-secondary hover:bg-secondary/10 font-bold text-sm"
+                    >−</button>
+                    <input
+                      type="number"
+                      min={0}
+                      max={line.quantity_sent}
+                      value={qty}
+                      onChange={e => {
+                        const n = parseInt(e.target.value || "0", 10);
+                        if (!Number.isFinite(n)) return;
+                        setQtys(q => ({ ...q, [line.id]: Math.max(0, Math.min(line.quantity_sent, n)) }));
+                      }}
+                      className="w-16 text-center border border-secondary/20 rounded-lg h-9 px-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQtys(q => ({ ...q, [line.id]: Math.min(line.quantity_sent, (q[line.id] ?? 0) + 1) }))}
+                      className="size-7 flex items-center justify-center rounded-lg border border-secondary/20 text-secondary hover:bg-secondary/10 font-bold text-sm"
+                    >+</button>
+                  </div>
+                </div>
+                {reduced && qty > 0 && (
+                  <p className="text-2.5 text-amber-700 mt-1.5">Will send {qty} of {line.quantity_sent} requested</p>
+                )}
+                {qty === 0 && (
+                  <p className="text-2.5 text-(--error) mt-1.5">This line will be removed</p>
+                )}
+              </div>
+            );
+          })}
+
+          <div>
+            <label className="text-2.5 text-secondary/70 block mb-1.5">
+              Note {isPartial ? <span className="text-(--error)">*</span> : <span className="text-secondary/40">(optional)</span>}
+            </label>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              rows={2}
+              placeholder={isPartial ? "Explain why quantities were adjusted…" : "e.g. packed and ready"}
+              className="w-full border border-secondary/20 rounded-lg px-3 py-2 text-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-2.5 px-3 py-2 rounded-lg">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 py-4 border-t border-secondary/10 bg-gray-50 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 font-semibold">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={busy}
+            className={`flex-1 px-4 py-2.5 rounded-lg text-xs font-semibold ${
+              busy ? "bg-gray-100 text-secondary/50 cursor-not-allowed" : "bg-accent text-primary hover:bg-accent/90"
+            }`}>
+            {busy ? "Fulfilling..." : isPartial ? "Fulfill (partial)" : "Fulfill request"}
           </button>
         </div>
       </div>

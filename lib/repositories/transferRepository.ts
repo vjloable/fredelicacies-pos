@@ -57,6 +57,7 @@ function mapRow(row: any): TransferWithItems {
     cancelled_at: row.cancelled_at,
     cancelled_by: row.cancelled_by,
     cancel_reason: row.cancel_reason,
+    fulfill_note: row.fulfill_note,
     note: row.note,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -169,6 +170,7 @@ export const transferRepository = {
       status?: TransferStatus;
       fulfilled_at?: string | null;
       fulfilled_by?: string | null;
+      fulfill_note?: string | null;
       cancelled_at?: string | null;
       cancelled_by?: string | null;
       cancel_reason?: string | null;
