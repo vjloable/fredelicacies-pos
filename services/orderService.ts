@@ -26,6 +26,8 @@ export const createOrder = async (
     price: number;
     cost?: number;
     quantity: number;
+    line_total?: number | null;
+    is_whole_priced?: boolean;
     type?: 'item' | 'bundle';
     is_bundle?: boolean;
     bundle_id?: string;
@@ -69,6 +71,8 @@ export const createOrder = async (
     price: item.price,
     cost: item.cost || 0,
     quantity: item.quantity,
+    line_total: item.is_whole_priced ? (item.line_total ?? null) : null,
+    is_whole_priced: item.is_whole_priced ?? false,
     is_bundle: item.type === 'bundle',
     bundle_components: item.type === 'bundle'
       ? (item.isPriceOverride
@@ -344,6 +348,11 @@ export const refundOrder = async (
   return { error: null };
 };
 
+// Revenue for a single order line. Whole-priced lines carry an absolute line_total
+// (authoritative); everything else is unit price × quantity.
+const lineRevenue = (item: { price: number; quantity: number; line_total?: number | null; is_whole_priced?: boolean }) =>
+  item.is_whole_priced && item.line_total != null ? item.line_total : item.price * item.quantity;
+
 // Calculate sales statistics
 export const calculateSalesStats = (orders: OrderWithItems[]) => {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
@@ -351,7 +360,7 @@ export const calculateSalesStats = (orders: OrderWithItems[]) => {
     (sum, order) =>
       sum +
       order.items.reduce(
-        (itemSum, item) => itemSum + (item.price - (item.cost || 0)) * item.quantity,
+        (itemSum, item) => itemSum + (lineRevenue(item) - (item.cost || 0) * item.quantity),
         0
       ),
     0
@@ -396,8 +405,8 @@ export const getTopSellingItems = (orders: OrderWithItems[], limit: number = 10)
       };
 
       existing.quantity += item.quantity;
-      existing.revenue += item.price * item.quantity;
-      existing.profit += (item.price - (item.cost || 0)) * item.quantity;
+      existing.revenue += lineRevenue(item);
+      existing.profit += lineRevenue(item) - (item.cost || 0) * item.quantity;
 
       itemStats.set(itemId, existing);
     });

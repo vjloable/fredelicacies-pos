@@ -35,7 +35,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
-import CartItemEditor from "./CartItemEditor";
+import CartItemEditor, { type PricingState } from "./CartItemEditor";
 import CartLine from "./CartLine";
 import HelpButton from "@/components/HelpButton";
 import { storeSteps } from "@/components/TutorialSteps";
@@ -50,6 +50,14 @@ type CartLineLike = { type?: 'item' | 'bundle'; isB1T1?: boolean; is_custom?: bo
 const isCashierPriced = (item: CartLineLike) => (item.type ?? 'item') !== 'bundle' && !item.isB1T1 && !item.is_custom;
 const effectiveUnitPrice = (item: CartLineLike, paymentMethod: string) =>
 	paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
+
+// A line is treated as absolute whole-priced only for non-Grab payments — Grab has its own
+// per-unit grab_price. When whole-priced, wholePrice is the exact line total (no × quantity).
+type WholeLike = CartLineLike & { priceMode?: 'per_piece' | 'whole'; wholePrice?: number | null };
+const isWholeLine = (item: WholeLike, paymentMethod: string) =>
+	paymentMethod !== 'grab' && item.priceMode === 'whole' && item.wholePrice != null;
+const lineTotal = (item: WholeLike & { quantity: number }, paymentMethod: string) =>
+	isWholeLine(item, paymentMethod) ? (item.wholePrice as number) : effectiveUnitPrice(item, paymentMethod) * item.quantity;
 
 // Inline numeric price editor used on cashier-priced cart lines.
 const InlinePriceInput = ({ value, onChange, placeholder = '0.00' }: { value: number | null | undefined; onChange: (n: number) => void; placeholder?: string }) => (
@@ -210,6 +218,10 @@ export default function StoreScreen() {
 			isPriceOverride?: boolean;
 			isPriced?: boolean;
 			originalPrice?: number;
+			// Absolute whole-line pricing. When priceMode='whole', wholePrice is the
+			// authoritative line total and price is a display-only per-piece figure.
+			priceMode?: 'per_piece' | 'whole';
+			wholePrice?: number | null;
 		}>
 	>([]);
 	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
@@ -582,9 +594,19 @@ export default function StoreScreen() {
 		}
 	};
 
-	// Cashier-entered pricing for regular cart lines.
-	const updateCartItemPrice = (id: string, price: number) =>
-		setCart(prev => prev.map(i => (i.id === id ? { ...i, price, isPriced: true } : i)));
+	// Cashier-entered pricing for regular cart lines. Carries the pricing mode:
+	// per-piece stores the unit price; whole stores the absolute line total in wholePrice
+	// (price is kept as a display-only per-piece figure and is never × quantity for whole lines).
+	const updateCartItemPricing = (id: string, s: PricingState) =>
+		setCart(prev => prev.map(i => (i.id === id
+			? {
+				...i,
+				price: s.perPiece,
+				priceMode: s.mode,
+				wholePrice: s.mode === 'whole' ? s.wholePrice : null,
+				isPriced: true,
+			}
+			: i)));
 	const updateCartItemGrabPrice = (id: string, grab: number) =>
 		setCart(prev => prev.map(i => (i.id === id ? { ...i, grab_price: grab > 0 ? grab : null } : i)));
 
@@ -680,7 +702,7 @@ export default function StoreScreen() {
 	};
 
 	const subtotal = cart.reduce(
-		(sum, item) => sum + (paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price) * item.quantity,
+		(sum, item) => sum + lineTotal(item, paymentMethod),
 		0
 	);
 	// For B1T1: take-1 items are in cart at the promo price; discount_amount is savings for reporting only
@@ -737,8 +759,10 @@ export default function StoreScreen() {
 	useEffect(() => {
 		if (!appliedDiscount) return;
 		const cartItemsForDiscount = cart.map(i => ({
-			price: i.price,
-			quantity: i.quantity,
+			// Whole-priced lines: collapse to a single unit at the absolute total so the
+			// discount math sees the exact line amount (no per-piece rounding drift).
+			price: i.priceMode === 'whole' && i.wholePrice != null ? i.wholePrice : i.price,
+			quantity: i.priceMode === 'whole' && i.wholePrice != null ? 1 : i.quantity,
 			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
 		}));
 		if (!isDiscountEligible(appliedDiscount, cartItemsForDiscount)) {
@@ -765,8 +789,10 @@ export default function StoreScreen() {
 		setGrabManualDiscount("");
 		if (!appliedDiscount || appliedDiscount.type === 'b1t1') return;
 		const cartItemsForDiscount = cart.map(i => ({
-			price: i.price,
-			quantity: i.quantity,
+			// Whole-priced lines: collapse to a single unit at the absolute total so the
+			// discount math sees the exact line amount (no per-piece rounding drift).
+			price: i.priceMode === 'whole' && i.wholePrice != null ? i.wholePrice : i.price,
+			quantity: i.priceMode === 'whole' && i.wholePrice != null ? 1 : i.quantity,
 			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
 		}));
 		const sub = calculateEligibleSubtotal(appliedDiscount, cartItemsForDiscount);
@@ -899,6 +925,8 @@ export default function StoreScreen() {
 					price: effectiveUnitPrice(item, paymentMethod),
 					cost: item.cost || 0,
 					quantity: item.quantity,
+					line_total: isWholeLine(item, paymentMethod) ? (item.wholePrice as number) : null,
+					is_whole_priced: isWholeLine(item, paymentMethod),
 					imgUrl: item.imgUrl || "",
 					categoryId: item.categoryId || "",
 					originalStock: item.originalStock,
@@ -937,11 +965,13 @@ export default function StoreScreen() {
 				date: new Date(),
 				items: cart.map((item) => {
 					const itemPrice = paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
+					const whole = isWholeLine(item, paymentMethod);
 					return {
 						name: item.isB1T1 ? `${item.name} [B1T1]` : item.name,
 						qty: item.quantity,
 						price: itemPrice,
-						total: itemPrice * item.quantity,
+						// Whole-priced lines print the exact absolute total, never itemPrice × qty.
+						total: whole ? (item.wholePrice as number) : itemPrice * item.quantity,
 						isPriceOverride: item.isPriceOverride,
 						originalPrice: item.originalPrice,
 					};
@@ -2187,8 +2217,10 @@ export default function StoreScreen() {
 						<CartItemEditor
 							name={it.name}
 							price={it.price}
+							wholePrice={it.wholePrice ?? null}
+							priceMode={it.priceMode ?? 'per_piece'}
 							quantity={it.quantity}
-							onPriceChange={(v) => updateCartItemPrice(it.id, v)}
+							onPricingChange={(s) => updateCartItemPricing(it.id, s)}
 							onQuantityChange={(d) => updateQuantity(it.id, d, it.type || 'item')}
 							onClose={() => setEditingCartId(null)}
 						/>

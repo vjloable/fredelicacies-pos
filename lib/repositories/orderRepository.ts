@@ -24,6 +24,8 @@ export const orderRepository = {
         price: number;
         cost?: number;
         name: string;
+        line_total?: number | null;
+        is_whole_priced?: boolean;
         is_bundle?: boolean;
         bundle_components?: any;
       }>;
@@ -65,6 +67,8 @@ export const orderRepository = {
           price: item.price,
           cost: item.cost || null,
           name: item.name,
+          line_total: item.line_total ?? null,
+          is_whole_priced: item.is_whole_priced ?? false,
           is_bundle: item.is_bundle || false,
           bundle_components: item.bundle_components || null,
         }))

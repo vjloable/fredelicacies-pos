@@ -16,6 +16,8 @@ export interface CartLineItem {
 	isB1T1?: boolean;
 	isPriceOverride?: boolean;
 	isPriced?: boolean;
+	priceMode?: "per_piece" | "whole";
+	wholePrice?: number | null;
 	components?: BundleComponent[];
 }
 
@@ -43,6 +45,9 @@ export default function CartLine({
 	onMarkB1T1: () => void;
 }) {
 	const hasStepper = !item.is_custom;
+	// Whole-priced lines carry an absolute line total — display it directly, never price × qty.
+	const isWhole = item.priceMode === "whole" && item.wholePrice != null;
+	const displayLineTotal = isWhole ? (item.wholePrice as number) : item.price * item.quantity;
 	const sideBtn =
 		"shrink-0 w-14 rounded-2xl bg-light-accent hover:bg-accent active:scale-95 transition-all flex items-center justify-center group/side";
 	const sideSymbol = "text-3xl font-bold leading-none text-secondary group-hover/side:text-primary select-none";
@@ -80,6 +85,7 @@ export default function CartLine({
 						{item.isB1T1 && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded">B1T1</span>}
 						{item.is_custom && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded">Custom</span>}
 						{item.isPriceOverride && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">Price adj.</span>}
+						{isWhole && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded">Whole</span>}
 					</div>
 
 					{/* Price · ×qty · total */}
@@ -100,7 +106,7 @@ export default function CartLine({
 						</span>
 						<span className="flex items-center gap-1.5 shrink-0">
 							<span className="text-xs text-secondary/50">=</span>
-							<span className="font-bold text-xs text-secondary font-poppins tabular-nums">{formatCurrency(item.price * item.quantity)}</span>
+							<span className="font-bold text-xs text-secondary font-poppins tabular-nums">{formatCurrency(displayLineTotal)}</span>
 						</span>
 					</div>
 

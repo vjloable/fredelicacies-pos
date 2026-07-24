@@ -30,7 +30,13 @@ function makeOrder(overrides: Partial<OrderWithItems> & { items: OrderWithItems[
   };
 }
 
-function makeItem(name: string, price: number, cost: number, quantity: number) {
+function makeItem(
+  name: string,
+  price: number,
+  cost: number,
+  quantity: number,
+  whole?: { line_total: number },
+) {
   return {
     id: `item-${name}`,
     order_id: 'o-1',
@@ -40,6 +46,8 @@ function makeItem(name: string, price: number, cost: number, quantity: number) {
     price,
     cost,
     quantity,
+    line_total: whole ? whole.line_total : null,
+    is_whole_priced: !!whole,
     is_bundle: false,
     bundle_components: null,
     created_at: '',
@@ -83,6 +91,20 @@ describe('calculateSalesStats', () => {
     expect(stats.totalItemsSold).toBe(0);
     expect(stats.totalOrders).toBe(0);
     expect(stats.averageOrderValue).toBe(0);
+  });
+
+  it('uses the absolute line_total for whole-priced lines (no rounding drift)', () => {
+    // ₱100 across 3 pcs: per-piece would drift to 33.33 * 3 = 99.99. The whole price is exact.
+    const orders = [
+      makeOrder({
+        total: 100,
+        items: [makeItem('Bilao', 33.33, 30, 3, { line_total: 100 })],
+      }),
+    ];
+    const stats = calculateSalesStats(orders);
+    // revenue comes from order.total; profit uses line_total - cost*qty = 100 - 90 = 10
+    expect(stats.totalProfit).toBe(10);
+    expect(stats.totalItemsSold).toBe(3);
   });
 
   it('handles items with no cost (null/0)', () => {
@@ -149,6 +171,16 @@ describe('getTopSellingItems', () => {
 
   it('handles empty orders', () => {
     expect(getTopSellingItems([])).toEqual([]);
+  });
+
+  it('reports whole-priced revenue as the absolute line_total', () => {
+    const orders = [
+      makeOrder({ total: 100, items: [makeItem('Bilao', 33.33, 30, 3, { line_total: 100 })] }),
+    ];
+    const top = getTopSellingItems(orders);
+    expect(top[0].revenue).toBe(100);      // not 33.33 * 3
+    expect(top[0].profit).toBe(10);        // 100 - 30*3
+    expect(top[0].quantity).toBe(3);
   });
 
   it('aggregates same item across multiple orders', () => {

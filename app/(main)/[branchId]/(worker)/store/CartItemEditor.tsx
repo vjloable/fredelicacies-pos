@@ -2,31 +2,48 @@
 
 import { useEffect, useState } from "react";
 
-type PricingMode = "per_piece" | "whole";
+export type PricingMode = "per_piece" | "whole";
+
+// The line's pricing state reported to the parent.
+//   mode="per_piece" — perPiece is the source of truth; wholePrice is null.
+//   mode="whole"     — wholePrice is the absolute, authoritative total for the whole line;
+//                      perPiece is display-only and must never be reconstructed into wholePrice.
+export interface PricingState {
+	mode: PricingMode;
+	perPiece: number;
+	wholePrice: number | null;
+}
 
 // Touch-friendly editor for a cart line: calculator keypad for the selling price + a quantity stepper.
 // Supports two pricing modes:
 //   per_piece — the keypad sets the price for one piece; total = price × qty
-//   whole     — the keypad sets the total for all pieces; per-piece = total ÷ qty
-// onPriceChange always receives the per-piece price regardless of mode.
+//   whole     — the keypad sets an ABSOLUTE total for the whole line; qty does not rescale it
+//               (no divide → round → multiply round-trip, so the typed total stays exact).
 export default function CartItemEditor({
 	name,
 	price,
+	wholePrice,
+	priceMode = "per_piece",
 	quantity,
-	onPriceChange,
+	onPricingChange,
 	onQuantityChange,
 	onClose,
 }: {
 	name: string;
 	price: number;
+	wholePrice?: number | null;
+	priceMode?: PricingMode;
 	quantity: number;
-	onPriceChange: (value: number) => void;
+	onPricingChange: (state: PricingState) => void;
 	onQuantityChange: (delta: number) => void;
 	onClose: () => void;
 }) {
-	const [mode, setMode] = useState<PricingMode>("per_piece");
-	// priceStr holds the raw keypad value — per-piece when mode=per_piece, total when mode=whole
-	const [priceStr, setPriceStr] = useState(price ? String(price) : "");
+	const [mode, setMode] = useState<PricingMode>(priceMode);
+	// priceStr holds the raw keypad value — per-piece when mode=per_piece, the absolute
+	// whole total when mode=whole.
+	const [priceStr, setPriceStr] = useState(
+		priceMode === "whole" ? (wholePrice ? String(wholePrice) : "") : (price ? String(price) : "")
+	);
 
 	// Editable quantity that stays in sync with the ± stepper.
 	const [qtyStr, setQtyStr] = useState(String(quantity));
@@ -38,25 +55,32 @@ export default function CartItemEditor({
 		if (Number.isFinite(n) && n >= 1 && n !== quantity) onQuantityChange(n - quantity);
 	};
 
+	// Report the current pricing state to the parent for a given mode + raw keypad value.
+	const report = (nextMode: PricingMode, raw: number) => {
+		if (nextMode === "whole") {
+			// The typed value IS the absolute whole-line total. perPiece is display-only.
+			const perPiece = quantity > 0 ? +(raw / quantity).toFixed(2) : 0;
+			onPricingChange({ mode: "whole", perPiece, wholePrice: +raw.toFixed(2) });
+		} else {
+			onPricingChange({ mode: "per_piece", perPiece: +raw.toFixed(2), wholePrice: null });
+		}
+	};
+
 	const switchMode = (next: PricingMode) => {
 		if (next === mode) return;
 		const current = parseFloat(priceStr) || 0;
-		if (next === "whole") {
-			// Convert per-piece → total
-			setPriceStr(current > 0 ? String(+(current * quantity).toFixed(2)) : "");
-		} else {
-			// Convert total → per-piece
-			const perPiece = quantity > 0 ? current / quantity : 0;
-			setPriceStr(perPiece > 0 ? String(+perPiece.toFixed(2)) : "");
-		}
+		// Seed the new mode's keypad with a sensible starting value converted from the old one.
+		const seeded = next === "whole"
+			? (current > 0 ? +(current * quantity).toFixed(2) : 0)        // per-piece → whole total
+			: (quantity > 0 && current > 0 ? +(current / quantity).toFixed(2) : 0); // whole → per-piece
+		setPriceStr(seeded > 0 ? String(seeded) : "");
 		setMode(next);
+		report(next, seeded);
 	};
 
 	const apply = (next: string) => {
 		setPriceStr(next);
-		const v = parseFloat(next) || 0;
-		const perPiece = mode === "whole" ? (quantity > 0 ? v / quantity : 0) : v;
-		onPriceChange(+perPiece.toFixed(2));
+		report(mode, parseFloat(next) || 0);
 	};
 
 	const pressKey = (k: string) => {

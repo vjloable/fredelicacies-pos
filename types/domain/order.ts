@@ -30,6 +30,10 @@ export interface OrderItem {
   price: number;
   cost: number | null;
   quantity: number;
+  // Absolute whole-line price. When is_whole_priced is true, line_total is the
+  // authoritative amount for the whole line and price is display-only (never × quantity).
+  line_total: number | null;
+  is_whole_priced: boolean;
   is_bundle: boolean;
   bundle_components: any | null;
   created_at: string;
@@ -57,6 +61,8 @@ export interface CreateOrderData {
     price: number;
     cost?: number;
     quantity: number;
+    line_total?: number | null;
+    is_whole_priced?: boolean;
     is_bundle?: boolean;
     bundle_components?: any;
   }>;
