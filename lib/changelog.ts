@@ -26,6 +26,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.1.2',
+    features: [
+      {
+        title: 'Whole Price Stays Exact',
+        description: 'When you set a whole price for several pieces, that exact amount is used.',
+        iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+        steps: [
+          'Open a cart item and switch the price editor to Whole Price',
+          'Type the total for all the pieces — for example ₱100 for 3 pieces',
+          'The order and receipt now show exactly ₱100, not ₱99.99',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.1.1',
     features: [
       {
