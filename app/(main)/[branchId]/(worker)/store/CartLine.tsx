@@ -13,6 +13,7 @@ export interface CartLineItem {
 	imgUrl?: string | null;
 	type?: "item" | "bundle";
 	is_custom?: boolean;
+	isFoodHouse?: boolean;
 	isB1T1?: boolean;
 	isPriceOverride?: boolean;
 	isPriced?: boolean;
@@ -31,6 +32,7 @@ export default function CartLine({
 	onOpen,
 	onDec,
 	onInc,
+	onRemove,
 	onToggleExpand,
 	onMarkB1T1,
 }: {
@@ -41,10 +43,13 @@ export default function CartLine({
 	onOpen: () => void;
 	onDec: () => void;
 	onInc: () => void;
+	onRemove: () => void;
 	onToggleExpand: () => void;
 	onMarkB1T1: () => void;
 }) {
-	const hasStepper = !item.is_custom;
+	// Food House lines are custom (dish untracked) but sold per-order, so they
+	// still get a quantity stepper.
+	const hasStepper = !item.is_custom || !!item.isFoodHouse;
 	// Whole-priced lines carry an absolute line total — display it directly, never price × qty.
 	const isWhole = item.priceMode === "whole" && item.wholePrice != null;
 	const displayLineTotal = isWhole ? (item.wholePrice as number) : item.price * item.quantity;
@@ -54,9 +59,14 @@ export default function CartLine({
 
 	return (
 		<div className="flex items-stretch gap-2 w-full">
-			{/* Minus — tall rectangle on the left */}
-			{hasStepper && (
+			{/* Left control: quantity − for regular lines, remove for custom/whole lines
+			    (which have no stepper, so removing is the only way to take them out). */}
+			{hasStepper ? (
 				<button onClick={onDec} aria-label="Decrease quantity" className={sideBtn}>
+					<span className={sideSymbol}>−</span>
+				</button>
+			) : (
+				<button onClick={onRemove} aria-label={`Remove ${item.name}`} title="Remove from order" className={sideBtn}>
 					<span className={sideSymbol}>−</span>
 				</button>
 			)}
@@ -98,7 +108,7 @@ export default function CartLine({
 							) : (
 								<span className="font-normal text-xs text-secondary font-poppins">{formatCurrency(item.price)}</span>
 							)}
-							{!item.is_custom && (
+							{(!item.is_custom || item.isFoodHouse) && (
 								<span className="shrink-0 font-bold text-xs text-primary font-poppins bg-accent/80 px-2 py-0.5 rounded-full min-w-6 text-center">
 									×{item.quantity}
 								</span>

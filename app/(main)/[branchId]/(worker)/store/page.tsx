@@ -20,6 +20,7 @@ import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
 import { isDiscountEligible, calculateEligibleSubtotal, calculateDiscountAmount } from "@/services/discountService";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
+import CategoryIcon from "@/components/CategoryIcon";
 import { AnimatePresence, motion } from "motion/react";
 
 import { formatCurrency } from "@/lib/currency_formatter";
@@ -35,6 +36,10 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
+
+import AssortedKakaninModal, { type AssortedKakaninResult } from "./AssortedKakaninModal";
+
+import FoodHouseModal, { type FoodHouseResult } from "./FoodHouseModal";
 import CartItemEditor, { type PricingState } from "./CartItemEditor";
 import CartLine from "./CartLine";
 import HelpButton from "@/components/HelpButton";
@@ -196,6 +201,8 @@ export default function StoreScreen() {
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
 	const [customBundleTarget, setCustomBundleTarget] = useState<BundleWithComponents | null>(null);
 	const [showWildcardModal, setShowWildcardModal] = useState(false);
+	const [showAssortedModal, setShowAssortedModal] = useState(false);
+	const [showFoodHouseModal, setShowFoodHouseModal] = useState(false);
 	const [editingCartId, setEditingCartId] = useState<string | null>(null);
 	const [cart, setCart] = useState<
 		Array<{
@@ -212,6 +219,7 @@ export default function StoreScreen() {
 			categoryIds?: string[];
 			type?: 'item' | 'bundle';
 			is_custom?: boolean;
+			isFoodHouse?: boolean;
 			components?: BundleComponent[];
 			isB1T1?: boolean;
 			regularPrice?: number;
@@ -467,13 +475,13 @@ export default function StoreScreen() {
 			if (!categoryMap.has(key)) categoryMap.set(key, []);
 			categoryMap.get(key)!.push(item);
 		});
-		const groups: { id: string; name: string; color: string; items: DisplayItem[] }[] = [];
+		const groups: { id: string; name: string; color: string; icon?: string | null; items: DisplayItem[] }[] = [];
 		categories.forEach(cat => {
 			const items = categoryMap.get(String(cat.id)) || [];
-			if (items.length > 0) groups.push({ id: String(cat.id), name: cat.name, color: cat.color?.trim() || '#9CA3AF', items });
+			if (items.length > 0) groups.push({ id: String(cat.id), name: cat.name, color: cat.color?.trim() || '#9CA3AF', icon: cat.icon, items });
 		});
 		const uncategorized = categoryMap.get('__uncategorized__') || [];
-		if (uncategorized.length > 0) groups.push({ id: '__uncategorized__', name: 'Uncategorized', color: '#9CA3AF', items: uncategorized });
+		if (uncategorized.length > 0) groups.push({ id: '__uncategorized__', name: 'Uncategorized', color: '#9CA3AF', icon: null, items: uncategorized });
 		return groups;
 	}, [displayItems, categories]);
 
@@ -667,7 +675,7 @@ export default function StoreScreen() {
 			bundleId: null,
 			name: `Wildcard Bilao ${result.sizeLabel} (${result.maxPieces} pcs)`,
 			price: result.sellingPrice,
-			grab_price: result.sellingPrice,
+			grab_price: result.grabPrice,
 			cost,
 			quantity: 1,
 			originalStock: 999,
@@ -679,6 +687,90 @@ export default function StoreScreen() {
 			components,
 		}]);
 		setShowWildcardModal(false);
+	};
+
+	const handleAssortedConfirm = (result: AssortedKakaninResult) => {
+		// Kakanin cost + the container's own cost (container decrements stock too).
+		const cost =
+			result.selections.reduce((s, p) => s + p.cost, 0) + (result.container.cost ?? 0);
+		// Container is a component (qty 1) so its stock deducts alongside the kakanin.
+		const components: BundleComponent[] = [
+			{
+				id: '',
+				bundle_id: '',
+				inventory_item_id: result.container.id,
+				quantity: 1,
+				created_at: '',
+				inventory_item: result.container,
+			},
+			...result.selections.map(p => ({
+				id: '',
+				bundle_id: '',
+				inventory_item_id: p.inventoryItemId,
+				quantity: p.quantity,
+				created_at: '',
+				inventory_item: p.item,
+			})),
+		];
+		setCart(prev => [...prev, {
+			id: `assorted_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+			bundleId: null,
+			name: `Assorted Kakanin — ${result.container.name}`,
+			price: result.sellingPrice,
+			grab_price: result.grabPrice,
+			cost,
+			quantity: 1,
+			originalStock: 999,
+			imgUrl: result.container.img_url ?? undefined,
+			categoryId: 0,
+			categoryIds: [],
+			type: 'bundle',
+			is_custom: true,
+			// Whole-priced: the cashier's price is the exact line total, never × quantity.
+			priceMode: 'whole',
+			wholePrice: result.sellingPrice,
+			components,
+		}]);
+		setShowAssortedModal(false);
+	};
+
+	const handleFoodHouseConfirm = (result: FoodHouseResult) => {
+		// Made-to-order dish: the dish itself is never stocked, so it is NOT a
+		// component (no stock draw-down). Only the chosen container deducts.
+		const components: BundleComponent[] = result.container
+			? [{
+				id: '',
+				bundle_id: '',
+				inventory_item_id: result.container.id,
+				quantity: 1,
+				created_at: '',
+				inventory_item: result.container,
+			}]
+			: [];
+		const cost = result.container?.cost ?? 0; // per-order cost; scales with quantity
+		const name = result.container
+			? `${result.dish.name} — ${result.container.name}`
+			: `${result.dish.name} (Solo)`;
+		setCart(prev => [...prev, {
+			id: `foodhouse_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+			bundleId: null,
+			name,
+			// Per-order (not whole): the typed price is the unit price, so the line
+			// total is price × quantity and the container deducts per order.
+			price: result.sellingPrice,
+			grab_price: result.grabPrice,
+			cost,
+			quantity: Math.max(1, result.quantity),
+			originalStock: 999,
+			imgUrl: result.dish.img_url ?? undefined,
+			categoryId: 0,
+			categoryIds: [],
+			type: 'bundle',
+			is_custom: true,
+			isFoodHouse: true,
+			components,
+		}]);
+		setShowFoodHouseModal(false);
 	};
 
 	const handleB1T1Confirm = (selections: B1T1PickedItem[], b1t1Price: number) => {
@@ -851,8 +943,10 @@ export default function StoreScreen() {
 				.map((item) => {
 					if (item.id === id && (item.type || 'item') === itemType) {
 						const newQuantity = Math.max(0, item.quantity + delta);
+						// Food House dishes are made-to-order (untracked), so quantity is
+						// never gated by stock — the chosen container deducts per order.
 						// Check if we can increase quantity based on available stock
-						if (delta > 0) {
+						if (delta > 0 && !item.isFoodHouse) {
 							let maxAvailable = 0;
 							if (itemType === 'bundle') {
 								const bundle = bundles.find(b => b.id === id);
@@ -871,6 +965,12 @@ export default function StoreScreen() {
 				})
 				.filter((item) => item.quantity > 0)
 		);
+	};
+
+	// Remove an entire line from the cart (used by lines without a +/− stepper,
+	// e.g. custom/whole-priced bundles that can't be decremented to zero).
+	const removeFromCart = (id: string) => {
+		setCart(prev => prev.filter((item) => item.id !== id));
 	};
 
 	// Function to clear the cart
@@ -1201,38 +1301,56 @@ export default function StoreScreen() {
 					<div className='space-y-4'>
 						{showFolders && (
         <>
-        {/* Wildcard Bundle quick-action card */}
-						<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
+        {/* Build-your-own quick actions */}
+						<div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+							{/* Wildcard Bilao quick-action */}
 							<button
 								type='button'
 								onClick={() => setShowWildcardModal(true)}
-								className='group relative text-left w-full rounded-xl overflow-hidden cursor-pointer bg-primary border-2 border-dashed border-bundle/40 hover:border-bundle hover:shadow-md active:scale-95 transition-all duration-200'>
-								<div className='relative w-full h-24 flex items-center justify-center overflow-hidden bg-bundle/5 group-hover:bg-bundle/10 transition-colors duration-200'>
-									{/* sparkle accent */}
-									<svg className='absolute top-2.5 right-3 w-3 h-3 text-bundle/50 group-hover:text-bundle group-hover:scale-125 transition-all duration-300' viewBox='0 0 24 24' fill='currentColor'>
-										<path d='M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6z' />
-									</svg>
-									{/* round bilao tray you build yourself */}
-									<svg className='w-11 h-11 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
-										{/* tray rim + inner lip */}
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+								<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
+									<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
 										<circle cx='10.5' cy='10.5' r='8' strokeWidth={1.5} />
-										<circle cx='10.5' cy='10.5' r='5.4' strokeWidth={1} strokeOpacity={0.3} />
-										{/* pieces already on the tray */}
 										<circle cx='10.5' cy='6.4' r='1.5' fill='currentColor' stroke='none' />
 										<circle cx='6.9' cy='12.6' r='1.5' fill='currentColor' stroke='none' />
 										<circle cx='14.1' cy='12.6' r='1.5' fill='currentColor' stroke='none' />
-										{/* add-your-own badge */}
 										<circle cx='18' cy='18' r='4.3' fill='currentColor' stroke='var(--primary)' strokeWidth={1.5} />
 										<path d='M18 16.1v3.8M16.1 18h3.8' stroke='var(--primary)' strokeWidth={1.6} />
 									</svg>
 								</div>
-								<div className='px-2 py-1.5 border-t border-bundle/15'>
-									<p className='font-bold text-secondary text-xs leading-snug line-clamp-1'>
-										Wildcard Bundle
-									</p>
-									<span className='text-bundle font-semibold text-2.5'>Build your own</span>
-								</div>
+								<span className='text-sm font-bold text-bundle leading-tight'>Wildcard Bilao</span>
 							</button>
+
+							{/* Assorted Kakanin quick-action */}
+							<button
+								type='button'
+								onClick={() => setShowAssortedModal(true)}
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+								<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
+									<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
+										<ellipse cx='12' cy='14' rx='9' ry='6' />
+										<ellipse cx='12' cy='12' rx='9' ry='6' />
+										<circle cx='9' cy='11.5' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='13' cy='10.5' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='15.5' cy='13' r='1.2' fill='currentColor' stroke='none' />
+										<circle cx='10' cy='13.5' r='1.2' fill='currentColor' stroke='none' />
+									</svg>
+								</div>
+								<span className='text-sm font-bold text-bundle leading-tight'>Assorted Kakanin</span>
+							</button>
+
+								{/* Food House quick-action */}
+								<button
+									type='button'
+									onClick={() => setShowFoodHouseModal(true)}
+									className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+									<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
+										<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.6} strokeLinecap='round' strokeLinejoin='round'>
+											<path d='M4 3v7a3 3 0 003 3v8M7 3v5M10 3v5M17 3c-1.5 1.5-2 4-2 7s.5 4 2 4v7' />
+										</svg>
+									</div>
+									<span className='text-sm font-bold text-bundle leading-tight'>Food House</span>
+								</button>
 						</div>
 
 						{/* Category folders */}
@@ -1240,7 +1358,11 @@ export default function StoreScreen() {
           {groupedItems.map(group => (
             <button key={group.id} onClick={() => setActiveStoreCategory(group.id)}
               className='group relative aspect-square rounded-xl border-2 border-gray-200 bg-primary hover:border-accent hover:shadow-md active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-2 p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
-              <span className='w-6 h-1.5 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
+              {group.icon ? (
+                <span className='shrink-0' style={{ color: group.color }}><CategoryIcon icon={group.icon} className='w-11 h-11 sm:w-12 sm:h-12' /></span>
+              ) : (
+                <span className='w-6 h-1.5 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
+              )}
               <span className='text-3.5 font-semibold text-secondary leading-tight line-clamp-3'>{group.name}</span>
               <span className='text-2.5 text-secondary/40 tabular-nums'>{group.items.length} {group.items.length === 1 ? 'item' : 'items'}</span>
             </button>
@@ -1497,6 +1619,7 @@ export default function StoreScreen() {
 											onOpen={() => setEditingCartId(item.id)}
 											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
 											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
+											onRemove={() => removeFromCart(item.id)}
 											onToggleExpand={() => toggleBundle(item.id)}
 											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
 										/>
@@ -1710,6 +1833,7 @@ export default function StoreScreen() {
 											onOpen={() => setEditingCartId(item.id)}
 											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
 											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
+											onRemove={() => removeFromCart(item.id)}
 											onToggleExpand={() => toggleBundle(item.id)}
 											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
 										/>
@@ -2234,6 +2358,24 @@ export default function StoreScreen() {
 					categories={categories}
 					onConfirm={handleWildcardConfirm}
 					onClose={() => setShowWildcardModal(false)}
+				/>
+			)}
+
+			{/* Assorted Kakanin Modal */}
+			{showAssortedModal && (
+				<AssortedKakaninModal
+					inventory={inventoryItems}
+					onConfirm={handleAssortedConfirm}
+					onClose={() => setShowAssortedModal(false)}
+				/>
+			)}
+
+			{/* Food House Modal */}
+			{showFoodHouseModal && (
+				<FoodHouseModal
+					inventory={inventoryItems}
+					onConfirm={handleFoodHouseConfirm}
+					onClose={() => setShowFoodHouseModal(false)}
 				/>
 			)}
 

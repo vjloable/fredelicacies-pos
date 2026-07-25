@@ -16,6 +16,9 @@ import EditIcon from '../../store/icons/EditIcon';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddBundleModal from './AddBundleModal';
 import EditBundleModal from './EditBundleModal';
+import AssortedKakaninConfigModal from './AssortedKakaninConfigModal';
+import FoodHouseConfigModal from './FoodHouseConfigModal';
+import CategoryIcon from '@/components/CategoryIcon';
 
 // Sentinel folder id for bundles that have no category.
 const UNCAT = '__uncategorized__';
@@ -44,6 +47,8 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAssortedConfig, setShowAssortedConfig] = useState(false);
+  const [showFoodHouseConfig, setShowFoodHouseConfig] = useState(false);
   const [editingBundle, setEditingBundle] = useState<BundleWithComponents | null>(null);
   const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
 
@@ -224,6 +229,54 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
         </button>
           </div>
 
+          {/* Assorted Kakanin — permanent, undeletable special config */}
+          <button
+            onClick={() => setShowAssortedConfig(true)}
+            className="w-full mb-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:scale-[0.99] transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+          >
+            <div className="w-10 h-10 rounded-lg bg-bundle/10 shrink-0 flex items-center justify-center text-bundle">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                <ellipse cx="12" cy="13" rx="9" ry="6" />
+                <ellipse cx="12" cy="11.5" rx="9" ry="6" />
+                <circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="13" cy="10" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="15.5" cy="12.5" r="1.2" fill="currentColor" stroke="none" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-secondary flex items-center gap-1.5">
+                Assorted Kakanin
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-bundle/15 text-bundle rounded">Special</span>
+              </p>
+              <p className="text-2.5 text-secondary/50 mt-0.5">Configure containers &amp; kakanin cashiers can pick from</p>
+            </div>
+            <svg className="w-4 h-4 text-secondary/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Food House — permanent, undeletable special config */}
+          <button
+            onClick={() => setShowFoodHouseConfig(true)}
+            className="w-full mb-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:scale-[0.99] transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+          >
+            <div className="w-10 h-10 rounded-lg bg-bundle/10 shrink-0 flex items-center justify-center text-bundle">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 3v7a3 3 0 003 3v8M7 3v5M10 3v5M17 3c-1.5 1.5-2 4-2 7s.5 4 2 4v7" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-secondary flex items-center gap-1.5">
+                Food House
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-bundle/15 text-bundle rounded">Special</span>
+              </p>
+              <p className="text-2.5 text-secondary/50 mt-0.5">Configure made-to-order dishes &amp; container sizes</p>
+            </div>
+            <svg className="w-4 h-4 text-secondary/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
           {bundles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10">
               <div className="w-20 h-20 rounded-full border border-bundle/40 flex items-center justify-center text-bundle/80 mb-4">
@@ -241,7 +294,11 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
               {folderCats.map((cat) => (
                 <button key={cat.id} onClick={() => setSelectedCat(cat.id ?? null)}
                 className="group relative aspect-square rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                <span className="w-5 sm:w-6 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                {cat.icon ? (
+                  <span className="shrink-0" style={{ color: cat.color }}><CategoryIcon icon={cat.icon} className="w-10 h-10 sm:w-12 sm:h-12" /></span>
+                ) : (
+                  <span className="w-5 sm:w-6 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                )}
                 <span className="text-3 sm:text-3.5 font-semibold leading-tight line-clamp-3 text-secondary">{cat.name}</span>
                 <span className="text-2.5 text-secondary/40 tabular-nums">{catCounts.get(cat.id!)}</span>
               </button>
@@ -382,6 +439,22 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
         inventory={inventory}
         categories={categories}
         onClose={() => setShowAddModal(false)}
+        onError={(err) => setError(err)}
+      />
+
+      <AssortedKakaninConfigModal
+        isOpen={showAssortedConfig}
+        inventory={inventory}
+        categories={categories}
+        onClose={() => setShowAssortedConfig(false)}
+        onError={(err) => setError(err)}
+      />
+
+      <FoodHouseConfigModal
+        isOpen={showFoodHouseConfig}
+        inventory={inventory}
+        categories={categories}
+        onClose={() => setShowFoodHouseConfig(false)}
         onError={(err) => setError(err)}
       />
 

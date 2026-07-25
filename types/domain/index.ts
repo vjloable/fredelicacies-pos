@@ -30,6 +30,14 @@ export type {
 } from './inventory';
 
 export type {
+  AssortedKakaninConfig,
+} from './assortedKakanin';
+
+export type {
+  FoodHouseConfig,
+} from './foodHouse';
+
+export type {
   Bundle,
   BundleAdditionalItem,
   BundleComponent,
