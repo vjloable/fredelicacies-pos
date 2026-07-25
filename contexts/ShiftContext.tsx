@@ -108,6 +108,8 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   const [writeOffs, setWriteOffs] = useState<WriteOff[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // True once the active shift has been fetched for the current branch.
+  const [shiftChecked, setShiftChecked] = useState(false);
 
   // Modal state
   const [showOpenShiftModal, setShowOpenShiftModal] = useState(false);
@@ -119,15 +121,20 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   const hasActiveShift = isExempt || !!activeShift;
   const safeDropTotal = safeDrops.reduce((sum, d) => sum + d.amount, 0);
 
-  // Managers and owners can open/close shifts
-  const canManageShift = isExempt || (user?.roleAssignments?.some(
-    (ra) => ra.role === 'manager' && ra.branchId === currentBranch?.id && ra.isActive
-  ) ?? false);
+  // Workers and managers of the current branch can open/close shifts.
+  // Owners are exempt from shifts entirely (see isExempt) and cannot open/close.
+  const canManageShift = user?.roleAssignments?.some(
+    (ra) =>
+      (ra.role === 'worker' || ra.role === 'manager') &&
+      ra.branchId === currentBranch?.id &&
+      ra.isActive
+  ) ?? false;
 
   // Load active shift for the branch on mount / branch change
   useEffect(() => {
     if (!currentBranch) return;
     let cancelled = false;
+    setShiftChecked(false);
 
     (async () => {
       const { shift } = await getActiveShift(currentBranch.id);
@@ -147,10 +154,18 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
         setSafeDrops([]);
         setWriteOffs([]);
       }
+      if (!cancelled) setShiftChecked(true);
     })();
 
     return () => { cancelled = true; };
   }, [currentBranch]);
+
+  // Auto-prompt workers/managers to open the branch shift when none is active.
+  useEffect(() => {
+    if (shiftChecked && canManageShift && !activeShift) {
+      setShowOpenShiftModal(true);
+    }
+  }, [shiftChecked, canManageShift, activeShift]);
 
   const refreshShift = useCallback(async () => {
     if (!currentBranch) return;
