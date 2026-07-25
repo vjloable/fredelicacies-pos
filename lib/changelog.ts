@@ -26,6 +26,41 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.1.3',
+    features: [
+      {
+        title: 'Assorted Kakanin',
+        description: 'Fill one container with any kakanin you want and set a single price.',
+        iconPath: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+        steps: [
+          'On the store screen, tap the Assorted Kakanin card',
+          'Pick a container, then add any kakanin in any amount',
+          'Type one whole price and add it to the order',
+        ],
+      },
+      {
+        title: 'Food House Dishes',
+        description: 'Ring up made-to-order dishes like Palabok in different container sizes.',
+        iconPath: 'M4 3v7a3 3 0 003 3v8M7 3v5M10 3v5M17 3c-1.5 1.5-2 4-2 7s.5 4 2 4v7',
+        steps: [
+          'Set up dishes and containers in Inventory → Bundles → Food House',
+          'On the store screen, tap Food House and pick a dish and container',
+          'Set the price and quantity, then add it to the order',
+        ],
+      },
+      {
+        title: 'Category Icons',
+        description: 'Give each category an icon so it is easier to spot at a glance.',
+        iconPath: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+        steps: [
+          'Open a category and tap Edit',
+          'Choose an icon from the picker (or None to keep the color dot)',
+          'Save — the icon now shows on the category card',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.1.2',
     features: [
       {
