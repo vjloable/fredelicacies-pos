@@ -11,6 +11,9 @@ export interface Bundle {
   max_pieces: number | null;
   category_id?: string | null;
   category_ids?: string[]; // populated from bundle_categories junction table
+  // Durable FK to the commissary source bundle this branch row mirrors.
+  // NULL on the commissary's own bundles and on branch-only bundles.
+  commissary_bundle_id?: string | null;
   status: 'active' | 'inactive';
   needs_attention: boolean;
   created_at: string;

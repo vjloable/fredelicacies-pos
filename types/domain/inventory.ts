@@ -19,6 +19,10 @@ export interface InventoryItem {
   uncarried_stock: number;
   reserved_stock: number;
   synced_from_main_at: string | null;
+  // Durable FK to the commissary source product this branch row mirrors.
+  // NULL on the commissary's own rows and on branch-only items. Used to repoint
+  // references from branch-local ids to commissary ids in the centralized menu.
+  commissary_item_id: string | null;
   barcode: string | null;
   img_url: string | null;
   // Commissary custom production goods measured by a unit of measure (NULL for sellable items).

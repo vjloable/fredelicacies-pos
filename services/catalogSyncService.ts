@@ -213,6 +213,8 @@ export async function syncCatalog(
       img_url: r.img_url ?? null,
       stock: 0,
       synced_from_main_at: new Date().toISOString(),
+      // Durable link back to the commissary source product (centralized menu).
+      commissary_item_id: r.id,
     }));
     const { data: created, error: insErr } = await supabase
       .from('inventory_items')
@@ -253,6 +255,20 @@ export async function syncCatalog(
     }
   }
   report.items.skipped = (srcItems || []).length - report.items.created;
+
+  // 4b) Backfill the commissary link on pre-existing dest items that were matched
+  //     by name but created before this column existed. Only fills NULLs, so it's
+  //     idempotent and never overwrites an existing link.
+  for (const r of srcItems || []) {
+    const destId = destItemIdByLowerName.get((r as any).name.toLowerCase());
+    if (!destId) continue;
+    const { error: linkErr } = await supabase
+      .from('inventory_items')
+      .update({ commissary_item_id: (r as any).id })
+      .eq('id', destId)
+      .is('commissary_item_id', null);
+    if (linkErr) report.warnings.push(`Item link backfill failed for "${(r as any).name}": ${linkErr.message}`);
+  }
 
   // 5) Bundles (optional).
   if (options.includeBundles !== false) {
@@ -300,8 +316,16 @@ export async function syncCatalog(
 
       for (const sb of srcBundles || []) {
         const srcBundle = sb as any;
-        if (destBundleByLowerName.has(srcBundle.name.toLowerCase())) {
+        const existingDestBundleId = destBundleByLowerName.get(srcBundle.name.toLowerCase());
+        if (existingDestBundleId) {
           report.bundles.skipped++;
+          // Backfill the commissary link on the pre-existing dest bundle (NULLs only).
+          const { error: bLinkErr } = await supabase
+            .from('bundles')
+            .update({ commissary_bundle_id: srcBundle.id })
+            .eq('id', existingDestBundleId)
+            .is('commissary_bundle_id', null);
+          if (bLinkErr) report.warnings.push(`Bundle link backfill failed for "${srcBundle.name}": ${bLinkErr.message}`);
           continue;
         }
 
@@ -346,6 +370,8 @@ export async function syncCatalog(
             category_id: srcBundle.category_id ? catIdMap.get(srcBundle.category_id) ?? null : null,
             status: incomplete ? 'inactive' : srcBundle.status,
             needs_attention: incomplete,
+            // Durable link back to the commissary source bundle (centralized menu).
+            commissary_bundle_id: srcBundle.id,
           })
           .select('id, name')
           .single();

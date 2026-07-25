@@ -16,6 +16,17 @@ export const branchService = {
     return await branchRepository.getById(branchId);
   },
 
+  // Get the single commissary branch — the centralized menu source.
+  getCommissaryBranch: async (): Promise<{ branch: Branch | null; error: any }> => {
+    return await branchRepository.getCommissary();
+  },
+
+  // Convenience: just the commissary branch id (null if none configured).
+  getCommissaryBranchId: async (): Promise<string | null> => {
+    const { branch } = await branchRepository.getCommissary();
+    return branch?.id ?? null;
+  },
+
   // Create new branch (owner only)
   createBranch: async (ownerId: string, branchData: CreateBranchData): Promise<{ id: string | null; error: any }> => {
     const { branch, error } = await branchRepository.create(ownerId, branchData);

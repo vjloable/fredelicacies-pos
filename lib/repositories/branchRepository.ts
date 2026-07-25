@@ -43,6 +43,18 @@ export const branchRepository = {
     return { branch: data, error };
   },
 
+  // Get the single commissary branch (the centralized menu source), if any.
+  async getCommissary(): Promise<{ branch: Branch | null; error: any }> {
+    const { data, error } = await supabase
+      .from('branches')
+      .select('*')
+      .eq('type', 'commissary')
+      .limit(1)
+      .maybeSingle();
+
+    return { branch: data, error };
+  },
+
   // Update branch
   async update(id: string, data: UpdateBranchData): Promise<{ branch: Branch | null; error: any }> {
     const { data: branch, error } = await supabase
