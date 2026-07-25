@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { createCategory, updateCategory } from '@/services/categoryService';
 import type { Category } from '@/types/domain';
+import CategoryIcon, { CATEGORY_ICONS } from '@/components/CategoryIcon';
 
 interface AddCategoryModalProps {
   branchId: string;
@@ -21,7 +22,7 @@ export default function AddCategoryModal({
   editingCategory,
 }: AddCategoryModalProps) {
   const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState({ name: "", color: "#ff9f80" });
+  const [category, setCategory] = useState<{ name: string; color: string; icon: string | null }>({ name: "", color: "#ff9f80", icon: null });
 
   const isEditing = !!editingCategory;
 
@@ -30,8 +31,8 @@ export default function AddCategoryModal({
     if (isOpen) {
       setCategory(
         editingCategory
-          ? { name: editingCategory.name, color: editingCategory.color }
-          : { name: "", color: "#ff9f80" }
+          ? { name: editingCategory.name, color: editingCategory.color, icon: editingCategory.icon ?? null }
+          : { name: "", color: "#ff9f80", icon: null }
       );
     }
   }, [isOpen, editingCategory]);
@@ -46,11 +47,13 @@ export default function AddCategoryModal({
         await updateCategory(editingCategory.id, {
           name: category.name,
           color: category.color,
+          icon: category.icon,
         });
       } else {
         await createCategory(branchId, {
           name: category.name,
           color: category.color,
+          icon: category.icon,
         });
       }
       onClose();
@@ -93,10 +96,19 @@ export default function AddCategoryModal({
           <>
             {/* Modal Header */}
             <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-accent/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
+              <div
+                className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center"
+                style={{ backgroundColor: `${category.color}22`, color: category.color }}
+              >
+                <CategoryIcon
+                  icon={category.icon}
+                  className="w-5 h-5"
+                  fallback={
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  }
+                />
               </div>
               <h3 className="text-sm font-bold text-secondary mb-1">
                 {isEditing ? 'Edit Category' : 'Add New Category'}
@@ -142,6 +154,46 @@ export default function AddCategoryModal({
                       placeholder="#3B82F6"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-secondary mb-2">
+                  Icon <span className="text-secondary/40 font-normal">(optional)</span>
+                </label>
+                <div className="grid grid-cols-8 gap-1.5">
+                  {/* None / clear */}
+                  <button
+                    type="button"
+                    onClick={() => setCategory({ ...category, icon: null })}
+                    aria-label="No icon"
+                    title="No icon"
+                    className={`aspect-square rounded-lg border flex items-center justify-center transition-all ${
+                      category.icon == null ? 'border-accent bg-accent/10 ring-2 ring-accent/30' : 'border-secondary/15 hover:border-secondary/40 text-secondary/40'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 5l14 14M19 5L5 19" />
+                    </svg>
+                  </button>
+                  {CATEGORY_ICONS.map(def => {
+                    const selected = category.icon === def.key;
+                    return (
+                      <button
+                        key={def.key}
+                        type="button"
+                        onClick={() => setCategory({ ...category, icon: def.key })}
+                        aria-label={def.label}
+                        title={def.label}
+                        className={`aspect-square rounded-lg border flex items-center justify-center transition-all ${
+                          selected ? 'border-accent bg-accent/10 ring-2 ring-accent/30' : 'border-secondary/15 hover:border-secondary/40'
+                        }`}
+                        style={selected ? { color: category.color } : undefined}
+                      >
+                        <CategoryIcon icon={def.key} className={selected ? 'w-4.5 h-4.5' : 'w-4.5 h-4.5 text-secondary/70'} />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

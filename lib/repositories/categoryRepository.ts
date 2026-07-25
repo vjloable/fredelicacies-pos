@@ -20,6 +20,7 @@ export const categoryRepository = {
         branch_id: branchId,
         name: data.name,
         color: data.color,
+        icon: data.icon ?? null,
       })
       .select()
       .single();

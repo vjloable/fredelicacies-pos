@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
+import CategoryIcon from "@/components/CategoryIcon";
 import EditItemModal from "./components/EditItemModal";
 import AddItemModal from "./components/AddItemModal";
 import AddCategoryModal from "./components/AddCategoryModal";
@@ -601,10 +602,14 @@ export default function InventoryScreen() {
 																	onClick={() => { if (!manageCategories) setActiveCategoryId(cat.id ?? null); }}
 																	className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl w-full h-full ${manageCategories ? 'cursor-default pb-12' : ''}`}
 																>
-																	<span
-																		className='w-5 sm:w-6 h-1.5 rounded-full shrink-0'
-																		style={{ backgroundColor: cat.color }}
-																	/>
+																	{cat.icon ? (
+																		<span className='shrink-0' style={{ color: cat.color }}><CategoryIcon icon={cat.icon} className='w-10 h-10 sm:w-12 sm:h-12' /></span>
+																	) : (
+																		<span
+																			className='w-5 sm:w-6 h-1.5 rounded-full shrink-0'
+																			style={{ backgroundColor: cat.color }}
+																		/>
+																	)}
 																	<span className={`text-3 sm:text-3.5 font-semibold text-center leading-tight line-clamp-3 ${cat.is_hidden ? 'text-secondary/40' : 'text-secondary'}`}>
 																		{cat.name}
 																	</span>
