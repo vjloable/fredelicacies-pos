@@ -13,15 +13,24 @@ export async function logActivity(params: {
   entityType?: string;
   entityId?: string;
   details?: Record<string, any>;
+  // Audit-actor tracking for Admin role-preview (impersonation): when an admin acts
+  // while previewing another role, `assumedRole` is the previewed role and `actorId`
+  // is the real admin. Both are folded into `details` so the true actor is never lost.
+  actorId?: string;
+  assumedRole?: string;
 }): Promise<void> {
   try {
+    const details =
+      params.assumedRole || (params.actorId && params.actorId !== params.userId)
+        ? { ...(params.details ?? {}), real_actor_id: params.actorId, assumed_role: params.assumedRole }
+        : params.details ?? null;
     await supabase.from('activity_logs').insert({
       branch_id: params.branchId ?? null,
       user_id: params.userId ?? null,
       action: params.action,
       entity_type: params.entityType ?? null,
       entity_id: params.entityId ?? null,
-      details: params.details ?? null,
+      details,
     });
 
     log.info('Activity logged', {

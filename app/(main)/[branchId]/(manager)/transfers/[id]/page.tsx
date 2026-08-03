@@ -50,7 +50,7 @@ export default function TransferDetailPage() {
   const params = useParams();
   const branchId = typeof params.branchId === "string" ? params.branchId : "";
   const transferId = typeof params.id === "string" ? params.id : "";
-  const { getUserRoleForBranch, isUserOwner } = useAuth();
+  const { getUserRoleForBranch, isUserOwner, hasManagerPrivileges } = useAuth();
   const { availableBranches } = useBranch();
 
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,7 @@ export default function TransferDetailPage() {
 
   const owner = isUserOwner();
   const role = getUserRoleForBranch(branchId);
-  const isManagerHere = owner || role === "manager";
+  const isManagerHere = hasManagerPrivileges(branchId);
   const isAtSource = branchId === transfer.source_branch_id;
   const isAtDest = branchId === transfer.destination_branch_id;
   const sourceManagerByOwner = owner;
@@ -115,7 +115,7 @@ export default function TransferDetailPage() {
     transfer.status === "sent" &&
     isAtDest &&
     (transfer.direction === "push" || !!transfer.fulfilled_at) &&
-    (isManagerHere || role === "worker" || destManagerByOwner);
+    (isManagerHere || role === "cashier" || destManagerByOwner);
   const canCancel =
     transfer.status === "sent" &&
     (owner || (isManagerHere && (isAtSource || isAtDest)));

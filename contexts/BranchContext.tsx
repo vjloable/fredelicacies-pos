@@ -97,7 +97,7 @@ export function BranchProvider({
     const managerBranchIds =
       currentWorker.roleAssignments
         ?.filter(
-          (assignment) => assignment.role === "manager" && assignment.isActive
+          (assignment) => assignment.role === "team_leader" && assignment.isActive
         )
         .map((assignment) => assignment.branchId) || [];
 
@@ -112,7 +112,7 @@ export function BranchProvider({
     const workerBranchIds =
       currentWorker.roleAssignments
         ?.filter(
-          (assignment) => assignment.role === "worker" && assignment.isActive
+          (assignment) => assignment.role === "cashier" && assignment.isActive
         )
         .map((assignment) => assignment.branchId) || [];
 

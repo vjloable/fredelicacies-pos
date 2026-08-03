@@ -1,6 +1,6 @@
 // Worker types - Supabase schema
 
-export type UserRole = "owner" | "manager" | "worker";
+export type UserRole = "admin" | "owner" | "manager" | "team_leader" | "cashier";
 export interface CreateWorkerRequest {
 	name: string;
 	email: string;
@@ -9,9 +9,10 @@ export interface CreateWorkerRequest {
 	employeeId?: string;
 	branchAssignments: Array<{
 		branchId: string;
-		role: "manager" | "worker";
+		role: "team_leader" | "cashier";
 	}>;
-	isOwner?: boolean; // Only available to owner users
+	isOwner?: boolean;   // Only available to owner users
+	isManager?: boolean; // All-branch manager (owner/admin only)
 	profilePicture?: File;
 }
 

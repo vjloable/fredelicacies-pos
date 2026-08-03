@@ -16,7 +16,7 @@ export interface Worker {
   roleAssignments: Array<{
     workersTableId: string;
     branchId: string;
-    role: 'manager' | 'worker';
+    role: 'team_leader' | 'cashier';
     assignedAt: Date;
     assignedBy: string;
     isActive: boolean;
@@ -41,7 +41,7 @@ export const workerService = {
     email: string;
     password: string;
     isOwner?: boolean;
-    branchAssignments?: Array<{ branchId: string; role: 'manager' | 'worker' }>;
+    branchAssignments?: Array<{ branchId: string; role: 'team_leader' | 'cashier' }>;
     phoneNumber?: string;
     employeeId?: string;
   }): Promise<string> => {
@@ -198,7 +198,7 @@ export const workerService = {
   // List workers with filters
   listWorkers: async (filters?: {
     branchId?: string;
-    role?: 'manager' | 'worker';
+    role?: 'team_leader' | 'cashier';
     status?: 'clocked_in' | 'clocked_out';
     searchQuery?: string;
     limit?: number;
@@ -274,7 +274,7 @@ export const workerService = {
   assignWorkerToBranch: async (
     userId: string,
     branchId: string,
-    role: 'manager' | 'worker'
+    role: 'team_leader' | 'cashier'
   ): Promise<void> => {
     try {
       // Check if worker assignment already exists
@@ -322,7 +322,7 @@ export const workerService = {
   updateWorkerRole: async (
     userId: string,
     branchId: string,
-    newRole: 'manager' | 'worker'
+    newRole: 'team_leader' | 'cashier'
   ): Promise<void> => {
     try {
       const { workers } = await workerRepository.getByBranch(branchId);

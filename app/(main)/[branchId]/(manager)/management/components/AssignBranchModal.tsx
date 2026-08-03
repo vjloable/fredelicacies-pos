@@ -29,8 +29,8 @@ export default function AssignBranchModal({
 
 	// Single branch assignment state
 	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
-	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
-		"worker"
+	const [selectedRole, setSelectedRole] = useState<"team_leader" | "cashier">(
+		"cashier"
 	);
 
 	// Get available branches based on user permissions
@@ -50,7 +50,7 @@ export default function AssignBranchModal({
 				setSelectedRole(activeAssignments[0].role);
 			} else {
 				setSelectedBranchId("");
-				setSelectedRole("worker");
+				setSelectedRole("cashier");
 			}
 			setError(null);
 		}
@@ -60,7 +60,7 @@ export default function AssignBranchModal({
 		setSelectedBranchId(branchId);
 	};
 
-	const handleRoleChange = (role: "manager" | "worker") => {
+	const handleRoleChange = (role: "team_leader" | "cashier") => {
 		setSelectedRole(role);
 	};
 
@@ -324,13 +324,13 @@ export default function AssignBranchModal({
 										)}
 									</label>
 									<DropdownField
-										options={["Worker", "Manager"]}
+										options={["Cashier", "Team Leader"]}
 										defaultValue={
-											selectedRole === "worker" ? "Worker" : "Manager"
+											selectedRole === "cashier" ? "Cashier" : "Team Leader"
 										}
 										onChange={(value) =>
 											handleRoleChange(
-												value.toLowerCase() as "manager" | "worker"
+												(value === "Team Leader" ? "team_leader" : "cashier")
 											)
 										}
 										roundness='lg'

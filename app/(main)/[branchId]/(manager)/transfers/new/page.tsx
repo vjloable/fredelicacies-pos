@@ -88,11 +88,10 @@ function NewTransferPageInner() {
   const branchId = typeof params.branchId === "string" ? params.branchId : "";
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, getUserRoleForBranch, isUserOwner } = useAuth();
+  const { user, hasManagerPrivileges } = useAuth();
   const { allBranches, currentBranch } = useBranch();
 
-  const role = getUserRoleForBranch(branchId);
-  const canManage = isUserOwner() || role === "manager";
+  const canManage = hasManagerPrivileges(branchId);
 
   const queryMode = searchParams.get("mode");
   const [mode, setMode] = useState<Mode>(queryMode === "pull" || queryMode === "push" ? queryMode : "push");

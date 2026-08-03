@@ -128,7 +128,7 @@ export default function WorkerRow({
 	const canEdit =
 		currentUser.is_owner ||
 		(currentUser.roleAssignments.some(
-			(assignment) => assignment.role === "manager"
+			(assignment) => assignment.role === "team_leader"
 		) &&
 			worker.roleAssignments.some((workerAssignment) =>
 				currentUser.roleAssignments.some(
@@ -206,7 +206,7 @@ export default function WorkerRow({
 							<span
 								key={assignment.branchId}
 								className={`inline-flex justify-center items-center px-3 py-1 text-xs font-semibold min-w-25 text-center ${
-									assignment.role === "manager"
+									assignment.role === "team_leader"
 										? "bg-accent text-primary text-shadow-md"
 										: "bg-accent text-primary text-shadow-md rounded-full"
 								}`}>

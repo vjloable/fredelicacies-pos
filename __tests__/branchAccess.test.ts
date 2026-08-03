@@ -34,7 +34,7 @@ function makeWorker(overrides: {
   };
 }
 
-function makeAssignment(branchId: string, role: 'manager' | 'worker', isActive = true): Worker['roleAssignments'][number] {
+function makeAssignment(branchId: string, role: 'team_leader' | 'cashier', isActive = true): Worker['roleAssignments'][number] {
   return {
     workersTableId: 'wt-1',
     branchId,
@@ -63,8 +63,8 @@ describe('getAccessibleBranches', () => {
   it('worker only gets assigned active branches', () => {
     const worker = makeWorker({
       roleAssignments: [
-        makeAssignment('b-1', 'worker'),
-        makeAssignment('b-2', 'worker', false), // inactive
+        makeAssignment('b-1', 'cashier'),
+        makeAssignment('b-2', 'cashier', false), // inactive
       ],
     });
     const result = getAccessibleBranches(null, worker, branches);
@@ -87,17 +87,17 @@ describe('canAccessBranch', () => {
   });
 
   it('worker can access assigned branch', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(canAccessBranch(null, worker, 'b-1')).toBe(true);
   });
 
   it('worker cannot access unassigned branch', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(canAccessBranch(null, worker, 'b-2')).toBe(false);
   });
 
   it('inactive assignment denies access', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker', false)] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier', false)] });
     expect(canAccessBranch(null, worker, 'b-1')).toBe(false);
   });
 });
@@ -108,21 +108,21 @@ describe('canAccessBranch', () => {
 describe('getUserRoleInBranch', () => {
   it('owner is always admin', () => {
     const owner = makeWorker({ isOwner: true });
-    expect(getUserRoleInBranch(owner, 'b-1')).toBe('admin');
+    expect(getUserRoleInBranch(owner, 'b-1')).toBe('owner');
   });
 
   it('returns manager role', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'manager')] });
-    expect(getUserRoleInBranch(worker, 'b-1')).toBe('manager');
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'team_leader')] });
+    expect(getUserRoleInBranch(worker, 'b-1')).toBe('team_leader');
   });
 
   it('returns worker role', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
-    expect(getUserRoleInBranch(worker, 'b-1')).toBe('worker');
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
+    expect(getUserRoleInBranch(worker, 'b-1')).toBe('cashier');
   });
 
   it('returns null for unassigned branch', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(getUserRoleInBranch(worker, 'b-999')).toBeNull();
   });
 
@@ -141,12 +141,12 @@ describe('canManageWorkersInBranch', () => {
   });
 
   it('manager can manage', () => {
-    const mgr = makeWorker({ roleAssignments: [makeAssignment('b-1', 'manager')] });
+    const mgr = makeWorker({ roleAssignments: [makeAssignment('b-1', 'team_leader')] });
     expect(canManageWorkersInBranch(null, mgr, 'b-1')).toBe(true);
   });
 
   it('worker cannot manage', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(canManageWorkersInBranch(null, worker, 'b-1')).toBe(false);
   });
 });
@@ -157,7 +157,7 @@ describe('canManageWorkersInBranch', () => {
 describe('canManageWorker', () => {
   it('owner can manage non-owners', () => {
     const owner = makeWorker({ isOwner: true });
-    const target = makeWorker({ id: 'w-2', roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const target = makeWorker({ id: 'w-2', roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(canManageWorker(owner, target)).toBe(true);
   });
 
@@ -170,11 +170,11 @@ describe('canManageWorker', () => {
   it('manager can manage workers in same branch', () => {
     const mgr = makeWorker({
       id: 'm-1',
-      roleAssignments: [makeAssignment('b-1', 'manager')],
+      roleAssignments: [makeAssignment('b-1', 'team_leader')],
     });
     const worker = makeWorker({
       id: 'w-2',
-      roleAssignments: [makeAssignment('b-1', 'worker')],
+      roleAssignments: [makeAssignment('b-1', 'cashier')],
     });
     expect(canManageWorker(mgr, worker)).toBe(true);
   });
@@ -182,11 +182,11 @@ describe('canManageWorker', () => {
   it('manager cannot manage workers in different branch', () => {
     const mgr = makeWorker({
       id: 'm-1',
-      roleAssignments: [makeAssignment('b-1', 'manager')],
+      roleAssignments: [makeAssignment('b-1', 'team_leader')],
     });
     const worker = makeWorker({
       id: 'w-2',
-      roleAssignments: [makeAssignment('b-2', 'worker')],
+      roleAssignments: [makeAssignment('b-2', 'cashier')],
     });
     expect(canManageWorker(mgr, worker)).toBe(false);
   });
@@ -194,11 +194,11 @@ describe('canManageWorker', () => {
   it('manager cannot manage other managers', () => {
     const mgr = makeWorker({
       id: 'm-1',
-      roleAssignments: [makeAssignment('b-1', 'manager')],
+      roleAssignments: [makeAssignment('b-1', 'team_leader')],
     });
     const otherMgr = makeWorker({
       id: 'm-2',
-      roleAssignments: [makeAssignment('b-1', 'manager')],
+      roleAssignments: [makeAssignment('b-1', 'team_leader')],
     });
     expect(canManageWorker(mgr, otherMgr)).toBe(false);
   });
@@ -220,15 +220,15 @@ describe('filterAccessibleWorkers', () => {
   it('manager sees self + workers in their branch', () => {
     const mgr = makeWorker({
       id: 'm-1',
-      roleAssignments: [makeAssignment('b-1', 'manager')],
+      roleAssignments: [makeAssignment('b-1', 'team_leader')],
     });
     const sameB = makeWorker({
       id: 'w-2',
-      roleAssignments: [makeAssignment('b-1', 'worker')],
+      roleAssignments: [makeAssignment('b-1', 'cashier')],
     });
     const diffB = makeWorker({
       id: 'w-3',
-      roleAssignments: [makeAssignment('b-2', 'worker')],
+      roleAssignments: [makeAssignment('b-2', 'cashier')],
     });
     const result = filterAccessibleWorkers(mgr, [mgr, sameB, diffB]);
     expect(result.map(w => w.id)).toEqual(['m-1', 'w-2']);
@@ -253,17 +253,17 @@ describe('requiresClockInForPOS', () => {
   });
 
   it('worker with access must clock in', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(requiresClockInForPOS(worker, 'b-1')).toBe(true);
   });
 
   it('worker without branch access does not need clock in', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(requiresClockInForPOS(worker, 'b-999')).toBe(false);
   });
 
   it('requires clock in when no branch specified', () => {
-    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'worker')] });
+    const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(requiresClockInForPOS(worker)).toBe(true);
   });
 });
@@ -275,8 +275,8 @@ describe('getDefaultBranch', () => {
   it('returns first active assignment', () => {
     const worker = makeWorker({
       roleAssignments: [
-        makeAssignment('b-2', 'worker', false),
-        makeAssignment('b-1', 'worker'),
+        makeAssignment('b-2', 'cashier', false),
+        makeAssignment('b-1', 'cashier'),
       ],
     });
     expect(getDefaultBranch(worker)).toBe('b-1');
@@ -288,7 +288,7 @@ describe('getDefaultBranch', () => {
 
   it('returns null when no active assignments', () => {
     const worker = makeWorker({
-      roleAssignments: [makeAssignment('b-1', 'worker', false)],
+      roleAssignments: [makeAssignment('b-1', 'cashier', false)],
     });
     expect(getDefaultBranch(worker)).toBeNull();
   });
@@ -313,8 +313,8 @@ describe('getBranchAccessSummary', () => {
   it('worker summary counts roles correctly', () => {
     const worker = makeWorker({
       roleAssignments: [
-        makeAssignment('b-1', 'manager'),
-        makeAssignment('b-2', 'worker'),
+        makeAssignment('b-1', 'team_leader'),
+        makeAssignment('b-2', 'cashier'),
       ],
     });
     const summary = getBranchAccessSummary(worker, branches);

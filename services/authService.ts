@@ -99,7 +99,7 @@ export const authService = {
   assignUserToBranch: async (
     userId: string,
     branchId: string,
-    role: 'manager' | 'worker'
+    role: 'team_leader' | 'cashier'
   ): Promise<void> => {
     // Delegate to workerService (will be implemented there)
     console.warn('assignUserToBranch should be called from workerService');

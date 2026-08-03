@@ -20,8 +20,8 @@ export default function CommissaryDashboardPage() {
 	const params = useParams();
 	const branchId = typeof params.branchId === "string" ? params.branchId : "";
 	const { currentBranch } = useBranch();
-	const { getUserRoleForBranch, isUserOwner } = useAuth();
-	const isManager = isUserOwner() || getUserRoleForBranch(branchId) === "manager";
+	const { hasManagerPrivileges } = useAuth();
+	const isManager = hasManagerPrivileges(branchId);
 
 	const [items, setItems] = useState<InventoryItem[]>([]);
 	const [transfers, setTransfers] = useState<TransferWithItems[]>([]);

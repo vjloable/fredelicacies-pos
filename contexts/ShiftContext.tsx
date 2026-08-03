@@ -125,7 +125,7 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   // Owners are exempt from shifts entirely (see isExempt) and cannot open/close.
   const canManageShift = user?.roleAssignments?.some(
     (ra) =>
-      (ra.role === 'worker' || ra.role === 'manager') &&
+      (ra.role === 'cashier' || ra.role === 'team_leader') &&
       ra.branchId === currentBranch?.id &&
       ra.isActive
   ) ?? false;

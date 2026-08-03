@@ -11,7 +11,7 @@ export const workerRepository = {
         branch_id: branchId,
         user_id: data.user_id,
         pin: data.pin || null,
-        role: data.role || 'worker',
+        role: data.role || 'cashier',
         face_descriptor: data.face_descriptor || null,
         status: data.status || 'active',
       });
@@ -122,7 +122,7 @@ export const workerRepository = {
       .from('workers')
       .select('*')
       .eq('branch_id', branchId)
-      .eq('role', 'manager')
+      .eq('role', 'team_leader')
       .eq('status', 'active')
       .order('created_at', { ascending: true });
 

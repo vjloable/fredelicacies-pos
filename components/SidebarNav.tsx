@@ -34,7 +34,7 @@ interface NavItem {
 }
 
 export default function SidebarNav() {
-	const { logout, isUserOwner, getUserRoleForBranch } = useAuth();
+	const { logout, isUserOwner, hasManagerPrivileges } = useAuth();
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [transferActionable, setTransferActionable] = useState(0);
@@ -79,9 +79,9 @@ export default function SidebarNav() {
 		};
 	}, [currentBranch?.id]);
 
-	// Check if user is manager for current branch
+	// Check if user is team leader (or higher) for current branch
 	const isManagerForCurrentBranch = currentBranch
-		? getUserRoleForBranch(currentBranch.id) === "manager"
+		? hasManagerPrivileges(currentBranch.id)
 		: false;
 
 	// The commissary is a production hub: inventory + distribution + dashboard, no store/sales.

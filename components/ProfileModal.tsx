@@ -46,10 +46,12 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     if (!isOpen || !user) return null;
 
     const roleLabel = {
+        admin: 'Admin',
         owner: 'Owner',
         manager: 'Manager',
-        worker: 'Worker',
-    }[getUserHierarchyLevel() ?? 'worker'];
+        team_leader: 'Team Leader',
+        cashier: 'Cashier',
+    }[getUserHierarchyLevel() ?? 'cashier'];
 
     // First letter placeholder — uses current form name so it updates live as user types
     const avatarLetter = (formData.name || user.email).trim()[0]?.toUpperCase() ?? '?';

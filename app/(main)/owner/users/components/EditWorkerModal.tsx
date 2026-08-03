@@ -38,16 +38,16 @@ export default function EditWorkerModal({
 		isOwner: false,
 		branchAssignments: [] as Array<{
 			branchId: string;
-			role: "manager" | "worker";
+			role: "team_leader" | "cashier";
 		}>,
 	});
 
 	// Single branch assignment state
 	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
-	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
-		"worker"
+	const [selectedRole, setSelectedRole] = useState<"team_leader" | "cashier">(
+		"cashier"
 	);
-	const [originalRole, setOriginalRole] = useState<"manager" | "worker" | null>(null);
+	const [originalRole, setOriginalRole] = useState<"team_leader" | "cashier" | null>(null);
 
 	// Get available branches based on user permissions
 	const availableBranches = isOwner
@@ -66,7 +66,7 @@ export default function EditWorkerModal({
 		
 		// Managers cannot demote other managers - check if worker is a manager
 		const isWorkerManager = worker.roleAssignments.some(
-			assignment => assignment.role === "manager" && assignment.isActive !== false
+			assignment => assignment.role === "team_leader" && assignment.isActive !== false
 		);
 		
 		if (isWorkerManager) return false;
@@ -77,18 +77,18 @@ export default function EditWorkerModal({
 
 	// Get available role options based on permissions
 	const getAvailableRoleOptions = (): string[] => {
-		if (!worker) return ["Worker"];
+		if (!worker) return ["Cashier"];
 		
 		if (!canDemoteWorker(worker)) {
 			// If can't demote, only show current role
 			const currentRole = worker.roleAssignments.find(
 				assignment => assignment.isActive !== false
-			)?.role || "worker";
-			return [currentRole === "worker" ? "Worker" : "Manager"];
+			)?.role || "cashier";
+			return [currentRole === "cashier" ? "Cashier" : "Team Leader"];
 		}
 		
 		// Full options if can demote
-		return ["Worker", "Manager"];
+		return ["Cashier", "Team Leader"];
 	};
 
 	// Initialize form data when worker changes
@@ -139,13 +139,13 @@ export default function EditWorkerModal({
 			} else if (currentAvailableBranches.length === 1) {
 				// Auto-select the only available branch for managers
 				setSelectedBranchId(currentAvailableBranches[0].id);
-				setSelectedRole("worker");
-				setOriginalRole("worker");
+				setSelectedRole("cashier");
+				setOriginalRole("cashier");
 				console.log("✅ Auto-selected branch for manager:", currentAvailableBranches[0].id);
 			} else {
 				setSelectedBranchId("");
-				setSelectedRole("worker");
-				setOriginalRole("worker");
+				setSelectedRole("cashier");
+				setOriginalRole("cashier");
 				console.log("⚠️ No branch assignments found");
 			}
 
@@ -186,7 +186,7 @@ export default function EditWorkerModal({
 		}));
 	};
 
-	const handleRoleChange = (role: "manager" | "worker") => {
+	const handleRoleChange = (role: "team_leader" | "cashier") => {
 		console.log("🔄 Role change attempted:", { role, selectedBranchId, isOwner });
 		setSelectedRole(role);
 		if (selectedBranchId) {
@@ -550,11 +550,11 @@ export default function EditWorkerModal({
 											<DropdownField
 												options={getAvailableRoleOptions()}
 												defaultValue={
-													selectedRole === "worker" ? "Worker" : "Manager"
+													selectedRole === "cashier" ? "Cashier" : "Team Leader"
 												}
 												onChange={(value) => {
 													handleRoleChange(
-														value.toLowerCase() as "manager" | "worker"
+														(value === "Team Leader" ? "team_leader" : "cashier")
 													);
 												}}
 												roundness='lg'
@@ -567,14 +567,14 @@ export default function EditWorkerModal({
 										) : (
 											// Show readonly role for managers or when cannot demote
 											<div className='w-full px-3 py-2 h-9.5 text-3 bg-secondary/5 border border-secondary/20 rounded-lg text-secondary/50 flex items-center justify-between'>
-												<span>{selectedRole === "worker" ? "Worker" : "Manager"}</span>
+												<span>{selectedRole === "cashier" ? "Cashier" : "Team Leader"}</span>
 												{!isOwner && (
 													<span className='text-xs text-secondary/40'>(Only owners can change roles)</span>
 												)}
 												{isOwner && worker?.id === currentUserId && (
 													<span className='text-xs text-secondary/40'>(Cannot change own role)</span>
 												)}
-												{isOwner && worker?.roleAssignments.some(a => a.role === "manager" && a.isActive !== false) && worker?.id !== currentUserId && (
+												{isOwner && worker?.roleAssignments.some(a => a.role === "team_leader" && a.isActive !== false) && worker?.id !== currentUserId && (
 													<span className='text-xs text-secondary/40'>(Cannot demote managers)</span>
 												)}
 											</div>

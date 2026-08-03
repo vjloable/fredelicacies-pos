@@ -96,13 +96,13 @@ export default function WorkersPage() {
 			// Apply branch filtering based on selected branch for owners
 			const workerFilters: {
 				branchId?: string;
-				role?: 'manager' | 'worker';
+				role?: 'team_leader' | 'cashier';
 				status?: 'clocked_in' | 'clocked_out';
 				searchQuery?: string;
 				limit?: number;
 			} = {
 				branchId: filters.branchId,
-				role: filters.role === 'owner' ? undefined : filters.role as 'manager' | 'worker' | undefined,
+				role: (filters.role === 'team_leader' || filters.role === 'cashier') ? filters.role : undefined,
 				status: filters.status,
 				searchQuery: filters.searchQuery,
 				limit: filters.limit,

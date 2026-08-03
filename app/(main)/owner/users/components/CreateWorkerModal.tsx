@@ -41,8 +41,8 @@ export default function CreateWorkerModal({
 	const [selectedBranchId, setSelectedBranchId] = useState<string>(
 		defaultBranchId || ""
 	);
-	const [selectedRole, setSelectedRole] = useState<"manager" | "worker">(
-		"worker"
+	const [selectedRole, setSelectedRole] = useState<"team_leader" | "cashier">(
+		"cashier"
 	);
 
 	// Get available branches based on user permissions
@@ -76,14 +76,14 @@ export default function CreateWorkerModal({
 					? currentAvailableBranches[0].id
 					: "");
 			setSelectedBranchId(initialBranchId);
-			setSelectedRole("worker");
+			setSelectedRole("cashier");
 			setError(null);
 
 			// If branch is auto-selected, update form data
 			if (initialBranchId) {
 				setFormData((prev) => ({
 					...prev,
-					branchAssignments: [{ branchId: initialBranchId, role: "worker" }],
+					branchAssignments: [{ branchId: initialBranchId, role: "cashier" }],
 				}));
 			}
 		}
@@ -123,7 +123,7 @@ export default function CreateWorkerModal({
 		}));
 	};
 
-	const handleRoleChange = (role: "manager" | "worker") => {
+	const handleRoleChange = (role: "team_leader" | "cashier") => {
 		setSelectedRole(role);
 		if (selectedBranchId) {
 			setFormData((prev) => ({
@@ -184,7 +184,7 @@ export default function CreateWorkerModal({
 			isOwner: false,
 		});
 		setSelectedBranchId("");
-		setSelectedRole("worker");
+		setSelectedRole("cashier");
 		setError(null);
 	};
 
@@ -409,13 +409,13 @@ export default function CreateWorkerModal({
 											Role <span className="text-error">*</span>
 										</label>
 										<DropdownField
-											options={["Worker", "Manager"]}
+											options={["Cashier", "Team Leader"]}
 											defaultValue={
-												selectedRole === "worker" ? "Worker" : "Manager"
+												selectedRole === "cashier" ? "Cashier" : "Team Leader"
 											}
 											onChange={(value) =>
 												handleRoleChange(
-													value.toLowerCase() as "manager" | "worker"
+													(value === "Team Leader" ? "team_leader" : "cashier")
 												)
 											}
 											roundness='lg'

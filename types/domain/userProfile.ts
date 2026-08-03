@@ -8,6 +8,8 @@ export interface UserProfile {
   profile_picture?: string;
   display_name?: string;
   is_owner: boolean;
+  is_admin: boolean;
+  is_manager: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -22,6 +24,7 @@ export interface CreateUserProfileData {
   employee_id?: string;
   profile_picture?: string;
   is_owner?: boolean;
+  is_manager?: boolean;
   created_by?: string;
 }
 
@@ -32,15 +35,16 @@ export interface UpdateUserProfileData {
   employee_id?: string;
   profile_picture?: string;
   is_active?: boolean;
-  // is_owner can only be updated by owners (handled by RLS)
+  // is_owner / is_manager can only be updated by owners (handled by RLS)
   is_owner?: boolean;
+  is_manager?: boolean;
 }
 
 // Extended User Profile with Role Assignments (for compatibility with existing code)
 export interface RoleAssignment {
   workersTableId: string; // workers.id (UUID pk) — used as attendance.worker_id FK
   branchId: string;
-  role: 'manager' | 'worker';
+  role: 'team_leader' | 'cashier';
   assignedAt: string | Date;
   assignedBy?: string;
   isActive: boolean;

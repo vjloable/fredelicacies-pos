@@ -7,7 +7,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface AuthGuardProps {
 	children: React.ReactNode;
-	requiredRole?: "manager" | "worker";
+	requiredRole?: "team_leader" | "cashier";
 	requiredBranch?: string;
 	adminOnly?: boolean;
 	ownerOnly?: boolean;
@@ -66,7 +66,7 @@ export default function AuthGuard({
 				const userRole = getUserRoleForBranch(requiredBranch);
 				if (
 					!userRole ||
-					(requiredRole === "manager" && userRole !== "manager")
+					(requiredRole === "team_leader" && userRole !== "team_leader")
 				) {
 					router.push("/login"); // Redirect if user doesn't have required role
 					return;
@@ -160,7 +160,7 @@ export default function AuthGuard({
 	// Check role requirements
 	if (requiredRole && requiredBranch) {
 		const userRole = getUserRoleForBranch(requiredBranch);
-		if (!userRole || (requiredRole === "manager" && userRole !== "manager")) {
+		if (!userRole || (requiredRole === "team_leader" && userRole !== "team_leader")) {
 			return (
 				<div className='flex items-center justify-center h-screen bg-background'>
 					<div className='text-center'>

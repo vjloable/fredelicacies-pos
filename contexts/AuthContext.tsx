@@ -4,12 +4,25 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { authService } from "@/services/authService";
 import type { UserWithRoles, RoleAssignment } from "@/types/domain";
 import { logActivity } from "@/services/activityLogService";
+import {
+  type EffectiveRole,
+  type Impersonation,
+  PREVIEWABLE_ROLES,
+  resolveRealRole,
+  resolveEffectiveRole,
+  canPreviewRoles,
+  canManageRole as canManageRoleLadder,
+  hasAllBranchAccess,
+} from "@/lib/roles";
 
 export interface User extends UserWithRoles {
   uid: string; // Alias for backward compatibility
 }
 
 export type { RoleAssignment };
+export type { EffectiveRole, Impersonation };
+
+const IMPERSONATION_KEY = "admin_role_preview";
 
 interface AuthContextType {
   user: User | null;
@@ -18,17 +31,32 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 
-  // Existing methods
-  getUserRoleForBranch: (branchId: string) => "manager" | "worker" | null;
+  // Role model
+  realRole: EffectiveRole | null;      // the user's true role (ignores preview)
+  effectiveRole: EffectiveRole | null; // the role currently in force (preview-aware)
+
+  // Admin role-switch preview (impersonation)
+  impersonation: Impersonation;
+  canPreview: boolean;                 // true only for admins
+  previewableRoles: readonly EffectiveRole[];
+  startPreview: (assumedRole: EffectiveRole, opts?: { branchId?: string; workerId?: string }) => void;
+  stopPreview: () => void;
+
+  // Existing methods (branch role strings renamed to team_leader/cashier)
+  getUserRoleForBranch: (branchId: string) => "team_leader" | "cashier" | null;
   getAssignedBranches: () => string[];
-  isUserOwner: () => boolean;
-  isUserAdmin: () => boolean; // Backward compatibility
+  isUserOwner: () => boolean;   // owner-level power (owner or admin), preview-aware
+  isUserAdmin: () => boolean;   // true admin (privilege to preview), ignores preview
   canAccessBranch: (branchId: string) => boolean;
   refreshUserData: () => Promise<void>;
 
+  // Elevated privileges at a branch (owner/admin/all-branch manager, or team leader of that branch)
+  hasManagerPrivileges: (branchId?: string) => boolean;
+
   // Worker Management methods
-  isManager: () => boolean;
-  isWorker: () => boolean;
+  isManager: () => boolean;   // all-branch manager (preview-aware)
+  isWorker: () => boolean;    // cashier (preview-aware) — back-compat alias of isCashier
+  isCashier: () => boolean;
   canManageWorkers: () => boolean;
   getAccessibleBranches: () => string[];
   canManageWorker: (
@@ -41,8 +69,8 @@ interface AuthContextType {
   hasWorkerManagementAccess: () => boolean;
 
   // Role hierarchy helpers
-  getUserHierarchyLevel: () => "owner" | "manager" | "worker" | null;
-  canManageRole: (targetRole: "owner" | "manager" | "worker") => boolean;
+  getUserHierarchyLevel: () => EffectiveRole | null;
+  canManageRole: (targetRole: EffectiveRole) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,7 +90,59 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonation, setImpersonation] = useState<Impersonation>(null);
   const initialCheckDone = useRef(false);
+
+  // The user's real role (ignores preview) and the role currently in force.
+  const realRole = user
+    ? resolveRealRole(
+        { is_admin: user.is_admin, is_owner: user.is_owner, is_manager: user.is_manager },
+        user.roleAssignments
+      )
+    : null;
+  const canPreview = canPreviewRoles(realRole);
+  // Only admins may preview; drop any stale impersonation for non-admins.
+  const activeImpersonation = canPreview ? impersonation : null;
+  const effectiveRole = resolveEffectiveRole(realRole, activeImpersonation);
+
+  // Restore a persisted preview once the (admin) user is known.
+  useEffect(() => {
+    if (!canPreview) {
+      setImpersonation(null);
+      return;
+    }
+    if (impersonation) return;
+    try {
+      const raw = sessionStorage.getItem(IMPERSONATION_KEY);
+      if (raw) setImpersonation(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPreview]);
+
+  const startPreview = useCallback(
+    (assumedRole: EffectiveRole, opts?: { branchId?: string; workerId?: string }) => {
+      if (!canPreview) return;
+      const next: Impersonation = { assumedRole, branchId: opts?.branchId, workerId: opts?.workerId };
+      setImpersonation(next);
+      try {
+        sessionStorage.setItem(IMPERSONATION_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+    },
+    [canPreview]
+  );
+
+  const stopPreview = useCallback(() => {
+    setImpersonation(null);
+    try {
+      sessionStorage.removeItem(IMPERSONATION_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     // Subscribe to auth state changes
@@ -154,9 +234,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Helper methods that delegate to authService or use local user state
-  const getUserRoleForBranch = (branchId: string) => {
+  // ---- Role helpers (all preview-aware via effectiveRole) --------------------
+
+  // Branch role from the user's assignments. While previewing team_leader/cashier,
+  // the assumed role stands in for the previewed branch.
+  const getUserRoleForBranch = (branchId: string): "team_leader" | "cashier" | null => {
     if (!user) return null;
+    if (activeImpersonation && (effectiveRole === "team_leader" || effectiveRole === "cashier")) {
+      return activeImpersonation.branchId === branchId ? effectiveRole : null;
+    }
     const assignment = user.roleAssignments.find(
       (a) => a.branchId === branchId && a.isActive !== false
     );
@@ -170,22 +256,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .map((assignment) => assignment.branchId);
   };
 
-  const isUserOwner = () => {
-    return user?.is_owner || false;
-  };
+  // Owner-level power (owner or admin). Preview-aware: an admin previewing a lower
+  // role loses owner power for the duration of the preview.
+  const isUserOwner = () => effectiveRole === "owner" || effectiveRole === "admin";
 
-  // Backward compatibility
-  const isUserAdmin = () => {
-    return user?.is_owner || false;
-  };
+  // A true admin (has the privilege to preview). Ignores preview so the switcher
+  // never hides itself while previewing.
+  const isUserAdmin = () => realRole === "admin";
+
+  const isManager = () => effectiveRole === "manager";
+  const isCashier = () => effectiveRole === "cashier";
+  const isWorker = isCashier; // back-compat alias
 
   const canAccessBranch = (branchId: string) => {
     if (!user) return false;
-    if (user.is_owner) return true;
+    if (hasAllBranchAccess(effectiveRole)) return true;
+    if (activeImpersonation) return activeImpersonation.branchId === branchId;
     return user.roleAssignments.some(
       (assignment) =>
         assignment.branchId === branchId && assignment.isActive !== false
     );
+  };
+
+  // Elevated privileges at a branch: owner/admin/all-branch manager everywhere,
+  // or a team leader of that specific branch.
+  const hasManagerPrivileges = (branchId?: string) => {
+    if (!user) return false;
+    if (hasAllBranchAccess(effectiveRole)) return true;
+    if (!branchId) return effectiveRole === "team_leader";
+    return getUserRoleForBranch(branchId) === "team_leader";
   };
 
   const refreshUserData = useCallback(async () => {
@@ -199,9 +298,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user.profile_picture !== userData.profile_picture ||
           user.display_name !== userData.display_name ||
           user.is_owner !== userData.is_owner ||
+          user.is_admin !== userData.is_admin ||
+          user.is_manager !== userData.is_manager ||
           user.roleAssignments.length !== userData.roleAssignments.length ||
           JSON.stringify(user.roleAssignments) !== JSON.stringify(userData.roleAssignments);
-        
+
         if (hasChanged) {
           const extendedUser: User = {
             ...userData,
@@ -213,136 +314,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  // Worker Management helper methods
-  const isManager = () => {
-    if (!user) return false;
-    // Owners are above managers in hierarchy, so they're not "managers"
-    if (user.is_owner) return false;
-    return user.roleAssignments.some(
-      (assignment) =>
-        assignment.role === "manager" && assignment.isActive !== false
-    );
-  };
-
-  const isWorker = () => {
-    if (!user) return false;
-    // Owners are never considered "workers" - they are above the hierarchy
-    if (user.is_owner) return false;
-    // Check if user has any worker role assignments (but no manager roles)
-    const hasWorkerRole = user.roleAssignments.some(
-      (assignment) =>
-        assignment.role === "worker" && assignment.isActive !== false
-    );
-    const hasManagerRole = user.roleAssignments.some(
-      (assignment) =>
-        assignment.role === "manager" && assignment.isActive !== false
-    );
-    // Pure worker: has worker role but no manager role
-    return hasWorkerRole && !hasManagerRole;
-  };
-
-  const canManageWorkers = () => {
-    if (!user) return false;
-    return user.is_owner || isManager();
-  };
+  // ---- Worker/user management (owner/admin only, per product decision) --------
+  const canManageWorkers = () => isUserOwner();
 
   const getAccessibleBranches = () => {
     if (!user) return [];
-    if (user.is_owner) {
-      // Owners have access to all branches but are not assigned to specific branches
-      // They get access through their owner status, not through roleAssignments
-      // For now, return empty array since admins should not be assigned to specific branches
-      // In practice, owner access would be handled globally through branch service
-      return [];
-    }
-    // Managers can only access branches they manage
+    // All-branch roles aren't pinned to specific branches (empty = "all"),
+    // matching the historical owner semantics callers already handle.
+    if (hasAllBranchAccess(effectiveRole)) return [];
+    if (activeImpersonation?.branchId) return [activeImpersonation.branchId];
     return user.roleAssignments
-      .filter(
-        (assignment) =>
-          assignment.role === "manager" && assignment.isActive !== false
-      )
+      .filter((assignment) => assignment.isActive !== false)
       .map((assignment) => assignment.branchId);
   };
 
   const canManageWorker = (
-    targetUserId: string,
-    targetUserBranches: string[]
-  ) => {
-    if (!user || !canManageWorkers()) return false;
+    _targetUserId: string,
+    _targetUserBranches: string[]
+  ) => canManageWorkers();
 
-    // Owners can manage anyone
-    if (user.is_owner) return true;
+  const canCreateWorker = () => canManageWorkers();
+  const canDeleteWorker = () => isUserOwner();
+  const canAssignToOwner = () => isUserOwner();
+  const hasWorkerManagementAccess = () => canManageWorkers();
 
-    // Managers can only manage workers in their branches
-    const accessibleBranches = getAccessibleBranches();
-    return targetUserBranches.some((branchId) =>
-      accessibleBranches.includes(branchId)
-    );
-  };
+  // ---- Role hierarchy helpers ------------------------------------------------
+  const getUserHierarchyLevel = (): EffectiveRole | null => effectiveRole;
 
-  const canCreateWorker = () => {
-    return canManageWorkers();
-  };
-
-  const canDeleteWorker = () => {
-    if (!user) return false;
-    // Only owners can delete workers
-    return user.is_owner;
-  };
-
-  const canAssignToOwner = () => {
-    if (!user) return false;
-    // Only owners can assign owner roles
-    return user.is_owner;
-  };
-
-  const hasWorkerManagementAccess = () => {
-    if (!user) return false;
-    // Workers cannot access worker management at all
-    return user.is_owner || isManager();
-  };
-
-  // Role hierarchy helpers
-  const getUserHierarchyLevel = (): "owner" | "manager" | "worker" | null => {
-    if (!user) return null;
-
-    // Owner is the highest level
-    if (user.is_owner) return "owner";
-
-    // Check for manager role
-    const hasManagerRole = user.roleAssignments.some(
-      (assignment) =>
-        assignment.role === "manager" && assignment.isActive !== false
-    );
-    if (hasManagerRole) return "manager";
-
-    // Check for worker role
-    const hasWorkerRole = user.roleAssignments.some(
-      (assignment) =>
-        assignment.role === "worker" && assignment.isActive !== false
-    );
-    if (hasWorkerRole) return "worker";
-
-    return null;
-  };
-
-  const canManageRole = (
-    targetRole: "owner" | "manager" | "worker"
-  ): boolean => {
-    const currentLevel = getUserHierarchyLevel();
-    if (!currentLevel) return false;
-
-    // Hierarchy: owner > manager > worker
-    // Each level can manage those below them
-    if (currentLevel === "owner") {
-      return targetRole === "manager" || targetRole === "worker";
-    }
-    if (currentLevel === "manager") {
-      return targetRole === "worker";
-    }
-    // Workers cannot manage anyone
-    return false;
-  };
+  const canManageRole = (targetRole: EffectiveRole): boolean =>
+    canManageRoleLadder(effectiveRole, targetRole);
 
   const value = {
     user,
@@ -350,16 +350,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     isAuthenticated: !!user,
+    // Role model
+    realRole,
+    effectiveRole,
+    // Preview
+    impersonation: activeImpersonation,
+    canPreview,
+    previewableRoles: PREVIEWABLE_ROLES,
+    startPreview,
+    stopPreview,
     // Existing methods
     getUserRoleForBranch,
     getAssignedBranches,
     isUserOwner,
-    isUserAdmin, // Backward compatibility
+    isUserAdmin,
     canAccessBranch,
     refreshUserData,
+    hasManagerPrivileges,
     // Worker Management methods
     isManager,
     isWorker,
+    isCashier,
     canManageWorkers,
     getAccessibleBranches,
     canManageWorker,

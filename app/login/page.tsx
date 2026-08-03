@@ -53,10 +53,10 @@ function LoginContent() {
 				// Check if user has valid branch assignmentsgit
 				const branchId = user?.roleAssignments?.[0]?.branchId;
 				if (branchId) {
-					// Check if user is a manager for any branch
+					// Check if user is a team leader for any branch
 					const isManager = user.roleAssignments.some(
 						(assignment) =>
-							assignment.role === "manager" && assignment.isActive !== false
+							assignment.role === "team_leader" && assignment.isActive !== false
 					);
 
 					if (isManager) {

@@ -72,7 +72,7 @@ export default function QuickTimeWidget({
 	const isExemptOwner =
 		timeTracking.worker?.isOwner &&
 		!timeTracking.worker.roleAssignments.some(
-			(assignment) => assignment.role === "manager"
+			(assignment) => assignment.role === "team_leader"
 		);
 
 	if (!user || !timeTracking.worker || isExemptOwner) {

@@ -73,9 +73,9 @@ export default function ManagementPage() {
 				setError("Access denied. You don't have access to this branch.");
 				setLoading(false);
 				return;
-			} else if (!userRole || userRole === "worker") {
+			} else if (!userRole || userRole === "cashier") {
 				setError(
-					"Access denied. You need manager permissions for this branch."
+					"Access denied. You need team leader permissions for this branch."
 				);
 				setLoading(false);
 				return;
@@ -257,11 +257,11 @@ export default function ManagementPage() {
 		if (filters.role) {
 			filtered = filtered.filter((worker) => {
 				if (filters.role === "owner") return worker.isOwner;
-				if (filters.role === "worker") return !worker.isOwner;
-				if (filters.role === "manager") {
-					// Check if worker has manager role for any branch
+				if (filters.role === "cashier") return !worker.isOwner;
+				if (filters.role === "team_leader") {
+					// Check if worker is a team leader for any branch
 					return worker.roleAssignments?.some(
-						(assignment) => assignment.role === "manager"
+						(assignment) => assignment.role === "team_leader"
 					);
 				}
 				return true;

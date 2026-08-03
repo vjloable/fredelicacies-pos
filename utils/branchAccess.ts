@@ -59,10 +59,10 @@ export function canAccessBranch(
 export function getUserRoleInBranch(
 	worker: Worker | null,
 	branchId: string
-): "admin" | "manager" | "worker" | null {
+): "owner" | "team_leader" | "cashier" | null {
 	// Owner users are always admin regardless of branch
 	if (worker?.isOwner) {
-		return "admin";
+		return "owner";
 	}
 
 	if (!worker || !worker.roleAssignments) {
@@ -85,7 +85,7 @@ export function canManageWorkersInBranch(
 	branchId: string
 ): boolean {
 	const role = getUserRoleInBranch(worker, branchId);
-	return role === "admin" || role === "manager";
+	return role === "owner" || role === "team_leader";
 }
 
 /**
@@ -113,7 +113,7 @@ export function canManageWorker(
 	// Get branches where current user is manager
 	const managerBranches = currentUser.roleAssignments
 		.filter(
-			(assignment) => assignment.role === "manager" && assignment.isActive
+			(assignment) => assignment.role === "team_leader" && assignment.isActive
 		)
 		.map((assignment) => assignment.branchId);
 
@@ -128,7 +128,7 @@ export function canManageWorker(
 	);
 
 	const isTargetOnlyWorker = targetWorker.roleAssignments.every(
-		(assignment) => assignment.role === "worker"
+		(assignment) => assignment.role === "cashier"
 	);
 
 	return hasCommonBranches && isTargetOnlyWorker;
@@ -153,7 +153,7 @@ export function filterAccessibleWorkers(
 
 	const managerBranches = currentUser.roleAssignments
 		.filter(
-			(assignment) => assignment.role === "manager" && assignment.isActive
+			(assignment) => assignment.role === "team_leader" && assignment.isActive
 		)
 		.map((assignment) => assignment.branchId);
 
@@ -251,10 +251,10 @@ export function getBranchAccessSummary(
 	const activeAssignments =
 		worker.roleAssignments?.filter((assignment) => assignment.isActive) || [];
 	const managerBranches = activeAssignments.filter(
-		(assignment) => assignment.role === "manager"
+		(assignment) => assignment.role === "team_leader"
 	).length;
 	const workerBranches = activeAssignments.filter(
-		(assignment) => assignment.role === "worker"
+		(assignment) => assignment.role === "cashier"
 	).length;
 
 	return {

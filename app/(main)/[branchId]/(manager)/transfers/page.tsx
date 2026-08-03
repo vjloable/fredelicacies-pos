@@ -236,13 +236,13 @@ function Lane({
 export default function TransfersListPage() {
   const params = useParams();
   const branchId = typeof params.branchId === "string" ? params.branchId : "";
-  const { user, getUserRoleForBranch, isUserOwner } = useAuth();
+  const { user, getUserRoleForBranch, hasManagerPrivileges } = useAuth();
   const { currentBranch, allBranches } = useBranch();
 
   const commissary = allBranches.find((b) => b.type === "commissary" && b.id !== branchId);
   const showRequestFromCommissary = !!commissary && currentBranch?.type !== "commissary";
 
-  const isManager = isUserOwner() || getUserRoleForBranch(branchId) === "manager";
+  const isManager = hasManagerPrivileges(branchId);
 
   const [loading, setLoading] = useState(true);
   const [transfers, setTransfers] = useState<TransferWithItems[]>([]);
@@ -374,9 +374,9 @@ export default function TransfersListPage() {
           </div>
         )}
 
-        {!isManager && getUserRoleForBranch(branchId) === "worker" && (
+        {!isManager && getUserRoleForBranch(branchId) === "cashier" && (
           <p className="mt-3 text-2.5 text-secondary/40">
-            You&apos;re viewing as a worker. You can mark incoming transfers received on the detail page, but only managers can confirm or decline.
+            You&apos;re viewing as a cashier. You can mark incoming transfers received on the detail page, but only team leaders can confirm or decline.
           </p>
         )}
       </div>

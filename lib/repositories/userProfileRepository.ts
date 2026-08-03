@@ -15,6 +15,7 @@ export const userProfileRepository = {
         employee_id: data.employee_id || null,
         profile_picture: data.profile_picture || null,
         is_owner: data.is_owner || false,
+        is_manager: data.is_manager || false,
         created_by: data.created_by || null,
       })
       .select()
@@ -125,11 +126,12 @@ export const userProfileRepository = {
 
     // Map workers to role assignments
     const roleAssignments: RoleAssignment[] = (workers || [])
-      .filter(w => w.role !== 'owner') // Owners are global, not branch-specific
+      // Owners/managers are profile-level (global), not branch rows; keep only branch roles.
+      .filter(w => w.role === 'team_leader' || w.role === 'cashier')
       .map(w => ({
         workersTableId: w.id,
         branchId: w.branch_id,
-        role: w.role as 'manager' | 'worker',
+        role: w.role as 'team_leader' | 'cashier',
         assignedAt: w.created_at,
         isActive: w.status === 'active',
       }));
