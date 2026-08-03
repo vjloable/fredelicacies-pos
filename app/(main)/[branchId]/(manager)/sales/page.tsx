@@ -21,7 +21,7 @@ import type { Discount } from "@/types/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import type { OrderWithItems, OrderItem, WastageItemSummary, WastageLog } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
-import { formatCurrency } from "@/services/salesService";
+import { formatCurrency } from "@/lib/currency_formatter";
 import { getWastageSummary, getTopWastedItems, getWastageLogs } from "@/services/wastageService";
 import { getEodLocks } from "@/services/eodService";
 import { getInventoryItems } from "@/services/inventoryService";

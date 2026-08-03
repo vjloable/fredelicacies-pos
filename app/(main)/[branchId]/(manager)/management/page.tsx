@@ -14,7 +14,6 @@ import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
 import AssignBranchModal from "@/app/(main)/[branchId]/(manager)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
 import AttendanceView from "@/app/(main)/[branchId]/(manager)/management/components/AttendanceView";
-import EditFaceEmbeddingModal from "@/app/(main)/[branchId]/(manager)/management/components/EditFaceEmbeddingModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -45,7 +44,6 @@ export default function ManagementPage() {
 	const [isTimeInOutModalOpen, setIsTimeInOutModalOpen] = useState(false);
 	const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
 	const [isWorkerDetailModalOpen, setIsWorkerDetailModalOpen] = useState(false);
-	const [isFaceEmbeddingModalOpen, setIsFaceEmbeddingModalOpen] = useState(false);
 	const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 	const [timeInOutAction, setTimeInOutAction] = useState<
 		"time_in" | "time_out"
@@ -200,11 +198,6 @@ export default function ManagementPage() {
 		setIsWorkerDetailModalOpen(true);
 	};
 
-	const handleEditFaceEmbedding = (worker: Worker) => {
-		setSelectedWorker(worker);
-		setIsFaceEmbeddingModalOpen(true);
-	};
-
 	const handleSort = (column: string) => {
 		setSortConfig((prev) => ({
 			column,
@@ -228,7 +221,6 @@ export default function ManagementPage() {
 		setIsTimeInOutModalOpen(false);
 		setIsAssignBranchModalOpen(false);
 		setIsWorkerDetailModalOpen(false);
-		setIsFaceEmbeddingModalOpen(false);
 		setSelectedWorker(null);
 	};
 
@@ -568,7 +560,6 @@ export default function ManagementPage() {
 										onTimeIn={(worker) => handleTimeInOut(worker, "time_in")}
 										onTimeOut={(worker) => handleTimeInOut(worker, "time_out")}
 										onRowClick={handleWorkerDetails}
-										onEditFaceEmbedding={handleEditFaceEmbedding}
 									/>
 
 									{/* Stats */}
@@ -645,13 +636,6 @@ export default function ManagementPage() {
 					isOpen={isWorkerDetailModalOpen}
 					worker={selectedWorker}
 					onClose={handleModalClose}
-				/>
-
-				<EditFaceEmbeddingModal
-					isOpen={isFaceEmbeddingModalOpen}
-					worker={selectedWorker}
-					onClose={handleModalClose}
-					onSuccess={handleWorkerUpdated}
 				/>
 			</div>
 		</div>

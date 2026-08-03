@@ -14,7 +14,6 @@ interface WorkerRowProps {
 	onTimeOut?: (worker: Worker) => void;
 	onAssignBranch?: (worker: Worker) => void;
 	onRowClick?: (worker: Worker) => void;
-	onEditFaceEmbedding?: (worker: Worker) => void;
 }
 
 // Action icons
@@ -103,23 +102,6 @@ function BranchIcon({ className }: { className?: string }) {
 	);
 }
 
-function FaceIcon() {
-	return (
-		<svg
-			className='w-4 h-4'
-			fill='none'
-			stroke='currentColor'
-			viewBox='0 0 24 24'>
-			<path
-				strokeLinecap='round'
-				strokeLinejoin='round'
-				strokeWidth={2}
-				d='M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'
-			/>
-		</svg>
-	);
-}
-
 function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
 	return (
 		<div className='relative group/tip'>
@@ -141,7 +123,6 @@ export default function WorkerRow({
 	onTimeOut,
 	onAssignBranch,
 	onRowClick,
-	onEditFaceEmbedding,
 }: WorkerRowProps) {
 	// Permission checks
 	const canEdit =
@@ -322,20 +303,6 @@ export default function WorkerRow({
 								}}
 								className='text-secondary hover:text-secondary/60 p-1 rounded hover:bg-secondary/10'>
 								<BranchIcon />
-							</button>
-						</Tooltip>
-					)}
-
-					{/* Face enrollment button */}
-					{canEdit && onEditFaceEmbedding && (
-						<Tooltip label="Face Enrollment">
-							<button
-								onClick={(e) => {
-									e.stopPropagation();
-									onEditFaceEmbedding(worker);
-								}}
-								className='text-accent hover:text-accent/60 p-1 rounded hover:bg-accent/10'>
-								<FaceIcon />
 							</button>
 						</Tooltip>
 					)}

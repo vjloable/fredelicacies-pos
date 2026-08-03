@@ -8,9 +8,8 @@ import React, {
 	useCallback,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { workerService, Worker } from "@/services/workerService";
+import { Worker, subscribeToWorker } from "@/services/workerService";
 import { Attendance, attendanceService } from "@/services/attendanceService";
-import { dataStore } from "@/stores/dataStore";
 
 interface TimeTrackingOptions {
 	autoRefresh?: boolean;
@@ -99,8 +98,6 @@ export function TimeTrackingProvider({
 
 		setState((prev) => ({ ...prev, loading: true, error: null }));
 
-		dataStore.startWorkerListeners(user.uid);
-
 		const handleWorkerUpdate = async (workerData: Worker | null) => {
 			try {
 				if (!workerData) {
@@ -164,11 +161,10 @@ export function TimeTrackingProvider({
 			}
 	};
 
-	dataStore.subscribe(`workerChanged:${user.uid}`, handleWorkerUpdate);
+	const unsubscribe = subscribeToWorker(user.uid, handleWorkerUpdate);
 
 	return () => {
-		dataStore.unsubscribe(`workerChanged:${user.uid}`, handleWorkerUpdate);
-		dataStore.stopWorkerListeners(user.uid);
+		unsubscribe();
 	};
 }, [user, calculateDuration]);
 

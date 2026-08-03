@@ -4,6 +4,7 @@ import { userProfileRepository, workerRepository, authRepository } from '@/lib/r
 import { attendanceService } from '@/services/attendanceService';
 import type { UserWithRoles, RoleAssignment, CreateUserProfileData } from '@/types/domain';
 import { hashPin, verifyPin } from '@/lib/pin';
+import { supabase } from '@/lib/supabase';
 
 // Worker interface for backward compatibility
 export interface Worker {
@@ -473,3 +474,46 @@ export const workerService = {
     };
   },
 };
+
+/**
+ * Subscribe to realtime changes for a single worker (by auth userId).
+ * Fires `callback` with the initial worker record and again whenever the
+ * user's profile or workers row changes. Returns an unsubscribe function.
+ *
+ * Note: the attendance table has no user_id column, so clock in/out updates
+ * are applied directly in TimeTrackingContext rather than via this channel.
+ */
+export function subscribeToWorker(
+  userId: string,
+  callback: (worker: Worker | null) => void
+): () => void {
+  let cancelled = false;
+
+  const emit = async () => {
+    const worker = await workerService.getWorker(userId);
+    if (!cancelled) callback(worker);
+  };
+
+  // Initial fetch
+  void emit();
+
+  // Realtime updates from user_profiles and workers tables
+  const channel = supabase
+    .channel(`worker-changes-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'user_profiles', filter: `id=eq.${userId}` },
+      () => { void emit(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'workers', filter: `user_id=eq.${userId}` },
+      () => { void emit(); }
+    )
+    .subscribe();
+
+  return () => {
+    cancelled = true;
+    channel.unsubscribe();
+  };
+}
