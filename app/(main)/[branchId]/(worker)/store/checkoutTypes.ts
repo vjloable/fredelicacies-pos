@@ -3,7 +3,7 @@
 // Extracted from the StoreScreen god-component so the cart line shape and the
 // payment-method unions can be reused by the checkout hooks (useCheckoutTotals,
 // useCart) without duplicating the inline type literals.
-import type { BundleComponent } from "@/types/domain";
+import type { InventoryItem, BundleComponent } from "@/types/domain";
 
 export type PaymentMethod =
 	| 'cash'
@@ -45,3 +45,23 @@ export type CartLine = {
 	grabPriceMode?: 'per_piece' | 'whole';
 	grabWholePrice?: number | null;
 };
+
+// A tile in the store menu grid — either a stock inventory item or a bundle.
+// This is what addToCart receives when the cashier taps a product.
+export type DisplayItem =
+	| (InventoryItem & { type: 'item'; availability: number })
+	| {
+		id: string;
+		name: string;
+		price: number;
+		grab_price?: number | null;
+		img_url: string | null | undefined;
+		type: 'bundle';
+		availability: number;
+		components?: BundleComponent[];
+		category_id?: string | null;
+		category_ids?: string[];
+		description?: string | null;
+		is_custom?: boolean;
+		max_pieces?: number | null;
+	};
