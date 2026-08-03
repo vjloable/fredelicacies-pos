@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import OrderCartIcon from "./icons/OrderCartIcon";
-import type { InventoryItem, Category, Discount, BundleWithComponents, BundleComponent } from "@/types/domain";
+import type { InventoryItem, Category, BundleWithComponents, BundleComponent } from "@/types/domain";
 import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock } from "@/services/inventoryService";
 import { subscribeToCategories } from "@/services/categoryService";
 import { subscribeToBundles, calculateBundleAvailability } from "@/services/bundleService";
@@ -18,7 +18,6 @@ import EmptyStoreIllustration from "./illustrations/EmptyStore";
 import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
-import { isDiscountEligible, calculateEligibleSubtotal, calculateDiscountAmount } from "@/services/discountService";
 import {
 	isCashierPriced,
 	effectiveUnitPrice,
@@ -28,7 +27,8 @@ import {
 } from "@/lib/pricing";
 import { useCheckoutTotals } from "./useCheckoutTotals";
 import { useCart } from "./useCart";
-import type { DisplayItem } from "./checkoutTypes";
+import { usePayment } from "./usePayment";
+import type { DisplayItem, SplitMethod } from "./checkoutTypes";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import CategoryIcon from "@/components/CategoryIcon";
 import { AnimatePresence, motion } from "motion/react";
@@ -150,20 +150,9 @@ export default function StoreScreen() {
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
-	const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'grab' | 'debit_credit' | 'employee_charge' | 'split'>('cash');
-	type SplitMethod = 'cash' | 'gcash' | 'debit_credit';
-	const [splitMethod1, setSplitMethod1] = useState<SplitMethod>('cash');
-	const [splitMethod2, setSplitMethod2] = useState<SplitMethod>('gcash');
-	const [splitAmount1, setSplitAmount1] = useState("");
-	const [splitAmount2, setSplitAmount2] = useState("");
-	const [splitTxn1, setSplitTxn1] = useState("");
-	const [splitTxn2, setSplitTxn2] = useState("");
 	const [orderType, setOrderType] = useState<
 		"DINE-IN" | "TAKE OUT" | "DELIVERY"
 	>("TAKE OUT");
-	const [discountCode, setDiscountCode] = useState("");
-	const [discountAmount, setDiscountAmount] = useState(0);
-	const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 	const [isClient, setIsClient] = useState(false);
 	const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
@@ -173,9 +162,6 @@ export default function StoreScreen() {
 	const [debitReferenceNo, setDebitReferenceNo] = useState("");
 	const [debitTransactionNo, setDebitTransactionNo] = useState("");
 	const [debitApprovalCode, setDebitApprovalCode] = useState("");
-	const [grabManualDiscount, setGrabManualDiscount] = useState("");
-	// Cashier-entered manual discount (₱ off) for non-Grab payments. Exclusive with the DiscountDropdown.
-	const [manualDiscount, setManualDiscount] = useState("");
 	const [employeeChargeName, setEmployeeChargeName] = useState("");
 	const [showSuccessToast, setShowSuccessToast] = useState(false);
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
@@ -196,6 +182,22 @@ export default function StoreScreen() {
 		updateCartItemPricing,
 		updateCartItemGrabPricing,
 	} = useCart({ bundles, inventoryItems, onRequestCustomBundle: setCustomBundleTarget });
+	const {
+		paymentMethod, setPaymentMethod,
+		splitMethod1, setSplitMethod1,
+		splitMethod2, setSplitMethod2,
+		splitAmount1, setSplitAmount1,
+		splitAmount2, setSplitAmount2,
+		splitTxn1, setSplitTxn1,
+		splitTxn2, setSplitTxn2,
+		discountCode, setDiscountCode,
+		discountAmount, setDiscountAmount,
+		appliedDiscount, setAppliedDiscount,
+		grabManualDiscount, setGrabManualDiscount,
+		manualDiscount, setManualDiscount,
+		handleDiscountApplied,
+		handleManualDiscountChange,
+	} = usePayment({ cart, setCart });
 	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
 	const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
 	const toggleBundle = (id: string) => setExpandedBundles(prev => {
@@ -633,50 +635,6 @@ export default function StoreScreen() {
 	});
 
 
-	// Auto-clear applied discount when cart changes and discount is no longer eligible
-	useEffect(() => {
-		if (!appliedDiscount) return;
-		const cartItemsForDiscount = cart.map(i => ({
-			// Whole-priced lines: collapse to a single unit at the absolute total so the
-			// discount math sees the exact line amount (no per-piece rounding drift).
-			price: i.priceMode === 'whole' && i.wholePrice != null ? i.wholePrice : i.price,
-			quantity: i.priceMode === 'whole' && i.wholePrice != null ? 1 : i.quantity,
-			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
-		}));
-		if (!isDiscountEligible(appliedDiscount, cartItemsForDiscount)) {
-			setAppliedDiscount(null);
-			setDiscountAmount(0);
-			setDiscountCode("");
-			// Remove B1T1 take-1 items if discount cleared
-			setCart(prev => prev.filter(i => !i.isB1T1));
-		}
-	}, [cart, appliedDiscount]);
-
-	// Recalculate discount amount when payment method changes (e.g. Grab uses grab_price).
-	// Grab has its own flow: clear any applied Discount object + B1T1 items and let the
-	// cashier type the manual discount amount instead.
-	useEffect(() => {
-		if (paymentMethod === 'grab') {
-			setAppliedDiscount(null);
-			setDiscountAmount(0);
-			setDiscountCode("");
-			setCart(prev => prev.filter(i => !i.isB1T1));
-			return;
-		}
-		// Switching away from Grab — reset the manual discount input.
-		setGrabManualDiscount("");
-		if (!appliedDiscount || appliedDiscount.type === 'b1t1') return;
-		const cartItemsForDiscount = cart.map(i => ({
-			// Whole-priced lines: collapse to a single unit at the absolute total so the
-			// discount math sees the exact line amount (no per-piece rounding drift).
-			price: i.priceMode === 'whole' && i.wholePrice != null ? i.wholePrice : i.price,
-			quantity: i.priceMode === 'whole' && i.wholePrice != null ? 1 : i.quantity,
-			categoryIds: i.categoryIds ?? (i.categoryId && i.categoryId !== 0 ? [String(i.categoryId)] : []),
-		}));
-		const sub = calculateEligibleSubtotal(appliedDiscount, cartItemsForDiscount);
-		setDiscountAmount(calculateDiscountAmount(appliedDiscount, sub, cartItemsForDiscount));
-	}, [paymentMethod]);
-
 	// Initialize split amounts when entering split mode; clear when leaving.
 	useEffect(() => {
 		if (paymentMethod === 'split') {
@@ -690,37 +648,6 @@ export default function StoreScreen() {
 			setSplitTxn2("");
 		}
 	}, [paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	// Handle discount application
-	const handleDiscountApplied = (discount: Discount | null, amount: number) => {
-		setAppliedDiscount(discount);
-		setDiscountAmount(amount);
-		// Exclusive with the manual discount: picking a dropdown discount clears any typed manual amount.
-		if (discount) setManualDiscount("");
-		if (discount) {
-			console.log(
-				"Discount applied:",
-				discount.name,
-				"Amount:",
-				amount
-			);
-		} else {
-			console.log("Discount cleared");
-		}
-	};
-
-	// Manual discount input handler. Only accepts a numeric ₱ amount, and applying it
-	// clears any dropdown discount / B1T1 items so the two never stack.
-	const handleManualDiscountChange = (v: string) => {
-		if (!/^\d*\.?\d*$/.test(v)) return;
-		setManualDiscount(v);
-		if (parseFloat(v) > 0 && (appliedDiscount || discountAmount > 0)) {
-			setAppliedDiscount(null);
-			setDiscountAmount(0);
-			setDiscountCode("");
-			setCart(prev => prev.filter(i => !i.isB1T1));
-		}
-	};
 
 	// Function to clear the cart
 	const clearCart = () => {
