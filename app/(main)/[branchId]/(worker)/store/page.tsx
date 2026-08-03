@@ -25,13 +25,9 @@ import {
 	wholePriceOf,
 	isWholeLine,
 	lineTotal,
-	computeSubtotal,
-	computeB1T1Savings,
-	clampManualDiscount,
-	resolveDiscount,
-	computeTotal,
-	validateSplit,
 } from "@/lib/pricing";
+import { useCheckoutTotals } from "./useCheckoutTotals";
+import type { CartLine as CheckoutCartLine } from "./checkoutTypes";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import CategoryIcon from "@/components/CategoryIcon";
 import { AnimatePresence, motion } from "motion/react";
@@ -189,38 +185,7 @@ export default function StoreScreen() {
 	const [showFoodHouseModal, setShowFoodHouseModal] = useState(false);
 	const [editingCartId, setEditingCartId] = useState<string | null>(null);
 	const [editingGrabCartId, setEditingGrabCartId] = useState<string | null>(null);
-	const [cart, setCart] = useState<
-		Array<{
-			id: string;
-			bundleId?: string | null;
-			name: string;
-			price: number;
-			grab_price?: number | null;
-			cost?: number;
-			quantity: number;
-			originalStock: number;
-			imgUrl?: string | null;
-			categoryId: number | string;
-			categoryIds?: string[];
-			type?: 'item' | 'bundle';
-			is_custom?: boolean;
-			isFoodHouse?: boolean;
-			components?: BundleComponent[];
-			isB1T1?: boolean;
-			regularPrice?: number;
-			isPriceOverride?: boolean;
-			isPriced?: boolean;
-			originalPrice?: number;
-			// Absolute whole-line pricing. When priceMode='whole', wholePrice is the
-			// authoritative line total and price is a display-only per-piece figure.
-			priceMode?: 'per_piece' | 'whole';
-			wholePrice?: number | null;
-			// Grab equivalents: grab_price is the display-only per-piece figure when
-			// grabPriceMode='whole', where grabWholePrice is the authoritative line total.
-			grabPriceMode?: 'per_piece' | 'whole';
-			grabWholePrice?: number | null;
-		}>
-	>([]);
+	const [cart, setCart] = useState<CheckoutCartLine[]>([]);
 	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
 	const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
 	const toggleBundle = (id: string) => setExpandedBundles(prev => {
@@ -792,49 +757,30 @@ export default function StoreScreen() {
 		setB1T1PickerTarget(null);
 	};
 
-	const subtotal = computeSubtotal(cart, paymentMethod);
-	// For B1T1: take-1 items are in cart at the promo price; discount_amount is savings for reporting only.
-	const b1t1SavingsAmount = useMemo(() => computeB1T1Savings(cart), [cart]);
-	// Grab uses a cashier-entered manual discount instead of the DiscountDropdown.
-	const grabManualDiscountAmount = useMemo(
-		() => (paymentMethod === 'grab' ? clampManualDiscount(grabManualDiscount, subtotal) : 0),
-		[paymentMethod, grabManualDiscount, subtotal]
-	);
-	// Non-grab manual discount: cashier types a ₱ amount that subtracts straight from the total.
-	// Exclusive with the DiscountDropdown — applying one clears the other (see handleManualDiscountChange / handleDiscountApplied).
-	const manualDiscountAmount = useMemo(
-		() => (paymentMethod === 'grab' ? 0 : clampManualDiscount(manualDiscount, subtotal)),
-		[paymentMethod, manualDiscount, subtotal]
-	);
-	// effectiveDiscountForTotal subtracts from the total; displayDiscount is shown on the
-	// summary/receipt and recorded on the sale. Manual takes precedence over a dropdown
-	// discount (mutually exclusive); a B1T1 dropdown subtracts nothing but shows its savings.
-	const { effectiveDiscountForTotal, displayDiscount } = resolveDiscount({
-		paymentMethod,
-		grabManualDiscountAmount,
-		manualDiscountAmount,
-		appliedDiscountType: appliedDiscount?.type,
-		discountAmount,
-		b1t1SavingsAmount,
-	});
-	const total = computeTotal(subtotal, effectiveDiscountForTotal);
-
-	// Regular items require a cashier-entered selling price before the order can be placed.
-	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && i.isPriced === false).length;
-
+	// All derived money figures (subtotal, discounts, total, split validation) come
+	// from the pure useCheckoutTotals hook wrapping lib/pricing — see checkoutTypes.ts.
 	const {
-		amount1Num: splitAmount1Num,
-		amount2Num: splitAmount2Num,
-		sum: splitSum,
-		diff: splitDiff,
-		valid: splitValid,
-	} = validateSplit({
-		paymentMethod,
+		subtotal,
+		manualDiscountAmount,
+		displayDiscount,
 		total,
-		amount1: splitAmount1,
-		amount2: splitAmount2,
-		method1: splitMethod1,
-		method2: splitMethod2,
+		unpricedItemCount,
+		splitAmount1Num,
+		splitAmount2Num,
+		splitSum,
+		splitDiff,
+		splitValid,
+	} = useCheckoutTotals({
+		cart,
+		paymentMethod,
+		grabManualDiscount,
+		manualDiscount,
+		appliedDiscount,
+		discountAmount,
+		splitAmount1,
+		splitAmount2,
+		splitMethod1,
+		splitMethod2,
 	});
 
 
