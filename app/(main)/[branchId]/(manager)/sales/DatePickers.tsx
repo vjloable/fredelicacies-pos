@@ -49,7 +49,7 @@ export function DayPicker({ value, onChange }: DayPickerProps) {
 
 	const handleSelect = (cell: (typeof cells)[number]) => {
 		let y = viewYear, m = viewMonth;
-		let d = cell.day;
+		const d = cell.day;
 		if (cell.month === "prev") { if (m === 0) { y--; m = 11; } else m--; }
 		if (cell.month === "next") { if (m === 11) { y++; m = 0; } else m++; }
 		onChange(`${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);

@@ -161,6 +161,6 @@ export const authService = {
 };
 
 // Type exports for backward compatibility
-export interface User extends UserWithRoles {}
+export type User = UserWithRoles;
 
 export type { RoleAssignment };
