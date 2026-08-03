@@ -28,8 +28,8 @@ const eslintConfig = [
       // Allow img tags (next/image can be added later)
       "@next/next/no-img-element": "warn",
       
-      // Relax rules of hooks to warnings (React hooks in wrong places)
-      "react-hooks/rules-of-hooks": "warn",
+      // Rules of hooks must be errors (React hooks in wrong places are real bugs)
+      "react-hooks/rules-of-hooks": "error",
       
       // Allow unsafe function types for now
       "@typescript-eslint/no-unsafe-function-type": "warn",
