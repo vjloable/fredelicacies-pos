@@ -20,14 +20,13 @@ import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
 import {
 	isCashierPriced,
-	effectiveUnitPrice,
-	wholePriceOf,
 	isWholeLine,
 	lineTotal,
 } from "@/lib/pricing";
 import { useCheckoutTotals } from "./useCheckoutTotals";
 import { useCart } from "./useCart";
 import { usePayment } from "./usePayment";
+import { buildOrderLineItems, buildReceiptItems, buildPaymentDetails } from "./orderBuilder";
 import type { DisplayItem, SplitMethod } from "./checkoutTypes";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import CategoryIcon from "@/components/CategoryIcon";
@@ -671,17 +670,14 @@ export default function StoreScreen() {
 		setShowOrderConfirmation(true);
 	};
 
-	const buildSplitPaymentDetails = (): Record<string, string> => {
-		const d: Record<string, string> = {
-			split_method_1: splitMethod1,
-			split_amount_1: splitAmount1Num.toFixed(2),
-			split_method_2: splitMethod2,
-			split_amount_2: splitAmount2Num.toFixed(2),
-		};
-		if (splitTxn1.trim()) d.split_txn_1 = splitTxn1.trim();
-		if (splitTxn2.trim()) d.split_txn_2 = splitTxn2.trim();
-		return d;
-	};
+	// Assembles the method-specific payment-detail payload shared by createOrder and the receipt.
+	const paymentDetails = () => buildPaymentDetails(paymentMethod, {
+		debitReferenceNo,
+		debitTransactionNo,
+		debitApprovalCode,
+		employeeChargeName,
+		split: { splitMethod1, splitAmount1Num, splitMethod2, splitAmount2Num, splitTxn1, splitTxn2 },
+	});
 
 	// Function to confirm and actually place the order
 	const confirmPlaceOrder = async () => {
@@ -694,23 +690,7 @@ export default function StoreScreen() {
 			const { id: orderId, orderNumber: orderNum, error: orderError } = await createOrder(
 				currentBranch.id,
 				user.id,
-				cart.map((item) => ({
-					id: item.id,
-					bundleId: item.bundleId,
-					name: item.name,
-					price: effectiveUnitPrice(item, paymentMethod),
-					cost: item.cost || 0,
-					quantity: item.quantity,
-					line_total: isWholeLine(item, paymentMethod) ? (wholePriceOf(item, paymentMethod) as number) : null,
-					is_whole_priced: isWholeLine(item, paymentMethod),
-					imgUrl: item.imgUrl || "",
-					categoryId: item.categoryId || "",
-					originalStock: item.originalStock,
-					type: item.type,
-					components: item.components,
-					isPriceOverride: item.isPriceOverride,
-					originalPrice: item.originalPrice,
-				})),
+				buildOrderLineItems(cart, paymentMethod),
 				subtotal,
 				total,
 				paymentMethod === 'grab' ? undefined : appliedDiscount?.id,
@@ -718,13 +698,7 @@ export default function StoreScreen() {
 				paymentMethod,
 				paymentMethod === 'cash' ? orderNote : undefined,
 				paymentMethod === 'gcash' || paymentMethod === 'grab' ? gcashTransactionNumber : undefined,
-				paymentMethod === 'debit_credit'
-					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
-					: paymentMethod === 'employee_charge'
-					? { employee_name: employeeChargeName }
-					: paymentMethod === 'split'
-					? buildSplitPaymentDetails()
-					: null
+				paymentDetails()
 			);
 
 			if (orderError) {
@@ -739,18 +713,7 @@ export default function StoreScreen() {
 			const receiptData = {
 				orderId: orderNum || orderId,
 				date: new Date(),
-				items: cart.map((item) => {
-					const itemPrice = effectiveUnitPrice(item, paymentMethod);
-					return {
-						name: item.isB1T1 ? `${item.name} [B1T1]` : item.name,
-						qty: item.quantity,
-						price: itemPrice,
-						// Whole-priced lines print the exact absolute total, never itemPrice × qty.
-						total: lineTotal(item, paymentMethod),
-						isPriceOverride: item.isPriceOverride,
-						originalPrice: item.originalPrice,
-					};
-				}),
+				items: buildReceiptItems(cart, paymentMethod),
 				subtotal,
 				discount: displayDiscount,
 				appliedDiscountCode: paymentMethod === 'grab'
@@ -776,13 +739,7 @@ export default function StoreScreen() {
 				paymentMethod,
 				orderType,
 				transactionNumber: (paymentMethod === 'gcash' || paymentMethod === 'grab') ? gcashTransactionNumber : undefined,
-				paymentDetails: (paymentMethod === 'debit_credit'
-					? { reference_no: debitReferenceNo, transaction_no: debitTransactionNo, approval_code: debitApprovalCode }
-					: paymentMethod === 'employee_charge'
-					? { employee_name: employeeChargeName }
-					: paymentMethod === 'split'
-					? buildSplitPaymentDetails()
-					: undefined) as Record<string, string> | undefined,
+				paymentDetails: paymentDetails() ?? undefined,
 			};
 
 			// Print receipt via Bluetooth printer using context
