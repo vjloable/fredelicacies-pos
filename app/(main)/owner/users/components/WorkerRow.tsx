@@ -205,7 +205,7 @@ export default function WorkerRow({
 										? "bg-accent text-primary text-shadow-md"
 										: "bg-accent text-primary text-shadow-md rounded-full"
 								}`}>
-								{String(assignment.role).charAt(0).toUpperCase() + String(assignment.role).slice(1)}
+								{assignment.role === "team_leader" ? "Team Leader" : "Cashier"}
 							</span>
 						))}
 					{!worker.isOwner && (!worker.roleAssignments || worker.roleAssignments.length === 0) && (

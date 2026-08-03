@@ -317,7 +317,7 @@ export default function WorkerDetailModal({
 														{branchMap.get(assignment.branchId) || `Branch ${assignment.branchId}`}
 													</span>
 													<span className='rounded-full bg-accent text-primary text-xs px-3 py-1 font-bold '>
-														{assignment.role.toUpperCase()}
+														{assignment.role === "team_leader" ? "Team Leader" : "Cashier"}
 													</span>
 												</div>
 												<div className='flex items-center gap-2'>
