@@ -21,6 +21,18 @@ import type {
   SettleLineCount,
 } from '@/types/domain/transfer';
 import type { InventoryItem } from '@/types/domain';
+// UI passes commissary item ids, but transfer_items and the transfer RPCs key on
+// branch-local ids. Translate each line's source item id to the source branch's
+// branch_item_id so the existing RPCs work unchanged.
+async function localizeTransferItems<T extends { source_item_id: string }>(
+  branchId: string,
+  items: T[]
+): Promise<T[]> {
+  return Promise.all(items.map(async (i) => {
+    const branchItemId = await inventoryRepository.resolveBranchItemId(branchId, i.source_item_id);
+    return branchItemId ? { ...i, source_item_id: branchItemId } : i;
+  }));
+}
 
 async function generateTransferNumber(branchId: string): Promise<string> {
   const { data, error } = await supabase.rpc('next_transfer_number', { p_branch_id: branchId });
@@ -118,6 +130,8 @@ export async function createPushTransfer(
   const guardErr = await assertTransferAllowed(data.source_branch_id, data.destination_branch_id);
   if (guardErr) return { id: null, error: guardErr };
 
+  data.items = await localizeTransferItems(data.source_branch_id, data.items);
+
   const { map: snapshot, error: snapErr } = await snapshotLines(
     data.items.map(i => i.source_item_id)
   );
@@ -207,6 +221,8 @@ export async function createPullRequest(
   // branch can only pull from the commissary (not from the main branch).
   const guardErr = await assertTransferAllowed(data.source_branch_id, data.destination_branch_id);
   if (guardErr) return { id: null, error: guardErr };
+
+  data.items = await localizeTransferItems(data.source_branch_id, data.items);
 
   const { map: snapshot, error: snapErr } = await snapshotLines(
     data.items.map(i => i.source_item_id)
@@ -359,9 +375,18 @@ export async function receiveTransfer(
     }
   }
 
+  // destination_item_id is a commissary id → translate to the destination
+  // branch's branch_item_id (RPC keys on branch-local ids).
+  const settleLines: SettleLineCount[] = await Promise.all(lineCounts.map(async (line) => {
+    const branchItemId = await inventoryRepository.resolveBranchItemId(
+      transfer.destination_branch_id, line.destination_item_id!
+    );
+    return branchItemId ? { ...line, destination_item_id: branchItemId } : line;
+  }));
+
   const { error } = await supabase.rpc('transfer_settle', {
     p_transfer_id: transferId,
-    p_line_counts: lineCounts,
+    p_line_counts: settleLines,
   });
   if (error) return { error };
 

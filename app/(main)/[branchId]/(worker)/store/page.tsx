@@ -19,6 +19,19 @@ import LogoIcon from "./icons/LogoIcon";
 import SafeImage from "@/components/SafeImage";
 import DiscountDropdown from "./components/DiscountDropdown";
 import { isDiscountEligible, calculateEligibleSubtotal, calculateDiscountAmount } from "@/services/discountService";
+import {
+	isCashierPriced,
+	effectiveUnitPrice,
+	wholePriceOf,
+	isWholeLine,
+	lineTotal,
+	computeSubtotal,
+	computeB1T1Savings,
+	clampManualDiscount,
+	resolveDiscount,
+	computeTotal,
+	validateSplit,
+} from "@/lib/pricing";
 import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import CategoryIcon from "@/components/CategoryIcon";
 import { AnimatePresence, motion } from "motion/react";
@@ -48,38 +61,9 @@ import { storeSteps } from "@/components/TutorialSteps";
 // Stable reference avoids DropdownField re-running its calcPosition effect each render.
 const SPLIT_DROPDOWN_OFFSET = { top: 2, left: 0 };
 
-// A "cashier-priced" line is a plain inventory item (not a bundle / custom bundle / B1T1).
-// Regular items no longer carry a stored price — the cashier types the selling price into
-// the cart line at the point of sale, and the Grab price into the order-confirmation modal.
-type CartLineLike = { type?: 'item' | 'bundle'; isB1T1?: boolean; is_custom?: boolean; price: number; grab_price?: number | null };
-const isCashierPriced = (item: CartLineLike) => (item.type ?? 'item') !== 'bundle' && !item.isB1T1 && !item.is_custom;
-const effectiveUnitPrice = (item: CartLineLike, paymentMethod: string) =>
-	paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
-
-// A line is treated as absolute whole-priced only for non-Grab payments — Grab has its own
-// per-unit grab_price. When whole-priced, wholePrice is the exact line total (no × quantity).
-type WholeLike = CartLineLike & { priceMode?: 'per_piece' | 'whole'; wholePrice?: number | null };
-const isWholeLine = (item: WholeLike, paymentMethod: string) =>
-	paymentMethod !== 'grab' && item.priceMode === 'whole' && item.wholePrice != null;
-const lineTotal = (item: WholeLike & { quantity: number }, paymentMethod: string) =>
-	isWholeLine(item, paymentMethod) ? (item.wholePrice as number) : effectiveUnitPrice(item, paymentMethod) * item.quantity;
-
-// Inline numeric price editor used on cashier-priced cart lines.
-const InlinePriceInput = ({ value, onChange, placeholder = '0.00' }: { value: number | null | undefined; onChange: (n: number) => void; placeholder?: string }) => (
-	<span className='inline-flex items-center gap-1' onClick={e => e.stopPropagation()}>
-		<span className='text-xs text-secondary/50 font-poppins'>₱</span>
-		<input
-			type='text'
-			inputMode='decimal'
-			value={value ? String(value) : ''}
-			placeholder={placeholder}
-			onChange={e => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) onChange(parseFloat(v) || 0); }}
-			onFocus={e => e.target.select()}
-			onClick={e => e.stopPropagation()}
-			className='w-16 text-right border border-accent/40 rounded h-7 px-2 text-xs text-secondary focus:outline-none focus:ring-1 focus:ring-accent'
-		/>
-	</span>
-);
+// Pure pricing helpers live in lib/pricing.ts (unit-tested, no React/side effects).
+// Re-export the line-level primitives under their original names so call sites below
+// (isCashierPriced, lineTotal, …) stay unchanged.
 
 // Toast notification component
 const SuccessToast = ({
@@ -204,6 +188,7 @@ export default function StoreScreen() {
 	const [showAssortedModal, setShowAssortedModal] = useState(false);
 	const [showFoodHouseModal, setShowFoodHouseModal] = useState(false);
 	const [editingCartId, setEditingCartId] = useState<string | null>(null);
+	const [editingGrabCartId, setEditingGrabCartId] = useState<string | null>(null);
 	const [cart, setCart] = useState<
 		Array<{
 			id: string;
@@ -230,6 +215,10 @@ export default function StoreScreen() {
 			// authoritative line total and price is a display-only per-piece figure.
 			priceMode?: 'per_piece' | 'whole';
 			wholePrice?: number | null;
+			// Grab equivalents: grab_price is the display-only per-piece figure when
+			// grabPriceMode='whole', where grabWholePrice is the authoritative line total.
+			grabPriceMode?: 'per_piece' | 'whole';
+			grabWholePrice?: number | null;
 		}>
 	>([]);
 	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
@@ -245,7 +234,7 @@ export default function StoreScreen() {
 		setIsClient(true);
 	}, []);
 
-	// Set up real-time subscription to inventory items using singleton dataStore
+	// Set up real-time subscription to inventory items
 	useEffect(() => {
 		if (!isClient || !currentBranch) return;
 
@@ -293,7 +282,7 @@ export default function StoreScreen() {
 		setBundleAvailability(availability);
 	}, [bundles, inventoryItems]);
 
-	// Set up real-time subscription to categories using singleton dataStore
+	// Set up real-time subscription to categories
 	useEffect(() => {
 		if (!isClient || !currentBranch) return;
 
@@ -615,8 +604,18 @@ export default function StoreScreen() {
 				isPriced: true,
 			}
 			: i)));
-	const updateCartItemGrabPrice = (id: string, grab: number) =>
-		setCart(prev => prev.map(i => (i.id === id ? { ...i, grab_price: grab > 0 ? grab : null } : i)));
+	// Grab pricing for cashier-priced lines, mirroring updateCartItemPricing. per-piece stores
+	// the per-unit grab price; whole stores the absolute line total in grabWholePrice (grab_price
+	// is kept as a display-only per-piece figure and is never × quantity for whole lines).
+	const updateCartItemGrabPricing = (id: string, s: PricingState) =>
+		setCart(prev => prev.map(i => (i.id === id
+			? {
+				...i,
+				grab_price: s.perPiece > 0 ? s.perPiece : null,
+				grabPriceMode: s.mode,
+				grabWholePrice: s.mode === 'whole' ? s.wholePrice : null,
+			}
+			: i)));
 
 	const handleCustomBundleConfirm = (bundle: BundleWithComponents, selections: PickedItem[], overridePrice?: number) => {
 		const cost = selections.reduce((s, p) => s + p.cost, 0);
@@ -793,58 +792,50 @@ export default function StoreScreen() {
 		setB1T1PickerTarget(null);
 	};
 
-	const subtotal = cart.reduce(
-		(sum, item) => sum + lineTotal(item, paymentMethod),
-		0
-	);
-	// For B1T1: take-1 items are in cart at the promo price; discount_amount is savings for reporting only
-	const b1t1SavingsAmount = useMemo(
-		() => cart.filter(i => i.isB1T1).reduce((s, i) => s + ((i.regularPrice ?? i.price) - i.price) * i.quantity, 0),
-		[cart]
-	);
+	const subtotal = computeSubtotal(cart, paymentMethod);
+	// For B1T1: take-1 items are in cart at the promo price; discount_amount is savings for reporting only.
+	const b1t1SavingsAmount = useMemo(() => computeB1T1Savings(cart), [cart]);
 	// Grab uses a cashier-entered manual discount instead of the DiscountDropdown.
-	const grabManualDiscountAmount = useMemo(() => {
-		if (paymentMethod !== 'grab') return 0;
-		const n = parseFloat(grabManualDiscount);
-		if (!Number.isFinite(n) || n <= 0) return 0;
-		// Clamp so the discount can never exceed the Grab subtotal.
-		return Math.min(n, subtotal);
-	}, [paymentMethod, grabManualDiscount, subtotal]);
+	const grabManualDiscountAmount = useMemo(
+		() => (paymentMethod === 'grab' ? clampManualDiscount(grabManualDiscount, subtotal) : 0),
+		[paymentMethod, grabManualDiscount, subtotal]
+	);
 	// Non-grab manual discount: cashier types a ₱ amount that subtracts straight from the total.
 	// Exclusive with the DiscountDropdown — applying one clears the other (see handleManualDiscountChange / handleDiscountApplied).
-	const manualDiscountAmount = useMemo(() => {
-		if (paymentMethod === 'grab') return 0;
-		const n = parseFloat(manualDiscount);
-		if (!Number.isFinite(n) || n <= 0) return 0;
-		// Clamp so the discount can never exceed the subtotal.
-		return Math.min(n, subtotal);
-	}, [paymentMethod, manualDiscount, subtotal]);
-	const effectiveDiscountForTotal = paymentMethod === 'grab'
-		? grabManualDiscountAmount
-		: (manualDiscountAmount > 0
-			? manualDiscountAmount
-			: (appliedDiscount?.type === 'b1t1' ? 0 : discountAmount));
-	// Discount amount shown on the summary/receipt and recorded on the sale.
-	// Manual takes precedence over a dropdown discount (they are mutually exclusive).
-	const displayDiscount = paymentMethod === 'grab'
-		? grabManualDiscountAmount
-		: (manualDiscountAmount > 0
-			? manualDiscountAmount
-			: (appliedDiscount?.type === 'b1t1' ? b1t1SavingsAmount : discountAmount));
-	const total = subtotal - effectiveDiscountForTotal;
+	const manualDiscountAmount = useMemo(
+		() => (paymentMethod === 'grab' ? 0 : clampManualDiscount(manualDiscount, subtotal)),
+		[paymentMethod, manualDiscount, subtotal]
+	);
+	// effectiveDiscountForTotal subtracts from the total; displayDiscount is shown on the
+	// summary/receipt and recorded on the sale. Manual takes precedence over a dropdown
+	// discount (mutually exclusive); a B1T1 dropdown subtracts nothing but shows its savings.
+	const { effectiveDiscountForTotal, displayDiscount } = resolveDiscount({
+		paymentMethod,
+		grabManualDiscountAmount,
+		manualDiscountAmount,
+		appliedDiscountType: appliedDiscount?.type,
+		discountAmount,
+		b1t1SavingsAmount,
+	});
+	const total = computeTotal(subtotal, effectiveDiscountForTotal);
 
 	// Regular items require a cashier-entered selling price before the order can be placed.
 	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && i.isPriced === false).length;
 
-	const splitAmount1Num = parseFloat(splitAmount1) || 0;
-	const splitAmount2Num = parseFloat(splitAmount2) || 0;
-	const splitSum = splitAmount1Num + splitAmount2Num;
-	const splitDiff = Math.round((total - splitSum) * 100) / 100;
-	const splitValid = paymentMethod !== 'split'
-		|| (splitMethod1 !== splitMethod2
-			&& splitAmount1Num > 0
-			&& splitAmount2Num > 0
-			&& Math.abs(splitDiff) < 0.005);
+	const {
+		amount1Num: splitAmount1Num,
+		amount2Num: splitAmount2Num,
+		sum: splitSum,
+		diff: splitDiff,
+		valid: splitValid,
+	} = validateSplit({
+		paymentMethod,
+		total,
+		amount1: splitAmount1,
+		amount2: splitAmount2,
+		method1: splitMethod1,
+		method2: splitMethod2,
+	});
 
 
 	// Auto-clear applied discount when cart changes and discount is no longer eligible
@@ -1025,7 +1016,7 @@ export default function StoreScreen() {
 					price: effectiveUnitPrice(item, paymentMethod),
 					cost: item.cost || 0,
 					quantity: item.quantity,
-					line_total: isWholeLine(item, paymentMethod) ? (item.wholePrice as number) : null,
+					line_total: isWholeLine(item, paymentMethod) ? (wholePriceOf(item, paymentMethod) as number) : null,
 					is_whole_priced: isWholeLine(item, paymentMethod),
 					imgUrl: item.imgUrl || "",
 					categoryId: item.categoryId || "",
@@ -1064,14 +1055,13 @@ export default function StoreScreen() {
 				orderId: orderNum || orderId,
 				date: new Date(),
 				items: cart.map((item) => {
-					const itemPrice = paymentMethod === 'grab' ? (item.grab_price ?? item.price) : item.price;
-					const whole = isWholeLine(item, paymentMethod);
+					const itemPrice = effectiveUnitPrice(item, paymentMethod);
 					return {
 						name: item.isB1T1 ? `${item.name} [B1T1]` : item.name,
 						qty: item.quantity,
 						price: itemPrice,
 						// Whole-priced lines print the exact absolute total, never itemPrice × qty.
-						total: whole ? (item.wholePrice as number) : itemPrice * item.quantity,
+						total: lineTotal(item, paymentMethod),
 						isPriceOverride: item.isPriceOverride,
 						originalPrice: item.originalPrice,
 					};
@@ -2003,10 +1993,26 @@ export default function StoreScreen() {
 												</h4>
 												<div className='flex items-center gap-1.5 flex-wrap'>
 													{paymentMethod === 'grab' && isCashierPriced(item) ? (
-														<span className='inline-flex items-center gap-1'>
+														<button
+															type='button'
+															onClick={() => setEditingGrabCartId(item.id)}
+															className='inline-flex items-center gap-1 rounded-md px-1 -mx-1 py-0.5 hover:bg-[#02B150]/10 transition-colors'
+														>
 															<span className='text-[9px] font-semibold text-[#02B150]'>Grab</span>
-															<InlinePriceInput value={item.grab_price ?? undefined} placeholder={String(item.price)} onChange={(n) => updateCartItemGrabPrice(item.id, n)} />
-														</span>
+															{item.grab_price ? (
+																<>
+																	<span className='text-xs text-secondary'>
+																		{formatCurrency(isWholeLine(item, 'grab') ? (item.grabWholePrice as number) : item.grab_price)}
+																	</span>
+																	{isWholeLine(item, 'grab') && (
+																		<span className='text-[9px] font-semibold px-1 py-0.5 rounded bg-[#02B150]/10 text-[#02B150]'>Whole</span>
+																	)}
+																</>
+															) : (
+																<span className='text-xs text-[#02B150] font-medium'>Set price</span>
+															)}
+															<svg className='w-3 h-3 text-[#02B150]/60' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={2}><path strokeLinecap='round' strokeLinejoin='round' d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /></svg>
+														</button>
 													) : (
 														<>
 															<p className='text-xs text-secondary'>
@@ -2037,7 +2043,7 @@ export default function StoreScreen() {
 													Qty: {item.quantity}
 												</div>
 												<div className='text-xs font-regular text-secondary'>
-													{formatCurrency((paymentMethod === 'grab' && item.grab_price ? item.grab_price : item.price) * item.quantity)}
+													{formatCurrency(lineTotal(item, paymentMethod))}
 												</div>
 											</div>
 										</div>
@@ -2055,7 +2061,11 @@ export default function StoreScreen() {
 										</span>
 									</div>
 									{paymentMethod === 'grab' && (() => {
-										const grabUplift = cart.reduce((sum, i) => sum + (i.grab_price && i.grab_price !== i.price ? (i.grab_price - i.price) * i.quantity : 0), 0);
+										const grabUplift = cart.reduce((sum, i) => {
+											const grabTotal = lineTotal(i, 'grab');
+											const regularTotal = i.price * i.quantity;
+											return sum + (grabTotal > regularTotal ? grabTotal - regularTotal : 0);
+										}, 0);
 										return grabUplift > 0 ? (
 											<div className='flex justify-between text-xs'>
 												<span className='text-[#02B150]'>Grab price adjustment:</span>
@@ -2350,6 +2360,23 @@ export default function StoreScreen() {
 						/>
 					);
 				})()}
+
+				{editingGrabCartId && (() => {
+						const it = cart.find(i => i.id === editingGrabCartId);
+						if (!it) return null;
+						return (
+							<CartItemEditor
+								name={`${it.name} — Grab`}
+								price={it.grab_price ?? it.price}
+								wholePrice={it.grabWholePrice ?? null}
+								priceMode={it.grabPriceMode ?? 'per_piece'}
+								quantity={it.quantity}
+								onPricingChange={(s) => updateCartItemGrabPricing(it.id, s)}
+								onQuantityChange={(d) => updateQuantity(it.id, d, it.type || 'item')}
+								onClose={() => setEditingGrabCartId(null)}
+							/>
+						);
+					})()}
 
 				{/* Wildcard Bundle Modal */}
 			{showWildcardModal && (

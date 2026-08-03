@@ -16,6 +16,7 @@ import PublishMenuModal from "./components/PublishMenuModal";
 import type { InventoryItem, Category } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
+import { inventoryRepository } from "@/lib/repositories";
 import { logActivity } from "@/services/activityLogService";
 import { recordWastage } from "@/services/wastageService";
 import { subscribeToEodLocks, getEodLocks, resolveUncarried, submitEOD, lockItem } from "@/services/eodService";
@@ -48,6 +49,9 @@ interface Item extends InventoryItem {
 export default function InventoryScreen() {
 	const { currentBranch, refreshBranches, availableBranches } = useBranch();
 	const { user } = useAuth();
+	// Items are created ONLY at the commissary; branches carry the commissary menu
+	// automatically, so branches cannot create items.
+	const canCreateItems = currentBranch?.type === 'commissary';
 	const { date: todayFormatted } = useDateTime();
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [items, setItems] = useState<Item[]>([]);
@@ -318,7 +322,9 @@ export default function InventoryScreen() {
 		const wastageItems: { item_id: string; item_name: string; quantity_wasted: number; cost_per_unit: number }[] = [];
 		for (const item of selectedItems) {
 			const oldStock = item.stock;
-			const { error: updateError } = await updateInventoryItem(item.id, { stock: 0 });
+			const { error: updateError } = currentBranch.type !== 'commissary'
+				? await inventoryRepository.setBranchStock(currentBranch.id, item.id, { stock: 0 })
+				: await updateInventoryItem(item.id, { stock: 0 });
 			if (!updateError && oldStock > 0) {
 				void logActivity({
 					branchId: currentBranch.id,
@@ -794,7 +800,8 @@ export default function InventoryScreen() {
 																<span>CARRY OVER ALL</span>
 															</button>
 														)}
-														{/* ADD ITEM — pre-targets current folder */}
+														{/* ADD ITEM — pre-targets current folder (commissary-only when centralized) */}
+														{canCreateItems && (
 														<button
 															onClick={() => setShowItemForm(true)}
 															disabled={auditMode}
@@ -807,6 +814,7 @@ export default function InventoryScreen() {
 															</div>
 															<span className='text-primary text-shadow-md'>ADD ITEM</span>
 														</button>
+														)}
 														{/* Audit config cog (owner only) — desktop */}
 														{isOwner && (
 															<button

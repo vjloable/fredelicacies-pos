@@ -36,11 +36,9 @@ export async function createWriteOff(
     return { writeOff: null, error };
   }
 
-  // Deduct stock from inventory
+  // Deduct stock: itemId is a commissary id → route to the branch's stock.
   if (data.itemId) {
-    await inventoryRepository.bulkUpdateStock([
-      { id: data.itemId, stock: -data.quantity },
-    ]);
+    await inventoryRepository.bulkUpdateBranchStock(branchId, [{ id: data.itemId, stock: -data.quantity }]);
   }
 
   void logActivity({

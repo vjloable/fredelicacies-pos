@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { updateInventoryItem, deleteInventoryItem } from '@/services/inventoryService';
+import { inventoryRepository } from '@/lib/repositories';
 import { unlockItem } from '@/services/eodService';
 import type { InventoryItem, Category, UpdateInventoryItemData } from '@/types/domain';
 import type { EodItemLock } from '@/types/domain/eod';
@@ -96,7 +97,18 @@ export default function EditItemModal({
         img_url: localEditingItem.img_url || undefined
       };
 
-      await updateInventoryItem(localEditingItem.id, updates);
+      // At a branch, the item id is a commissary id: menu fields write to the
+      // commissary (menu-source) row; STOCK is per-branch → setBranchStock.
+      // At the commissary itself, stock lives on its own row → plain update.
+      if (currentBranch && currentBranch.type !== 'commissary') {
+        const { stock, ...menu } = updates;
+        await updateInventoryItem(localEditingItem.id, menu);
+        if (stock !== undefined) {
+          await inventoryRepository.setBranchStock(currentBranch.id, localEditingItem.id, { stock });
+        }
+      } else {
+        await updateInventoryItem(localEditingItem.id, updates);
+      }
 
       if (editingItem && currentBranch) {
         const branchId = currentBranch.id;

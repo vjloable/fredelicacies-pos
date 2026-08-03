@@ -54,3 +54,6 @@ CLAUDE.local.md
 
 # graphify
 /graphify-out
+# Local data exports
+talisay_inventory_items.csv
+talisay_bundles.csv

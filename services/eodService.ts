@@ -1,11 +1,21 @@
 import { eodRepository } from '@/lib/repositories/eodRepository';
-import { updateInventoryItem } from '@/services/inventoryService';
+import { inventoryRepository } from '@/lib/repositories';
 import { recordWastage } from '@/services/wastageService';
 import { logActivity } from '@/services/activityLogService';
 import { categoryEodPolicyRepository } from '@/lib/repositories/categoryEodPolicyRepository';
 import { log, measureTime } from '@/lib/logging';
 import type { EodItemLock, EodSession, EodDailySummary } from '@/types/domain/eod';
 import type { InventoryItem } from '@/types/domain/inventory';
+
+// Write absolute stock fields for an item (itemId is a commissary id → route to
+// the branch's stock).
+async function writeEodStock(
+  branchId: string,
+  itemId: string,
+  fields: { stock?: number; uncarried_stock?: number },
+): Promise<void> {
+  await inventoryRepository.setBranchStock(branchId, itemId, fields);
+}
 
 // ---------------------------------------------------------------------------
 // Lock / Unlock
@@ -164,7 +174,7 @@ export async function submitEOD(
     for (const lock of locks) {
       // Carry-over: set inventory stock to the locked count
       if (lock.item_id) {
-        await updateInventoryItem(lock.item_id, { stock: lock.locked_stock });
+        await writeEodStock(branchId, lock.item_id, { stock: lock.locked_stock });
         log.info('EOD: Inventory stock updated', {
           branchId,
           itemId: lock.item_id,
@@ -279,7 +289,7 @@ export async function flagUncarriedItems(
 
     // Flag each item by setting uncarried_stock
     for (const item of uncarriedItems) {
-      await updateInventoryItem(item.id, { uncarried_stock: item.stock });
+      await writeEodStock(branchId, item.id, { uncarried_stock: item.stock });
 
       void logActivity({
         branchId,
@@ -323,7 +333,7 @@ export async function resolveUncarried(
     for (const item of items) {
       if (resolution === 'carry_over') {
         // Accept the old stock as valid — just clear the uncarried flag
-        await updateInventoryItem(item.id, { uncarried_stock: 0 });
+        await writeEodStock(branchId, item.id, { uncarried_stock: 0 });
 
         void logActivity({
           branchId,
@@ -341,7 +351,7 @@ export async function resolveUncarried(
       } else {
         // Destock the uncarried portion
         const newStock = item.stock - item.uncarried_stock;
-        await updateInventoryItem(item.id, {
+        await writeEodStock(branchId, item.id, {
           stock: Math.max(0, newStock),
           uncarried_stock: 0,
         });

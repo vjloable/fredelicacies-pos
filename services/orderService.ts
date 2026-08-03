@@ -3,6 +3,12 @@ import type { OrderWithItems, BundleComponent } from '@/types/domain';
 import { logActivity } from '@/services/activityLogService';
 import { log, measureTime } from '@/lib/logging';
 import { supabase } from '@/lib/supabase';
+// Apply stock deltas for a branch. Item ids are commissary ids → route to the
+// branch's stock via increment_branch_stock.
+async function applyStockDeltas(branchId: string, updates: Array<{ id: string; stock: number }>) {
+  if (updates.length === 0) return;
+  await inventoryRepository.bulkUpdateBranchStock(branchId, updates);
+}
 
 // Generate order number via server-side atomic counter (format: XXX-YYYY-000001)
 // Falls back to timestamp format if the branch has no branch_code set yet.
@@ -135,9 +141,7 @@ export const createOrder = async (
   // Combine all stock updates
   const allStockUpdates = [...regularStockUpdates, ...bundleStockUpdates];
 
-  if (allStockUpdates.length > 0) {
-    await inventoryRepository.bulkUpdateStock(allStockUpdates);
-  }
+  await applyStockDeltas(branchId, allStockUpdates);
 
   void logActivity({
     branchId,
@@ -330,9 +334,7 @@ export const refundOrder = async (
   );
 
   const allStockUpdates = [...regularStockUpdates, ...bundleStockUpdates];
-  if (allStockUpdates.length > 0) {
-    await inventoryRepository.bulkUpdateStock(allStockUpdates);
-  }
+  await applyStockDeltas(branchId, allStockUpdates);
 
   log.info('Order refunded successfully', { branchId, userId, orderId, orderNumber });
 

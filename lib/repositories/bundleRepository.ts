@@ -1,6 +1,13 @@
 // Bundle Repository - Handles bundle data access with components
 import { supabase } from '@/lib/supabase';
 import type { Bundle, BundleAdditionalItem, BundleComponent, BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain/bundle';
+// A bundle component references a branch-local item id, but the app operates on
+// COMMISSARY ids, so translate the component's item id to its commissary source
+// (the embedded item carries commissary_item_id). Keeps availability and stock
+// deduction on the same id space.
+function resolveComponentItemId(rawId: string, embeddedItem: any): string {
+  return embeddedItem?.commissary_item_id ?? rawId;
+}
 
 // Module-level callback registry for immediate post-mutation refresh
 const activeCallbacks = new Map<string, Set<(bundles: BundleWithComponents[]) => void>>();
@@ -118,7 +125,7 @@ export const bundleRepository = {
         .map(c => ({
           id: c.id,
           bundle_id: c.bundle_id,
-          inventory_item_id: c.inventory_item_id,
+          inventory_item_id: resolveComponentItemId(c.inventory_item_id, c.inventory_items),
           quantity: c.quantity,
           created_at: c.created_at,
           inventory_item: c.inventory_items,
@@ -128,7 +135,7 @@ export const bundleRepository = {
         .map((a): BundleAdditionalItem => ({
           id: a.id,
           bundle_id: a.bundle_id,
-          inventory_item_id: a.inventory_item_id,
+          inventory_item_id: resolveComponentItemId(a.inventory_item_id, a.inventory_items),
           quantity: a.quantity,
           created_at: a.created_at,
           inventory_item: a.inventory_items,
@@ -186,7 +193,7 @@ export const bundleRepository = {
       components: (components || []).map(c => ({
         id: c.id,
         bundle_id: c.bundle_id,
-        inventory_item_id: c.inventory_item_id,
+        inventory_item_id: resolveComponentItemId(c.inventory_item_id, c.inventory_items),
         quantity: c.quantity,
         created_at: c.created_at,
         inventory_item: c.inventory_items,
@@ -194,7 +201,7 @@ export const bundleRepository = {
       additional_items: (additionalItems || []).map((a): BundleAdditionalItem => ({
         id: a.id,
         bundle_id: a.bundle_id,
-        inventory_item_id: a.inventory_item_id,
+        inventory_item_id: resolveComponentItemId(a.inventory_item_id, a.inventory_items),
         quantity: a.quantity,
         created_at: a.created_at,
         inventory_item: a.inventory_items,
