@@ -140,8 +140,8 @@ export default function StoreScreen() {
 	const shiftCtx = useShift();
 	const [showSafeDropModal, setShowSafeDropModal] = useState(false);
 	const [showWriteOffModal, setShowWriteOffModal] = useState(false);
-	const [selectedCategory, setSelectedCategory] = useState("All");
-	const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // For multiple category filtering
+	const [selectedCategory] = useState("All");
+	const [selectedCategories] = useState<string[]>([]); // For multiple category filtering
 	const [activeStoreCategory, setActiveStoreCategory] = useState<string | null>(null); // folder-directory: null = folder grid
 	const [searchQuery, setSearchQuery] = useState("");
 	const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -289,39 +289,6 @@ export default function StoreScreen() {
 		if (categoryId === null) return "transparent";
 		const category = categories.find((cat) => cat.id === String(categoryId));
 		return category ? category.color.trim() : "transparent";
-	};
-
-	// Get display categories including "All" button plus visible (non-hidden) categories
-	const displayCategories = [
-		{ id: "all", name: "All", isSpecial: true },
-		...categories.filter((cat) => !cat.is_hidden).map((cat) => ({ ...cat, isSpecial: false })),
-	];
-
-	// Function to handle category toggle
-	const toggleCategory = (categoryName: string) => {
-		if (categoryName === "All") {
-			setSelectedCategory("All");
-			setSelectedCategories([]);
-			// Clear search when clicking "All" for better UX
-			if (searchQuery) setSearchQuery("");
-		} else {
-			setSelectedCategory(""); // Clear "All" selection
-			setSelectedCategories((prev) => {
-				if (prev.includes(categoryName)) {
-					return prev.filter((cat) => cat !== categoryName);
-				} else {
-					return [...prev, categoryName];
-				}
-			});
-		}
-	};
-
-	// Check if a category is selected
-	const isCategorySelected = (categoryName: string) => {
-		if (categoryName === "All") {
-			return selectedCategory === "All" && selectedCategories.length === 0;
-		}
-		return selectedCategories.includes(categoryName);
 	};
 
 	// Filter items based on selected categories and search query
