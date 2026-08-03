@@ -1,11 +1,16 @@
 "use client";
 
-// Publish Menu — copy items + categories + bundles from the main branch to
-// selected sub-branches. Only meaningful on the main branch; owner-gated.
+// Publish Menu — copy bundle definitions + categories from the commissary to
+// selected branches. Items are no longer published here: the commissary is
+// the sole item source and every branch auto-carries every commissary item
+// via branch_item_stock (migration 0022). Bundles have no per-branch stock
+// equivalent, so they still need to be explicitly published. Owner-gated,
+// commissary-only.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { syncCatalog, type SyncReport } from "@/services/catalogSyncService";
-import type { InventoryItem } from "@/types/domain";
+import { getBundles } from "@/services/bundleService";
+import type { Bundle } from "@/types/domain";
 
 interface PublishMenuModalProps {
 	isOpen: boolean;
@@ -13,7 +18,6 @@ interface PublishMenuModalProps {
 	userId: string;
 	sourceBranchId: string;
 	sourceBranchName: string;
-	items: InventoryItem[];
 	subBranches: Array<{ id: string; name: string }>;
 }
 
@@ -23,29 +27,39 @@ export default function PublishMenuModal({
 	userId,
 	sourceBranchId,
 	sourceBranchName,
-	items,
 	subBranches,
 }: PublishMenuModalProps) {
 	const [search, setSearch] = useState("");
-	const [pickedItems, setPickedItems] = useState<Set<string>>(new Set());
+	const [bundles, setBundles] = useState<Bundle[]>([]);
+	const [loadingBundles, setLoadingBundles] = useState(true);
+	const [pickedBundles, setPickedBundles] = useState<Set<string>>(new Set());
 	const [pickedDestIds, setPickedDestIds] = useState<Set<string>>(new Set());
-	const [includeBundles, setIncludeBundles] = useState(true);
 	const [running, setRunning] = useState(false);
 	const [reports, setReports] = useState<Array<{ branch: string; report: SyncReport }>>([]);
 	const [error, setError] = useState<string | null>(null);
 
-	const filteredItems = useMemo(() => {
+	useEffect(() => {
+		if (!isOpen) return;
+		setLoadingBundles(true);
+		getBundles(sourceBranchId).then(({ bundles: b, error: err }) => {
+			setBundles(b ?? []);
+			if (err) setError(`Failed to load bundles: ${err.message ?? err}`);
+			setLoadingBundles(false);
+		});
+	}, [isOpen, sourceBranchId]);
+
+	const filteredBundles = useMemo(() => {
 		const q = search.trim().toLowerCase();
-		return items
-			.filter((i) => i.status === "active")
-			.filter((i) => (q ? i.name.toLowerCase().includes(q) : true))
+		return bundles
+			.filter((b) => b.status === "active")
+			.filter((b) => (q ? b.name.toLowerCase().includes(q) : true))
 			.sort((a, b) => a.name.localeCompare(b.name));
-	}, [items, search]);
+	}, [bundles, search]);
 
 	if (!isOpen) return null;
 
-	const togglePickedItem = (id: string) => {
-		setPickedItems((prev) => {
+	const togglePickedBundle = (id: string) => {
+		setPickedBundles((prev) => {
 			const n = new Set(prev);
 			if (n.has(id)) n.delete(id);
 			else n.add(id);
@@ -62,10 +76,10 @@ export default function PublishMenuModal({
 		});
 	};
 
-	const allItemIds = filteredItems.map((i) => i.id);
-	const allItemsPicked = allItemIds.length > 0 && allItemIds.every((id) => pickedItems.has(id));
-	const toggleAllItems = () => {
-		setPickedItems(allItemsPicked ? new Set() : new Set(allItemIds));
+	const allBundleIds = filteredBundles.map((b) => b.id);
+	const allBundlesPicked = allBundleIds.length > 0 && allBundleIds.every((id) => pickedBundles.has(id));
+	const toggleAllBundles = () => {
+		setPickedBundles(allBundlesPicked ? new Set() : new Set(allBundleIds));
 	};
 
 	const handleClose = () => {
@@ -74,18 +88,17 @@ export default function PublishMenuModal({
 	};
 
 	const handlePublish = async () => {
-		if (pickedItems.size === 0 || pickedDestIds.size === 0) return;
+		if (pickedBundles.size === 0 || pickedDestIds.size === 0) return;
 		setRunning(true);
 		setError(null);
 		setReports([]);
 
-		const itemIdList = Array.from(pickedItems);
+		const bundleIdList = Array.from(pickedBundles);
 		const out: Array<{ branch: string; report: SyncReport }> = [];
 		for (const destId of pickedDestIds) {
 			const branchName = subBranches.find((b) => b.id === destId)?.name ?? destId;
 			const { report, error } = await syncCatalog(userId, sourceBranchId, destId, {
-				itemIds: itemIdList,
-				includeBundles,
+				bundleIds: bundleIdList,
 			});
 			if (error) {
 				setError(`Publish to ${branchName} failed: ${error.message ?? error}`);
@@ -110,10 +123,11 @@ export default function PublishMenuModal({
 				<div className="px-5 py-4 border-b border-secondary/10">
 					<div className="flex items-start justify-between gap-3">
 						<div>
-							<h2 className="text-lg font-semibold text-secondary">Publish Menu</h2>
+							<h2 className="text-lg font-semibold text-secondary">Publish Bundles</h2>
 							<p className="text-xs text-secondary/60 mt-0.5">
-								Copy items, categories, and bundles from{" "}
-								<span className="font-semibold">{sourceBranchName}</span> to other branches.
+								Copy bundle definitions and their categories from{" "}
+								<span className="font-semibold">{sourceBranchName}</span> to other branches. Items no
+								longer need publishing — every branch already carries the full commissary catalog.
 							</p>
 						</div>
 						<button aria-label="Close"
@@ -153,14 +167,14 @@ export default function PublishMenuModal({
 						)}
 					</div>
 
-					{/* Items */}
+					{/* Bundles */}
 					<div>
 						<div className="flex items-center justify-between mb-2">
 							<p className="text-xs font-medium text-secondary/70">
-								Items to publish <span className="text-secondary/40">({pickedItems.size})</span>
+								Bundles to publish <span className="text-secondary/40">({pickedBundles.size})</span>
 							</p>
-							<button onClick={toggleAllItems} className="text-2.5 text-accent hover:underline">
-								{allItemsPicked ? "Deselect all" : "Select all"}
+							<button onClick={toggleAllBundles} className="text-2.5 text-accent hover:underline">
+								{allBundlesPicked ? "Deselect all" : "Select all"}
 							</button>
 						</div>
 
@@ -168,36 +182,33 @@ export default function PublishMenuModal({
 							type="text"
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Search items…"
+							placeholder="Search bundles…"
 							className="w-full border border-secondary/20 rounded-lg h-9.5 px-3 text-3 focus:outline-none focus:ring-2 focus:ring-accent mb-2"
 						/>
 
-						{filteredItems.length === 0 ? (
-							<p className="text-2.5 text-secondary/40 text-center py-4">No active items.</p>
+						{loadingBundles ? (
+							<p className="text-2.5 text-secondary/40 text-center py-4">Loading bundles…</p>
+						) : filteredBundles.length === 0 ? (
+							<p className="text-2.5 text-secondary/40 text-center py-4">No active bundles.</p>
 						) : (
 							<div className="max-h-64 overflow-y-auto -mx-1 border border-secondary/10 rounded-lg">
-								{filteredItems.map((item) => {
-									const picked = pickedItems.has(item.id);
+								{filteredBundles.map((bundle) => {
+									const picked = pickedBundles.has(bundle.id);
 									return (
 										<label
-											key={item.id}
+											key={bundle.id}
 											className={`px-3 py-2 border-b border-secondary/5 last:border-b-0 flex items-center gap-3 cursor-pointer ${
 												picked ? "bg-accent/5" : ""
 											}`}>
 											<input
 												type="checkbox"
 												checked={picked}
-												onChange={() => togglePickedItem(item.id)}
+												onChange={() => togglePickedBundle(bundle.id)}
 												className="accent-accent shrink-0"
 											/>
 											<div className="flex-1 min-w-0">
-												<p className="text-xs font-medium text-secondary truncate">{item.name}</p>
-												<p className="text-2.5 text-secondary/50">
-													₱{item.price.toFixed(2)}
-													{item.cost != null && (
-														<span className="ml-2 text-secondary/40">cost ₱{item.cost.toFixed(2)}</span>
-													)}
-												</p>
+												<p className="text-xs font-medium text-secondary truncate">{bundle.name}</p>
+												<p className="text-2.5 text-secondary/50">₱{bundle.price.toFixed(2)}</p>
 											</div>
 										</label>
 									);
@@ -205,17 +216,6 @@ export default function PublishMenuModal({
 							</div>
 						)}
 					</div>
-
-					{/* Options */}
-					<label className="flex items-center gap-2 text-xs text-secondary cursor-pointer">
-						<input
-							type="checkbox"
-							checked={includeBundles}
-							onChange={(e) => setIncludeBundles(e.target.checked)}
-							className="accent-accent"
-						/>
-						Include bundles (incomplete bundles land as inactive, flagged for review)
-					</label>
 
 					{error && (
 						<div className="bg-error/10 border border-error/20 text-error text-2.5 px-3 py-2 rounded-lg">
@@ -230,7 +230,6 @@ export default function PublishMenuModal({
 								<div key={i} className="bg-secondary/5 border border-secondary/10 rounded-xl p-3">
 									<p className="text-sm font-semibold text-secondary mb-1">{r.branch}</p>
 									<ul className="text-2.5 text-secondary/70 space-y-0.5">
-										<li>Items created {r.report.items.created} / skipped {r.report.items.skipped}</li>
 										<li>Categories created {r.report.categories.created} / skipped {r.report.categories.skipped}</li>
 										<li>
 											Bundles created {r.report.bundles.created} / skipped {r.report.bundles.skipped}
@@ -259,9 +258,9 @@ export default function PublishMenuModal({
 					</button>
 					<button
 						onClick={handlePublish}
-						disabled={running || pickedItems.size === 0 || pickedDestIds.size === 0}
+						disabled={running || pickedBundles.size === 0 || pickedDestIds.size === 0}
 						className={`flex-1 px-4 py-2.5 rounded-lg text-xs font-semibold ${
-							running || pickedItems.size === 0 || pickedDestIds.size === 0
+							running || pickedBundles.size === 0 || pickedDestIds.size === 0
 								? "bg-gray-100 text-secondary/50 cursor-not-allowed"
 								: "bg-accent text-primary hover:bg-accent/90"
 						}`}>

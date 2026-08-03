@@ -83,6 +83,8 @@ export default function AddItemModal({
   });
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [stockInput, setStockInput] = useState('');
+  const [code, setCode] = useState('');
+  const [codeTouched, setCodeTouched] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -123,12 +125,23 @@ export default function AddItemModal({
     if (initialCategoryId) setSelectedCategoryIds([initialCategoryId]);
   }, [isOpen, initialCategoryId]);
 
+  // Auto-suggest a SKU from category + name (e.g. "BEV-CFLT"), left editable.
+  useEffect(() => {
+    if (codeTouched) return;
+    const categoryPart = categories.find(c => c.id === selectedCategoryIds[0])?.name
+      .replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase() ?? '';
+    const namePart = newItem.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase();
+    setCode([categoryPart, namePart].filter(Boolean).join('-'));
+  }, [newItem.name, selectedCategoryIds, categories, codeTouched]);
+
   if (!isOpen) return null;
 
   const resetForm = () => {
     setNewItem({ name: "", stock: 0, description: "", img_url: "" });
     setSelectedCategoryIds([]);
     setStockInput('');
+    setCode('');
+    setCodeTouched(false);
     setKind(null);
     setUnitType('');
     setUnit('');
@@ -174,6 +187,7 @@ export default function AddItemModal({
         category_ids: selectedCategoryIds,
         category_id: selectedCategoryIds[0] || undefined,
         stock: finalStock,
+        code: code || undefined,
         description: newItem.description || undefined,
         img_url: newItem.img_url || undefined,
         kind: effectiveKind,
@@ -313,6 +327,25 @@ export default function AddItemModal({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-secondary mb-2">
+                        Code / SKU
+                        <span className="text-xs text-secondary/50 ml-1">(Optional, auto-suggested)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={code}
+                        onChange={(e) => {
+                          setCodeTouched(true);
+                          setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''));
+                        }}
+                        className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent uppercase"
+                        placeholder="e.g. BEV-CFLT"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-secondary mb-2">
                         Description
                         <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
                       </label>
@@ -324,9 +357,6 @@ export default function AddItemModal({
                         placeholder="Enter description"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-secondary mb-2">
                         Initial Stock <span className="text-error">*</span>
@@ -358,6 +388,9 @@ export default function AddItemModal({
                         inputMode="numeric"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-secondary mb-2">
                         Categories

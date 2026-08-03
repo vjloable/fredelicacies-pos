@@ -495,12 +495,25 @@ export function subscribeToBranchTransfers(branchId: string, callback: () => voi
   return transferRepository.subscribeOnly(branchId, callback);
 }
 
-// Find a destination inventory item with the same (case-insensitive) name as a source line —
-// used by the receive flow to pre-fill destination_item_id.
+// Resolve a destination item for a transfer line — used by the receive flow to
+// pre-fill destination_item_id. Item identity is the shared commissary id, so a
+// transfer's source_item_id (once repointed, see migration 0026) already IS the
+// destination id at any branch; confirm the row still exists. Falls back to a
+// case-insensitive name match against the destination's own rows for legacy
+// lines that predate the shared-id repoint (or the commissary's own branch).
 export async function matchDestinationItem(
   destinationBranchId: string,
-  sourceItemName: string
+  sourceItemName: string,
+  sourceItemId?: string | null
 ): Promise<InventoryItem | null> {
+  if (sourceItemId) {
+    const { data } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('id', sourceItemId)
+      .maybeSingle();
+    if (data) return data as InventoryItem;
+  }
   const { data } = await supabase
     .from('inventory_items')
     .select('*')

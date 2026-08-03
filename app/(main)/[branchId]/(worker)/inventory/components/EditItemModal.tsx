@@ -38,7 +38,9 @@ export default function EditItemModal({
 }: EditItemModalProps) {
   const { currentBranch } = useBranch();
   const { user, isManager, isUserOwner } = useAuth();
+  const isCommissary = currentBranch?.type === 'commissary';
   const canRemove = isManager() || isUserOwner();
+  const canDelete = canRemove && isCommissary;
   const [loading, setLoading] = useState(false);
   const [localEditingItem, setLocalEditingItem] = useState<Item | null>(editingItem);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -88,24 +90,23 @@ export default function EditItemModal({
 
     setLoading(true);
     try {
-      const updates: UpdateInventoryItemData = {
-        name: localEditingItem.name,
-        stock: localEditingItem.stock,
-        description: localEditingItem.description || undefined,
-        category_ids: selectedCategoryIds,
-        category_id: selectedCategoryIds[0] || undefined,
-        img_url: localEditingItem.img_url || undefined
-      };
+      // Non-commissary branches can only ever touch stock — menu fields
+      // (name/description/categories/image/code) are commissary-only.
+      const updates: UpdateInventoryItemData = isCommissary
+        ? {
+            name: localEditingItem.name,
+            stock: localEditingItem.stock,
+            description: localEditingItem.description || undefined,
+            category_ids: selectedCategoryIds,
+            category_id: selectedCategoryIds[0] || undefined,
+            img_url: localEditingItem.img_url || undefined,
+            code: localEditingItem.code || undefined,
+          }
+        : { stock: localEditingItem.stock };
 
-      // At a branch, the item id is a commissary id: menu fields write to the
-      // commissary (menu-source) row; STOCK is per-branch → setBranchStock.
-      // At the commissary itself, stock lives on its own row → plain update.
-      if (currentBranch && currentBranch.type !== 'commissary') {
-        const { stock, ...menu } = updates;
-        await updateInventoryItem(localEditingItem.id, menu);
-        if (stock !== undefined) {
-          await inventoryRepository.setBranchStock(currentBranch.id, localEditingItem.id, { stock });
-        }
+      if (currentBranch && !isCommissary) {
+        // Item id is the commissary id; stock is per-branch.
+        await inventoryRepository.setBranchStock(currentBranch.id, localEditingItem.id, { stock: localEditingItem.stock });
       } else {
         await updateInventoryItem(localEditingItem.id, updates);
       }
@@ -197,8 +198,8 @@ export default function EditItemModal({
               </p>
             </div>
 
-        {/* Item Image Upload */}
-          {/* Image Upload */}
+        {/* Item Image Upload — menu field, commissary only */}
+        {isCommissary && (
           <ImageUpload
             currentImageUrl={localEditingItem.img_url || ''}
             onImageUpload={(imageUrl) => setLocalEditingItem({...localEditingItem, img_url: imageUrl})}
@@ -206,9 +207,12 @@ export default function EditItemModal({
             bucket="inventory-images"
             compact
           />
-        
+        )}
+
         {/* Edit Form */}
         <div className="space-y-4">
+        {isCommissary && (
+        <>
           {/* Item Name */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
@@ -220,6 +224,24 @@ export default function EditItemModal({
               onChange={(e) => setLocalEditingItem({...localEditingItem, name: e.target.value})}
               className="w-full px-3 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="Enter item name"
+            />
+          </div>
+
+          {/* SKU / Code */}
+          <div>
+            <label className="block text-xs font-medium text-secondary mb-2">
+              Code / SKU
+              <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              value={localEditingItem.code || ''}
+              onChange={(e) => setLocalEditingItem({
+                ...localEditingItem,
+                code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''),
+              })}
+              className="w-full px-3 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent uppercase"
+              placeholder="e.g. BEV-CFLT"
             />
           </div>
 
@@ -297,6 +319,8 @@ export default function EditItemModal({
               rows={3}
             />
           </div>
+        </>
+        )}
 
           {/* Stock Adjustment Section */}
           <div className="bg-primary rounded-xl p-4 border border-secondary/20">
@@ -392,7 +416,7 @@ export default function EditItemModal({
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-5">
-          {canRemove && (
+          {canDelete && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
@@ -473,7 +497,7 @@ export default function EditItemModal({
         )}
 
         {/* Delete Confirmation Dialog */}
-        {canRemove && showDeleteConfirm && (
+        {canDelete && showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center">

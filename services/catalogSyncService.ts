@@ -130,51 +130,58 @@ async function resolveOrCreateCategoriesAt(
 }
 
 interface SyncCatalogOptions {
-  itemIds: string[]; // source inventory item ids to sync
-  includeBundles?: boolean; // default true
+  // Source bundle ids to publish. Omit/undefined to publish every active
+  // source bundle.
+  bundleIds?: string[];
 }
 
 export async function syncCatalog(
   userId: string,
   sourceBranchId: string,
   destinationBranchId: string,
-  options: SyncCatalogOptions
+  options: SyncCatalogOptions = {}
 ): Promise<{ report: SyncReport; error: any }> {
+  // Items are no longer synced per-branch: the commissary is the sole item
+  // source (branch_item_stock auto-carries every commissary item to every
+  // branch — see migration 0022). Only bundles remain genuinely per-branch,
+  // since there's no bundle_item_stock equivalent, so publishing bundle
+  // *definitions* from the commissary to branches is still needed. Bundle
+  // components reference the shared (commissary) item id directly now — no
+  // per-branch id translation required.
   const report: SyncReport = {
     items: { created: 0, skipped: 0 },
     categories: { created: 0, skipped: 0 },
     bundles: { created: 0, skipped: 0, needs_attention: 0 },
     warnings: [],
   };
-  log.info('syncCatalog start', {
-    userId,
-    sourceBranchId,
-    destinationBranchId,
-    itemIds: options.itemIds.length,
-  });
+  log.info('syncCatalog start', { userId, sourceBranchId, destinationBranchId });
 
   if (sourceBranchId === destinationBranchId) {
     return { report, error: new Error('Source and destination must differ') };
   }
-  if (options.itemIds.length === 0) {
-    return { report, error: new Error('No items selected') };
-  }
 
-  // 1) Pull source items + their categories.
-  const { data: srcItems, error: itemsErr } = await supabase
-    .from('inventory_items')
-    .select('id, name, description, price, cost, grab_price, category_id, status, barcode, img_url, inventory_item_categories(category_id)')
-    .in('id', options.itemIds)
+  let bundlesQuery = supabase
+    .from('bundles')
+    .select(
+      `
+        id, name, description, price, grab_price, img_url, is_predefined, is_custom,
+        max_pieces, status, category_id,
+        bundle_components(inventory_item_id, quantity),
+        bundle_categories(category_id),
+        bundle_additional_items(inventory_item_id, quantity)
+      `
+    )
     .eq('branch_id', sourceBranchId);
+  if (options.bundleIds) bundlesQuery = bundlesQuery.in('id', options.bundleIds);
+  const { data: srcBundles, error: bundlesErr } = await bundlesQuery;
+  if (bundlesErr) return { report, error: bundlesErr };
 
-  if (itemsErr) return { report, error: itemsErr };
-
-  // 2) Resolve categories at dest (find or create).
+  // Resolve categories used by the selected bundles at dest (find or create).
   const allSrcCategoryIds = new Set<string>();
-  for (const it of srcItems ?? []) {
-    const r = it as any;
-    if (r.category_id) allSrcCategoryIds.add(r.category_id);
-    for (const link of r.inventory_item_categories ?? []) allSrcCategoryIds.add(link.category_id);
+  for (const sb of srcBundles ?? []) {
+    const b = sb as any;
+    if (b.category_id) allSrcCategoryIds.add(b.category_id);
+    for (const link of b.bundle_categories ?? []) allSrcCategoryIds.add(link.category_id);
   }
   const { idMap: catIdMap, created: catsCreated, error: catErr } =
     await resolveOrCreateCategoriesAt(destinationBranchId, Array.from(allSrcCategoryIds));
@@ -182,255 +189,130 @@ export async function syncCatalog(
   report.categories.created = catsCreated;
   report.categories.skipped = allSrcCategoryIds.size - catsCreated;
 
-  // 3) Look up which items already exist at dest by name (case-insensitive).
-  const itemNames = (srcItems || []).map((r: any) => r.name);
-  const { data: existingDestItems } = await supabase
-    .from('inventory_items')
+  // Verify every referenced component item id still exists (they're shared
+  // commissary ids now, so a missing one means the source item was deleted).
+  const allComponentItemIds = new Set<string>();
+  for (const sb of srcBundles ?? []) {
+    const b = sb as any;
+    for (const c of b.bundle_components ?? []) allComponentItemIds.add(c.inventory_item_id);
+    for (const a of b.bundle_additional_items ?? []) allComponentItemIds.add(a.inventory_item_id);
+  }
+  const { data: existingItems } = allComponentItemIds.size
+    ? await supabase.from('inventory_items').select('id').in('id', Array.from(allComponentItemIds))
+    : { data: [] as any[] };
+  const existingItemIds = new Set((existingItems ?? []).map((r: any) => r.id));
+
+  // Look up which bundles already exist at dest by name.
+  const { data: existingDestBundles } = await supabase
+    .from('bundles')
     .select('id, name')
     .eq('branch_id', destinationBranchId)
-    .in('name', itemNames);
-  const destItemIdByLowerName = new Map<string, string>();
-  for (const row of existingDestItems ?? []) {
-    destItemIdByLowerName.set((row as any).name.toLowerCase(), (row as any).id);
-  }
-
-  // 4) Insert missing items + link their categories.
-  const itemsToCreate = (srcItems || []).filter(
-    (r: any) => !destItemIdByLowerName.has(r.name.toLowerCase())
+    .in('name', (srcBundles || []).map((b: any) => b.name));
+  const destBundleByLowerName = new Map<string, string>(
+    (existingDestBundles ?? []).map((r: any) => [r.name.toLowerCase(), r.id])
   );
-  let createdItemRows: any[] = [];
-  if (itemsToCreate.length > 0) {
-    const payload = itemsToCreate.map((r: any) => ({
-      branch_id: destinationBranchId,
-      name: r.name,
-      description: r.description ?? null,
-      price: r.price,
-      cost: r.cost ?? null,
-      grab_price: r.grab_price ?? null,
-      category_id: r.category_id ? catIdMap.get(r.category_id) ?? null : null,
-      status: r.status,
-      barcode: r.barcode ?? null,
-      img_url: r.img_url ?? null,
-      stock: 0,
-      synced_from_main_at: new Date().toISOString(),
-      // Durable link back to the commissary source product (centralized menu).
-      commissary_item_id: r.id,
-    }));
-    const { data: created, error: insErr } = await supabase
-      .from('inventory_items')
-      .insert(payload)
-      .select('id, name');
-    if (insErr) return { report, error: insErr };
-    createdItemRows = created || [];
-    report.items.created = createdItemRows.length;
 
-    // Build dest item id map for the freshly created.
-    for (const row of createdItemRows) {
-      destItemIdByLowerName.set((row as any).name.toLowerCase(), (row as any).id);
-    }
-
-    // Insert category links for each created item.
-    const links: Array<{ inventory_item_id: string; category_id: string }> = [];
-    for (let i = 0; i < itemsToCreate.length; i++) {
-      const src = itemsToCreate[i] as any;
-      const dest = createdItemRows[i];
-      if (!dest) continue;
-      const linkedCatIds = new Set<string>();
-      for (const link of src.inventory_item_categories ?? []) {
-        const destCatId = catIdMap.get(link.category_id);
-        if (destCatId) linkedCatIds.add(destCatId);
-      }
-      // Also include the primary category_id if present.
-      if (src.category_id) {
-        const destPrimary = catIdMap.get(src.category_id);
-        if (destPrimary) linkedCatIds.add(destPrimary);
-      }
-      for (const cid of linkedCatIds) {
-        links.push({ inventory_item_id: dest.id, category_id: cid });
-      }
-    }
-    if (links.length > 0) {
-      const { error: linkErr } = await supabase.from('inventory_item_categories').insert(links);
-      if (linkErr) report.warnings.push(`Some category links failed: ${linkErr.message}`);
-    }
-  }
-  report.items.skipped = (srcItems || []).length - report.items.created;
-
-  // 4b) Backfill the commissary link on pre-existing dest items that were matched
-  //     by name but created before this column existed. Only fills NULLs, so it's
-  //     idempotent and never overwrites an existing link.
-  for (const r of srcItems || []) {
-    const destId = destItemIdByLowerName.get((r as any).name.toLowerCase());
-    if (!destId) continue;
-    const { error: linkErr } = await supabase
-      .from('inventory_items')
-      .update({ commissary_item_id: (r as any).id })
-      .eq('id', destId)
-      .is('commissary_item_id', null);
-    if (linkErr) report.warnings.push(`Item link backfill failed for "${(r as any).name}": ${linkErr.message}`);
-  }
-
-  // 5) Bundles (optional).
-  if (options.includeBundles !== false) {
-    // Build itemIdMap: source.inventory_item_id → dest.inventory_item_id, by name match (case-insensitive).
-    const allSrcItemIdsForBundles = new Set(options.itemIds);
-    const { data: srcBundles, error: bundlesErr } = await supabase
-      .from('bundles')
-      .select(
-        `
-          id, name, description, price, grab_price, img_url, is_predefined, is_custom,
-          max_pieces, status, category_id,
-          bundle_components(inventory_item_id, quantity),
-          bundle_categories(category_id),
-          bundle_additional_items(inventory_item_id, quantity)
-        `
-      )
-      .eq('branch_id', sourceBranchId);
-    if (bundlesErr) {
-      report.warnings.push(`Bundle fetch failed: ${bundlesErr.message}`);
-    } else {
-      // Map of source inventory_item_id → name (used to compute name-based matching).
-      const { data: srcItemNames } = await supabase
-        .from('inventory_items')
-        .select('id, name')
-        .eq('branch_id', sourceBranchId);
-      const nameBySrcItemId = new Map<string, string>(
-        (srcItemNames ?? []).map((r: any) => [r.id, r.name])
-      );
-
-      const allDestNames = Array.from(destItemIdByLowerName.keys());
-      const destItemIdByName = destItemIdByLowerName; // alias for clarity
-
-      // Look up which bundles already exist at dest by name.
-      const { data: existingDestBundles } = await supabase
+  for (const sb of srcBundles || []) {
+    const srcBundle = sb as any;
+    const existingDestBundleId = destBundleByLowerName.get(srcBundle.name.toLowerCase());
+    if (existingDestBundleId) {
+      report.bundles.skipped++;
+      // Backfill the commissary link on the pre-existing dest bundle (NULLs only).
+      const { error: bLinkErr } = await supabase
         .from('bundles')
-        .select('id, name')
-        .eq('branch_id', destinationBranchId)
-        .in(
-          'name',
-          (srcBundles || []).map((b: any) => b.name)
-        );
-      const destBundleByLowerName = new Map<string, string>(
-        (existingDestBundles ?? []).map((r: any) => [r.name.toLowerCase(), r.id])
+        .update({ commissary_bundle_id: srcBundle.id })
+        .eq('id', existingDestBundleId)
+        .is('commissary_bundle_id', null);
+      if (bLinkErr) report.warnings.push(`Bundle link backfill failed for "${srcBundle.name}": ${bLinkErr.message}`);
+      continue;
+    }
+
+    const missingNames: string[] = [];
+    const components = (srcBundle.bundle_components ?? [])
+      .filter((c: any) => {
+        const ok = existingItemIds.has(c.inventory_item_id);
+        if (!ok) missingNames.push(c.inventory_item_id);
+        return ok;
+      })
+      .map((c: any) => ({ destItemId: c.inventory_item_id, quantity: c.quantity }));
+    const additionalItems = (srcBundle.bundle_additional_items ?? [])
+      .filter((a: any) => {
+        const ok = existingItemIds.has(a.inventory_item_id);
+        if (!ok) missingNames.push(a.inventory_item_id);
+        return ok;
+      })
+      .map((a: any) => ({ destItemId: a.inventory_item_id, quantity: a.quantity }));
+
+    const incomplete = missingNames.length > 0;
+    const { data: createdBundle, error: bInsErr } = await supabase
+      .from('bundles')
+      .insert({
+        branch_id: destinationBranchId,
+        name: srcBundle.name,
+        description: srcBundle.description ?? null,
+        price: srcBundle.price,
+        grab_price: srcBundle.grab_price ?? null,
+        img_url: srcBundle.img_url ?? null,
+        is_predefined: srcBundle.is_predefined ?? false,
+        is_custom: srcBundle.is_custom ?? false,
+        max_pieces: srcBundle.max_pieces ?? null,
+        category_id: srcBundle.category_id ? catIdMap.get(srcBundle.category_id) ?? null : null,
+        status: incomplete ? 'inactive' : srcBundle.status,
+        needs_attention: incomplete,
+        // Durable link back to the commissary source bundle (centralized menu).
+        commissary_bundle_id: srcBundle.id,
+      })
+      .select('id, name')
+      .single();
+
+    if (bInsErr || !createdBundle) {
+      report.warnings.push(`Bundle "${srcBundle.name}" failed: ${bInsErr?.message ?? 'unknown'}`);
+      continue;
+    }
+    report.bundles.created++;
+    if (incomplete) report.bundles.needs_attention++;
+
+    if (components.length > 0) {
+      await supabase.from('bundle_components').insert(
+        components.map((c: any) => ({
+          bundle_id: (createdBundle as any).id,
+          inventory_item_id: c.destItemId,
+          quantity: c.quantity,
+        }))
       );
+    }
+    if (additionalItems.length > 0) {
+      await supabase.from('bundle_additional_items').insert(
+        additionalItems.map((a: any) => ({
+          bundle_id: (createdBundle as any).id,
+          inventory_item_id: a.destItemId,
+          quantity: a.quantity,
+        }))
+      );
+    }
+    // Bundle category links (best-effort).
+    const bundleCatLinks: Array<{ bundle_id: string; category_id: string }> = [];
+    for (const link of srcBundle.bundle_categories ?? []) {
+      const destCatId = catIdMap.get(link.category_id);
+      if (destCatId) bundleCatLinks.push({ bundle_id: (createdBundle as any).id, category_id: destCatId });
+    }
+    if (bundleCatLinks.length > 0) {
+      await supabase.from('bundle_categories').insert(bundleCatLinks);
+    }
 
-      for (const sb of srcBundles || []) {
-        const srcBundle = sb as any;
-        const existingDestBundleId = destBundleByLowerName.get(srcBundle.name.toLowerCase());
-        if (existingDestBundleId) {
-          report.bundles.skipped++;
-          // Backfill the commissary link on the pre-existing dest bundle (NULLs only).
-          const { error: bLinkErr } = await supabase
-            .from('bundles')
-            .update({ commissary_bundle_id: srcBundle.id })
-            .eq('id', existingDestBundleId)
-            .is('commissary_bundle_id', null);
-          if (bLinkErr) report.warnings.push(`Bundle link backfill failed for "${srcBundle.name}": ${bLinkErr.message}`);
-          continue;
-        }
-
-        // Resolve component item ids at dest. Missing components mean the bundle is incomplete.
-        const components: Array<{ destItemId: string; quantity: number }> = [];
-        const missingNames: string[] = [];
-        for (const comp of srcBundle.bundle_components ?? []) {
-          const srcName = nameBySrcItemId.get(comp.inventory_item_id);
-          if (!srcName) {
-            missingNames.push('(unknown)');
-            continue;
-          }
-          const destItemId = destItemIdByName.get(srcName.toLowerCase());
-          if (destItemId) {
-            components.push({ destItemId, quantity: comp.quantity });
-          } else {
-            missingNames.push(srcName);
-          }
-        }
-        const additionalItems: Array<{ destItemId: string; quantity: number }> = [];
-        for (const a of srcBundle.bundle_additional_items ?? []) {
-          const srcName = nameBySrcItemId.get(a.inventory_item_id);
-          if (!srcName) continue;
-          const destItemId = destItemIdByName.get(srcName.toLowerCase());
-          if (destItemId) additionalItems.push({ destItemId, quantity: a.quantity });
-          else missingNames.push(srcName);
-        }
-
-        const incomplete = missingNames.length > 0;
-        const { data: createdBundle, error: bInsErr } = await supabase
-          .from('bundles')
-          .insert({
-            branch_id: destinationBranchId,
-            name: srcBundle.name,
-            description: srcBundle.description ?? null,
-            price: srcBundle.price,
-            grab_price: srcBundle.grab_price ?? null,
-            img_url: srcBundle.img_url ?? null,
-            is_predefined: srcBundle.is_predefined ?? false,
-            is_custom: srcBundle.is_custom ?? false,
-            max_pieces: srcBundle.max_pieces ?? null,
-            category_id: srcBundle.category_id ? catIdMap.get(srcBundle.category_id) ?? null : null,
-            status: incomplete ? 'inactive' : srcBundle.status,
-            needs_attention: incomplete,
-            // Durable link back to the commissary source bundle (centralized menu).
-            commissary_bundle_id: srcBundle.id,
-          })
-          .select('id, name')
-          .single();
-
-        if (bInsErr || !createdBundle) {
-          report.warnings.push(`Bundle "${srcBundle.name}" failed: ${bInsErr?.message ?? 'unknown'}`);
-          continue;
-        }
-        report.bundles.created++;
-        if (incomplete) report.bundles.needs_attention++;
-
-        if (components.length > 0) {
-          await supabase.from('bundle_components').insert(
-            components.map(c => ({
-              bundle_id: (createdBundle as any).id,
-              inventory_item_id: c.destItemId,
-              quantity: c.quantity,
-            }))
-          );
-        }
-        if (additionalItems.length > 0) {
-          await supabase.from('bundle_additional_items').insert(
-            additionalItems.map(a => ({
-              bundle_id: (createdBundle as any).id,
-              inventory_item_id: a.destItemId,
-              quantity: a.quantity,
-            }))
-          );
-        }
-        // Bundle category links (best-effort).
-        const bundleCatLinks: Array<{ bundle_id: string; category_id: string }> = [];
-        for (const link of srcBundle.bundle_categories ?? []) {
-          const destCatId = catIdMap.get(link.category_id);
-          if (destCatId) bundleCatLinks.push({ bundle_id: (createdBundle as any).id, category_id: destCatId });
-        }
-        if (bundleCatLinks.length > 0) {
-          await supabase.from('bundle_categories').insert(bundleCatLinks);
-        }
-
-        if (incomplete) {
-          void logActivity({
-            branchId: destinationBranchId,
-            userId,
-            action: 'bundle_marked_inactive',
-            entityType: 'bundle',
-            entityId: (createdBundle as any).id,
-            details: {
-              bundle_name: srcBundle.name,
-              missing_components: missingNames,
-              source_branch_id: sourceBranchId,
-            },
-          });
-        }
-      }
-
-      // Suppress unused-var warning while still keeping the variable available
-      // for future name-based reuse strategies.
-      void allSrcItemIdsForBundles;
-      void allDestNames;
+    if (incomplete) {
+      void logActivity({
+        branchId: destinationBranchId,
+        userId,
+        action: 'bundle_marked_inactive',
+        entityType: 'bundle',
+        entityId: (createdBundle as any).id,
+        details: {
+          bundle_name: srcBundle.name,
+          missing_components: missingNames,
+          source_branch_id: sourceBranchId,
+        },
+      });
     }
   }
 

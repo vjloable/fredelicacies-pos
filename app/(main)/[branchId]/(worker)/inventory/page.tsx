@@ -1314,7 +1314,6 @@ export default function InventoryScreen() {
 								userId={user.id}
 								sourceBranchId={currentBranch.id}
 								sourceBranchName={currentBranch.name}
-								items={items}
 								subBranches={availableBranches
 									.filter((b) => b.id !== currentBranch.id)
 									.map((b) => ({ id: b.id, name: b.name }))}

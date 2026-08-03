@@ -12,7 +12,6 @@ import {
   matchDestinationItem,
   receiveTransfer,
 } from "@/services/transferService";
-import { syncCatalog } from "@/services/catalogSyncService";
 import { getInventoryItems as getSourceInventory, getAvailableStock } from "@/services/inventoryService";
 import type { TransferWithItems, SettleLineCount } from "@/types/domain/transfer";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -326,7 +325,7 @@ function ReceiveShipmentModal({
             results[line.id] = line.destination_item_id;
             return;
           }
-          const match = await matchDestinationItem(transfer.destination_branch_id, line.item_name);
+          const match = await matchDestinationItem(transfer.destination_branch_id, line.item_name, line.source_item_id);
           results[line.id] = match?.id ?? null;
         })
       );
@@ -340,40 +339,10 @@ function ReceiveShipmentModal({
     };
   }, [transfer]);
 
+  // Item identity is shared (the commissary id) across every branch, so an
+  // unresolved line means the source item itself no longer exists — there's
+  // nothing left to sync/copy, unlike the old per-branch catalog world.
   const unresolved = transfer.items.filter(line => !destItemIds[line.id]);
-  const [syncing, setSyncing] = useState(false);
-
-  const handleSyncFromCommissary = async () => {
-    if (!user) return;
-    const unresolvedLines = transfer.items.filter(line => !destItemIds[line.id]);
-    const sourceItemIds = unresolvedLines
-      .map(l => l.source_item_id)
-      .filter((id): id is string => !!id);
-    if (!sourceItemIds.length) return;
-    setSyncing(true);
-    setError(null);
-    const { error: syncErr } = await syncCatalog(
-      user.id,
-      transfer.source_branch_id,
-      transfer.destination_branch_id,
-      { itemIds: sourceItemIds, includeBundles: false }
-    );
-    if (syncErr) {
-      setError(`Sync failed: ${syncErr.message ?? "unknown"}`);
-      setSyncing(false);
-      return;
-    }
-    // Re-match all previously unresolved lines now that they exist in the catalog.
-    const rematch: Record<string, string | null> = {};
-    await Promise.all(
-      unresolvedLines.map(async line => {
-        const match = await matchDestinationItem(transfer.destination_branch_id, line.item_name);
-        rematch[line.id] = match?.id ?? null;
-      })
-    );
-    setDestItemIds(prev => ({ ...prev, ...rematch }));
-    setSyncing(false);
-  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -427,26 +396,13 @@ function ReceiveShipmentModal({
           ) : (
             <>
               {unresolved.length > 0 && (
-                <div className="border border-amber-300 bg-amber-50/50 rounded-lg p-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-amber-800">
-                      {unresolved.length} item{unresolved.length === 1 ? "" : "s"} not in your catalog
-                    </p>
-                    <p className="text-2.5 text-amber-700 mt-0.5">
-                      Sync from commissary to copy the items and their categories into this branch.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSyncFromCommissary}
-                    disabled={syncing}
-                    className={`shrink-0 px-3 py-1.5 rounded-lg text-2.5 font-bold transition-all ${
-                      syncing
-                        ? "bg-gray-100 text-secondary/50 cursor-not-allowed"
-                        : "bg-amber-600 text-white hover:bg-amber-700 active:scale-95"
-                    }`}>
-                    {syncing ? "Syncing…" : "Sync from commissary"}
-                  </button>
+                <div className="border border-amber-300 bg-amber-50/50 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-amber-800">
+                    {unresolved.length} item{unresolved.length === 1 ? "" : "s"} no longer exist
+                  </p>
+                  <p className="text-2.5 text-amber-700 mt-0.5">
+                    The source item for these lines has been deleted at the commissary and can&apos;t be received.
+                  </p>
                 </div>
               )}
               {transfer.items.map(line => {

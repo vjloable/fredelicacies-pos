@@ -23,6 +23,8 @@ export interface InventoryItem {
   // NULL on the commissary's own rows and on branch-only items. Used to repoint
   // references from branch-local ids to commissary ids in the centralized menu.
   commissary_item_id: string | null;
+  // Human-assigned SKU/code, e.g. "BEV-CFLT". Unique when present.
+  code: string | null;
   barcode: string | null;
   img_url: string | null;
   // Commissary custom production goods measured by a unit of measure (NULL for sellable items).
@@ -43,6 +45,7 @@ export interface CreateInventoryItemData {
   category_ids?: string[];
   description?: string;
   stock?: number;
+  code?: string;
   barcode?: string;
   img_url?: string;
   status?: 'active' | 'inactive';
@@ -61,6 +64,7 @@ export interface UpdateInventoryItemData {
   uncarried_stock?: number;
   category_id?: string;
   category_ids?: string[];
+  code?: string;
   barcode?: string;
   img_url?: string;
   status?: 'active' | 'inactive';

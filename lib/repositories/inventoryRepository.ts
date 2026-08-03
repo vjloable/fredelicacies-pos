@@ -70,6 +70,7 @@ export const inventoryRepository = {
         category_id: categoryIds[0] ?? null,
         description: data.description || null,
         stock: data.stock || 0,
+        code: data.code || null,
         barcode: data.barcode || null,
         img_url: data.img_url || null,
         status: data.status || 'active',
