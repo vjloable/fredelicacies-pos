@@ -119,11 +119,6 @@ export default function DeleteWorkerModal({
 								<div>
 									<div className='font-medium text-secondary'>{worker.name}</div>
 									<div className='text-xs text-secondary/70'>{worker.email}</div>
-									{worker.employeeId && (
-										<div className='text-xs text-secondary/70'>
-											ID: {worker.employeeId}
-										</div>
-									)}
 								</div>
 							</div>
 						</div>

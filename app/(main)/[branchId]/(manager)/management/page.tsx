@@ -249,8 +249,7 @@ export default function ManagementPage() {
 			filtered = filtered.filter(
 				(worker) =>
 					worker.name.toLowerCase().includes(searchLower) ||
-					worker.email.toLowerCase().includes(searchLower) ||
-					worker.employeeId?.toLowerCase().includes(searchLower)
+					worker.email.toLowerCase().includes(searchLower)
 			);
 		}
 

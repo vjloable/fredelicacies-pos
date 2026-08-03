@@ -11,8 +11,6 @@ export interface Worker {
   id: string;
   name: string;
   email: string;
-  phoneNumber?: string;
-  employeeId?: string;
   roleAssignments: Array<{
     workersTableId: string;
     branchId: string;
@@ -43,8 +41,6 @@ export const workerService = {
     isOwner?: boolean;
     isManager?: boolean;
     branchAssignments?: Array<{ branchId: string; role: 'team_leader' | 'cashier' }>;
-    phoneNumber?: string;
-    employeeId?: string;
   }): Promise<string> => {
     try {
       // Create auth user
@@ -62,8 +58,6 @@ export const workerService = {
         id: user.id,
         email: userData.email,
         name: userData.name,
-        phone_number: userData.phoneNumber,
-        employee_id: userData.employeeId,
         is_owner: userData.isOwner || false,
         is_manager: userData.isManager || false,
       };
@@ -127,8 +121,6 @@ export const workerService = {
         id: user.id,
         name: user.name,
         email: user.email,
-        phoneNumber: user.phone_number,
-        employeeId: user.employee_id,
         roleAssignments: user.roleAssignments.map(ra => ({
           workersTableId: ra.workersTableId,
           branchId: ra.branchId,
@@ -163,8 +155,6 @@ export const workerService = {
       const profileUpdates: any = {};
       
       if (updates.name !== undefined) profileUpdates.name = updates.name;
-      if (updates.phoneNumber !== undefined) profileUpdates.phone_number = updates.phoneNumber;
-      if (updates.employeeId !== undefined) profileUpdates.employee_id = updates.employeeId;
       if (updates.profilePicture !== undefined) profileUpdates.profile_picture = updates.profilePicture;
       if (updates.isActive !== undefined) profileUpdates.is_active = updates.isActive;
 
@@ -246,8 +236,7 @@ export const workerService = {
         const searchTerm = filters.searchQuery.toLowerCase();
         filtered = filtered.filter(w =>
           w.name.toLowerCase().includes(searchTerm) ||
-          w.email.toLowerCase().includes(searchTerm) ||
-          w.employeeId?.toLowerCase().includes(searchTerm)
+          w.email.toLowerCase().includes(searchTerm)
         );
       }
 

@@ -11,8 +11,6 @@ export const userProfileRepository = {
         id: data.id,
         email: data.email,
         name: data.name,
-        phone_number: data.phone_number || null,
-        employee_id: data.employee_id || null,
         profile_picture: data.profile_picture || null,
         is_owner: data.is_owner || false,
         is_manager: data.is_manager || false,

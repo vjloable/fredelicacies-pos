@@ -15,6 +15,18 @@ interface EditWorkerModalProps {
 	currentUserId?: string;
 }
 
+const ROLE_BLURB: Record<"team_leader" | "cashier", string> = {
+	cashier: "Runs the register and daily sales at one branch.",
+	team_leader: "Leads and oversees the whole operation of one branch.",
+};
+
+function initialsOf(name: string): string {
+	const parts = name.trim().split(/\s+/).filter(Boolean);
+	if (parts.length === 0) return "?";
+	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+	return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export default function EditWorkerModal({
 	isOpen,
 	worker,
@@ -33,8 +45,6 @@ export default function EditWorkerModal({
 	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
-		phoneNumber: "",
-		employeeId: "",
 		isOwner: false,
 		branchAssignments: [] as Array<{
 			branchId: string;
@@ -44,138 +54,73 @@ export default function EditWorkerModal({
 
 	// Single branch assignment state
 	const [selectedBranchId, setSelectedBranchId] = useState<string>("");
-	const [selectedRole, setSelectedRole] = useState<"team_leader" | "cashier">(
-		"cashier"
-	);
+	const [selectedRole, setSelectedRole] = useState<"team_leader" | "cashier">("cashier");
 	const [originalRole, setOriginalRole] = useState<"team_leader" | "cashier" | null>(null);
 
-	// Get available branches based on user permissions
+	// Branches this editor is allowed to assign.
 	const availableBranches = isOwner
 		? branches
 		: branches.filter((branch) => userAccessibleBranches.includes(branch.id));
 
-	// Check if the current user can change roles for this worker
-	const canDemoteWorker = (worker: Worker | null): boolean => {
-		if (!worker || !currentUserId) return false;
-
-		// Owners can change any role
-		if (isOwner) return true;
-		
-		// Managers cannot demote themselves
-		if (worker.id === currentUserId) return false;
-		
-		// Managers cannot demote other managers - check if worker is a manager
-		const isWorkerManager = worker.roleAssignments.some(
-			assignment => assignment.role === "team_leader" && assignment.isActive !== false
+	// Whether the current editor may change this worker's role.
+	const canChangeRole = (w: Worker | null): boolean => {
+		if (!w || !currentUserId) return false;
+		if (isOwner) return true; // owners can change anyone
+		if (w.id === currentUserId) return false; // can't change your own role
+		const isTeamLeader = w.roleAssignments.some(
+			(a) => a.role === "team_leader" && a.isActive !== false
 		);
-		
-		if (isWorkerManager) return false;
-		
-		// Managers can only change worker roles (not demote managers)
-		return true;
+		return !isTeamLeader; // managers can't touch other leaders
 	};
 
-	// Get available role options based on permissions
-	const getAvailableRoleOptions = (): string[] => {
+	const roleOptions = (): string[] => {
 		if (!worker) return ["Cashier"];
-		
-		if (!canDemoteWorker(worker)) {
-			// If can't demote, only show current role
-			const currentRole = worker.roleAssignments.find(
-				assignment => assignment.isActive !== false
-			)?.role || "cashier";
-			return [currentRole === "cashier" ? "Cashier" : "Team Leader"];
+		if (!canChangeRole(worker)) {
+			const current = worker.roleAssignments.find((a) => a.isActive !== false)?.role || "cashier";
+			return [current === "cashier" ? "Cashier" : "Team Leader"];
 		}
-		
-		// Full options if can demote
 		return ["Cashier", "Team Leader"];
 	};
 
-	// Initialize form data when worker changes
+	// Initialize form when the worker changes.
 	useEffect(() => {
-		if (worker && isOpen) {
-			const branchAssignments = worker.roleAssignments
-				.filter((assignment) => assignment.isActive !== false)
-				.map((assignment) => ({
-					branchId: assignment.branchId,
-					role: assignment.role,
-				}));
+		if (!worker || !isOpen) return;
 
-			console.log("Initializing EditWorkerModal with:", {
-				workerName: worker.name,
-				roleAssignments: worker.roleAssignments,
-				activeBranchAssignments: branchAssignments,
-				isOwner,
-				availableBranches: availableBranches.length,
-				userAccessibleBranches
-			});
+		const branchAssignments = worker.roleAssignments
+			.filter((a) => a.isActive !== false)
+			.map((a) => ({ branchId: a.branchId, role: a.role }));
 
-			setFormData({
-				name: worker.name,
-				email: worker.email,
-				phoneNumber: worker.phoneNumber || "",
-				employeeId: worker.employeeId || "",
-				isOwner: worker.isOwner,
-				branchAssignments,
-			});
+		setFormData({
+			name: worker.name,
+			email: worker.email,
+			isOwner: worker.isOwner,
+			branchAssignments,
+		});
 
-			// Get current available branches
-			const currentAvailableBranches = isOwner
-				? branches
-				: branches.filter((branch) =>
-						userAccessibleBranches.includes(branch.id)
-				  );
+		const currentAvailable = isOwner
+			? branches
+			: branches.filter((b) => userAccessibleBranches.includes(b.id));
 
-			// Set single branch assignment
-			if (branchAssignments.length > 0) {
-				const currentAssignment = branchAssignments[0];
-				setSelectedBranchId(currentAssignment.branchId);
-				setSelectedRole(currentAssignment.role);
-				setOriginalRole(currentAssignment.role);
-				console.log("✅ Initialized with existing assignment:", { 
-					branchId: currentAssignment.branchId, 
-					role: currentAssignment.role 
-				});
-			} else if (currentAvailableBranches.length === 1) {
-				// Auto-select the only available branch for managers
-				setSelectedBranchId(currentAvailableBranches[0].id);
-				setSelectedRole("cashier");
-				setOriginalRole("cashier");
-				console.log("✅ Auto-selected branch for manager:", currentAvailableBranches[0].id);
-			} else {
-				setSelectedBranchId("");
-				setSelectedRole("cashier");
-				setOriginalRole("cashier");
-				console.log("⚠️ No branch assignments found");
-			}
-
-			setError(null);
+		if (branchAssignments.length > 0) {
+			setSelectedBranchId(branchAssignments[0].branchId);
+			setSelectedRole(branchAssignments[0].role);
+			setOriginalRole(branchAssignments[0].role);
+		} else if (currentAvailable.length === 1) {
+			setSelectedBranchId(currentAvailable[0].id);
+			setSelectedRole("cashier");
+			setOriginalRole("cashier");
+		} else {
+			setSelectedBranchId("");
+			setSelectedRole("cashier");
+			setOriginalRole("cashier");
 		}
-	}, [worker, isOpen, isOwner, branches, userAccessibleBranches, availableBranches.length]);
 
-	// Debug logging for render conditions
-	useEffect(() => {
-		if (isOpen && worker) {
-			console.log("🎯 Modal render state:", {
-				workerisOwner: formData.isOwner,
-				availableBranches: availableBranches.length,
-				selectedRole,
-				selectedBranchId,
-				shouldShowRoleDropdown: !formData.isOwner
-			});
-		}
-	}, [isOpen, worker, formData.isOwner, availableBranches.length, selectedRole, selectedBranchId]);
+		setError(null);
+	}, [worker, isOpen, isOwner, branches, userAccessibleBranches]);
 
-	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-	) => {
-		const { name, value, type } = e.target;
-		const checked = (e.target as HTMLInputElement).checked;
-
-		setFormData((prev) => ({
-			...prev,
-			[name]: type === "checkbox" ? checked : value,
-		}));
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value, type, checked } = e.target;
+		setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
 	};
 
 	const handleBranchChange = (branchId: string) => {
@@ -187,21 +132,9 @@ export default function EditWorkerModal({
 	};
 
 	const handleRoleChange = (role: "team_leader" | "cashier") => {
-		console.log("🔄 Role change attempted:", { role, selectedBranchId, isOwner });
 		setSelectedRole(role);
 		if (selectedBranchId) {
-			const updatedAssignments = [{ branchId: selectedBranchId, role }];
-			setFormData((prev) => ({
-				...prev,
-				branchAssignments: updatedAssignments,
-			}));
-			console.log("✅ Role change updated in form data:", { 
-				role, 
-				branchId: selectedBranchId,
-				branchAssignments: updatedAssignments
-			});
-		} else {
-			console.log("⚠️ No branch selected, cannot update role");
+			setFormData((prev) => ({ ...prev, branchAssignments: [{ branchId: selectedBranchId, role }] }));
 		}
 	};
 
@@ -213,7 +146,7 @@ export default function EditWorkerModal({
 			setPinResetDone(true);
 			setTimeout(() => setPinResetDone(false), 3000);
 		} catch {
-			setError('Failed to reset PIN. Please try again.');
+			setError("Couldn't reset the PIN. Please try again.");
 		} finally {
 			setPinResetLoading(false);
 		}
@@ -221,49 +154,25 @@ export default function EditWorkerModal({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-
 		if (!worker) return;
 
-		console.log("🚀 Form submission started:", {
-			workerId: worker.id,
-			currentRole: worker.roleAssignments,
-			newRole: selectedRole,
-			selectedBranchId,
-			isOwner: formData.isOwner,
-			availableBranches: availableBranches.length
-		});
-
 		if (!formData.name.trim() || !formData.email.trim()) {
-			setError("Please fill in all required fields");
+			setError("Name and email are both required.");
 			return;
 		}
-
-		if (!selectedBranchId && !formData.isOwner) {
-			setError("Please select a branch assignment or make them an admin");
+		if (!formData.isOwner && !selectedBranchId) {
+			setError("Pick a branch for this person, or make them an owner.");
 			return;
 		}
-
-		if (!formData.isOwner && !selectedRole) {
-			setError("Please select a role for the worker");
+		if (!isOwner && !canChangeRole(worker)) {
+			setError("You don't have permission to change this person's role.");
 			return;
 		}
-
-		// Additional validation for manager permissions
-		if (!isOwner && !canDemoteWorker(worker)) {
-			setError("You do not have permission to change this user's role");
-			return;
-		}
-
-		// Prevent managers from changing branch assignments or roles
+		// Managers can edit their own details but never move branch or change role.
 		if (!isOwner) {
-			const currentBranchAssignment = worker.roleAssignments.find(
-				(a) => a.isActive !== false
-			);
-			const currentBranch = currentBranchAssignment?.branchId;
-			const currentRole = currentBranchAssignment?.role;
-
-			if (currentBranch !== selectedBranchId || currentRole !== selectedRole) {
-				setError("Only owners can change branch assignments and roles");
+			const current = worker.roleAssignments.find((a) => a.isActive !== false);
+			if (current?.branchId !== selectedBranchId || current?.role !== selectedRole) {
+				setError("Only owners can change branch or role.");
 				return;
 			}
 		}
@@ -272,361 +181,266 @@ export default function EditWorkerModal({
 		setError(null);
 
 		try {
-			// Update worker data
 			await workerService.updateWorker(worker.id, {
 				name: formData.name,
 				email: formData.email,
-				phoneNumber: formData.phoneNumber,
-				employeeId: formData.employeeId,
 				isOwner: formData.isOwner,
 			});
 
-			// Handle admin role changes (only for owners)
 			if (isOwner && formData.isOwner !== worker.isOwner) {
-				if (formData.isOwner) {
-					await workerService.promoteToOwner(worker.id);
-				} else {
-					await workerService.demoteFromOwner(worker.id);
+				if (formData.isOwner) await workerService.promoteToOwner(worker.id);
+				else await workerService.demoteFromOwner(worker.id);
+			}
+
+			if (isOwner && !formData.isOwner) {
+				const current = worker.roleAssignments.find((a) => a.isActive !== false);
+				const branchChanged = current?.branchId !== selectedBranchId;
+				const roleChanged = current?.role !== selectedRole;
+
+				if (!branchChanged && roleChanged && selectedBranchId) {
+					await workerService.updateWorkerRole(worker.id, selectedBranchId, selectedRole);
+				} else if (branchChanged) {
+					if (current?.branchId) await workerService.removeWorkerFromBranch(worker.id, current.branchId);
+					if (selectedBranchId) await workerService.assignWorkerToBranch(worker.id, selectedBranchId, selectedRole);
 				}
 			}
 
-		// Update branch/role assignment if not admin (only for owners)
-		if (isOwner && !formData.isOwner) {
-			const currentAssignment = worker.roleAssignments.find(
-				(a) => a.isActive !== false
-			);
-			const currentBranchId = currentAssignment?.branchId;
-			const currentRole = currentAssignment?.role;
-
-			const branchChanged = currentBranchId !== selectedBranchId;
-			const roleChanged = currentRole !== selectedRole;
-
-			if (!branchChanged && roleChanged && selectedBranchId) {
-				// Only the role changed — update in place directly
-				await workerService.updateWorkerRole(worker.id, selectedBranchId, selectedRole);
-			} else if (branchChanged) {
-				// Branch changed — remove from old and assign to new
-				if (currentBranchId) {
-					await workerService.removeWorkerFromBranch(worker.id, currentBranchId);
-				}
-				if (selectedBranchId) {
-					await workerService.assignWorkerToBranch(worker.id, selectedBranchId, selectedRole);
-				}
-			}
-		}			
-			console.log("✅ Worker updated successfully!");
-			
-			// Check if role was changed to determine if we need to reload
-			const roleChanged = originalRole !== selectedRole;
-			console.log("🔄 Role change status:", { originalRole, selectedRole, roleChanged });
-			
-			if (roleChanged) {
-				console.log("🔄 Role was changed, reloading page...");
-				// Close modal first
+			// A role change shifts which route group the worker lands in, so refresh.
+			if (originalRole !== selectedRole) {
 				onSuccess();
-				// Small delay to ensure modal closes, then reload
-				setTimeout(() => {
-					window.location.reload();
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				onSuccess();
 			}
 		} catch (err: unknown) {
-			console.error("❌ Error updating worker:", err);
-			const errorMessage = err instanceof Error ? err.message : "Failed to update worker";
-			setError(`Update failed: ${errorMessage}`);
+			setError(err instanceof Error ? err.message : "Couldn't save changes. Please try again.");
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	const handleClose = () => {
-		if (!loading) {
-			setError(null);
-			onClose();
-		}
+		if (loading) return;
+		setError(null);
+		onClose();
 	};
 
 	if (!isOpen || !worker) return null;
 
+	const currentBranchName =
+		availableBranches.find((b) => b.id === selectedBranchId)?.name ??
+		branches.find((b) => b.id === selectedBranchId)?.name ??
+		"No branch";
+	const roleLabel = formData.isOwner
+		? "Owner"
+		: selectedRole === "cashier"
+		? "Cashier"
+		: "Team Leader";
+	const canEditRole = isOwner && canChangeRole(worker);
+	const canEditBranch = isOwner && availableBranches.length > 1;
+
 	return (
 		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
-			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto'>
+			<div className='bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto'>
 				{loading ? (
-					<div className='text-center py-12'>
-						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
-							<LoadingSpinner size="lg" />
-						</div>
-						<h3 className='text-lg font-bold text-secondary mb-2'>
-							Updating Worker...
-						</h3>
-						<p className='text-secondary opacity-70'>
-							Saving changes to worker account
-						</p>
+					<div className='text-center py-16 px-8'>
+						<LoadingSpinner size='lg' />
+						<p className='text-secondary/70 mt-4'>Saving changes…</p>
 					</div>
 				) : (
-					<>
-						{/* Header */}
-						<div className='flex items-center justify-between mb-6'>
-							<div>
-								<h2 className='text-xl font-bold text-secondary'>
-									Edit Worker
-								</h2>
-								<p className='text-xs text-secondary/70 mt-1'>
-									Update worker information and role assignments
-								</p>
+					<form onSubmit={handleSubmit}>
+						{/* Identity header — who am I editing? */}
+						<div className='flex items-start gap-4 p-6 border-b border-secondary/10'>
+							<div className='size-12 shrink-0 rounded-full bg-accent/10 text-accent flex items-center justify-center font-semibold text-sm'>
+								{initialsOf(formData.name || worker.name)}
 							</div>
-							<button aria-label="Close"
+							<div className='min-w-0 flex-1'>
+								<h2 className='text-lg font-bold text-secondary truncate'>
+									{formData.name || worker.name}
+								</h2>
+								<p className='text-xs text-secondary/60 truncate'>{formData.email || worker.email}</p>
+								<div className='flex flex-wrap items-center gap-1.5 mt-2'>
+									<span className='inline-flex items-center rounded-full bg-accent/10 text-accent text-2.5 font-semibold px-2 py-0.5'>
+										{roleLabel}
+									</span>
+									{!formData.isOwner && (
+										<span className='inline-flex items-center rounded-full bg-secondary/8 text-secondary/60 text-2.5 font-medium px-2 py-0.5'>
+											{currentBranchName}
+										</span>
+									)}
+								</div>
+							</div>
+							<button
+								type='button'
+								aria-label='Close'
 								onClick={handleClose}
-								className='text-secondary/40 hover:text-secondary/60 p-2'>
-								<svg
-									className='w-6 h-6'
-									fill='none'
-									stroke='currentColor'
-									viewBox='0 0 24 24'>
-									<path
-										strokeLinecap='round'
-										strokeLinejoin='round'
-										strokeWidth={2}
-										d='M6 18L18 6M6 6l12 12'
-									/>
+								className='shrink-0 -mr-1 -mt-1 text-secondary/40 hover:text-secondary/70 p-1.5 rounded-lg hover:bg-secondary/5 transition-colors'>
+								<svg className='size-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+									<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
 								</svg>
 							</button>
 						</div>
 
-						{/* Error Display */}
-						{error && (
-							<div className='mb-6 p-4 bg-error/5 border border-error/20 rounded-lg'>
-								<div className='flex items-center'>
-									<svg
-										className='w-5 h-5 text-error/40 mr-2'
-										fill='currentColor'
-										viewBox='0 0 20 20'>
-										<path
-											fillRule='evenodd'
-											d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
-											clipRule='evenodd'
-										/>
+						<div className='p-6 space-y-6'>
+							{error && (
+								<div className='flex items-start gap-2 p-3 bg-error/5 border border-error/20 rounded-lg'>
+									<svg className='size-4 text-error/60 mt-0.5 shrink-0' fill='currentColor' viewBox='0 0 20 20'>
+										<path fillRule='evenodd' d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z' clipRule='evenodd' />
 									</svg>
 									<span className='text-error text-xs'>{error}</span>
 								</div>
-							</div>
-						)}
+							)}
 
-						{/* Form */}
-						<form onSubmit={handleSubmit} className='space-y-6'>
-							{/* Basic Information */}
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+							{/* Name + email */}
+							<div className='space-y-4'>
 								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Full Name <span className="text-error">*</span>
-									</label>
+									<label className='block text-xs font-medium text-secondary/70 mb-1.5'>Name</label>
 									<input
 										type='text'
 										name='name'
 										value={formData.name}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter full name'
+										className='w-full px-3 h-10 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										placeholder='Their full name'
 										required
 									/>
 								</div>
 								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Email Address <span className="text-error">*</span>
-									</label>
+									<label className='block text-xs font-medium text-secondary/70 mb-1.5'>Email</label>
 									<input
 										type='email'
 										name='email'
 										value={formData.email}
 										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter email address'
+										className='w-full px-3 h-10 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+										placeholder='name@example.com'
 										required
 									/>
 								</div>
 							</div>
 
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Phone Number
-									</label>
-									<input
-										type='tel'
-										name='phoneNumber'
-										value={formData.phoneNumber}
-										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter phone number'
-									/>
-								</div>
-								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Employee ID
-									</label>
-									<input
-										type='text'
-										name='employeeId'
-										value={formData.employeeId}
-										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter employee ID (optional)'
-									/>
-								</div>
-							</div>
-
-							{/* Owner Toggle */}
+							{/* Owner toggle — a real switch, clearly labelled */}
 							{isOwner && (
-								<div className='flex items-center'>
+								<label className='flex items-center justify-between gap-4 p-3 rounded-xl border border-secondary/15 cursor-pointer hover:bg-secondary/3 transition-colors'>
+									<div>
+										<p className='text-3 font-medium text-secondary'>Owner access</p>
+										<p className='text-2.5 text-secondary/55 mt-0.5'>
+											Full control of every branch. No branch or role assignment needed.
+										</p>
+									</div>
 									<input
 										type='checkbox'
 										name='isOwner'
 										checked={formData.isOwner}
 										onChange={handleInputChange}
-										className='w-4 h-4 rounded shrink-0 accent-accent'
+										className='size-5 shrink-0 rounded accent-accent'
 									/>
-									<label className='ml-2 block text-xs text-secondary p-1'>
-										Grant admin privileges
-									</label>
-								</div>
+								</label>
 							)}
 
-							{/* Branch Assignment */}
+							{/* Branch + role — only when not an owner */}
 							{!formData.isOwner && (
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div className='space-y-4'>
 									<div>
-										<label className='block text-xs font-medium text-secondary/70 mb-2'>
-											Assign to Branch <span className="text-error">*</span>
-										</label>
-										{!isOwner || availableBranches.length === 1 ? (
-											// For managers - show readonly branch name (no changes allowed)
-											<div className='w-full px-3 py-2 h-9.5 flex items-center text-3 bg-secondary/5 border border-secondary/20 rounded-lg text-secondary/50'>
-												{availableBranches[0]?.name || selectedBranchId}
-											</div>
-										) : (
-											// For admins - show dropdown
+										<label className='block text-xs font-medium text-secondary/70 mb-1.5'>Branch</label>
+										{canEditBranch ? (
 											<DropdownField
-												options={[
-													"Select a branch",
-													...availableBranches.map(
-														(branch: Branch) => branch.name
-													),
-												]}
-												defaultValue={
-													selectedBranchId
-														? availableBranches.find(
-																(b: Branch) => b.id === selectedBranchId
-														  )?.name
-														: "Select a branch"
-												}
+												options={["Select a branch", ...availableBranches.map((b: Branch) => b.name)]}
+												defaultValue={currentBranchName === "No branch" ? "Select a branch" : currentBranchName}
 												onChange={(value) => {
-													if (value === "Select a branch") {
-														handleBranchChange("");
-													} else {
-														const branch = availableBranches.find(
-															(b: Branch) => b.name === value
-														);
-														if (branch) {
-															handleBranchChange(branch.id);
-														}
-													}
+													const branch = availableBranches.find((b: Branch) => b.name === value);
+													handleBranchChange(branch ? branch.id : "");
 												}}
 												roundness='lg'
-												height={42}
+												height={40}
 												valueAlignment='left'
 												shadow={false}
 												fontSize='14px'
 												padding='12px'
 												maxVisibleOptions={3}
 											/>
+										) : (
+											<div className='w-full px-3 h-10 flex items-center text-3 bg-secondary/5 border border-secondary/15 rounded-lg text-secondary/60'>
+												{currentBranchName}
+											</div>
 										)}
 									</div>
+
 									<div>
-										<label className='block text-xs font-medium text-secondary/70 mb-2'>
-											Role <span className="text-error">*</span>
-										</label>
-										{isOwner && canDemoteWorker(worker) ? (
+										<label className='block text-xs font-medium text-secondary/70 mb-1.5'>Role</label>
+										{canEditRole ? (
 											<DropdownField
-												options={getAvailableRoleOptions()}
-												defaultValue={
-													selectedRole === "cashier" ? "Cashier" : "Team Leader"
+												options={roleOptions()}
+												defaultValue={selectedRole === "cashier" ? "Cashier" : "Team Leader"}
+												onChange={(value) =>
+													handleRoleChange(value === "Team Leader" ? "team_leader" : "cashier")
 												}
-												onChange={(value) => {
-													handleRoleChange(
-														(value === "Team Leader" ? "team_leader" : "cashier")
-													);
-												}}
 												roundness='lg'
-												height={42}
+												height={40}
 												valueAlignment='left'
 												shadow={false}
 												fontSize='14px'
 												padding='12px'
 											/>
 										) : (
-											// Show readonly role for managers or when cannot demote
-											<div className='w-full px-3 py-2 h-9.5 text-3 bg-secondary/5 border border-secondary/20 rounded-lg text-secondary/50 flex items-center justify-between'>
+											<div className='w-full px-3 h-10 flex items-center justify-between text-3 bg-secondary/5 border border-secondary/15 rounded-lg text-secondary/60'>
 												<span>{selectedRole === "cashier" ? "Cashier" : "Team Leader"}</span>
-												{!isOwner && (
-													<span className='text-xs text-secondary/40'>(Only owners can change roles)</span>
-												)}
-												{isOwner && worker?.id === currentUserId && (
-													<span className='text-xs text-secondary/40'>(Cannot change own role)</span>
-												)}
-												{isOwner && worker?.roleAssignments.some(a => a.role === "team_leader" && a.isActive !== false) && worker?.id !== currentUserId && (
-													<span className='text-xs text-secondary/40'>(Cannot demote managers)</span>
-												)}
+												<span className='text-2.5 text-secondary/40'>
+													{!isOwner
+														? "Owners only"
+														: worker.id === currentUserId
+														? "That's you"
+														: "Can't change a leader"}
+												</span>
 											</div>
 										)}
+										<p className='text-2.5 text-secondary/50 mt-1.5'>{ROLE_BLURB[selectedRole]}</p>
 									</div>
 								</div>
 							)}
 
-							{/* PIN Reset — owner only, not for self, not for other owners */}
-							{isOwner && worker?.id !== currentUserId && !worker?.isOwner && (
-								<div className='pt-4 border-t border-secondary/10'>
-									<div className='flex items-center justify-between'>
-										<div>
-										<p className='text-xs font-medium text-secondary'>Worker PIN</p>
-										<p className='text-xs text-secondary/50 mt-0.5'>
+							{/* PIN reset — owners only, not self, not other owners */}
+							{isOwner && worker.id !== currentUserId && !worker.isOwner && (
+								<div className='flex items-center justify-between gap-4 pt-4 border-t border-secondary/10'>
+									<div>
+										<p className='text-3 font-medium text-secondary'>Sign-in PIN</p>
+										<p className='text-2.5 text-secondary/55 mt-0.5'>
 											{pinResetDone
-											? 'PIN cleared — worker will set a new one on next clock-in'
-											: 'Clear the PIN so the worker must create a new one'}
+												? "Cleared — they'll set a new PIN at their next clock-in."
+												: "Clear it if they forgot their PIN or need a new one."}
 										</p>
-										</div>
-										<button
-											type='button'
-											onClick={handlePinReset}
-											disabled={pinResetLoading || pinResetDone}
-											className={`ml-4 shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 ${
-											pinResetDone
-											? 'bg-success/10 text-success'
-											: 'bg-error/10 text-error hover:bg-error/20'
-											}`}>
-											{pinResetLoading ? 'Resetting…' : pinResetDone ? 'PIN Reset ✓' : 'Reset PIN'}
-										</button>
 									</div>
+									<button
+										type='button'
+										onClick={handlePinReset}
+										disabled={pinResetLoading || pinResetDone}
+										className={`shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 ${
+											pinResetDone
+												? "bg-success/10 text-success"
+												: "bg-error/10 text-error hover:bg-error/20"
+										}`}>
+										{pinResetLoading ? "Clearing…" : pinResetDone ? "PIN cleared ✓" : "Reset PIN"}
+									</button>
 								</div>
 							)}
+						</div>
 
-							{/* Form Actions */}
-							<div className='flex flex-col sm:flex-row gap-3 pt-6 border-t border-secondary/20'>
-								<button
-									type='button'
-									onClick={handleClose}
-									className='flex-1 py-3 px-4 border border-secondary/30 rounded-lg text-secondary/70 font-medium hover:bg-secondary/20 transition-colors'>
-									Cancel
-								</button>
-								<button
-									type='submit'
-									disabled={loading}
-									className='flex-1 py-3 px-4 bg-accent text-primary rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50'>
-									Update Worker
-								</button>
-							</div>
-						</form>
-					</>
+						{/* Actions */}
+						<div className='flex gap-3 p-6 border-t border-secondary/10'>
+							<button
+								type='button'
+								onClick={handleClose}
+								className='flex-1 h-11 border border-secondary/25 rounded-lg text-secondary/70 font-medium hover:bg-secondary/5 transition-colors'>
+								Cancel
+							</button>
+							<button
+								type='submit'
+								disabled={loading}
+								className='flex-1 h-11 bg-accent text-primary rounded-lg font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50'>
+								Save changes
+							</button>
+						</div>
+					</form>
 				)}
 			</div>
 		</div>

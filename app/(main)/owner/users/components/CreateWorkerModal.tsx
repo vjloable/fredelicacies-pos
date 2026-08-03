@@ -31,8 +31,6 @@ export default function CreateWorkerModal({
 		name: "",
 		email: "",
 		password: "",
-		phoneNumber: "",
-		employeeId: "",
 		branchAssignments: [],
 		isOwner: false,
 	});
@@ -57,8 +55,6 @@ export default function CreateWorkerModal({
 				name: "",
 				email: "",
 				password: "",
-				phoneNumber: "",
-				employeeId: "",
 				branchAssignments: [],
 				isOwner: false,
 			});
@@ -180,8 +176,6 @@ export default function CreateWorkerModal({
 			name: "",
 			email: "",
 			password: "",
-			phoneNumber: "",
-			employeeId: "",
 			branchAssignments: [],
 			isOwner: false,
 		});
@@ -297,48 +291,19 @@ export default function CreateWorkerModal({
 								</div>
 							</div>
 
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Password <span className="text-error">*</span>
-									</label>
-									<input
-										type='password'
-										name='password'
-										value={formData.password}
-										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter password'
-										required
-										minLength={6}
-									/>
-								</div>
-								<div>
-									<label className='block text-xs font-medium text-secondary/70 mb-2'>
-										Phone Number
-									</label>
-									<input
-										type='tel'
-										name='phoneNumber'
-										value={formData.phoneNumber}
-										onChange={handleInputChange}
-										className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-										placeholder='Enter phone number'
-									/>
-								</div>
-							</div>
-
 							<div>
 								<label className='block text-xs font-medium text-secondary/70 mb-2'>
-									Employee ID
+									Password <span className="text-error">*</span>
 								</label>
 								<input
-									type='text'
-									name='employeeId'
-									value={formData.employeeId}
+									type='password'
+									name='password'
+									value={formData.password}
 									onChange={handleInputChange}
 									className='w-full px-3 py-2 text-3 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
-									placeholder='Enter employee ID (optional)'
+									placeholder='Enter password'
+									required
+									minLength={6}
 								/>
 							</div>
 

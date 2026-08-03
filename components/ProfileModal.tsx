@@ -26,7 +26,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         display_name: '',
-        phone_number: '',
         profile_picture: '',
     });
 
@@ -35,7 +34,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             setFormData({
                 name: user.name || '',
                 display_name: user.display_name || '',
-                phone_number: user.phone_number || '',
                 profile_picture: user.profile_picture || '',
             });
             setError(null);
@@ -99,7 +97,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         const { error: updateError } = await authService.updateUserProfile(user.id, {
             name: formData.name.trim(),
             display_name: formData.display_name.trim() || undefined,
-            phone_number: formData.phone_number.trim() || undefined,
             profile_picture: formData.profile_picture || undefined,
         });
 
@@ -239,21 +236,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         </p>
                     </div>
 
-                    {/* Phone */}
-                    <div>
-                        <label className='block text-xs font-medium text-secondary mb-1.5'>
-                            Phone Number <span className='text-xs text-secondary/50 ml-1'>(Optional)</span>
-                        </label>
-                        <input
-                            type='tel'
-                            value={formData.phone_number}
-                            onChange={(e) => setFormData((p) => ({ ...p, phone_number: e.target.value }))}
-                            placeholder='+63 9xx xxx xxxx'
-                            disabled={loading}
-                            className='w-full h-9.5 px-3 border border-secondary/20 rounded-lg text-xs text-secondary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 transition-colors'
-                        />
-                    </div>
-
                     {/* Change Password */}
                     <div className='pt-1 border-t border-secondary/10'>
                         <button
@@ -276,12 +258,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                             <span className='text-xs text-secondary/50'>Role</span>
                             <span className='text-xs text-secondary font-medium'>{roleLabel}</span>
                         </div>
-                        {user.employee_id && (
-                            <div className='flex items-center justify-between'>
-                                <span className='text-xs text-secondary/50'>Employee ID</span>
-                                <span className='text-xs text-secondary font-medium'>{user.employee_id}</span>
-                            </div>
-                        )}
                     </div>
 
                     {/* Actions */}

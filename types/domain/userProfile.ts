@@ -3,8 +3,6 @@ export interface UserProfile {
   id: string; // References auth.users(id)
   email: string;
   name: string;
-  phone_number?: string;
-  employee_id?: string;
   profile_picture?: string;
   display_name?: string;
   is_owner: boolean;
@@ -20,8 +18,6 @@ export interface CreateUserProfileData {
   id: string; // Must match auth.users(id)
   email: string;
   name: string;
-  phone_number?: string;
-  employee_id?: string;
   profile_picture?: string;
   is_owner?: boolean;
   is_manager?: boolean;
@@ -31,8 +27,6 @@ export interface CreateUserProfileData {
 export interface UpdateUserProfileData {
   name?: string;
   display_name?: string;
-  phone_number?: string;
-  employee_id?: string;
   profile_picture?: string;
   is_active?: boolean;
   // is_owner / is_manager can only be updated by owners (handled by RLS)

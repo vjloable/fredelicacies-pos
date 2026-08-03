@@ -178,11 +178,6 @@ export default function WorkerRow({
 						<div className='text-xs font-medium text-secondary'>
 							{worker.name}
 						</div>
-						{worker.employeeId && (
-							<div className='text-xs text-secondary/50'>
-								ID: {worker.employeeId}
-							</div>
-						)}
 					</div>
 				</div>
 			</td>

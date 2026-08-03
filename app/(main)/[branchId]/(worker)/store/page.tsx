@@ -733,7 +733,7 @@ export default function StoreScreen() {
 					timeTracking.worker?.name ||
 					user?.email ||
 					"Unknown Worker",
-				cashierEmployeeId: timeTracking.worker?.employeeId || user.uid,
+				cashierEmployeeId: user.uid,
 				storeName: "FREDELECACIES",
 				branchName: currentBranch.name,
 				paymentMethod,

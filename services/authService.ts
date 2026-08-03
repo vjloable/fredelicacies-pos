@@ -58,16 +58,12 @@ export const authService = {
       email: string;
       isOwner?: boolean;
       roleAssignments?: RoleAssignment[];
-      phoneNumber?: string;
-      employeeId?: string;
     }
   ): Promise<{ error: any }> => {
     const profileData: CreateUserProfileData = {
       id: userId,
       email: userData.email,
       name: userData.name,
-      phone_number: userData.phoneNumber,
-      employee_id: userData.employeeId,
       is_owner: userData.isOwner || false,
     };
 

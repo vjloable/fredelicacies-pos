@@ -5,8 +5,6 @@ export interface CreateWorkerRequest {
 	name: string;
 	email: string;
 	password: string;
-	phoneNumber?: string;
-	employeeId?: string;
 	branchAssignments: Array<{
 		branchId: string;
 		role: "team_leader" | "cashier";
