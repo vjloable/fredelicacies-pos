@@ -73,6 +73,17 @@ export const workerRepository = {
     return { worker: data, error };
   },
 
+  // Bulk: all worker rows for a set of users (one query, for list assembly).
+  async getByUserIds(userIds: string[]): Promise<{ workers: Worker[]; error: any }> {
+    if (userIds.length === 0) return { workers: [], error: null };
+    const { data, error } = await supabase
+      .from('workers')
+      .select('*')
+      .in('user_id', userIds);
+
+    return { workers: data || [], error };
+  },
+
   // Get worker by PIN for a branch
   async getByPin(branchId: string, pin: string): Promise<{ worker: Worker | null; error: any }> {
     const { data, error } = await supabase

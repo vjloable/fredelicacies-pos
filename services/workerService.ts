@@ -2,7 +2,7 @@
 // Business logic for worker management
 import { userProfileRepository, workerRepository, authRepository } from '@/lib/repositories';
 import { attendanceService } from '@/services/attendanceService';
-import type { UserWithRoles, RoleAssignment, CreateUserProfileData } from '@/types/domain';
+import type { CreateUserProfileData } from '@/types/domain';
 import { hashPin, verifyPin } from '@/lib/pin';
 import { supabase } from '@/lib/supabase';
 
@@ -196,6 +196,10 @@ export const workerService = {
     limit?: number;
   }): Promise<Worker[]> => {
     try {
+      // Assemble the whole list from a constant 3 bulk queries instead of the old
+      // per-worker N+1 (profile → workers → attendance, sequentially). Indexes on
+      // workers.user_id and the partial attendance(worker_id) WHERE clock_out IS NULL
+      // make both IN-lookups cheap.
       const { profiles, error } = await userProfileRepository.getActive();
 
       if (error) {
@@ -203,15 +207,63 @@ export const workerService = {
         return [];
       }
 
-      // Get all workers and convert to Worker format
-      const workers: Worker[] = [];
+      const userIds = profiles.map(p => p.id);
 
-      for (const profile of profiles) {
-        const worker = await workerService.getWorker(profile.id);
-        if (worker) {
-          workers.push(worker);
-        }
+      // 1 query: every worker (branch/role) row for these users.
+      const { workers: workerRows } = await workerRepository.getByUserIds(userIds);
+
+      // 1 query: all currently-open attendance rows for those worker rows.
+      const workerIdByUser = new Map<string, string[]>();
+      for (const w of workerRows) {
+        const list = workerIdByUser.get(w.user_id) ?? [];
+        list.push(w.id);
+        workerIdByUser.set(w.user_id, list);
       }
+      const { records: activeAttendance } = await attendanceService.getActiveAttendanceByWorkerIds(
+        workerRows.map(w => w.id)
+      );
+      const activeByWorkerId = new Map(activeAttendance.map(a => [a.worker_id, a]));
+
+      // Group role assignments per user (branch roles only; owners have none).
+      const assignmentsByUser = new Map<string, Worker['roleAssignments']>();
+      for (const w of workerRows) {
+        if (w.role !== 'team_leader' && w.role !== 'cashier') continue;
+        const list = assignmentsByUser.get(w.user_id) ?? [];
+        list.push({
+          workersTableId: w.id,
+          branchId: w.branch_id,
+          role: w.role,
+          assignedAt: new Date(w.created_at),
+          assignedBy: '',
+          isActive: w.status === 'active',
+        });
+        assignmentsByUser.set(w.user_id, list);
+      }
+
+      const workers: Worker[] = profiles.map(profile => {
+        // Active attendance for any of this user's worker rows (non-owners only).
+        const active = profile.is_owner
+          ? undefined
+          : (workerIdByUser.get(profile.id) ?? [])
+              .map(id => activeByWorkerId.get(id))
+              .find(Boolean);
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          roleAssignments: assignmentsByUser.get(profile.id) ?? [],
+          isOwner: profile.is_owner,
+          currentStatus: profile.is_owner ? undefined : active ? 'clocked_in' : 'clocked_out',
+          currentBranchId: active?.branch_id,
+          lastTimeIn: active ? new Date(active.clock_in) : undefined,
+          lastTimeOut: undefined,
+          profilePicture: profile.profile_picture,
+          createdAt: new Date(profile.created_at),
+          updatedAt: new Date(profile.updated_at),
+          createdBy: profile.created_by || '',
+          isActive: profile.is_active,
+        };
+      });
 
       // Apply filters
       let filtered = workers;

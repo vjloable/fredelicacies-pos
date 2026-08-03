@@ -10,6 +10,7 @@ export interface AttendanceService {
   clockOut: (attendanceId: string) => Promise<{ attendance: Attendance | null; error: any }>;
   getActiveAttendance: (workerId: string) => Promise<{ attendance: Attendance | null; error: any }>;
   getActiveAttendanceByUserId: (userId: string) => Promise<{ attendance: Attendance | null; error: any }>;
+  getActiveAttendanceByWorkerIds: (workerIds: string[]) => Promise<{ records: Attendance[]; error: any }>;
   getAttendancesByBranch: (branchId: string, startDate?: Date, endDate?: Date) => Promise<{ records: Attendance[]; error: any }>;
   getAttendancesByWorker: (workerId: string, startDate?: Date, endDate?: Date, limit?: number) => Promise<{ records: Attendance[]; error: any }>;
 }
@@ -37,6 +38,11 @@ export const attendanceService: AttendanceService = {
 
   getActiveAttendanceByUserId: async (userId: string): Promise<{ attendance: Attendance | null; error: any }> => {
     return await attendanceRepository.getActiveByUserId(userId);
+  },
+
+  // Bulk active-attendance lookup for many workers at once (avoids per-worker N+1).
+  getActiveAttendanceByWorkerIds: async (workerIds: string[]): Promise<{ records: Attendance[]; error: any }> => {
+    return await attendanceRepository.getActiveByWorkerIds(workerIds);
   },
 
   getAttendancesByBranch: async (

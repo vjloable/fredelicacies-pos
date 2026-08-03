@@ -64,6 +64,20 @@ export const attendanceRepository = {
     return { attendance: data, error };
   },
 
+  // Bulk: all open (not-clocked-out) attendance rows for a set of workers.
+  // Uses the partial index idx_attendance_active (worker_id WHERE clock_out IS NULL).
+  async getActiveByWorkerIds(workerIds: string[]): Promise<{ records: Attendance[]; error: any }> {
+    if (workerIds.length === 0) return { records: [], error: null };
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .in('worker_id', workerIds)
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false });
+
+    return { records: data || [], error };
+  },
+
   // Get active attendance for a worker (not clocked out)
   async getActiveByWorker(workerId: string): Promise<{ attendance: Attendance | null; error: any }> {
     const { data, error } = await supabase
