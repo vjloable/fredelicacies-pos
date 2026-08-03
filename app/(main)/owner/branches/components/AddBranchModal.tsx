@@ -7,6 +7,7 @@ import type { BranchType } from '@/types/domain';
 import ImageUpload from '@/components/ImageUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { isUniqueViolation } from '@/lib/dbErrors';
 
 // Owners can create these kinds.
 const BRANCH_TYPE_OPTIONS: { value: BranchType; label: string; hint: string }[] = [
@@ -74,13 +75,22 @@ export default function AddBranchModal({
 
     setLoading(true);
     try {
-      await branchService.createBranch(user.uid, {
+      const { error } = await branchService.createBranch(user.uid, {
         name: branchData.name.trim(),
         address: branchData.address.trim(),
         logo_url: branchData.logo_url,
         branch_code: branchData.branch_code ? branchData.branch_code.toUpperCase() : undefined,
         type: branchType,
       });
+
+      if (error) {
+        onError(
+          isUniqueViolation(error, 'branches_branch_code')
+            ? `Branch code "${branchData.branch_code}" is already used by another branch. Pick a different code.`
+            : 'Failed to create branch. Please try again.'
+        );
+        return;
+      }
 
       // Reset form
       setBranchType('branch');
@@ -227,7 +237,7 @@ export default function AddBranchModal({
                     onImageUpload={(imageUrl) => setBranchData({...branchData, logo_url: imageUrl})}
                     onImageRemove={() => setBranchData({...branchData, logo_url: ""})}
                     bucket="branch-logos"
-                    objectName={branchData.name}
+                    objectName={branchData.branch_code}
                   />
                 </div>
 

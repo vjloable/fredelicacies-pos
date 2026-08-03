@@ -5,6 +5,7 @@ import { branchService, Branch } from '@/services/branchService';
 import ImageUpload from '@/components/ImageUpload';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ResetBranchDataModal from '@/components/ResetBranchDataModal';
+import { isUniqueViolation } from '@/lib/dbErrors';
 
 interface EditBranchModalProps {
   isOpen: boolean;
@@ -68,13 +69,23 @@ export default function EditBranchModal({
         setLoading(false);
         return;
       }
-      await branchService.updateBranch(branch.id, {
+      const { error } = await branchService.updateBranch(branch.id, {
         name: branchData.name.trim(),
         address: branchData.address.trim(),
         status: branchData.status,
         logo_url: branchData.logo_url || '',
         branch_code: branchData.branch_code || undefined,
       });
+
+      if (error) {
+        onError(
+          isUniqueViolation(error, 'branches_branch_code')
+            ? `Branch code "${branchData.branch_code}" is already used by another branch. Pick a different code.`
+            : 'Failed to update branch. Please try again.'
+        );
+        setLoading(false);
+        return;
+      }
 
       onSuccess();
       onClose();
@@ -224,7 +235,7 @@ export default function EditBranchModal({
                     onImageUpload={(imageUrl) => setBranchData({...branchData, logo_url: imageUrl})}
                     onImageRemove={() => setBranchData({...branchData, logo_url: ""})}
                     bucket="branch-logos"
-                    objectName={branchData.name}
+                    objectName={branchData.branch_code}
                   />
                 </div>
 

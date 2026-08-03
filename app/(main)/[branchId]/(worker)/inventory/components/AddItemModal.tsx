@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { createInventoryItem } from '@/services/inventoryService';
+import { isUniqueViolation } from '@/lib/dbErrors';
 import type { Category, CreateInventoryItemData, InventoryUnitType, InventoryItemKind } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
 import { useBranch } from '@/contexts/BranchContext';
@@ -196,7 +197,15 @@ export default function AddItemModal({
           : {}),
       };
 
-      await createInventoryItem(currentBranch!.id, itemData);
+      const { error } = await createInventoryItem(currentBranch!.id, itemData);
+      if (error) {
+        onError(
+          isUniqueViolation(error, 'inventory_items_code')
+            ? `SKU "${code}" is already used by another item. Pick a different code.`
+            : 'Failed to add item. Please try again.'
+        );
+        return;
+      }
       void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'item_created', entityType: 'inventory', details: { name: newItem.name, kind: effectiveKind, categories: selectedCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) } });
 
       resetForm();
