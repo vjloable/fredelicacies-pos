@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { uploadToSupabase } from '@/lib/supabaseStorage';
+import { uploadToSupabase, deleteFromSupabaseUrl } from '@/lib/supabaseStorage';
 import { shimmerBlur } from '@/lib/imageUtils';
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -13,6 +13,9 @@ interface ImageUploadProps {
   className?: string;
   bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images' | 'profile-images'; // Supabase storage bucket
   compact?: boolean; // Smaller preview/upload area for modals
+  // When set, the stored file is named after this (e.g. the branch name) and the
+  // previous object is deleted on replace/remove — no orphaned files in storage.
+  objectName?: string;
 }
 
 export default function ImageUpload({
@@ -21,7 +24,8 @@ export default function ImageUpload({
   onImageRemove,
   className = '',
   bucket = 'inventory-images', // Default to inventory bucket
-  compact = false
+  compact = false,
+  objectName,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -47,7 +51,13 @@ export default function ImageUpload({
     setUploadError(null);
 
     try {
-      const result = await uploadToSupabase(file, bucket);
+      // Managed (named) storage: drop the previous object first so a replaced logo
+      // never leaves an orphan — covers the case where the file extension changed
+      // (e.g. png → jpg) and the new key wouldn't overwrite the old one.
+      if (objectName && currentImageUrl) {
+        await deleteFromSupabaseUrl(currentImageUrl);
+      }
+      const result = await uploadToSupabase(file, bucket, objectName ? { objectName } : undefined);
       onImageUpload(result.publicUrl);
     } catch (error) {
       console.error('Upload error:', error);
@@ -60,7 +70,12 @@ export default function ImageUpload({
     }
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = async () => {
+    // Managed (named) storage: also delete the object so removing the logo clears it
+    // from Supabase storage, not just the DB reference.
+    if (objectName && currentImageUrl) {
+      await deleteFromSupabaseUrl(currentImageUrl);
+    }
     if (onImageRemove) {
       onImageRemove();
     }
