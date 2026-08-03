@@ -32,6 +32,44 @@ const IMPERSONATION_KEY = "admin_role_preview";
 // bursts, so a small window still eliminates nearly all of them).
 const USER_PROFILE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
+// Optimistic hydration: the last signed-in user is cached here so a page refresh
+// can render immediately (from cache) and revalidate in the background, instead of
+// blocking the whole app on the async session-restore + profile fetch.
+const CACHED_USER_KEY = "cached_auth_user";
+
+// True when Supabase has a persisted, not-yet-expired session token in storage.
+// Gates optimistic render so we never show app chrome for a logged-out user; an
+// expired token falls through to the normal (validating) boot.
+function hasLiveSupabaseSession(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith("sb-") || !k.endsWith("-auth-token")) continue;
+      const raw = localStorage.getItem(k);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const expiresAt: unknown = parsed?.expires_at ?? parsed?.currentSession?.expires_at;
+      // No expiry info → trust it; the background revalidation will correct if stale.
+      if (typeof expiresAt !== "number") return true;
+      return expiresAt * 1000 > Date.now();
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function readCachedUser(): User | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(CACHED_USER_KEY);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -157,6 +195,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   useEffect(() => {
+    // Optimistic hydration: if a live Supabase session is persisted, render the app
+    // immediately from the cached user and let the auth-state listener revalidate in
+    // the background. initialCheckDone is set so the listener won't flash the spinner;
+    // loadedAtRef is left at 0 so it still does one fresh fetch to correct staleness.
+    if (hasLiveSupabaseSession()) {
+      const cached = readCachedUser();
+      if (cached) {
+        setUser(cached);
+        setLoading(false);
+        initialCheckDone.current = true;
+      }
+    }
+
     // Subscribe to auth state changes
     const unsubscribe = authService.onAuthStateChange(async (session) => {
       // Only show the loading screen on first check — subsequent token
@@ -218,6 +269,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return unsubscribe;
   }, []);
+
+  // Persist the signed-in user so the next refresh can hydrate optimistically.
+  // Cleared on logout so a signed-out refresh never renders cached chrome.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (user) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+      else localStorage.removeItem(CACHED_USER_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
