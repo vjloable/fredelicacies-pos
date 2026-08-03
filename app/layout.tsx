@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import RolePreviewBanner from "@/components/RolePreviewBanner";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const poppins = Poppins({
@@ -40,6 +41,7 @@ export default function RootLayout({
 					<TimeTrackingProvider options={{ autoRefresh: true }}>
 						<BranchProvider>
 							<DateTimeProvider>{children}</DateTimeProvider>
+							<RolePreviewBanner />
 						</BranchProvider>
 					</TimeTrackingProvider>
 				</AuthProvider>

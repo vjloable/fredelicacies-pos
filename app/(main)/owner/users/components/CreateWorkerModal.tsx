@@ -95,14 +95,16 @@ export default function CreateWorkerModal({
 		const { name, value, type } = e.target;
 
 		// If owner is being checked, clear branch assignment
-		if (name === "isOwner" && type === "checkbox") {
+		if ((name === "isOwner" || name === "isManager") && type === "checkbox") {
 			const checked = (e.target as HTMLInputElement).checked;
 			if (checked) {
 				setSelectedBranchId("");
 				setFormData((prev) => ({
 					...prev,
 					[name]: checked,
-					branchAssignments: [], // Clear branch assignments for owners
+					// Owner and manager are mutually exclusive all-branch roles; clear the other + branch.
+					...(name === "isOwner" ? { isManager: false } : { isOwner: false }),
+					branchAssignments: [],
 				}));
 				return;
 			}
@@ -145,16 +147,16 @@ export default function CreateWorkerModal({
 			return;
 		}
 
-		// Owners should not be assigned to branches
-		if (formData.isOwner && selectedBranchId) {
+		// Owners/managers are all-branch and should not be assigned to a specific branch
+		if ((formData.isOwner || formData.isManager) && selectedBranchId) {
 			setError(
-				"Owners cannot be assigned to specific branches. Please uncheck owner or clear branch assignment."
+				"Owners and managers have all-branch access and cannot be assigned to a specific branch. Clear the branch assignment first."
 			);
 			return;
 		}
 
-		if (!selectedBranchId && !formData.isOwner) {
-			setError("Please select a branch assignment or make them an admin");
+		if (!selectedBranchId && !formData.isOwner && !formData.isManager) {
+			setError("Please select a branch assignment, or grant owner/manager access");
 			return;
 		}
 
@@ -342,22 +344,36 @@ export default function CreateWorkerModal({
 
 							{/* Owner Toggle */}
 							{isOwner && (
-								<div className='flex items-center'>
-									<input
-										type='checkbox'
-										name='isOwner'
-										checked={formData.isOwner}
-										onChange={handleInputChange}
-										className='w-4 h-4 rounded shrink-0 accent-accent'
-									/>
-									<label className='ml-2 block text-xs text-secondary/70'>
-										Grant owner privileges
-									</label>
+								<div className='flex flex-col gap-2'>
+									<div className='flex items-center'>
+										<input
+											type='checkbox'
+											name='isOwner'
+											checked={formData.isOwner}
+											onChange={handleInputChange}
+											className='w-4 h-4 rounded shrink-0 accent-accent'
+										/>
+										<label className='ml-2 block text-xs text-secondary/70'>
+											Grant owner privileges
+										</label>
+									</div>
+									<div className='flex items-center'>
+										<input
+											type='checkbox'
+											name='isManager'
+											checked={formData.isManager ?? false}
+											onChange={handleInputChange}
+											className='w-4 h-4 rounded shrink-0 accent-accent'
+										/>
+										<label className='ml-2 block text-xs text-secondary/70'>
+											Grant manager privileges (all branches)
+										</label>
+									</div>
 								</div>
 							)}
 
 							{/* Branch Assignment */}
-							{!formData.isOwner && (
+							{!formData.isOwner && !formData.isManager && (
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div>
 										<label className='block text-xs font-medium text-secondary/70 mb-2'>

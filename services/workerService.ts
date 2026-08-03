@@ -41,6 +41,7 @@ export const workerService = {
     email: string;
     password: string;
     isOwner?: boolean;
+    isManager?: boolean;
     branchAssignments?: Array<{ branchId: string; role: 'team_leader' | 'cashier' }>;
     phoneNumber?: string;
     employeeId?: string;
@@ -64,6 +65,7 @@ export const workerService = {
         phone_number: userData.phoneNumber,
         employee_id: userData.employeeId,
         is_owner: userData.isOwner || false,
+        is_manager: userData.isManager || false,
       };
 
       const { error: profileError } = await userProfileRepository.create(profileData);
