@@ -11,6 +11,31 @@ function registerCategories(categories: Category[], branchId: string) {
   categories.forEach(cat => { if (cat.id) categoryBranchIndex.set(cat.id, branchId); });
 }
 
+// ─── Centralized menu ────────────────────────────────────────────────────────
+// Categories are part of the menu, so — like inventory items — a non-commissary
+// branch reads the COMMISSARY's categories, not its own (it has none). Memoized
+// lookup of the single commissary branch id (mirrors inventoryRepository).
+let commissaryIdCache: string | null | undefined;
+async function getCommissaryId(): Promise<string | null> {
+  // Never cache a null (commissary may be created after first load); only memoize a hit.
+  if (commissaryIdCache) return commissaryIdCache;
+  const { data } = await supabase
+    .from('branches')
+    .select('id')
+    .eq('type', 'commissary')
+    .limit(1)
+    .maybeSingle();
+  commissaryIdCache = data?.id ?? undefined;
+  return commissaryIdCache ?? null;
+}
+
+// The branch whose categories a given branch should read (commissary for retail
+// branches, itself for the commissary).
+async function menuSourceBranchId(branchId: string): Promise<string> {
+  const commissaryId = await getCommissaryId();
+  return commissaryId && branchId !== commissaryId ? commissaryId : branchId;
+}
+
 export const categoryRepository = {
   // Create a new category
   async create(branchId: string, data: CreateCategoryData): Promise<{ category: Category | null; error: any }> {
@@ -28,12 +53,14 @@ export const categoryRepository = {
     return { category, error };
   },
 
-  // Get all categories for a branch
+  // Get all categories for a branch. Non-commissary branches read the commissary's
+  // categories (the menu source); the commissary reads its own.
   async getByBranch(branchId: string): Promise<{ categories: Category[]; error: any }> {
+    const sourceBranchId = await menuSourceBranchId(branchId);
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .eq('branch_id', branchId)
+      .eq('branch_id', sourceBranchId)
       .order('name', { ascending: true });
 
     return { categories: data || [], error };
@@ -101,6 +128,9 @@ export const categoryRepository = {
       callback(categories);
     });
 
+    // No branch filter: a retail branch's categories live on the commissary row,
+    // so we watch the whole categories table and let getByBranch route the refetch
+    // to the correct (commissary) source. Matches the inventory subscription.
     const channel = supabase
       .channel(`categories-${branchId}`)
       .on(
@@ -109,7 +139,6 @@ export const categoryRepository = {
           event: '*',
           schema: 'public',
           table: 'categories',
-          filter: `branch_id=eq.${branchId}`,
         },
         () => {
           // Refetch categories when any change occurs
