@@ -27,8 +27,10 @@ const IMPERSONATION_KEY = "admin_role_preview";
 // How long a loaded profile/role snapshot is trusted before the next auth event
 // re-fetches it. Supabase already validates the JWT on its own cadence; this only
 // throttles the extra DB round-trip for the profile + role assignments, so token
-// refreshes and tab re-focus don't re-query on every event.
-const USER_PROFILE_TTL_MS = 60 * 60 * 1000; // 1 hour
+// refreshes and tab re-focus don't re-query on every event. Kept short so a
+// role/permission change propagates within minutes (redundant refetches arrive in
+// bursts, so a small window still eliminates nearly all of them).
+const USER_PROFILE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 interface AuthContextType {
   user: User | null;
