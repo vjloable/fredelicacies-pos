@@ -24,6 +24,12 @@ export type { EffectiveRole, Impersonation };
 
 const IMPERSONATION_KEY = "admin_role_preview";
 
+// How long a loaded profile/role snapshot is trusted before the next auth event
+// re-fetches it. Supabase already validates the JWT on its own cadence; this only
+// throttles the extra DB round-trip for the profile + role assignments, so token
+// refreshes and tab re-focus don't re-query on every event.
+const USER_PROFILE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -92,6 +98,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const [impersonation, setImpersonation] = useState<Impersonation>(null);
   const initialCheckDone = useRef(false);
+  // Identity + freshness of the last profile load, so repeated auth events for the
+  // same user (token refresh, tab focus) don't re-hit the DB until the TTL lapses.
+  const loadedUserIdRef = useRef<string | null>(null);
+  const loadedAtRef = useRef(0);
 
   // The user's real role (ignores preview) and the role currently in force.
   const realRole = user
@@ -155,6 +165,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (session) {
         try {
+          // Same user, and the last profile load is still within the TTL: this event
+          // is just a token refresh or a tab re-focus, not a new sign-in. Skip the
+          // profile/role re-fetch — the JWT is already validated by Supabase.
+          const sameUser = loadedUserIdRef.current === session.user.id;
+          const fresh = Date.now() - loadedAtRef.current < USER_PROFILE_TTL_MS;
+          if (sameUser && fresh) {
+            initialCheckDone.current = true;
+            setLoading(false);
+            return;
+          }
+
           const userData = await authService.getUserData(session.user.id);
 
           // If no user data exists, the user was deleted. Force logout.
@@ -174,6 +195,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               uid: userData.id, // Backward compatibility
             };
             setUser(extendedUser);
+            loadedUserIdRef.current = userData.id;
+            loadedAtRef.current = Date.now();
           } else {
             setUser(null);
           }
@@ -183,6 +206,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else {
         setUser(null);
+        loadedUserIdRef.current = null;
+        loadedAtRef.current = 0;
       }
 
       initialCheckDone.current = true;
@@ -290,6 +315,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUserData = useCallback(async () => {
     if (user) {
       const userData = await authService.getUserData(user.id);
+      // Explicit refresh (e.g. after an edit) resets the TTL window.
+      loadedAtRef.current = Date.now();
       if (userData) {
         // Only update if data actually changed (deep comparison of relevant fields)
         const hasChanged =
