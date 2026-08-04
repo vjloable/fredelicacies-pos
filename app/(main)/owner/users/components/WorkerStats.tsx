@@ -343,7 +343,7 @@ export default function WorkerStatsComponent({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<div className='flex items-center justify-between mb-6'>
 					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
@@ -366,7 +366,7 @@ export default function WorkerStatsComponent({
 
 	if (error) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<div className='flex items-center justify-between mb-6'>
 					<h3 className='text-base font-semibold text-gray-900'>
 						Worker Statistics
@@ -378,7 +378,6 @@ export default function WorkerStatsComponent({
 					</button>
 				</div>
 				<div className='text-center py-8'>
-					<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 						<svg
 							className='w-6 h-6 text-red-600'
 							fill='none'
@@ -391,7 +390,6 @@ export default function WorkerStatsComponent({
 								d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
 							/>
 						</svg>
-					</div>
 					<p className='text-gray-600 text-xs'>{error}</p>
 				</div>
 			</div>
@@ -403,7 +401,7 @@ export default function WorkerStatsComponent({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow'>
+		<div className='bg-white rounded-lg'>
 			{/* Header */}
 			<div className='flex items-center justify-between p-6 border-b border-gray-200'>
 				<div>
@@ -445,7 +443,6 @@ export default function WorkerStatsComponent({
 									{formatHours(stats.totalHoursWorked)}
 								</p>
 							</div>
-							<div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center'>
 								<svg
 									className='w-5 h-5 text-blue-600'
 									fill='none'
@@ -458,7 +455,6 @@ export default function WorkerStatsComponent({
 										d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
 									/>
 								</svg>
-							</div>
 						</div>
 					</div>
 
@@ -473,7 +469,6 @@ export default function WorkerStatsComponent({
 									{stats.totalAttendances}
 								</p>
 							</div>
-							<div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
 								<svg
 									className='w-5 h-5 text-green-600'
 									fill='none'
@@ -486,7 +481,6 @@ export default function WorkerStatsComponent({
 										d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
 									/>
 								</svg>
-							</div>
 						</div>
 					</div>
 
@@ -501,7 +495,6 @@ export default function WorkerStatsComponent({
 									{Math.round(stats.averageAttendanceDuration)}m
 								</p>
 							</div>
-							<div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center'>
 								<svg
 									className='w-5 h-5 text-purple-600'
 									fill='none'
@@ -514,7 +507,6 @@ export default function WorkerStatsComponent({
 										d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
 									/>
 								</svg>
-							</div>
 						</div>
 					</div>
 

@@ -199,11 +199,11 @@ export default function AddBundleModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading Screen */}
@@ -369,7 +369,7 @@ export default function AddBundleModal({
                       </svg>
                     </button>
                     {categoryDropdownOpen && (
-                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
                         {categories.map(cat => (
                           <label
                             key={cat.id}
@@ -394,7 +394,7 @@ export default function AddBundleModal({
               )}
 
               {/* Custom Bundle Toggle */}
-              <div className="border-t-2 border-secondary/20 pt-4">
+              <div className="border-t border-secondary/20 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-secondary">Custom Bundle</p>
@@ -447,7 +447,7 @@ export default function AddBundleModal({
 
               {/* Component Selector (fixed bundles only) */}
               {!isCustom && (
-                <div className="border-t-2 border-secondary/20 pt-6">
+                <div className="border-t border-secondary/20 pt-6">
                   <label className="block text-xs font-medium text-secondary mb-3">
                     Bundle Components <span className="text-error">*</span>
                   </label>
@@ -545,7 +545,7 @@ export default function AddBundleModal({
                   )}
 
                   {selectedComponents.length === 0 && (
-                    <div className="text-center py-5 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <div className="text-center py-5 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                       <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
@@ -557,7 +557,7 @@ export default function AddBundleModal({
               )}
 
               {/* Additional Items — always deducted on every order (e.g. packaging) */}
-              <div className="border-t-2 border-secondary/20 pt-4">
+              <div className="border-t border-secondary/20 pt-4">
                 <div className="mb-3">
                   <p className="text-xs font-semibold text-secondary">Additional Items</p>
                   <p className="text-xs text-secondary/50">Always deducted when this bundle is ordered (e.g. packaging)</p>

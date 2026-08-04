@@ -114,10 +114,10 @@ export default function PublishMenuModal({
 
 	return (
 		<div
-			className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4 sm:p-6"
+			className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
 			onClick={handleClose}>
 			<div
-				className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col"
+				className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
 				onClick={(e) => e.stopPropagation()}>
 				{/* Header */}
 				<div className="px-5 py-4 border-b border-secondary/10">

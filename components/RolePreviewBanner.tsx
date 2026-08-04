@@ -21,34 +21,35 @@ const ROLE_LABELS: Record<EffectiveRole, string> = {
 	cashier: "Cashier",
 };
 
+const ROLE_DESCRIPTIONS: Record<EffectiveRole, string> = {
+	admin: "Full system access",
+	owner: "Full access, every branch",
+	manager: "Operational access, every branch",
+	team_leader: "Branch lead — scoped to one branch",
+	cashier: "POS staff — scoped to one branch",
+};
+
 const NEEDS_BRANCH = (role: EffectiveRole) => role === "team_leader" || role === "cashier";
 
 export default function RolePreviewBanner() {
 	const { canPreview, previewableRoles, impersonation, startPreview, stopPreview } = useAuth();
-	const { allBranches } = useBranch();
+	const { allBranches, currentBranch } = useBranch();
 	const [open, setOpen] = useState(false);
-	const [pendingRole, setPendingRole] = useState<EffectiveRole | null>(null);
 
 	if (!canPreview) return null;
 
 	const branchName = (id?: string) => allBranches.find((b) => b.id === id)?.name ?? "—";
 
+	// Team Leader/Cashier are branch-scoped — only previewable while already inside a branch.
 	const choose = (role: EffectiveRole) => {
 		if (NEEDS_BRANCH(role)) {
-			// Two-step: pick the role, then a branch.
-			setPendingRole(role);
+			if (!currentBranch) return;
+			startPreview(role, { branchId: currentBranch.id });
+			setOpen(false);
 			return;
 		}
 		startPreview(role);
 		setOpen(false);
-		setPendingRole(null);
-	};
-
-	const chooseBranch = (branchId: string) => {
-		if (!pendingRole) return;
-		startPreview(pendingRole, { branchId });
-		setOpen(false);
-		setPendingRole(null);
 	};
 
 	// Active preview → persistent banner.
@@ -77,65 +78,59 @@ export default function RolePreviewBanner() {
 
 	// Idle → launcher + menu.
 	return (
-		<div className="fixed bottom-4 right-4 z-[80]">
+		<div className="fixed bottom-4 right-4 z-[80] flex flex-col items-end">
 			{open && (
-				<div className="mb-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-					{pendingRole ? (
-						<div className="p-2">
-							<div className="px-2 py-1.5 text-2.5 font-semibold text-secondary/60">
-								{ROLE_LABELS[pendingRole]} — pick a branch
-							</div>
-							<div className="max-h-56 overflow-y-auto">
-								{allBranches.length === 0 && (
-									<div className="px-2 py-2 text-3 text-secondary/50">No branches available</div>
-								)}
-								{allBranches.map((b) => (
-									<button
-										key={b.id}
-										type="button"
-										onClick={() => chooseBranch(b.id)}
-										className="block w-full rounded-lg px-2 py-2 text-left text-3 text-secondary hover:bg-light-accent"
-									>
-										{b.name}
-									</button>
-								))}
-							</div>
-							<button
-								type="button"
-								onClick={() => setPendingRole(null)}
-								className="mt-1 block w-full rounded-lg px-2 py-1.5 text-left text-2.5 text-secondary/50 hover:bg-gray-50"
-							>
-								← Back
-							</button>
-						</div>
-					) : (
-						<div className="p-2">
-							<div className="px-2 py-1.5 text-2.5 font-semibold text-secondary/60">Preview as role</div>
-							{previewableRoles.map((role) => (
+				<div className="mb-2 w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+					<div className="border-b border-gray-100 px-3.5 pt-3 pb-2.5">
+						<p className="text-3 font-bold text-secondary">Preview as role</p>
+						<p className="text-2.5 text-secondary/50">See the app the way another role would</p>
+					</div>
+					<div className="p-1.5">
+						{previewableRoles.map((role) => {
+							const disabled = NEEDS_BRANCH(role) && !currentBranch;
+							return (
 								<button
 									key={role}
 									type="button"
+									disabled={disabled}
 									onClick={() => choose(role)}
-									className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-3 text-secondary hover:bg-light-accent"
+									className="flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-light-accent disabled:cursor-not-allowed disabled:hover:bg-transparent"
 								>
-									<span>{ROLE_LABELS[role]}</span>
-									{NEEDS_BRANCH(role) && <span className="text-2.5 text-secondary/40">pick branch ›</span>}
+									<span
+										className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
+											disabled ? "bg-secondary/20" : "bg-accent"
+										}`}
+									/>
+									<span className="min-w-0">
+										<span className={`block text-3 font-semibold ${disabled ? "text-secondary/40" : "text-secondary"}`}>
+											{ROLE_LABELS[role]}
+										</span>
+										<span className={`block text-2.5 ${disabled ? "text-secondary/40" : "text-secondary/50"}`}>
+											{disabled ? "Open a branch to preview this role" : ROLE_DESCRIPTIONS[role]}
+										</span>
+									</span>
 								</button>
-							))}
-						</div>
-					)}
+							);
+						})}
+					</div>
 				</div>
 			)}
 			<button
 				type="button"
-				onClick={() => {
-					setOpen((v) => !v);
-					setPendingRole(null);
-				}}
+				onClick={() => setOpen((v) => !v)}
 				className="flex items-center gap-2 rounded-full border border-accent/30 bg-secondary px-4 py-2 text-3 font-semibold text-primary shadow-lg transition-opacity hover:opacity-90"
 			>
 				<span className="size-2 shrink-0 rounded-full bg-accent" />
 				Preview role
+				<svg
+					className={`size-3.5 shrink-0 text-primary/60 transition-transform ${open ? "rotate-180" : ""}`}
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth={2.5}
+				>
+					<path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+				</svg>
 			</button>
 		</div>
 	);

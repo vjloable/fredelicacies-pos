@@ -86,8 +86,8 @@ export default function CustomBundlePickerModal({
 
   if (!maxPieces || maxPieces <= 0) {
     return (
-      <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50" onClick={onClose}>
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+        <div className="bg-white rounded-xl w-full max-w-sm mx-4 p-6 text-center" onClick={(e) => e.stopPropagation()}>
           <p className="text-sm font-semibold text-secondary mb-1">Bundle not configured</p>
           <p className="text-xs text-secondary/50 mb-4">This custom bundle has no max pieces set. Edit the bundle in Inventory to fix this.</p>
           <button onClick={onClose} className="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all">Close</button>
@@ -98,11 +98,11 @@ export default function CustomBundlePickerModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
+        className="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -255,7 +255,7 @@ export default function CustomBundlePickerModal({
                     onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setOverridePriceInput(e.target.value); }}
                     onFocus={e => e.target.select()}
                     placeholder={bundle.price.toFixed(2)}
-                    className={`w-full pl-7 pr-3 py-1.5 text-xs border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent ${
+                    className={`w-full pl-7 pr-3 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent ${
                       overridePriceInput && !overridePriceValid
                         ? 'border-error/50 bg-error/5'
                         : 'border-secondary/20'

@@ -194,8 +194,8 @@ export default function CreateWorkerModal({
 	if (!isOpen) return null;
 
 	return (
-		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
-			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto'>
+		<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
+			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>

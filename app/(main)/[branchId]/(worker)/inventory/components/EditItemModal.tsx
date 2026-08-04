@@ -46,6 +46,7 @@ export default function EditItemModal({
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [customAmount, setCustomAmount] = useState('');
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Click-outside for category dropdown
@@ -70,6 +71,7 @@ export default function EditItemModal({
           : editingItem.category_id ? [editingItem.category_id] : []
       );
       setShowDeleteConfirm(false); // Reset delete confirmation when new item is loaded
+      setCustomAmount(''); // Reset stock keypad for the newly loaded item
     }
   }, [editingItem]);
 
@@ -77,6 +79,7 @@ export default function EditItemModal({
   useEffect(() => {
     if (!isOpen) {
       setShowDeleteConfirm(false);
+      setCustomAmount('');
     }
   }, [isOpen]);
 
@@ -110,6 +113,11 @@ export default function EditItemModal({
       } else {
         await updateInventoryItem(localEditingItem.id, updates);
       }
+
+      // Refresh subscribers immediately instead of waiting on the realtime
+      // round-trip, so the inventory list reflects the change the moment we save.
+      // Covers both paths (branch stock write + commissary menu/stock update).
+      if (currentBranch) await inventoryRepository.triggerRefresh(currentBranch.id);
 
       if (editingItem && currentBranch) {
         const branchId = currentBranch.id;
@@ -165,11 +173,11 @@ export default function EditItemModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? closeModal : undefined}
     >
       <div 
-        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading Screen */}
@@ -280,7 +288,7 @@ export default function EditItemModal({
                 </svg>
               </button>
               {categoryDropdownOpen && (
-                <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
                   {categories.map(cat => (
                     <label
                       key={cat.id}
@@ -323,94 +331,85 @@ export default function EditItemModal({
         )}
 
           {/* Stock Adjustment Section */}
-          <div className="bg-primary rounded-xl p-4 border border-secondary/20">
-            <h4 className="text-xs font-semibold text-secondary mb-2 flex items-center gap-2">
-              Add Stock
-            </h4>
+          {(() => {
+            const amount = parseInt(customAmount || '0', 10);
+            const press = (key: string) => {
+              if (key === 'C') { setCustomAmount(''); return; }
+              if (key === 'back') { setCustomAmount(prev => prev.slice(0, -1)); return; }
+              setCustomAmount(prev => {
+                const next = (prev + key).replace(/^0+/, '');
+                return next.length > 6 ? prev : next;
+              });
+            };
+            const applyCustom = () => {
+              if (amount > 0) {
+                setLocalEditingItem({ ...localEditingItem, stock: localEditingItem.stock + amount });
+                setCustomAmount('');
+              }
+            };
+            return (
+              <div className="bg-primary rounded-xl p-4 border border-secondary/20">
+                <h4 className="text-xs font-semibold text-secondary mb-3">Add Stock</h4>
 
-            {/* Quick Stock Buttons + Current Stock */}
-            <div className="flex gap-3 mb-3">
-              <div className="flex flex-col items-center justify-center bg-gray-50 rounded-lg border-2 border-gray-200 px-4 py-3 min-w-24 shrink-0">
-                <div className="text-2xl font-bold text-secondary leading-none">{localEditingItem.stock}</div>
-                <div className="text-xs text-secondary/50 mt-1">in stock</div>
-              </div>
+                {/* Prominent current stock + live new-total preview */}
+                <div className="flex items-stretch gap-2 mb-3">
+                  <div className="flex-1 flex flex-col items-center justify-center py-3 bg-secondary/5 border border-secondary/15 rounded-xl">
+                    <span className="text-4xl font-extrabold text-secondary tabular-nums leading-none">
+                      {localEditingItem.stock}
+                    </span>
+                    <span className="text-xs font-medium text-secondary/50 mt-1.5 uppercase tracking-wide">In stock</span>
+                  </div>
 
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="flex gap-2">
-                  {[1, 5, 10].map(amount => (
+                  <div className={`flex-1 flex flex-col items-center justify-center py-3 rounded-xl border transition-colors ${
+                    amount > 0 ? 'bg-success/10 border-success/40' : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <span className={`text-4xl font-extrabold tabular-nums leading-none ${amount > 0 ? 'text-success' : 'text-secondary/25'}`}>
+                      {amount > 0 ? localEditingItem.stock + amount : '—'}
+                    </span>
+                    <span className="text-xs font-medium text-secondary/50 mt-1.5 uppercase tracking-wide">
+                      {amount > 0 ? `New (+${amount})` : 'New total'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Keypad — large square tablet-friendly keys */}
+                <div className="grid grid-cols-3 gap-2">
+                  {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'back'].map(key => (
                     <button
-                      key={`add-${amount}`}
-                      onClick={() => setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount})}
-                      className="flex-1 py-2 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
+                      key={key}
+                      type="button"
+                      onClick={() => press(key)}
+                      className={`h-18 rounded-xl font-bold text-2xl flex items-center justify-center transition-all active:scale-95 ${
+                        key === 'C'
+                          ? 'bg-error/5 border border-error/30 text-error hover:bg-error/10'
+                          : key === 'back'
+                          ? 'bg-secondary/5 border border-secondary/15 text-secondary/70 hover:bg-secondary/10'
+                          : 'bg-white border border-secondary/15 text-secondary hover:bg-gray-50 hover:shadow-sm hover:border-secondary/30'
+                      }`}
                     >
-                      +{amount}
+                      {key === 'back' ? '⌫' : key}
                     </button>
                   ))}
                 </div>
-                {canRemove && (
-                  <div className="flex gap-2">
-                    {[1, 5, 10].map(amount => (
-                      <button
-                        key={`sub-${amount}`}
-                        onClick={() => setLocalEditingItem({...localEditingItem, stock: Math.max(0, localEditingItem.stock - amount)})}
-                        className="flex-1 py-2 bg-error/10 border-2 border-error/40 hover:bg-error/20 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-lg"
-                      >
-                        -{amount}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Custom Amount Input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Custom amount"
-                className="flex-1 px-3 py-2 h-9.5 text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^[0-9]*$/.test(value)) {
-                    e.target.value = value;
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                    e.preventDefault();
-                  }
-                  if (e.key === 'Enter') {
-                    const amount = parseInt((e.target as HTMLInputElement).value) || 0;
-                    if (amount > 0) {
-                      setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount});
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }
-                }}
-                onFocus={(e) => e.target.select()}
-                onBlur={(e) => {
-                  if (e.target.value === '' || isNaN(parseInt(e.target.value))) {
-                    e.target.value = '';
-                  }
-                }}
-                inputMode="numeric"
-              />
-              <button
-                onClick={(e) => {
-                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                  const amount = parseInt(input?.value || '0') || 0;
-                  if (amount > 0) {
-                    setLocalEditingItem({...localEditingItem, stock: localEditingItem.stock + amount});
-                    if (input) input.value = '';
-                  }
-                }}
-                className="px-4 h-9.5 bg-success/10 border-2 border-success hover:bg-success/20 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 text-xs shrink-0"
-              >
-                Add
-              </button>
-            </div>
-            <p className="text-xs text-secondary/40 mt-2">To remove stock, use the Destock feature from the inventory list.</p>
-          </div>
+                {/* Add button */}
+                <button
+                  type="button"
+                  onClick={applyCustom}
+                  disabled={amount <= 0}
+                  className={`w-full h-14 mt-2 rounded-xl font-bold text-lg transition-all ${
+                    amount > 0
+                      ? 'bg-success text-white hover:brightness-105 hover:shadow-sm active:scale-95'
+                      : 'bg-secondary/10 text-secondary/40 cursor-not-allowed'
+                  }`}
+                >
+                  {amount > 0 ? `Add +${amount} to stock` : 'Add to stock'}
+                </button>
+
+                <p className="text-xs text-secondary/40 mt-3 text-center">To remove stock, use the Destock feature from the inventory list.</p>
+              </div>
+            );
+          })()}
 
         </div>
 
@@ -498,8 +497,8 @@ export default function EditItemModal({
 
         {/* Delete Confirmation Dialog */}
         {canDelete && showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-60">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
               <div className="text-center">
                 <div className="w-16 h-16 bg-error/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -515,7 +514,7 @@ export default function EditItemModal({
                 <div className="flex gap-3">
                   <button
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
+                      className="flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 transition-colors hover:shadow-sm font-black"
                   >
                     CANCEL
                   </button>

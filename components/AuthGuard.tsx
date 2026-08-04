@@ -24,11 +24,17 @@ export default function AuthGuard({
 		loading,
 		isAuthenticated,
 		user,
+		realRole,
 		isUserOwner,
 		getUserRoleForBranch,
 		canAccessBranch,
 	} = useAuth();
 	const router = useRouter();
+
+	// Whether the account itself (ignoring any admin role preview) has owner-level
+	// power. Used only for the pending-approval gate below — that gate must reflect
+	// the real account, not whatever role an admin is currently previewing.
+	const isReallyOwner = realRole === "owner" || realRole === "admin";
 
 	useEffect(() => {
 		if (!loading && !isAuthenticated) {
@@ -38,7 +44,7 @@ export default function AuthGuard({
 
 		if (!loading && isAuthenticated && user) {
 			// Check if user has no role assignments and is not owner (needs approval)
-			if (!isUserOwner() && user.roleAssignments.length === 0) {
+			if (!isReallyOwner && user.roleAssignments.length === 0) {
 				router.push("/waiting-room");
 				return;
 			}
@@ -106,7 +112,7 @@ export default function AuthGuard({
 	}
 
 	// Check if user has no role assignments (should be handled by redirect, but just in case)
-	if (!isUserOwner() && user.roleAssignments.length === 0) {
+	if (!isReallyOwner && user.roleAssignments.length === 0) {
 		return (
 			<div className='flex items-center justify-center h-screen bg-background'>
 				<div className='text-center'>

@@ -131,7 +131,7 @@ export default function ImageUpload({
           // Upload Area
           <div 
             onClick={triggerFileInput}
-            className={`group w-full ${compact ? 'h-28' : 'h-48'} border-2 border-dashed border-secondary/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all`}
+            className={`group w-full ${compact ? 'h-28' : 'h-48'} border border-dashed border-secondary/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all`}
           >
             {uploading ? (
               <div className="flex flex-col items-center">

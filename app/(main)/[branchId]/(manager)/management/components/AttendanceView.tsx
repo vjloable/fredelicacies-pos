@@ -536,7 +536,7 @@ export default function AttendanceView({ branchId, workers }: AttendanceViewProp
 								<span className="text-secondary/70">Working Period</span>
 							</div>
 							<div className="flex items-center gap-2">
-								<div className="w-4 h-4 bg-accent rounded-full border-2 border-white" />
+								<div className="w-4 h-4 bg-accent rounded-full border border-white" />
 								<span className="text-secondary/70">Clock In/Out</span>
 							</div>
 							<div className="flex items-center gap-2">

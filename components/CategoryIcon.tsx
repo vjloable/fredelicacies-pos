@@ -58,8 +58,8 @@ export const CATEGORY_ICONS: CategoryIconDef[] = [
   { key: 'bag', label: 'Bag', viewBox: '0 0 24 24', strokeWidth: 1.8, paths: [
     'M6 7h12l1 13H5L6 7z', 'M9 7a3 3 0 0 1 6 0',
   ] },
-  { key: 'utensils', label: 'Utensils', viewBox: '0 0 24 24', strokeWidth: 1.8, paths: [
-    'M5 3v6a2 2 0 0 0 2 2v10', 'M8 3v6', 'M16 3c-1.5 1.5-2 4-2 7s.5 3 2 3v8',
+  { key: 'utensils', label: 'Utensils', viewBox: '-2.2 -3.25 18 18', strokeWidth: 1.35, paths: [
+    'M0.90143 0.900024V3.80782C0.90143 3.80782 0.74831 5.32949 3.63887 5.32949M3.63887 5.32949V10.6055M3.63887 5.32949C6.52943 5.32949 6.37631 3.80782 6.37631 3.80782V0.900024M3.63887 5.32949V0.900024M10.8298 6.23817C10.8298 7.49191 10.8298 10.6234 10.8298 10.6234M10.8298 6.23817C13.0915 6.23817 12.7837 3.57419 12.7837 3.57419C12.7837 3.57419 12.5406 0.900024 10.8298 0.900024C9.11888 0.900024 8.87586 3.57419 8.87586 3.57419C8.87586 3.57419 8.56805 6.23817 10.8298 6.23817Z',
   ] },
 ];
 
@@ -82,9 +82,16 @@ export default function CategoryIcon({
 }) {
   const def = getCategoryIcon(icon);
   if (!def) return <>{fallback}</>;
+  // Normalize any icon's viewBox to a centered square so every icon scales
+  // uniformly on both axes (no single-axis stretch) and fills the square box
+  // consistently, regardless of the source art's aspect ratio.
+  const [minX, minY, w, h] = def.viewBox.split(/\s+/).map(Number);
+  const side = Math.max(w, h);
+  const squareViewBox = `${minX - (side - w) / 2} ${minY - (side - h) / 2} ${side} ${side}`;
   return (
-    <svg className={className} viewBox={def.viewBox} fill="none" stroke="currentColor" strokeWidth={def.strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox={squareViewBox} fill="none" stroke="currentColor" strokeWidth={def.strokeWidth} strokeLinecap="round" strokeLinejoin="round">
       {def.paths.map((d, i) => <path key={i} d={d} />)}
     </svg>
   );
 }
+

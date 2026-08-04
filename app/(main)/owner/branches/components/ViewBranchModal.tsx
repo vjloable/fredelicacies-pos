@@ -29,11 +29,11 @@ export default function ViewBranchModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4 sm:p-6"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

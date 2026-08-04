@@ -224,11 +224,11 @@ export default function AddItemModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto overflow-x-hidden"
+        className="bg-white rounded-xl p-5 max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto overflow-x-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
@@ -434,7 +434,7 @@ export default function AddItemModal({
                           </svg>
                         </button>
                         {categoryDropdownOpen && (
-                          <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                          <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
                             {categories.map(cat => (
                               <label
                                 key={cat.id}

@@ -94,11 +94,11 @@ export default function LockItemModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-sm w-full mx-4 shadow-xl"
+        className="bg-white rounded-xl p-5 max-w-sm w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (

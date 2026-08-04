@@ -103,10 +103,10 @@ export default function WaitingRoomPage() {
     >
       <div className="w-full max-w-lg">
         {/* Waiting Room Card */}
-        <div className="bg-white rounded-xl shadow-xl">
+        <div className="bg-white rounded-xl">
           {/* Logo/Header */}
           <div className="text-center">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 rounded-t-xl">
               <div className="w-41.25 h-30">
                 <LogoVerticalIcon />
               </div>
@@ -172,7 +172,7 @@ export default function WaitingRoomPage() {
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                   isCheckingAccess
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-accent hover:bg-accent/90 text-white hover:shadow-lg"
+                    : "bg-accent hover:bg-accent/90 text-white hover:shadow-sm"
                 }`}
               >
                 {isCheckingAccess ? (

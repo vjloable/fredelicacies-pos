@@ -27,6 +27,18 @@ html {
   --color-light-accent: var(--light-accent);
   --color-bundle: var(--bundle);
   --font-poppins: var(--font-poppins);
+
+  /* Global corner radius: every non-full rounded utility renders at 2px.
+     rounded-full uses calc(infinity*1px) and is unaffected; rounded-none stays 0. */
+  --radius: 2px;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
 }
 
 body {

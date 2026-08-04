@@ -76,9 +76,9 @@ export default function FoodHouseConfigModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
+        className="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

@@ -74,7 +74,7 @@ function ContainerSelect({
       </button>
 
       {open && (
-        <div className="absolute z-10 mt-1.5 w-full max-h-64 overflow-y-auto rounded-xl border border-secondary/15 bg-white shadow-lg">
+        <div className="absolute z-10 mt-1.5 w-full max-h-64 overflow-y-auto rounded-xl border border-secondary/15 bg-white">
           {containers.map(c => {
             const active = c.id === value;
             return (
@@ -207,9 +207,9 @@ export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: 
     : 'Add to Order';
 
   return (
-    <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

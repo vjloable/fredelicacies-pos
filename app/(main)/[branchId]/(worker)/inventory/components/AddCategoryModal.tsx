@@ -6,6 +6,10 @@ import { createCategory, updateCategory } from '@/services/categoryService';
 import type { Category } from '@/types/domain';
 import CategoryIcon, { CATEGORY_ICONS } from '@/components/CategoryIcon';
 
+// Brand accent orange (globals.css --accent). Categories always use this color;
+// the per-category color picker was removed for a consistent brand look.
+const BRAND_COLOR = '#DA834D';
+
 interface AddCategoryModalProps {
   branchId: string;
   isOpen: boolean;
@@ -22,7 +26,7 @@ export default function AddCategoryModal({
   editingCategory,
 }: AddCategoryModalProps) {
   const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState<{ name: string; color: string; icon: string | null }>({ name: "", color: "#ff9f80", icon: null });
+  const [category, setCategory] = useState<{ name: string; color: string; icon: string | null }>({ name: "", color: BRAND_COLOR, icon: null });
 
   const isEditing = !!editingCategory;
 
@@ -32,7 +36,7 @@ export default function AddCategoryModal({
       setCategory(
         editingCategory
           ? { name: editingCategory.name, color: editingCategory.color, icon: editingCategory.icon ?? null }
-          : { name: "", color: "#ff9f80", icon: null }
+          : { name: "", color: BRAND_COLOR, icon: null }
       );
     }
   }, [isOpen, editingCategory]);
@@ -75,11 +79,11 @@ export default function AddCategoryModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-md w-full mx-4 shadow-xl"
+        className="bg-white rounded-xl p-5 max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
@@ -114,7 +118,7 @@ export default function AddCategoryModal({
                 {isEditing ? 'Edit Category' : 'Add New Category'}
               </h3>
               <p className="text-xs text-secondary opacity-70">
-                {isEditing ? 'Update the category name or color' : 'Create a new category to organize your items'}
+                {isEditing ? 'Update the category name or icon' : 'Create a new category to organize your items'}
               </p>
             </div>
 
@@ -132,29 +136,6 @@ export default function AddCategoryModal({
                   placeholder="Enter category name"
                   autoFocus
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-secondary mb-2">
-                  Category Color
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={category.color}
-                    onChange={(e) => setCategory({...category, color: e.target.value})}
-                    className="w-12 h-9.5 border-2 p-1 border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={category.color}
-                      onChange={(e) => setCategory({...category, color: e.target.value})}
-                      className="w-full px-3 py-2 h-9.5 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-xs"
-                      placeholder="#3B82F6"
-                    />
-                  </div>
-                </div>
               </div>
 
               <div>

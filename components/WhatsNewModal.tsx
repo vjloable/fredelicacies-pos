@@ -100,7 +100,7 @@ export default function WhatsNewModal({ forceOpen, onClose }: WhatsNewModalProps
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-6"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-6"
       onClick={dismiss}
     >
       <div

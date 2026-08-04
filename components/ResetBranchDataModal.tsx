@@ -69,7 +69,7 @@ export default function ResetBranchDataModal({ isOpen, branch, onClose, onReset,
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={handleClose}
     >
       <div
@@ -107,7 +107,7 @@ export default function ResetBranchDataModal({ isOpen, branch, onClose, onReset,
                   <button
                     key={m.value}
                     onClick={() => { setMode(m.value); setConfirmation(''); }}
-                    className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
                       mode === m.value
                         ? m.value === 'everything'
                           ? 'border-error bg-error/5'
@@ -116,7 +116,7 @@ export default function ResetBranchDataModal({ isOpen, branch, onClose, onReset,
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                         mode === m.value
                           ? m.value === 'everything' ? 'border-error' : 'border-accent'
                           : 'border-gray-300'

@@ -218,7 +218,7 @@ export function IllResetBranch() {
             { label: 'Reset Everything', active: true },
           ].map((opt, i) => (
             <div key={i} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${opt.active ? 'border-error bg-error/5' : 'border-gray-200'}`}>
-              <div className={`w-2.5 h-2.5 rounded-full border-2 flex items-center justify-center ${opt.active ? 'border-error' : 'border-gray-300'}`}>
+              <div className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center ${opt.active ? 'border-error' : 'border-gray-300'}`}>
                 {opt.active && <div className="w-1 h-1 rounded-full bg-error" />}
               </div>
               <span className="text-[6px] font-bold text-secondary">{opt.label}</span>

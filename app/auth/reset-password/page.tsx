@@ -72,9 +72,9 @@ export default function ResetPasswordPage() {
             }}
         >
             <div className='w-full max-w-md'>
-                <div className='bg-white rounded-xl shadow-xl'>
+                <div className='bg-white rounded-xl'>
                     <div className='text-center mb-8'>
-                        <div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl'>
+                        <div className='w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 rounded-t-xl'>
                             <div className='w-41.25 h-30'>
                                 <LogoVerticalIcon />
                             </div>
@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
                                         type='password'
                                         value={newPassword}
                                         onChange={(e) => { setNewPassword(e.target.value); setError(''); }}
-                                        className='w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
+                                        className='w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
                                         placeholder='Enter new password (min 6 characters)'
                                         disabled={loading}
                                         autoComplete='new-password'
@@ -120,7 +120,7 @@ export default function ResetPasswordPage() {
                                         type='password'
                                         value={confirmPassword}
                                         onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
-                                        className='w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
+                                        className='w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all'
                                         placeholder='Re-enter new password'
                                         disabled={loading}
                                         autoComplete='new-password'
@@ -141,7 +141,7 @@ export default function ResetPasswordPage() {
                                 <button
                                     type='submit'
                                     disabled={loading}
-                                    className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
+                                    className={`w-full py-3 rounded-md font-semibold transition-all hover:shadow-sm ${
                                         loading
                                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                             : 'bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95'

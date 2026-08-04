@@ -11,7 +11,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
 import UsersIcon from "./icons/SidebarNav/UsersIcon";
 import DistributionIcon from "./icons/SidebarNav/DistributionIcon";
@@ -86,133 +86,76 @@ export default function SidebarNav() {
 
 	// The commissary is a production hub: inventory + distribution + dashboard, no store/sales.
 	const isCommissary = currentBranch?.type === "commissary";
+	const isPlainWorker = !isUserOwner() && !isManagerForCurrentBranch;
 
-	// For owners, only show owner section if no branch is selected
-	const shouldShowWorkerSection = !isUserOwner() || currentBranch;
-	const shouldShowManagerSection =
-		(!isUserOwner() && (isManagerForCurrentBranch || isUserOwner())) ||
-		(isUserOwner() && currentBranch);
+	// Outside a branch, an owner/admin is looking at cross-branch tools only — a
+	// separate flat list (no functional grouping, since it's just five global pages).
+	const isGlobalOwnerView = isUserOwner() && !currentBranch;
 
-	// Worker Section - Available to all users (workers, managers, owners)
-	const workerNavItems: NavItem[] = isCommissary
+	const globalNavItems: NavItem[] = [
+		{ href: "/owner/branches", label: "Branches", icon: BranchesIcon, ownerOnly: true },
+		{ href: "/owner/dashboard", label: "Dashboard", icon: DashboardIcon, ownerOnly: true },
+		{ href: "/owner/transfers", label: "Distribution", icon: DistributionIcon, ownerOnly: true },
+		{ href: "/owner/users", label: "Users", icon: UsersIcon, ownerOnly: true },
+		{ href: "/owner/logs", label: "Logs", icon: LogsIcon, ownerOnly: true },
+	];
+
+	// Operations — day-to-day selling. Store/Sales don't apply to the commissary hub.
+	const operationsNavItems: NavItem[] = currentBranch && !isCommissary
 		? [
-			{ href: "dashboard", label: "Dashboard", icon: DashboardIcon },
-			{ href: "inventory", label: "Inventory", icon: InventoryIcon },
-			// Commissary is the distribution hub, so workers always see it.
-			...(!isUserOwner() && !isManagerForCurrentBranch
-				? [{ href: "transfers", label: "Distribution", icon: DistributionIcon, badge: transferActionable || undefined } as NavItem]
+			{ href: "store", label: "Store", icon: StoreIcon },
+			{ href: "sales", label: "Sales", icon: SalesIcon },
+			...(isManagerForCurrentBranch || isUserOwner()
+				? [{ href: "discounts", label: "Discounts", icon: DiscountsIcon } as NavItem]
 				: []),
-			...(!isUserOwner() && !isManagerForCurrentBranch ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
 		  ]
-		: [
-		{
-			href: "store",
-			label: "Store",
-			icon: StoreIcon,
-		},
-		{
-			href: "inventory",
-			label: "Inventory",
-			icon: InventoryIcon,
-		},
-		{
-			href: "sales",
-			label: "Sales",
-			icon: SalesIcon,
-		},
-		// Workers see Distribution only when there's an actionable item AND they're not a manager/owner.
-		...(!isUserOwner() && !isManagerForCurrentBranch && transferActionable > 0
-			? [{
-				href: "transfers",
-				label: "Distribution",
-				icon: DistributionIcon,
-				badge: transferActionable,
-			} as NavItem]
-			: []),
-		// Workers see Settings only if not manager/owner
-		...(!isUserOwner() && !isManagerForCurrentBranch ? [{ href: "settings", label: "Settings", icon: SettingsIcon }] : []),
+		: [];
+
+	// Inventory & Distribution — stock and inter-branch transfers.
+	const inventoryNavItems: NavItem[] = currentBranch
+		? [
+			{ href: "inventory", label: "Inventory", icon: InventoryIcon },
+			...(!isPlainWorker || transferActionable > 0 || isCommissary
+				? [{
+					href: "transfers",
+					label: "Distribution",
+					icon: DistributionIcon,
+					badge: transferActionable || undefined,
+				} as NavItem]
+				: []),
+		  ]
+		: [];
+
+	// People — managing staff and access.
+	const peopleNavItems: NavItem[] = currentBranch && (isManagerForCurrentBranch || isUserOwner())
+		? [{ href: "management", label: "Management", icon: ManagementIcon } as NavItem]
+		: [];
+
+	// Insights — the commissary's own dashboard (its production overview).
+	const insightsNavItems: NavItem[] = currentBranch && isCommissary
+		? [{ href: "dashboard", label: "Dashboard", icon: DashboardIcon } as NavItem]
+		: [];
+
+	// System — branch setup and account settings.
+	const systemNavItems: NavItem[] = currentBranch
+		? [{ href: "settings", label: "Settings", icon: SettingsIcon } as NavItem]
+		: [];
+
+	const navGroups: { label: string; items: NavItem[] }[] = [
+		{ label: "Operations", items: operationsNavItems },
+		{ label: "Inventory", items: inventoryNavItems },
+		{ label: "People", items: peopleNavItems },
+		{ label: "Insights", items: insightsNavItems },
+		{ label: "System", items: systemNavItems },
 	];
 
-	// Manager Section - Available to managers and owners
-	const managerNavItems: NavItem[] = [
-		{
-			href: "management",
-			label: "Management",
-			icon: ManagementIcon,
-			managerOnly: true,
-		},
-		// Discounts are sales-only — hidden on the commissary.
-		...(!isCommissary ? [{
-			href: "discounts",
-			label: "Discounts",
-			icon: DiscountsIcon,
-			managerOnly: true,
-		} as NavItem] : []),
-		// Distribution — the per-branch request/send page. Shown to managers and to the
-		// owner while they have a branch selected (the owner's global Distribution page is
-		// monitoring-only and can't initiate a transfer).
-		{
-			href: "transfers",
-			label: "Distribution",
-			icon: DistributionIcon,
-			managerOnly: true,
-			badge: transferActionable > 0 ? transferActionable : undefined,
-		} as NavItem,
-		// Manager sees Settings only if NOT owner (owner has it in owner section)
-		...(!isUserOwner() ? [{
-			href: "settings",
-			label: "Settings",
-			icon: SettingsIcon,
-			managerOnly: true,
-		} as NavItem] : []),
-	];
-
-	// Owner Section - Available to owners only
-	const ownerNavItems: NavItem[] = [
-		{
-			href: "/owner/dashboard",
-			label: "Dashboard",
-			icon: DashboardIcon,
-			ownerOnly: true,
-		},
-		{
-			href: "/owner/branches",
-			label: "Branches",
-			icon: BranchesIcon,
-			ownerOnly: true,
-		},
-		{
-			href: "/owner/users",
-			label: "Users",
-			icon: UsersIcon,
-			ownerOnly: true,
-		},
-		{
-			href: "/owner/transfers",
-			label: "Distribution",
-			icon: DistributionIcon,
-			ownerOnly: true,
-		},
-		{
-			href: "/owner/logs",
-			label: "Logs",
-			icon: LogsIcon,
-			ownerOnly: true,
-		},
-		{
-			href: "settings",
-			label: "Settings",
-			icon: SettingsIcon,
-			ownerOnly: true,
-		},
-	];
-
-	const renderNavItem = (item: NavItem, isOwnerItem = false) => {
+	const renderNavItem = (item: NavItem) => {
+		const isAbsolute = item.href.startsWith("/");
 		const IconComponent = item.icon;
-		const isActive = isOwnerItem
+		const isActive = isAbsolute
 			? isOwnerRouteActive(item.href)
 			: isRouteActive(item.href);
-		const href = isOwnerItem ? item.href : getBranchAwareHref(item.href);
+		const href = isAbsolute ? item.href : getBranchAwareHref(item.href);
 
 		return (
 			<li key={item.href}>
@@ -308,17 +251,17 @@ export default function SidebarNav() {
 					</div>
 				)}
 
-				{/* Back to Owner Button - Show for owners when they're in a branch */}
+				{/* Switch branch — takes the owner back to the branch picker */}
 				{isUserOwner() && currentBranch && (
-					<div className='px-3 py-2 border-b border-gray-200'>
+					<div className='px-3 py-2.5 border-b border-gray-200'>
 						<button
 							onClick={() => {
 								clearCurrentBranch();
 								router.push("/owner/branches");
 							}}
-							className='w-full flex items-center justify-start text-xs text-secondary/70 hover:text-secondary transition-colors'>
+							className='w-full flex items-center gap-2 rounded-lg border border-gray-200 bg-primary px-3 py-2 text-3 font-semibold text-secondary hover:border-accent/30 hover:bg-accent/5 hover:text-accent transition-colors'>
 							<svg
-								className='w-4 h-4 mr-2'
+								className='size-4 shrink-0'
 								fill='none'
 								stroke='currentColor'
 								viewBox='0 0 24 24'>
@@ -330,7 +273,7 @@ export default function SidebarNav() {
 								/>
 							</svg>
 							<span className='w-auto opacity-100 transition-all duration-300'>
-								Back to Owner
+								All Branches
 							</span>
 						</button>
 					</div>
@@ -339,47 +282,24 @@ export default function SidebarNav() {
 				{/* Navigation */}
 				<nav className='flex-1 min-h-0 py-2 overflow-y-auto'>
 					<ul className='space-y-0.5'>
-						{/* Worker Section - Show for non-owners or owners with selected branch */}
-						{shouldShowWorkerSection && (
-							<>
-								<li>
-									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
-										<span className='w-auto opacity-100 transition-all duration-300'>
-											Worker
-										</span>
-									</div>
-								</li>
-								{workerNavItems.map((item) => renderNavItem(item))}
-							</>
-						)}
-
-						{/* Manager Section - Visible to managers and owners with selected branch */}
-						{shouldShowManagerSection && (
-							<>
-								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
-										<span className='w-auto opacity-100 transition-all duration-300'>
-											Manager
-										</span>
-									</div>
-								</li>
-								{managerNavItems.map((item) => renderNavItem(item))}
-							</>
-						)}
-
-						{/* Owner Section - Visible to owners only */}
-						{isUserOwner() && (
-							<>
-								<li className='pt-4'>
-									<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
-										<span className='w-auto opacity-100 transition-all duration-300'>
-											Owner
-										</span>
-									</div>
-								</li>
-								{ownerNavItems.map((item) => renderNavItem(item, true))}
-							</>
-						)}
+						{/* Outside a branch: a flat, ordered list of cross-branch tools. Inside a
+						    branch: functional groups, each rendered only if it has visible items. */}
+						{isGlobalOwnerView
+							? globalNavItems.map((item) => renderNavItem(item))
+							: navGroups.map((group, index) =>
+								group.items.length > 0 ? (
+									<Fragment key={group.label}>
+										<li className={index === 0 ? undefined : "pt-4"}>
+											<div className='px-3 py-2 text-xs font-bold text-secondary/60 uppercase tracking-wider'>
+												<span className='w-auto opacity-100 transition-all duration-300'>
+													{group.label}
+												</span>
+											</div>
+										</li>
+										{group.items.map((item) => renderNavItem(item))}
+									</Fragment>
+								) : null
+							)}
 
 						{/* Logout Button */}
 						<li className='pt-4'>

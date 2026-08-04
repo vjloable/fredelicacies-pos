@@ -83,7 +83,7 @@ function ContainerSelect({
       </button>
 
       {open && (
-        <div className="absolute z-10 bottom-full mb-1.5 w-full rounded-xl border border-secondary/15 bg-white shadow-lg overflow-hidden">
+        <div className="absolute z-10 bottom-full mb-1.5 w-full rounded-xl border border-secondary/15 bg-white overflow-hidden">
           <div className="p-2 border-b border-secondary/10">
             <input
               autoFocus
@@ -213,9 +213,9 @@ export default function FoodHouseModal({ inventory, onConfirm, onClose }: Props)
   const sizeLabel = sizeKey === SOLO ? 'Solo' : container?.name;
 
   return (
-    <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

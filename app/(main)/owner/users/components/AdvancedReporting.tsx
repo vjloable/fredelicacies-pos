@@ -367,7 +367,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 	return (
 		<div className='space-y-6'>
 			{/* Filter Panel */}
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Report Filters
 				</h3>
@@ -461,7 +461,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 			{filters.reportType === "summary" && (
 				<div className='space-y-6'>
 					{loading ? (
-						<div className='bg-white rounded-lg shadow p-6'>
+						<div className='bg-white rounded-lg p-6'>
 							<div className='text-center py-8'>
 								<LoadingSpinner size="lg" className="mx-auto" />
 								<p className='text-gray-600 text-xs mt-2'>
@@ -470,9 +470,8 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 							</div>
 						</div>
 					) : error ? (
-						<div className='bg-white rounded-lg shadow p-6'>
+						<div className='bg-white rounded-lg p-6'>
 							<div className='text-center py-8'>
-								<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 									<svg
 										className='w-6 h-6 text-red-600'
 										fill='none'
@@ -485,7 +484,6 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 											d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
 										/>
 									</svg>
-								</div>
 								<p className='text-gray-600 text-xs'>{error}</p>
 								<button
 									onClick={generateSummaryReport}
@@ -499,7 +497,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 							<>
 								{/* Summary Cards */}
 								<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-									<div className='bg-white rounded-lg shadow p-6'>
+									<div className='bg-white rounded-lg p-6'>
 										<h4 className='text-xs font-medium text-gray-600'>
 											Total Workers
 										</h4>
@@ -510,7 +508,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 											{summaryMetrics.activeWorkers} active
 										</p>
 									</div>
-									<div className='bg-white rounded-lg shadow p-6'>
+									<div className='bg-white rounded-lg p-6'>
 										<h4 className='text-xs font-medium text-gray-600'>
 											Total Hours
 										</h4>
@@ -518,7 +516,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 											{formatHours(summaryMetrics.totalHours)}
 										</p>
 									</div>
-									<div className='bg-white rounded-lg shadow p-6'>
+									<div className='bg-white rounded-lg p-6'>
 										<h4 className='text-xs font-medium text-gray-600'>
 											Average Hours
 										</h4>
@@ -527,7 +525,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 										</p>
 										<p className='text-xs text-gray-600'>per worker</p>
 									</div>
-									<div className='bg-white rounded-lg shadow p-6'>
+									<div className='bg-white rounded-lg p-6'>
 										<h4 className='text-xs font-medium text-gray-600'>
 											Branch Coverage
 										</h4>
@@ -540,7 +538,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 								{/* Top Performers */}
 								{summaryMetrics.topPerformers.length > 0 && (
-									<div className='bg-white rounded-lg shadow'>
+									<div className='bg-white rounded-lg'>
 										<div className='p-6 border-b border-gray-200'>
 											<h4 className='text-base font-semibold text-gray-900'>
 												Top Performers
@@ -594,7 +592,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 								{/* Branch Performance */}
 								{summaryMetrics.branchCoverage.length > 0 && (
-									<div className='bg-white rounded-lg shadow'>
+									<div className='bg-white rounded-lg'>
 										<div className='p-6 border-b border-gray-200'>
 											<h4 className='text-base font-semibold text-gray-900'>
 												Branch Performance
@@ -629,7 +627,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 								)}
 
 								{/* Time Distribution Chart */}
-								<div className='bg-white rounded-lg shadow'>
+								<div className='bg-white rounded-lg'>
 									<div className='p-6 border-b border-gray-200'>
 										<h4 className='text-base font-semibold text-gray-900'>
 											Hourly Activity Distribution
@@ -685,7 +683,7 @@ export default function AdvancedReporting({ workers }: AdvancedReportingProps) {
 
 			{/* Worker Detail Modal */}
 			{selectedWorker && (
-				<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+				<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
 					<div className='bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex justify-between items-center'>

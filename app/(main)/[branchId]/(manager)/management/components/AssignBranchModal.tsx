@@ -123,8 +123,8 @@ export default function AssignBranchModal({
 	// Prevent assigning branches to admins
 	if (worker.isOwner) {
 		return (
-			<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
-				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl'>
+			<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
+				<div className='bg-white rounded-2xl p-8 max-w-lg w-full mx-4'>
 					<div className='text-center py-8'>
 						<div className='w-14 h-14 mx-auto mb-4 rounded-full border border-accent/30 flex items-center justify-center text-accent'>
 							<svg
@@ -160,8 +160,8 @@ export default function AssignBranchModal({
 	}
 
 	return (
-		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
-			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto'>
+		<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
+			<div className='bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
 				{loading ? (
 					<div className='text-center py-12'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>
@@ -179,7 +179,6 @@ export default function AssignBranchModal({
 						{/* Header */}
 						<div className='flex items-center justify-between mb-6'>
 							<div className='flex items-center'>
-								<div className='w-12 h-12 bg-light-accent rounded-full flex items-center justify-center mr-4'>
 									<svg
 										className='w-6 h-6 text-accent'
 										fill='none'
@@ -192,7 +191,6 @@ export default function AssignBranchModal({
 											d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'
 										/>
 									</svg>
-								</div>
 								<div>
 									<h3 className='text-lg font-bold text-secondary'>
 										Manage Branch Assignments

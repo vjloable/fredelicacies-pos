@@ -181,8 +181,8 @@ export default function WorkerDetailModal({
 	if (!isOpen || !worker) return null;
 
 	return (
-		<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-			<div className='bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
+		<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+			<div className='bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
 				{/* Header */}
 				<div className='flex items-center justify-between p-6 border-b border-secondary/20'>
 					<div className='flex items-center gap-4'>
@@ -227,7 +227,7 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("details")}
 						className={`px-6 py-3 font-medium text-xs transition-colors ${
 							activeTab === "details"
-								? "text-accent border-b-2 border-accent"
+								? "text-accent border-b border-accent"
 								: "text-secondary hover:text-secondary/60"
 						}`}>
 						Worker Details
@@ -236,7 +236,7 @@ export default function WorkerDetailModal({
 						onClick={() => setActiveTab("sessions")}
 						className={`px-6 py-3 font-medium text-xs transition-colors ${
 							activeTab === "sessions"
-								? "text-accent border-b-2 border-accent"
+								? "text-accent border-b border-accent"
 								: "text-secondary hover:text-secondary/60"
 						}`}>
 						Attendances<span className="ml-3 rounded-full px-2 py-1 bg-secondary/10 text-secondary/50 text-xs">Last 30 Days</span>

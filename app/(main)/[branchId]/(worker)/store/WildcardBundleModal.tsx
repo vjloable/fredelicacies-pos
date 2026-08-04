@@ -168,9 +168,9 @@ export default function WildcardBundleModal({
     : 'Add to Order';
 
   return (
-    <div className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -215,7 +215,7 @@ export default function WildcardBundleModal({
                 >
                   <div className="h-8 flex items-end justify-center">
                     <div
-                      className={`rounded-full border-2 transition-colors ${selected ? 'border-bundle bg-bundle/20' : 'border-secondary/30 bg-secondary/5'}`}
+                      className={`rounded-full border transition-colors ${selected ? 'border-bundle bg-bundle/20' : 'border-secondary/30 bg-secondary/5'}`}
                       style={{ width: `${s.w}px`, height: `${s.h}px` }}
                     />
                   </div>

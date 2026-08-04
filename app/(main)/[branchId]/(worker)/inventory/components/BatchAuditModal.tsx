@@ -112,11 +112,11 @@ export default function BatchAuditModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={!locking ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-2xl max-w-lg w-full shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {locking ? (

@@ -42,7 +42,7 @@ export default function WorkersTable({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow-sm border border-secondary overflow-hidden'>
+			<div className='bg-white rounded-lg border border-secondary overflow-hidden'>
 				<div className='animate-pulse'>
 					{/* Header */}
 					<div className='bg-gray-50 px-6 py-3 border-b border-secondary'>
@@ -69,7 +69,7 @@ export default function WorkersTable({
 
 	if (workers.length === 0) {
 		return (
-			<div className='bg-white rounded-lg shadow-md p-12 text-center'>
+			<div className='bg-white rounded-lg p-12 text-center'>
 				<div className='w-14 h-14 mx-auto mb-4 rounded-full border border-accent/30 flex items-center justify-center text-accent'>
 					<ManagementIcon className="text-accent"/>
 				</div>
@@ -84,7 +84,7 @@ export default function WorkersTable({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow-sm border border-secondary/20 overflow-hidden'>
+		<div className='bg-white rounded-lg border border-secondary/20 overflow-hidden'>
 			<div className='overflow-x-auto'>
 				<table className='min-w-full divide-y divide-secondary/10'>
 					<TableHeader

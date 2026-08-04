@@ -98,8 +98,8 @@ export default function CartItemEditor({
 	const total = mode === "whole" ? rawValue : rawValue * quantity;
 
 	return (
-		<div className="fixed inset-0 z-60 bg-secondary/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-			<div className="bg-white rounded-3xl w-full max-w-xs shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+		<div className="fixed inset-0 z-60 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+			<div className="bg-white rounded-3xl w-full max-w-xs overflow-hidden" onClick={(e) => e.stopPropagation()}>
 				{/* Header */}
 				<div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
 					<div className="min-w-0">

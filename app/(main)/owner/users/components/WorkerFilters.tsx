@@ -79,9 +79,7 @@ export default function WorkerFilters({
 						{localFilters.searchQuery ? (
 							<LoadingSpinner size="lg" />
 						) : (
-							<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
 								<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
-							</div>
 						)}
 					</div>
 				</div>

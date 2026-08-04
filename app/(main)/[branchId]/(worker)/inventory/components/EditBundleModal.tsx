@@ -280,11 +280,11 @@ export default function EditBundleModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading Screen */}
@@ -463,7 +463,7 @@ export default function EditBundleModal({
                       </svg>
                     </button>
                     {categoryDropdownOpen && (
-                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
                         {categories.map(cat => (
                           <label
                             key={cat.id}
@@ -488,7 +488,7 @@ export default function EditBundleModal({
               )}
 
               {/* Custom Bundle Toggle */}
-              <div className="border-t-2 border-secondary/20 pt-4">
+              <div className="border-t border-secondary/20 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-secondary">Custom Bundle</p>
@@ -541,7 +541,7 @@ export default function EditBundleModal({
 
               {/* Component Selector (fixed bundles only) */}
               {!isCustom && (
-                <div className="border-t-2 border-secondary/20 pt-4">
+                <div className="border-t border-secondary/20 pt-4">
                   <label className="block text-xs font-medium text-secondary mb-2">
                     Bundle Components <span className="text-error">*</span>
                   </label>
@@ -633,7 +633,7 @@ export default function EditBundleModal({
               )}
 
               {/* Additional Items — always deducted on every order (e.g. packaging) */}
-              <div className="border-t-2 border-secondary/20 pt-4">
+              <div className="border-t border-secondary/20 pt-4">
                 <div className="mb-3">
                   <p className="text-xs font-semibold text-secondary">Additional Items</p>
                   <p className="text-xs text-secondary/50">Always deducted when this bundle is ordered (e.g. packaging)</p>
@@ -725,8 +725,8 @@ export default function EditBundleModal({
 
             {/* Delete Confirmation Dialog */}
             {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-                <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-60">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
                   <div className="text-center">
                     <div className="w-16 h-16 bg-error/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
                       <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -742,7 +742,7 @@ export default function EditBundleModal({
                     <div className="flex gap-3">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black"
+                        className="flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 transition-colors hover:shadow-sm font-black"
                       >
                         CANCEL
                       </button>

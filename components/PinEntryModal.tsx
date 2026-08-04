@@ -157,7 +157,7 @@ export default function PinEntryModal({
 			: "Enter your 4-digit PIN to continue";
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
 			<div className="bg-primary rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
 				{/* Header */}
 				<div className="bg-accent px-6 py-5 text-center">
@@ -188,7 +188,7 @@ export default function PinEntryModal({
 								className={`w-4 h-4 rounded-full transition-all duration-200 ${
 									i < currentPin.length
 										? "bg-accent scale-110"
-										: "bg-light-accent border-2 border-accent/30"
+										: "bg-light-accent border border-accent/30"
 								}`}
 							/>
 						))}

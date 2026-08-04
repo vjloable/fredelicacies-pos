@@ -143,10 +143,10 @@ export default function SignUpPage() {
     >
       <div className="w-full max-w-md">
         {/* Sign Up Form */}
-        <div className="bg-white rounded-xl shadow-xl">
+        <div className="bg-white rounded-xl">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 shadow-md rounded-t-xl">
+            <div className="w-full h-full mx-auto mb-4 flex items-center justify-center bg-primary py-6 rounded-t-xl">
               <div className="w-41.25 h-30">
                 <LogoVerticalIcon />
               </div>
@@ -168,7 +168,7 @@ export default function SignUpPage() {
                     type="text"
                     value={formData.firstName}
                     onChange={handleInputChange("firstName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="First name"
                     disabled={isLoading}
                     autoComplete="given-name"
@@ -184,7 +184,7 @@ export default function SignUpPage() {
                     type="text"
                     value={formData.lastName}
                     onChange={handleInputChange("lastName")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Last name"
                     disabled={isLoading}
                     autoComplete="family-name"
@@ -201,7 +201,7 @@ export default function SignUpPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange("email")}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                   placeholder="Enter your email"
                   disabled={isLoading}
                   autoComplete="email"
@@ -219,7 +219,7 @@ export default function SignUpPage() {
                     type="password"
                     value={formData.password}
                     onChange={handleInputChange("password")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Create password (min. 6 characters)"
                     disabled={isLoading}
                     autoComplete="new-password"
@@ -235,7 +235,7 @@ export default function SignUpPage() {
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange("confirmPassword")}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-md text-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                     placeholder="Confirm your password"
                     disabled={isLoading}
                     autoComplete="new-password"
@@ -270,7 +270,7 @@ export default function SignUpPage() {
                   isLoading || 
                   validationErrors.emailTaken
                 }
-                className={`w-full py-3 rounded-md font-semibold transition-all shadow-lg ${
+                className={`w-full py-3 rounded-md font-semibold transition-all hover:shadow-sm ${
                   isLoading || 
                   validationErrors.emailTaken
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"

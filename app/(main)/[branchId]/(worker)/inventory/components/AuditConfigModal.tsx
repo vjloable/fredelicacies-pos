@@ -44,11 +44,11 @@ export default function AuditConfigModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={!saving ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-2xl max-w-sm w-full shadow-xl overflow-hidden"
+        className="bg-white rounded-2xl max-w-sm w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

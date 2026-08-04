@@ -225,7 +225,7 @@ export default function WorkScheduleManagement({
 	return (
 		<div className='space-y-6'>
 			{/* Header */}
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<div className='flex justify-between items-center'>
 					<div>
 						<h3 className='text-base font-semibold text-gray-900'>
@@ -244,7 +244,7 @@ export default function WorkScheduleManagement({
 			</div>
 
 			{/* Schedule Targets List */}
-			<div className='bg-white rounded-lg shadow'>
+			<div className='bg-white rounded-lg'>
 				<div className='p-6 border-b border-gray-200'>
 					<h4 className='text-base font-semibold text-gray-900'>
 						Current Schedule Targets
@@ -260,7 +260,6 @@ export default function WorkScheduleManagement({
 					</div>
 				) : scheduleTargets.length === 0 ? (
 					<div className='p-8 text-center'>
-						<div className='w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 							<svg
 								className='w-6 h-6 text-gray-400'
 								fill='none'
@@ -273,7 +272,6 @@ export default function WorkScheduleManagement({
 									d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
 								/>
 							</svg>
-						</div>
 						<h3 className='text-base font-medium text-gray-900 mb-2'>
 							No Schedule Targets
 						</h3>
@@ -307,7 +305,7 @@ export default function WorkScheduleManagement({
 
 			{/* Edit Schedule Modal */}
 			{isEditingSchedule && (
-				<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+				<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
 					<div className='bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto'>
 						<div className='p-6 border-b border-gray-200'>
 							<div className='flex justify-between items-center'>

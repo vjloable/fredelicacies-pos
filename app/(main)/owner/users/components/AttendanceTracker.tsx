@@ -92,7 +92,7 @@ export default function AttendanceTracker({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<div className='flex items-center justify-between mb-4'>
 					<h3 className='text-base font-semibold text-gray-900'>
 						Active Work Sessions
@@ -119,7 +119,7 @@ export default function AttendanceTracker({
 
 	if (error) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<div className='flex items-center justify-between mb-4'>
 					<h3 className='text-base font-semibold text-gray-900'>
 						Active Work Sessions
@@ -131,7 +131,6 @@ export default function AttendanceTracker({
 					</button>
 				</div>
 				<div className='text-center py-8'>
-					<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 						<svg
 							className='w-6 h-6 text-red-600'
 							fill='none'
@@ -144,7 +143,6 @@ export default function AttendanceTracker({
 								d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
 							/>
 						</svg>
-					</div>
 					<p className='text-gray-600 text-xs'>{error}</p>
 				</div>
 			</div>
@@ -152,7 +150,7 @@ export default function AttendanceTracker({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow'>
+		<div className='bg-white rounded-lg'>
 			<div className='flex items-center justify-between p-6 border-b border-gray-200'>
 				<div>
 					<h3 className='text-base font-semibold text-gray-900'>

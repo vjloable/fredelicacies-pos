@@ -60,11 +60,11 @@ export default function SubmitEODModal({
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={!submitting ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-2xl max-w-md w-full shadow-xl overflow-hidden"
+        className="bg-white rounded-2xl max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {submitting ? (

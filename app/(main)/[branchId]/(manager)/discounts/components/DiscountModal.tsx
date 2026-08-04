@@ -166,7 +166,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-4">
         </h2>
@@ -474,7 +474,7 @@ export default function DiscountModal({ isOpen, onClose, discount, onSuccess, ca
                     </svg>
                   </button>
                   {categoryDropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                    <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
                       {categories.map(cat => (
                         <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none">
                           <input

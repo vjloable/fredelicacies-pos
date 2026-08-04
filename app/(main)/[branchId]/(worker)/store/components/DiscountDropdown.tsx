@@ -158,7 +158,7 @@ export default function DiscountDropdown({
 
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-white border border-secondary/20 rounded-lg shadow-lg">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-white border border-secondary/20 rounded-lg">
           {/* Search */}
           <div className="p-2 border-b border-secondary/10">
             <div className="relative">

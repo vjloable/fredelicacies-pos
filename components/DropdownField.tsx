@@ -169,15 +169,14 @@ export default function DropdownField({
 		? baseOptions.filter(o => o.toLowerCase().includes(searchQuery.toLowerCase()))
 		: baseOptions;
 
-	// Resolve border-radius from the roundness prop without dynamic Tailwind classes
+	// Resolve border-radius from the roundness prop without dynamic Tailwind classes.
+	// Global rule: every non-full radius is 2px ("none" keeps 0, "full" stays a pill).
 	const borderRadius =
 		roundness === "none"
 			? "0"
 			: roundness === "full"
 				? "9999px"
-				: /^\d+$/.test(roundness)
-					? `${roundness}px`
-					: roundness;
+				: "2px";
 
 	const triggerStyle: React.CSSProperties = {
 		...(heightClassName ? {} : { height: `${height}px` }),

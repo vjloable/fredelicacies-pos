@@ -77,7 +77,7 @@ export function DayPicker({ value, onChange }: DayPickerProps) {
 			</button>
 
 			{open && (
-				<div className='absolute top-full left-0 mt-1.5 z-50 w-64 bg-primary rounded-xl shadow-lg border border-secondary/10 p-3'>
+				<div className='absolute top-full left-0 mt-1.5 z-50 w-64 bg-primary rounded-xl border border-secondary/10 p-3'>
 					{/* Month nav */}
 					<div className='flex items-center justify-between mb-3'>
 						<button onClick={prevMonth} className='w-7 h-7 flex items-center justify-center rounded-lg hover:bg-accent/10 text-secondary/60 hover:text-accent transition-colors text-sm'>‹</button>
@@ -169,7 +169,7 @@ export function WeekPicker({ value, onChange }: WeekPickerProps) {
 				</button>
 
 				{open && (
-					<div className='absolute top-full left-0 mt-1.5 z-50 w-56 bg-primary rounded-xl shadow-lg border border-secondary/10 p-3'>
+					<div className='absolute top-full left-0 mt-1.5 z-50 w-56 bg-primary rounded-xl border border-secondary/10 p-3'>
 						{/* Year nav */}
 						<div className='flex items-center justify-between mb-3'>
 							<button onClick={() => setViewYear(y => y - 1)} className='w-7 h-7 flex items-center justify-center rounded-lg hover:bg-accent/10 text-secondary/60 hover:text-accent transition-colors text-sm'>‹</button>
@@ -251,7 +251,7 @@ export function MonthPicker({ value, onChange }: MonthPickerProps) {
 			</button>
 
 			{open && (
-				<div className='absolute top-full left-0 mt-1.5 z-50 w-52 bg-primary rounded-xl shadow-lg border border-secondary/10 p-3'>
+				<div className='absolute top-full left-0 mt-1.5 z-50 w-52 bg-primary rounded-xl border border-secondary/10 p-3'>
 					{/* Year nav */}
 					<div className='flex items-center justify-between mb-3'>
 						<button onClick={() => setViewYear(y => y - 1)} className='w-7 h-7 flex items-center justify-center rounded-lg hover:bg-accent/10 text-secondary/60 hover:text-accent transition-colors text-sm'>‹</button>
@@ -316,7 +316,7 @@ export function YearPicker({ value, onChange }: YearPickerProps) {
 			</button>
 
 			{open && (
-				<div className='absolute top-full left-0 mt-1.5 z-50 w-44 bg-primary rounded-xl shadow-lg border border-secondary/10 p-2'>
+				<div className='absolute top-full left-0 mt-1.5 z-50 w-44 bg-primary rounded-xl border border-secondary/10 p-2'>
 					<div className='grid grid-cols-2 gap-1'>
 						{years.map((y) => (
 							<button

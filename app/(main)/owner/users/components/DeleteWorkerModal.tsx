@@ -56,8 +56,8 @@ export default function DeleteWorkerModal({
 	const isConfirmValid = confirmText === worker.name;
 
 	return (
-		<div className='fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50'>
-			<div className='bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl'>
+		<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
+			<div className='bg-white rounded-2xl p-8 max-w-md w-full mx-4'>
 				{loading ? (
 					<div className='text-center py-8'>
 						<div className='w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center'>

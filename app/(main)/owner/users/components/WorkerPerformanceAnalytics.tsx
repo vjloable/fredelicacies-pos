@@ -305,7 +305,7 @@ export default function WorkerPerformanceAnalytics({
 
 	if (loading) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Performance Analytics
 				</h3>
@@ -325,12 +325,11 @@ export default function WorkerPerformanceAnalytics({
 
 	if (error) {
 		return (
-			<div className='bg-white rounded-lg shadow p-6'>
+			<div className='bg-white rounded-lg p-6'>
 				<h3 className='text-base font-semibold text-gray-900 mb-4'>
 					Performance Analytics
 				</h3>
 				<div className='text-center py-8'>
-					<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
 						<svg
 							className='w-6 h-6 text-red-600'
 							fill='none'
@@ -343,7 +342,6 @@ export default function WorkerPerformanceAnalytics({
 								d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
 							/>
 						</svg>
-					</div>
 					<p className='text-gray-600 text-xs'>{error}</p>
 					<button
 						onClick={loadPerformanceMetrics}
@@ -360,7 +358,7 @@ export default function WorkerPerformanceAnalytics({
 	}
 
 	return (
-		<div className='bg-white rounded-lg shadow'>
+		<div className='bg-white rounded-lg'>
 			<div className='p-6 border-b border-gray-200'>
 				<h3 className='text-base font-semibold text-gray-900'>
 					Performance Analytics

@@ -94,7 +94,7 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-primary/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={!submitting ? handleClose : undefined}
     >
       <div
