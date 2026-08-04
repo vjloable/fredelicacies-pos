@@ -1,6 +1,12 @@
 // Category Repository - Handles category data access
 import { supabase } from '@/lib/supabase';
 import type { Category, CreateCategoryData, UpdateCategoryData } from '@/types/domain/category';
+import { readCache, writeCache } from '@/lib/branchCache';
+
+// Persistent cache key for a branch's category list (stale-while-revalidate).
+// Keyed by the requested branch id (what the page subscribes with), not the
+// resolved commissary source, so hydration matches the caller.
+const catCacheKey = (branchId: string) => `cat:${branchId}`;
 
 // Module-level callback registry for immediate post-mutation refresh
 const activeCallbacks = new Map<string, Set<(categories: Category[]) => void>>();
@@ -63,7 +69,9 @@ export const categoryRepository = {
       .eq('branch_id', sourceBranchId)
       .order('name', { ascending: true });
 
-    return { categories: data || [], error };
+    const categories = data || [];
+    if (!error) writeCache(catCacheKey(branchId), categories);
+    return { categories, error };
   },
 
   // Get single category by ID
@@ -121,6 +129,15 @@ export const categoryRepository = {
       activeCallbacks.set(branchId, new Set());
     }
     activeCallbacks.get(branchId)!.add(callback);
+
+    // Stale-while-revalidate: emit cached categories synchronously so the page
+    // renders them immediately (no empty-state flash), then refetch and update
+    // silently. Mirrors inventoryRepository.subscribe.
+    const cached = readCache<Category[]>(catCacheKey(branchId));
+    if (cached && cached.length) {
+      registerCategories(cached, branchId);
+      callback(cached);
+    }
 
     // Initial fetch
     this.getByBranch(branchId).then(({ categories }) => {

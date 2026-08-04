@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import LogoVerticalIcon from "@/components/icons/LogoVerticalIcon";
 import Link from "next/link";
 import VersionDisplay from "@/components/VersionDisplay";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import { useSearchParams } from "next/navigation";
 
 function ConfirmEmailContent() {
@@ -59,7 +59,7 @@ function ConfirmEmailContent() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="max-w-md w-full space-y-8 bg-white/95 backdrop-blur-sm p-8 rounded-lg shadow-xl">
+      <div className="max-w-md w-full space-y-8 bg-white/95 backdrop-blur-sm p-8 rounded-lg">
         <div>
           <div className="flex justify-center mb-6">
             <LogoVerticalIcon className="h-20 w-auto" />
@@ -187,9 +187,7 @@ function ConfirmEmailContent() {
 export default function ConfirmEmailPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
+      <PageLoader text="Loading…" />
     }>
       <ConfirmEmailContent />
     </Suspense>

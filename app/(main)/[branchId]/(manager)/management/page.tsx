@@ -19,6 +19,7 @@ import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import ManagementIcon from "@/components/icons/SidebarNav/ManagementIcon";
 
 export default function ManagementPage() {
@@ -338,10 +339,7 @@ export default function ManagementPage() {
 							showTimeTracking={true}
 						/>
 					</div>
-					<div className='flex-1 flex items-center justify-center gap-4'>
-						<LoadingSpinner size="md"/>
-						<p className='text-gray-500'>Loading...</p>
-					</div>
+					<PageLoader text="Loading…" />
 				</div>
 			</div>
 		);

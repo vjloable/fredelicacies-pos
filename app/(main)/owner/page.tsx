@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
+import PageLoader from "@/components/PageLoader";
 export default function OwnerPage() {
 	const router = useRouter();
 
@@ -14,8 +13,7 @@ export default function OwnerPage() {
 
 	return (
 		<div className='flex items-center justify-center h-full'>
-			<LoadingSpinner size='lg' />
-			<span className='ml-3 text-secondary'>Loading owner...</span>
+			<PageLoader text="Loading owner…" />
 		</div>
 	);
 }

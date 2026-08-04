@@ -15,6 +15,7 @@ import {
 import { getInventoryItems as getSourceInventory, getAvailableStock } from "@/services/inventoryService";
 import type { TransferWithItems, SettleLineCount } from "@/types/domain/transfer";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 
@@ -77,10 +78,7 @@ export default function TransferDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-2">
-        <LoadingSpinner size="md" />
-        <p className="text-secondary text-xs">Loading...</p>
-      </div>
+      <PageLoader text="Loading transfer…" />
     );
   }
 
@@ -371,7 +369,7 @@ function ReceiveShipmentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-xl max-w-lg w-full max-h-[85dvh] overflow-hidden flex flex-col">
         <div className="px-5 py-4 border-b border-secondary/10 flex items-center justify-between">
           <div>
@@ -554,7 +552,7 @@ function FulfillRequestModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-xl max-w-lg w-full max-h-[85dvh] overflow-hidden flex flex-col">
         <div className="px-5 py-4 border-b border-secondary/10 flex items-center justify-between">
           <div>
@@ -712,7 +710,7 @@ function CancelTransferModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-xl max-w-md w-full overflow-hidden flex flex-col">
         <div className="px-5 py-4 border-b border-secondary/10">
           <h2 className="text-sm font-semibold text-secondary">Cancel transfer?</h2>

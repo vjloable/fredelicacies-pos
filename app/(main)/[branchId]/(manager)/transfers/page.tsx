@@ -12,7 +12,7 @@ import {
   cancelTransfer,
 } from "@/services/transferService";
 import type { TransferWithItems } from "@/types/domain/transfer";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import PlusIcon from "@/components/icons/PlusIcon";
@@ -305,7 +305,7 @@ export default function TransfersListPage() {
               {showRequestFromCommissary && (
                 <Link
                   href={`/${branchId}/transfers/new?mode=pull`}
-                  className="h-12 px-4 flex items-center gap-2 rounded-lg shadow-sm font-black text-3 transition-all hover:scale-105 active:scale-95 bg-bundle/10 text-bundle hover:bg-bundle/20"
+                  className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m0 0l-5-5m5 5l5-5" />
@@ -315,7 +315,7 @@ export default function TransfersListPage() {
               )}
               <Link
                 href={`/${branchId}/transfers/new`}
-                className="h-12 px-4 flex items-center gap-2 rounded-lg shadow-sm font-black text-3 transition-all hover:scale-105 active:scale-95 bg-accent hover:bg-accent/90"
+                className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-accent hover:bg-accent/90"
               >
                 <div className="size-4 text-primary drop-shadow-lg">
                   <PlusIcon />
@@ -327,10 +327,7 @@ export default function TransfersListPage() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-2">
-            <LoadingSpinner size="md" />
-            <p className="text-secondary text-xs">Loading…</p>
-          </div>
+          <PageLoader text="Loading transfers…" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Lane 1 — Requests */}

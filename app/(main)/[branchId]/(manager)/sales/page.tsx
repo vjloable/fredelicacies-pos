@@ -15,6 +15,7 @@ import {
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import { getOrdersByBranch, getOrdersPage, subscribeToOrderInserts, voidOrder, refundOrder } from "@/services/orderService";
 import { subscribeToDiscounts } from "@/services/discountService";
 import type { Discount } from "@/types/domain";
@@ -645,14 +646,27 @@ export default function SalesScreen() {
 
 	// ── Realtime ──────────────────────────────────────────────────────────────
 
+	// fetchAnalytics/fetchTablePage get new identities on nearly every filter
+	// change (search, page, view mode, ...). Reading them via refs keeps the
+	// subscription itself tied only to the branch, so typing in the search box
+	// etc. doesn't tear down and recreate the same-named realtime channel —
+	// which was silently killing live updates after the first churn.
+	const fetchAnalyticsRef = useRef(fetchAnalytics);
+	const fetchTablePageRef = useRef(fetchTablePage);
+	useEffect(() => {
+		fetchAnalyticsRef.current = fetchAnalytics;
+		fetchTablePageRef.current = fetchTablePage;
+	}, [fetchAnalytics, fetchTablePage]);
+
 	useEffect(() => {
 		if (!currentBranch) return;
 		const unsub = subscribeToOrderInserts(currentBranch.id, () => {
-			fetchAnalytics();
-			fetchTablePage();
+			fetchAnalyticsRef.current();
+			fetchTablePageRef.current();
 		});
 		return unsub;
-	}, [currentBranch, fetchAnalytics, fetchTablePage]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentBranch?.id]);
 
 	// ── Wastage fetch ─────────────────────────────────────────────────────────
 
@@ -791,9 +805,7 @@ export default function SalesScreen() {
 					<div className='hidden xl:block w-full'>
 						<TopBar title='Sales' icon={<SalesIcon />} rightAction={<HelpButton variant='page' steps={salesSteps} />} />
 					</div>
-					<div className='flex-1 flex items-center justify-center'>
-						<LoadingSpinner />
-					</div>
+					<PageLoader text="Loading sales…" />
 				</div>
 			</div>
 		);
@@ -858,7 +870,7 @@ export default function SalesScreen() {
 								</svg>
 							</button>
 							{showActionsMenu && (
-								<div className='absolute right-0 top-10 z-20 bg-primary rounded-xl shadow-lg border border-secondary/10 py-1 min-w-44'>
+								<div className='absolute right-0 top-10 z-20 bg-primary rounded-xl border border-secondary/10 py-1 min-w-44'>
 									<button
 										onClick={() => { setShowActionsMenu(false); handlePrintDailySales(); }}
 										disabled={isPrinting}
@@ -901,7 +913,7 @@ export default function SalesScreen() {
 					{/* Stat cards + payment methods row */}
 					<div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
 						{/* Revenue */}
-						<div className='bg-primary rounded-xl p-4 shadow-sm'>
+						<div className='bg-primary rounded-xl p-4'>
 							<div className='flex items-center justify-between'>
 								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Net Revenue</p>
 								{priorPeriodStats && priorPeriodStats.totalRevenue > 0 && (() => {
@@ -917,7 +929,7 @@ export default function SalesScreen() {
 						</div>
 
 						{/* Orders */}
-						<div className='bg-primary rounded-xl p-4 shadow-sm'>
+						<div className='bg-primary rounded-xl p-4'>
 							<div className='flex items-center justify-between'>
 								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Orders</p>
 								{priorPeriodStats && priorPeriodStats.totalOrders > 0 && (() => {
@@ -930,7 +942,7 @@ export default function SalesScreen() {
 						</div>
 
 						{/* Profit */}
-						<div className='bg-primary rounded-xl p-4 shadow-sm'>
+						<div className='bg-primary rounded-xl p-4'>
 							<div className='flex items-center justify-between'>
 								<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Gross Profit</p>
 								{priorPeriodStats && priorPeriodStats.totalProfit > 0 && (() => {
@@ -946,14 +958,14 @@ export default function SalesScreen() {
 						</div>
 
 						{/* Peak */}
-						<div className='bg-primary rounded-xl p-4 shadow-sm'>
+						<div className='bg-primary rounded-xl p-4'>
 							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide'>Peak {viewMode === "day" ? "Hour" : "Day"}</p>
 							<p className='text-lg font-bold text-secondary mt-1 truncate'>{peakEntry ? peakEntry.label : "--"}</p>
 							<p className='text-2.5 text-secondary/40 mt-1'>{peakEntry ? `${peakEntry.orders} orders` : "0 orders"}</p>
 						</div>
 
 						{/* Payment methods — inline compact */}
-						<div className='col-span-2 lg:col-span-1 bg-primary rounded-xl p-4 shadow-sm'>
+						<div className='col-span-2 lg:col-span-1 bg-primary rounded-xl p-4'>
 							<p className='text-2.5 font-medium text-secondary/40 uppercase tracking-wide mb-3'>Payments</p>
 							<div className='grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2'>
 								{paymentBreakdown.map(p => (
@@ -980,7 +992,7 @@ export default function SalesScreen() {
 						{/* Left col: charts */}
 						<div className='xl:col-span-3 flex flex-col gap-3'>
 							{/* Revenue / orders line chart */}
-							<div className='bg-primary rounded-xl p-4 shadow-sm'>
+							<div className='bg-primary rounded-xl p-4'>
 								<div className='flex items-center justify-between mb-3'>
 									<p className='text-xs font-semibold text-secondary'>
 										{viewMode === "day"
@@ -1042,7 +1054,7 @@ export default function SalesScreen() {
 									contentStyle={{
 										backgroundColor: "#fff",
 										border: "1px solid #e5e7eb",
-										borderRadius: "8px",
+										borderRadius: "2px",
 										fontSize: "11px",
 									}}
 								/>
@@ -1076,7 +1088,7 @@ export default function SalesScreen() {
 							<div className='flex gap-3 items-start'>
 
 							{/* Wastage panel */}
-							<div className='flex-1 min-w-0 bg-primary rounded-xl p-4 shadow-sm'>
+							<div className='flex-1 min-w-0 bg-primary rounded-xl p-4'>
 								<div className='flex items-center justify-between mb-3'>
 									<p className='text-xs font-semibold text-secondary'>Wastage</p>
 									{prevWastageCost !== null && prevWastageCost > 0 && (() => {
@@ -1128,7 +1140,7 @@ export default function SalesScreen() {
 													contentStyle={{
 														backgroundColor: "#fff",
 														border: "1px solid #fee2e2",
-														borderRadius: "8px",
+														borderRadius: "2px",
 														fontSize: "11px",
 													}}
 												/>
@@ -1193,7 +1205,7 @@ export default function SalesScreen() {
 
 							{/* Carry-Over Stock panel — day view only */}
 							{viewMode === 'day' && (
-								<div className='flex-1 min-w-0 bg-primary rounded-xl p-4 shadow-sm'>
+								<div className='flex-1 min-w-0 bg-primary rounded-xl p-4'>
 									<div className='flex items-center justify-between mb-3'>
 										<p className='text-xs font-semibold text-secondary'>Carry-Over Stock</p>
 										{eodSession?.status === 'submitted' ? (
@@ -1268,7 +1280,7 @@ export default function SalesScreen() {
 							</div>
 
 							{/* Right col: orders list */}
-						<div className='xl:col-span-2 bg-primary rounded-xl shadow-sm flex flex-col overflow-hidden' style={{ maxHeight: 'calc(100vh - 220px)' }}>
+						<div className='xl:col-span-2 bg-primary rounded-xl flex flex-col overflow-hidden' style={{ maxHeight: 'calc(100vh - 220px)' }}>
 							{/* Header + search */}
 							<div className='p-4 border-b border-gray-100'>
 								<div className='flex items-center justify-between mb-3'>
@@ -1481,10 +1493,10 @@ export default function SalesScreen() {
 			{/* Order Receipt Modal */}
 			{selectedOrder && (
 				<div
-					className='fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4'
+					className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4'
 					onClick={() => setSelectedOrder(null)}>
 					<div
-						className='bg-white rounded-2xl w-full max-w-xs max-h-[90vh] overflow-y-auto shadow-2xl'
+						className='bg-white rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto'
 						onClick={(e) => e.stopPropagation()}>
 						{/* Branded header */}
 						<div className='bg-white rounded-t-2xl pt-5 pb-0 text-center'>
@@ -1514,7 +1526,7 @@ export default function SalesScreen() {
 						</div>
 
 						{/* Receipt body */}
-						<div className='px-5 pt-4 pb-5 font-mono text-secondary'>
+						<div className='px-6 pt-4 pb-6 font-mono text-secondary'>
 							<div className='flex items-start justify-between gap-2'>
 								<div>
 									<p className='font-bold text-sm'>
@@ -1625,7 +1637,7 @@ export default function SalesScreen() {
 								})()}
 							</div>
 
-							<div className='border-t-2 border-secondary/20 mt-4 pt-3 flex justify-between items-baseline'>
+							<div className='border-t border-secondary/20 mt-4 pt-3 flex justify-between items-baseline'>
 								<span className='text-sm font-bold'>TOTAL</span>
 								<span className='text-base font-bold tabular-nums'>
 									{formatCurrency(selectedOrder.total)}
@@ -1694,17 +1706,17 @@ export default function SalesScreen() {
 							</div>
 						)}
 
-						<div className='flex gap-2 mt-5'>
+						<div className='flex flex-wrap gap-2.5 mt-5'>
 							{selectedOrder.status !== 'voided' && (
 								<button
 									onClick={() => handleReprint(selectedOrder)}
 									disabled={isPrinting}
-									className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 ${
+									className={`flex-1 min-w-26 py-3 text-3 font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 ${
 										isPrinting
 											? 'bg-gray-100 text-secondary/30 cursor-not-allowed'
 											: 'bg-accent/10 text-accent hover:bg-accent/20'
 									}`}>
-									<svg className='w-3.5 h-3.5 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+									<svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z' />
 									</svg>
 									{isPrinting ? 'Printing...' : 'Reprint'}
@@ -1713,20 +1725,20 @@ export default function SalesScreen() {
 							{canVoid && selectedOrder.status === 'completed' && (
 								<button
 									onClick={() => setShowRefundConfirm(true)}
-									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors'>
+									className='flex-1 min-w-26 py-3 text-3 font-semibold rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors'>
 									Refund
 								</button>
 							)}
 							{canVoid && selectedOrder.status !== 'voided' && selectedOrder.status !== 'refunded' && (
 								<button
 									onClick={() => setShowVoidConfirm(true)}
-									className='flex-1 py-2.5 text-xs font-semibold rounded-xl bg-error/10 text-error hover:bg-error/20 transition-colors'>
+									className='flex-1 min-w-26 py-3 text-3 font-semibold rounded-xl bg-error/10 text-error hover:bg-error/20 transition-colors'>
 									Void
 								</button>
 							)}
 							<button
 								onClick={() => setSelectedOrder(null)}
-								className='flex-1 py-2.5 text-xs font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
+								className='flex-1 min-w-26 py-3 text-3 font-semibold text-secondary/50 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-secondary transition-colors'>
 								Close
 							</button>
 						</div>

@@ -11,6 +11,7 @@ import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LiveIndicator from "@/components/LiveIndicator";
 import { useState, useCallback } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
@@ -166,7 +167,7 @@ export default function MobileTopBar({
 					<MenuBurger className="text-primary"/>
 				</button>
 				<div className='flex-1 flex justify-center'>
-					<div className='flex items-center justify-center rounded-25 bg-accent h-12 px-6'>
+					<div className='flex items-center justify-center rounded-sm bg-accent h-12 px-6'>
 						<TextLogo className='h-5' />
 					</div>
 				</div>{" "}
@@ -182,9 +183,7 @@ export default function MobileTopBar({
 			</div>
 			<div className='flex items-center gap-3 px-4 py-2 overflow-x-auto'>
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center text-secondary'>
 						<UserIcon />
-					</span>
 					<span>{userDisplayName}</span>
 				</div>
 
@@ -204,8 +203,8 @@ export default function MobileTopBar({
 							disabled={isTimeTracking}
 							className={`flex-1 h-12 px-3 py-2 flex rounded-xl gap-2 items-center font-medium text-xs transition-all duration-200 cursor-pointer group ${
 								timeTracking.isWorking
-									? "bg-success/10 text-success border-2 border-success hover:bg-secondary/10 hover:border-secondary"
-									: "bg-secondary/10 text-secondary border-2 border-secondary hover:bg-success/10 hover:border-success"
+									? "bg-success/10 text-success border border-success hover:bg-secondary/10 hover:border-secondary"
+									: "bg-secondary/10 text-secondary border border-secondary hover:bg-success/10 hover:border-success"
 							} ${isTimeTracking ? "opacity-50" : "hover:scale-105"}`}>
 							<span
 								className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -218,7 +217,7 @@ export default function MobileTopBar({
 								) : timeTracking.isWorking ? (
 									<LoadingSpinner className="w-3! h-3! border-success group-hover:border-secondary" />
 								) : (
-									<div className="h-3 w-3 border-2 border-secondary rounded-full group-hover:border-success"/>
+									<div className="h-3 w-3 border border-secondary rounded-full group-hover:border-success"/>
 								)}
 							</span>
 							<span className={`font-bold 
@@ -280,9 +279,7 @@ export default function MobileTopBar({
 				)}
 
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center'>
 						<CalendarIcon />
-					</span>
 					<div className='flex flex-col items-start'>
 						{isLoading && !date ? (
 							<LoadingSpinner size='sm' />
@@ -298,19 +295,13 @@ export default function MobileTopBar({
 				</div>
 
 				<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-xs'>
-					<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center shrink-0'>
 						<ClockIcon />
-					</span>
 					<div className='flex flex-row items-center gap-2'>
 						{isLoading && !time ? (
 							<LoadingSpinner size='sm' />
 						) : (
 							<>
-								{!isInternetTime && time ? (
-									<LoadingSpinner className="w-3! h-3! border-error bg-error/20 shadow-sm" />
-								) : (
-									<LoadingSpinner className="w-3! h-3! border-success bg-success/20 shadow-sm" />
-								)}
+								<LiveIndicator live={isInternetTime} />
 								<span className='truncate animate-pulse'>{time}</span>
 							</>
 						)}

@@ -42,6 +42,7 @@ import SafeDropModal from "@/components/shift/SafeDropModal";
 import WriteOffModal from "@/components/shift/WriteOffModal";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
@@ -85,7 +86,7 @@ const SuccessToast = ({
 
 	return (
 		<div className='fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300'>
-			<div className='bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 min-w-75'>
+			<div className='bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-3 min-w-75'>
 				{/* Success Icon */}
 				<div className='shrink-0'>
 					<svg
@@ -827,9 +828,7 @@ export default function StoreScreen() {
 							{searchQuery ? (
 								<LoadingSpinner size="lg" />
 							) : (
-								<div className='size-7.5 bg-light-accent rounded-full flex items-center justify-center'>
 									<SearchIcon className='mr-0.5 mb-0.5 text-accent' />
-								</div>
 							)}
 						</div>
 					</div>
@@ -854,12 +853,7 @@ export default function StoreScreen() {
 				{/* Menu Items - Scrollable */}
 				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
 					{loading ? (
-						<div className='flex flex-col items-center justify-center py-8 gap-4'>
-							<LoadingSpinner size="lg"/>
-							<span className='ml-3 text-secondary'>
-								Loading menu...
-							</span>
-						</div>
+						<PageLoader text="Loading menu…" />
 					) : inventoryItems.length === 0 ? (
 						// Empty Inventory Collection State
 						<div className='flex flex-col items-center justify-center py-12'>
@@ -934,14 +928,14 @@ export default function StoreScreen() {
 						{showFolders && (
         <>
         {/* Build-your-own quick actions */}
+						<h3 className='text-2.5 font-bold uppercase tracking-wider text-bundle/70 mb-1.5 px-0.5'>Build Your Own</h3>
 						<div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
 							{/* Wildcard Bilao quick-action */}
 							<button
 								type='button'
 								onClick={() => setShowWildcardModal(true)}
-								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
-								<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
-									<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+									<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
 										<circle cx='10.5' cy='10.5' r='8' strokeWidth={1.5} />
 										<circle cx='10.5' cy='6.4' r='1.5' fill='currentColor' stroke='none' />
 										<circle cx='6.9' cy='12.6' r='1.5' fill='currentColor' stroke='none' />
@@ -949,7 +943,6 @@ export default function StoreScreen() {
 										<circle cx='18' cy='18' r='4.3' fill='currentColor' stroke='var(--primary)' strokeWidth={1.5} />
 										<path d='M18 16.1v3.8M16.1 18h3.8' stroke='var(--primary)' strokeWidth={1.6} />
 									</svg>
-								</div>
 								<span className='text-sm font-bold text-bundle leading-tight'>Wildcard Bilao</span>
 							</button>
 
@@ -957,9 +950,8 @@ export default function StoreScreen() {
 							<button
 								type='button'
 								onClick={() => setShowAssortedModal(true)}
-								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
-								<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
-									<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+									<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
 										<ellipse cx='12' cy='14' rx='9' ry='6' />
 										<ellipse cx='12' cy='12' rx='9' ry='6' />
 										<circle cx='9' cy='11.5' r='1.2' fill='currentColor' stroke='none' />
@@ -967,7 +959,6 @@ export default function StoreScreen() {
 										<circle cx='15.5' cy='13' r='1.2' fill='currentColor' stroke='none' />
 										<circle cx='10' cy='13.5' r='1.2' fill='currentColor' stroke='none' />
 									</svg>
-								</div>
 								<span className='text-sm font-bold text-bundle leading-tight'>Assorted Kakanin</span>
 							</button>
 
@@ -975,30 +966,31 @@ export default function StoreScreen() {
 								<button
 									type='button'
 									onClick={() => setShowFoodHouseModal(true)}
-									className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
-									<div className='w-11 h-11 shrink-0 rounded-full bg-bundle/10 group-hover:bg-bundle/15 flex items-center justify-center text-bundle transition-colors duration-200'>
-										<svg className='w-6 h-6 group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.6} strokeLinecap='round' strokeLinejoin='round'>
+									className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+										<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.6} strokeLinecap='round' strokeLinejoin='round'>
 											<path d='M4 3v7a3 3 0 003 3v8M7 3v5M10 3v5M17 3c-1.5 1.5-2 4-2 7s.5 4 2 4v7' />
 										</svg>
-									</div>
 									<span className='text-sm font-bold text-bundle leading-tight'>Food House</span>
 								</button>
 						</div>
 
 						{/* Category folders */}
-        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
-          {groupedItems.map(group => (
-            <button key={group.id} onClick={() => setActiveStoreCategory(group.id)}
-              className='group relative aspect-square rounded-xl border-2 border-gray-200 bg-primary hover:border-accent hover:shadow-md active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-2 p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
-              {group.icon ? (
-                <span className='shrink-0' style={{ color: group.color }}><CategoryIcon icon={group.icon} className='w-11 h-11 sm:w-12 sm:h-12' /></span>
-              ) : (
-                <span className='w-6 h-1.5 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
-              )}
-              <span className='text-3.5 font-semibold text-secondary leading-tight line-clamp-3'>{group.name}</span>
-              <span className='text-2.5 text-secondary/40 tabular-nums'>{group.items.length} {group.items.length === 1 ? 'item' : 'items'}</span>
-            </button>
-          ))}
+        <div>
+          <h3 className='text-2.5 font-bold uppercase tracking-wider text-secondary/40 mb-1.5 px-0.5'>Categories</h3>
+          <div className='grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2'>
+            {groupedItems.map(group => (
+              <button key={group.id} onClick={() => setActiveStoreCategory(group.id)}
+                className='group relative h-28 rounded-xl border border-gray-200 bg-primary hover:border-accent hover:bg-accent/5 hover:shadow-sm active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-1.5 px-2 py-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+                {group.icon ? (
+                  <span className='shrink-0' style={{ color: group.color }}><CategoryIcon icon={group.icon} className='w-8 h-8' /></span>
+                ) : (
+                  <span className='w-6 h-1.5 rounded-full shrink-0' style={{ backgroundColor: group.color }} />
+                )}
+                <span className='text-3.5 font-semibold text-secondary leading-tight line-clamp-2'>{group.name}</span>
+                <span className='text-2.5 font-medium text-secondary/35 tabular-nums'>{group.items.length} {group.items.length === 1 ? 'item' : 'items'}</span>
+              </button>
+            ))}
+          </div>
         </div>
         </>
         )}
@@ -1045,10 +1037,10 @@ export default function StoreScreen() {
 											<div
 												key={item.id || index}
 												onClick={() => !isOutOfStock && addToCart(item)}
-												className={`group bg-primary rounded-xl border-2 overflow-hidden transition-all duration-200
+												className={`group bg-primary rounded-xl border overflow-hidden transition-all duration-200
 													${isOutOfStock
 														? 'opacity-50 cursor-not-allowed border-gray-100'
-														: 'cursor-pointer border-gray-200 hover:border-accent hover:shadow-md active:scale-95'
+														: 'cursor-pointer border-gray-200 hover:border-accent hover:shadow-sm active:scale-95'
 													}`}>
 
 												{/* Image */}
@@ -1129,7 +1121,7 @@ export default function StoreScreen() {
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
 							transition={{ duration: 0.3 }}
-							className='absolute inset-0 bg-black/50'
+							className='absolute inset-0 bg-black/30 backdrop-blur-sm'
 							onClick={() => setShowOrderMenu(false)}
 						/>
 
@@ -1141,13 +1133,13 @@ export default function StoreScreen() {
 							transition={{ type: "spring", damping: 50, stiffness: 300 }}
 							className='absolute top-0 right-0 bottom-0 w-full bg-primary flex flex-col border-l border-gray-200'>
 							{/* Header with Close Button */}
-							<div className='shrink-0 flex items-center justify-between p-4 border-b-2 border-accent'>
+							<div className='shrink-0 flex items-center justify-between p-4 border-b border-accent'>
 								<h2 className='text-lg font-bold text-secondary'>
 									Current Order
 								</h2>
 								<button aria-label="Close"
 									onClick={() => setShowOrderMenu(false)}
-									className='w-10 h-10 flex items-center justify-center bg-light-accent rounded-full hover:bg-accent transition-all'>
+									className='w-10 h-10 flex items-center justify-center hover:opacity-60 transition-all'>
 									<svg
 										className='w-6 h-6 text-secondary'
 										fill='none'
@@ -1280,7 +1272,7 @@ export default function StoreScreen() {
 							</div>
 
 							{/* Order Summary */}
-							<div className='shrink-0 border-t-2 border-accent pb-[max(1rem,env(safe-area-inset-bottom))]'>
+							<div className='shrink-0 border-t border-accent pb-[max(1rem,env(safe-area-inset-bottom))]'>
 								<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
@@ -1311,7 +1303,7 @@ export default function StoreScreen() {
 										{cart.length > 0 && (
 											<button
 												onClick={clearCart}
-												className='flex-1 py-3 font-black text-3 text-error bg-white border-2 border-error rounded-lg hover:bg-error hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+												className='flex-1 py-3 font-black text-3 text-error bg-white border border-error rounded-lg hover:bg-error hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 												CLEAR CART
 											</button>
 										)}
@@ -1321,7 +1313,7 @@ export default function StoreScreen() {
 											className={`flex-1 py-3 font-black text-3 rounded-lg transition-all ${
 												cart.length === 0 || isPlacingOrder || !user
 													? "bg-gray-300 text-primary cursor-not-allowed"
-													: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+													: "bg-accent text-primary hover:bg-accent/80 hover:shadow-sm cursor-pointer text-shadow-lg"
 											}`}>
 											<span>
 												{!user
@@ -1348,14 +1340,12 @@ export default function StoreScreen() {
 					<div className='w-full h-22.5 bg-primary border-b border-secondary/20 border-dashed'>
 						{/* Order Header */}
 						<div className='flex items-center gap-2 p-2'>
-							<div className='bg-light-accent w-10 h-10 rounded-full items-center justify-center flex relative'>
 								<OrderCartIcon className="w-6 h-6"/>
 								{cart.length > 0 && (
 									<div className='absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1'>
 										{cart.reduce((sum, item) => sum + item.quantity, 0)}
 									</div>
 								)}
-							</div>
 							<div className='flex flex-1 flex-col items-center'>
 								<span className='text-secondary font-medium text-3.5 self-start'>
 									{cart.length === 0 ? "New Order" : "Current Order"}
@@ -1494,7 +1484,7 @@ export default function StoreScreen() {
 				</div>
 
 				{/* Order Summary */}
-				<div className='shrink-0 border-t-2 border-accent'>
+				<div className='shrink-0 border-t border-accent'>
 					<div className='flex justify-between h-9.75 text-secondary text-3 font-medium px-3 py-1.5 items-end'>
 						<span>Subtotal</span>
 						<span>{formatCurrency(subtotal)}</span>
@@ -1528,7 +1518,7 @@ export default function StoreScreen() {
 							className={`w-full py-3 font-black text-3.5 transition-all ${
 								cart.length === 0 || isPlacingOrder || !user
 									? "bg-gray-300 text-primary cursor-not-allowed"
-									: "bg-accent text-primary hover:bg-accent/80 hover:shadow-lg cursor-pointer text-shadow-lg"
+									: "bg-accent text-primary hover:bg-accent/80 hover:shadow-sm cursor-pointer text-shadow-lg"
 							}`}>
 							<span>
 								{!user
@@ -1546,29 +1536,29 @@ export default function StoreScreen() {
 
 			{/* Order Confirmation Modal */}
 			{showOrderConfirmation && (
-				<div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4'>
-					<div className='bg-white rounded-lg max-w-md w-full max-h-[80dvh] overflow-hidden flex flex-col'>
+				<div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+					<div className='bg-white rounded-lg max-w-xl w-full max-h-[85dvh] overflow-hidden flex flex-col'>
 						{/* Modal Header */}
-						<div className='p-4 border-b border-gray-200'>
+						<div className='p-5 border-b border-gray-200'>
 							<div className='flex items-center justify-between'>
-								<h2 className='text-lg font-semibold text-secondary'>
+								<h2 className='text-xl font-semibold text-secondary'>
 									Confirm Order
 								</h2>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='text-gray-400 hover:text-secondary text-xl'>
+									className='text-gray-400 hover:text-secondary text-2xl'>
 									×
 								</button>
 							</div>
-							<p className='text-xs text-secondary/80 mt-1'>
+							<p className='text-3 text-secondary/80 mt-1'>
 								Please review your order before confirming
 							</p>
 						</div>
 
 						{/* Order Details */}
-						<div className='flex-1 overflow-y-auto p-4'>
+						<div className='flex-1 overflow-y-auto p-5'>
 							{/* Order Type */}
-							<div className='mb-3 flex justify-between text-3'>
+							<div className='mb-3 flex justify-between text-3.5'>
 								<span className='text-secondary font-medium'>
 									Order Type:
 								</span>
@@ -1577,10 +1567,10 @@ export default function StoreScreen() {
 
 							{/* Payment Method */}
 							<div className='mb-4'>
-								<span className='text-xs font-medium text-secondary block mb-2'>
+								<span className='text-3 font-medium text-secondary block mb-2'>
 									Payment Method:
 								</span>
-								<div className='flex flex-wrap gap-2'>
+								<div className='flex flex-wrap gap-2.5'>
 									{(['cash', 'gcash', 'grab', 'debit_credit', 'employee_charge', 'split'] as const).map((method) => {
 										const grabDisabled = method === 'grab' && cart.length === 0;
 										const label = method === 'cash' ? 'Cash' : method === 'gcash' ? 'GCash' : method === 'grab' ? 'Grab' : method === 'debit_credit' ? 'Debit/Credit' : method === 'employee_charge' ? 'Employee Charge' : 'Split';
@@ -1589,7 +1579,7 @@ export default function StoreScreen() {
 											key={method}
 											onClick={() => !grabDisabled && setPaymentMethod(method)}
 											disabled={grabDisabled}
-											className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+											className={`px-5 py-2 rounded-full text-3 font-medium border transition-colors ${
 												grabDisabled
 													? 'bg-gray-100 text-secondary/30 border-gray-200 cursor-not-allowed'
 													: paymentMethod === method
@@ -1909,7 +1899,7 @@ export default function StoreScreen() {
 																dropdownOffset={SPLIT_DROPDOWN_OFFSET}
 															/>
 														</div>
-														<div className='relative w-28 shrink-0'>
+														<div className='relative w-32 shrink-0'>
 															<span className='absolute left-2.5 top-1/2 -translate-y-1/2 text-3 text-secondary/50 pointer-events-none'>₱</span>
 															<input
 																type='text'
@@ -1958,25 +1948,25 @@ export default function StoreScreen() {
 						</div>
 
 						{/* Modal Footer */}
-						<div className='p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-200 bg-gray-50'>
+						<div className='p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-gray-200 bg-gray-50'>
 							{unpricedItemCount > 0 && (
-								<p className='mb-3 text-xs font-medium text-error text-center'>
+								<p className='mb-3 text-3 font-medium text-error text-center'>
 									Enter a selling price for {unpricedItemCount} item{unpricedItemCount !== 1 ? 's' : ''} before placing the order.
 								</p>
 							)}
-							<div className='flex gap-3'>
+							<div className='flex gap-3.5'>
 								<button
 									onClick={() => setShowOrderConfirmation(false)}
-									className='flex-1 px-4 py-3 text-xs text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-md transition-colors font-black'>
+									className='flex-1 px-5 py-3.5 text-3 text-secondary/80 bg-white border border-secondary/20 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-colors font-black'>
 									CANCEL
 								</button>
 								<button
 									onClick={confirmPlaceOrder}
 									disabled={isPlacingOrder || !splitValid || unpricedItemCount > 0}
-									className={`flex-1 px-4 py-3 rounded-lg text-xs font-black transition-all ${
+									className={`flex-1 px-5 py-3.5 rounded-lg text-3 font-black transition-all ${
 										isPlacingOrder || !splitValid || unpricedItemCount > 0
 											? "bg-gray-100 text-secondary/50 cursor-not-allowed"
-											: "bg-accent text-primary hover:bg-accent/90 cursor-pointer hover:shadow-md"
+											: "bg-accent text-primary hover:bg-accent/90 cursor-pointer hover:shadow-sm"
 									}`}>
 									{isPlacingOrder ? "PROCESSING..." : "CONFIRM"}
 								</button>
@@ -2078,7 +2068,7 @@ export default function StoreScreen() {
 
 			<button
 				onClick={() => setShowOrderMenu(!showOrderMenu)}
-				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full shadow-lg hover:shadow-xl hover:scale-101 transition-all font-medium text-xs gap-3'>
+				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full hover:shadow-sm hover:scale-101 transition-all font-medium text-xs gap-3'>
 				<div className='flex-1 flex justify-between items-center text-primary'>
 					<span className='text-xs'>
 						{cart.length === 0

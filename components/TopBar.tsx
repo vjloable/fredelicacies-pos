@@ -7,6 +7,7 @@ import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LiveIndicator from "@/components/LiveIndicator";
 import { useState, useCallback } from "react";
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useBranch } from "@/contexts/BranchContext";
@@ -210,8 +211,8 @@ export default function TopBar({
 									disabled={isTimeTracking}
 									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-3 lg:text-3 cursor-pointer group transition-all duration-200 ${
 										timeTracking.isWorking
-											? "bg-success/10 text-success border-2 border-success hover:border-secondary hover:bg-secondary/20 hover:shadow-lg"
-											: "bg-secondary/10 text-secondary border-2 border-secondary hover:border-success hover:bg-success/20 hover:shadow-lg"
+											? "bg-success/10 text-success border border-success hover:border-secondary hover:bg-secondary/20 hover:shadow-lg"
+											: "bg-secondary/10 text-secondary border border-secondary hover:border-success hover:bg-success/20 hover:shadow-lg"
 									} ${
 										isTimeTracking
 											? "opacity-50 cursor-not-allowed"
@@ -244,7 +245,7 @@ export default function TopBar({
 										) : timeTracking.isWorking ? (
 											<LoadingSpinner className="w-3! h-3! border-success group-hover:border-secondary" />
 										) : (
-											<div className="border-2 border-secondary group-hover:border-success rounded-full h-3 w-3"/>
+											<div className="border border-secondary group-hover:border-success rounded-full h-3 w-3"/>
 										)}
 									</span>
 									<div className={`relative z-10 flex flex-col items-start]
@@ -325,9 +326,7 @@ export default function TopBar({
 					)}
 
 					<div className='shrink-0 min-w-7.5 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
-						<span className='w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary'>
 							<CalendarIcon className="text-secondary" />
-						</span>
 						<div className='flex flex-col items-start'>
 							{isLoading && !date ? (
 								<LoadingSpinner size='sm' />
@@ -343,19 +342,13 @@ export default function TopBar({
 					</div>
 					<span className='hidden sm:inline'>-</span>
 					<div className='shrink-0 min-w-32 h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-3 items-center font-medium text-3 lg:text-3'>
-						<span className='w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary font-bold text-xs'>
 							<ClockIcon className="text-secondary"/>
-						</span>
 						<div className='flex flex-row items-center gap-2'>
 							{isLoading && !time ? (
 								<LoadingSpinner size='sm' />
 							) : (
 								<>
-									{!isInternetTime && time ? (
-										<LoadingSpinner className="w-3! h-3! border-error bg-error/20 shadow-sm" />
-									) : (
-										<LoadingSpinner className="w-3! h-3! border-success bg-success/20 shadow-sm" />
-									)}
+									<LiveIndicator live={isInternetTime} />
 									<span className='animate-pulse '>{time}</span>
 								</>
 							)}

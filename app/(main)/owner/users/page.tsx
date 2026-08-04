@@ -19,6 +19,7 @@ import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import DropdownField from "@/components/DropdownField";
 import UsersIcon from "@/components/icons/SidebarNav/UsersIcon";
 
@@ -249,10 +250,7 @@ export default function WorkersPage() {
 	if (authLoading) {
 		return (
 			<div className='flex items-center justify-center h-full'>
-				<div className='flex flex-col items-center gap-2'>
-					<LoadingSpinner size="md" />
-					<p className='text-secondary'>Loading...</p>
-				</div>
+				<PageLoader text="Loading users…" />
 			</div>
 		);
 	}
@@ -337,7 +335,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:scale-105 hover:shadow-sm active:scale-95'>
 								<div className='size-4'>
 									<PlusIcon className='drop-shadow-lg' />
 								</div>
@@ -387,7 +385,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 shadow-sm transition-all hover:scale-105 active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:scale-105 hover:shadow-sm active:scale-95'>
 								<div className='size-4'>
 									<PlusIcon className='drop-shadow-lg' />
 								</div>

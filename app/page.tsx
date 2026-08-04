@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
+import PageLoader from "@/components/PageLoader";
 export default function RootPage() {
 	const router = useRouter();
 	const { user, loading, isAuthenticated, isUserOwner } = useAuth();
@@ -36,8 +35,7 @@ export default function RootPage() {
 
 	return (
 		<div className='flex items-center justify-center h-screen gap-3 bg-background'>
-			<LoadingSpinner size="lg" />
-			<p className='text-secondary'>Loading...</p>
+			<PageLoader text="Loading…" />
 		</div>
 	);
 }

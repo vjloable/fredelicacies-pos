@@ -1,6 +1,10 @@
 // Inventory Repository - Handles inventory data access
 import { supabase } from '@/lib/supabase';
 import type { InventoryItem, CreateInventoryItemData, UpdateInventoryItemData } from '@/types/domain/inventory';
+import { readCache, writeCache } from '@/lib/branchCache';
+
+// Persistent cache key for a branch's item list (stale-while-revalidate).
+const invCacheKey = (branchId: string) => `inv:${branchId}`;
 
 // Module-level callback registry for immediate post-mutation refresh
 const activeCallbacks = new Map<string, Set<(items: InventoryItem[]) => void>>();
@@ -107,6 +111,7 @@ export const inventoryRepository = {
       .order('name', { ascending: true });
 
     const items: InventoryItem[] = (data || []).map(mapCategoryIds);
+    if (!error) writeCache(invCacheKey(branchId), items);
     return { items, error };
   },
 
@@ -126,6 +131,7 @@ export const inventoryRepository = {
       .map((row: any) => mapCentralizedRow(row, branchId))
       .filter((i: InventoryItem | null): i is InventoryItem => i !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
+    if (!error) writeCache(invCacheKey(branchId), items);
     return { items, error };
   },
 
@@ -357,6 +363,14 @@ export const inventoryRepository = {
         callback(items);
       });
     };
+
+    // Stale-while-revalidate: emit the cached list synchronously so the page can
+    // render (and drop its loader) instantly, then refetch and update silently.
+    const cached = readCache<InventoryItem[]>(invCacheKey(branchId));
+    if (cached && cached.length) {
+      registerItems(cached, branchId);
+      callback(cached);
+    }
 
     // Initial fetch
     refetch();

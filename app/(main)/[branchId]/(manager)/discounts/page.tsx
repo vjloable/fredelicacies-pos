@@ -17,7 +17,7 @@ import DeleteIcon from "./icons/DeleteIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import DiscountsIcon from "@/components/icons/SidebarNav/DiscountsIcon";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import HelpButton from "@/components/HelpButton";
 import { discountsSteps } from "@/components/TutorialSteps";
 
@@ -128,9 +128,7 @@ export default function DiscountsScreen() {
 					<div className='hidden xl:block w-full'>
 						<TopBar title='Discounts' icon={<DiscountsIcon />} rightAction={<HelpButton variant='page' steps={discountsSteps} />} />
 					</div>
-					<div className='flex-1 flex items-center justify-center'>
-						<LoadingSpinner size="lg" />
-					</div>
+					<PageLoader text="Loading discounts…" />
 				</div>
 			</div>
 		);
@@ -242,7 +240,7 @@ export default function DiscountsScreen() {
 									</h2>
 									<button
 										onClick={handleCreateDiscount}
-										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold shadow-sm hover:scale-105 active:scale-95'>
+										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 hover:shadow-sm active:scale-95'>
 										<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3'>
 											<div className='w-4 h-4'>
 												<PlusIcon className='drop-shadow-lg' />
@@ -253,7 +251,7 @@ export default function DiscountsScreen() {
 								</div>
 
 								{/* Discounts Table */}
-								<div className='bg-white rounded-lg shadow-sm border border-secondary/20 overflow-hidden'>
+								<div className='bg-white rounded-lg border border-secondary/20 overflow-hidden'>
 									<div className='overflow-x-auto'>
 										<table className='min-w-full divide-y divide-gray-200'>
 											<thead className='bg-secondary/5'>

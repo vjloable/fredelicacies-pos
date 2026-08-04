@@ -18,7 +18,7 @@ import {
 } from "@/services/inventoryService";
 import { getCategories } from "@/services/categoryService";
 import type { InventoryItem, Category } from "@/types/domain";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 
@@ -458,10 +458,7 @@ function NewTransferPageInner() {
           </div>
 
           {loadingItems ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <LoadingSpinner size="md" />
-              <p className="text-secondary text-xs">Loading...</p>
-            </div>
+            <PageLoader text="Loading items…" />
           ) : !sourceBranchId ? (
             <p className="text-xs text-secondary/40 text-center py-6">Pick a branch first.</p>
           ) : search.trim() ? (
@@ -485,7 +482,7 @@ function NewTransferPageInner() {
                   <button
                     key={f.id}
                     onClick={() => setPickerCategoryId(f.id)}
-                    className="group flex flex-col items-start gap-2 p-3 rounded-lg border border-secondary/10 hover:border-accent hover:shadow-sm transition-all active:scale-95 text-left">
+                    className="group flex flex-col items-start gap-2 p-3 rounded-lg border border-secondary/10 hover:border-accent transition-all hover:shadow-sm active:scale-95 text-left">
                     <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${f.color}20`, color: f.color }}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -659,8 +656,8 @@ function NewTransferPageInner() {
         const n = Math.min(Math.max(0, parseInt(qtyDraft || "0", 10) || 0), cap);
         const bump = (d: number) => setQtyDraft(String(Math.min(Math.max(0, n + d), cap)));
         return (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-primary/70 p-4" onClick={closeQty}>
-            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm p-4" onClick={closeQty}>
+            <div className="bg-white rounded-2xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <div className="px-5 py-4 border-b border-secondary/10">
                 <p className="text-sm font-semibold text-secondary truncate">{qtyItem.name}</p>
                 <p className="text-2.5 text-secondary/50 mt-0.5">

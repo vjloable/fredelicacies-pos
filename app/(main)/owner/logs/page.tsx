@@ -6,6 +6,7 @@ import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import { getAllActivityLogs, subscribeToAllActivityLogs } from "@/services/activityLogService";
 import { branchService } from "@/services/branchService";
 import type { ActivityLog, Branch } from "@/types/domain";
@@ -361,9 +362,7 @@ export default function LogsScreen() {
           {/* Feed */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <LoadingSpinner size="md" />
-              </div>
+              <PageLoader text="Loading logs…" />
             ) : fetchError ? (
               <div className="flex flex-col items-center justify-center h-full text-red-400 gap-1">
                 <p className="text-xs font-semibold">Failed to load logs</p>
@@ -419,7 +418,7 @@ export default function LogsScreen() {
                                 <LogIconEl action={log.action} />
                               </div>
                               {!isLastInGroup && (
-                                <div className="flex-1 min-h-3 mt-1 border-l-2 border-dashed border-secondary/15" />
+                                <div className="flex-1 min-h-3 mt-1 border-l border-dashed border-secondary/15" />
                               )}
                             </div>
                             {/* Content */}

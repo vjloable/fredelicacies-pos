@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import {
 	AppSettings,
 	loadSettingsFromLocal,
@@ -147,9 +148,7 @@ export default function SettingsScreen() {
 				</div>
 
 				{isLoading && (
-					<div className='flex-1 flex items-center justify-center'>
-						<LoadingSpinner />
-					</div>
+					<PageLoader text="Loading settings…" />
 				)}
 
 				{!isLoading && workerOnly && (
@@ -190,7 +189,7 @@ export default function SettingsScreen() {
 									</div>
 
 									{/* Menu Display Setting */}
-									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
+									<div className='bg-white rounded-lg p-6 border border-gray-100'>
 										<h3 className='text-base font-semibold text-secondary mb-4'>
 											Menu Display
 										</h3>
@@ -227,7 +226,7 @@ export default function SettingsScreen() {
 									</div>
 
 								{/* Save/Sync Actions */}
-									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
+									<div className='bg-white rounded-lg p-6 border border-gray-100'>
 										<h3 className='text-base font-semibold text-secondary mb-4'>
 											Save & Sync
 										</h3>
@@ -332,7 +331,7 @@ export default function SettingsScreen() {
 									</div>
 
 									{/* Bluetooth Printer Section */}
-									<div className='bg-white rounded-lg p-6 shadow-sm border border-gray-100'>
+									<div className='bg-white rounded-lg p-6 border border-gray-100'>
 										<h3 className='text-base font-semibold text-secondary mb-4 flex items-center gap-2'>
 											Bluetooth
 										</h3>
@@ -379,7 +378,7 @@ export default function SettingsScreen() {
 													className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
 														isConnecting
 															? "bg-gray-300 text-gray-500 cursor-not-allowed"
-															: "bg-accent hover:bg-secondary/80 text-white hover:shadow-lg"
+															: "bg-accent hover:bg-secondary/80 text-white hover:shadow-sm"
 													}`}>
 													{isConnecting ? (
 														<div className='flex items-center justify-center'>
@@ -394,12 +393,12 @@ export default function SettingsScreen() {
 												<>
 													<button
 														onClick={testPrint}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-success hover:bg-success/50 text-secondary hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-success hover:bg-success/50 text-secondary transition-all hover:shadow-sm'>
 														Test Print
 													</button>
 													<button
 														onClick={disconnectPrinter}
-														className='w-full py-2 px-4 rounded-lg font-medium bg-error hover:bg-error/50 text-primary hover:shadow-lg transition-all'>
+														className='w-full py-2 px-4 rounded-lg font-medium bg-error hover:bg-error/50 text-primary transition-all hover:shadow-sm'>
 														Disconnect
 													</button>
 												</>
@@ -455,7 +454,7 @@ function BluetoothCard({
 	testPrint,
 }: BluetoothCardProps) {
 	return (
-		<div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4'>
+		<div className='bg-white rounded-xl p-6 border border-gray-100 space-y-4'>
 			{bluetoothStatus && (
 				<div className='p-3 bg-gray-50 rounded-lg border'>
 					<p className='text-3 text-secondary'>{bluetoothStatus}</p>
@@ -480,7 +479,7 @@ function BluetoothCard({
 						className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
 							isConnecting
 								? "bg-gray-300 text-gray-500 cursor-not-allowed"
-								: "bg-accent hover:bg-accent/90 text-primary shadow-sm hover:shadow-md"
+								: "bg-accent hover:bg-accent/90 text-primary hover:shadow-sm"
 						}`}>
 						{isConnecting ? (
 							<div className='flex items-center justify-center gap-2'>

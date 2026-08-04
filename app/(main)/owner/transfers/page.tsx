@@ -9,7 +9,7 @@ import {
   getAllTransfers,
 } from "@/services/transferService";
 import type { TransferStatus, TransferWithItems } from "@/types/domain/transfer";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 
@@ -179,10 +179,7 @@ export default function OwnerTransfersPage() {
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-2">
-            <LoadingSpinner size="md" />
-            <p className="text-secondary text-xs">Loading...</p>
-          </div>
+          <PageLoader text="Loading transfers…" />
         ) : transfers.length === 0 ? (
           <div className="bg-white border border-secondary/10 rounded-xl p-10 text-center text-xs text-secondary/50">
             No transfers in this view.

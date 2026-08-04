@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import TopBar from '@/components/TopBar';
 import MobileTopBar from '@/components/MobileTopBar';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import PageLoader from "@/components/PageLoader";
 import DashboardIcon from '@/components/icons/SidebarNav/DashboardIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { branchService, type Branch } from '@/services/branchService';
@@ -28,7 +28,6 @@ interface BranchData {
   activeShift: Shift | null;
   lowStockItems: InventoryItem[];
   lastShift: Shift | null;
-  paymentBreakdown: Record<string, number>;
 }
 
 export default function DashboardPage() {
@@ -50,7 +49,9 @@ export default function DashboardPage() {
 
     (async () => {
       const { branches } = await branchService.getAllBranches();
-      const activeBranches = branches.filter(b => b.status === 'active');
+      // Commissaries are production hubs, not points of sale — they have no
+      // revenue of their own, so they're excluded here. Only branch/event stay.
+      const activeBranches = branches.filter(b => b.status === 'active' && b.type !== 'commissary');
       if (cancelled || activeBranches.length === 0) {
         setLoading(false);
         return;
@@ -76,21 +77,6 @@ export default function DashboardPage() {
           const orders = (ordersRes.orders || []).filter(o => o.status === 'completed');
           const stats = calculateSalesStats(orders);
 
-          // Payment breakdown
-          const paymentBreakdown: Record<string, number> = {};
-          for (const o of orders) {
-            const pm = o.payment_method;
-            if (pm === 'split' && o.payment_details) {
-              const d = o.payment_details;
-              const m1 = d.split_method_1;
-              const m2 = d.split_method_2;
-              if (m1) paymentBreakdown[m1] = (paymentBreakdown[m1] || 0) + parseFloat(d.split_amount_1 || '0');
-              if (m2) paymentBreakdown[m2] = (paymentBreakdown[m2] || 0) + parseFloat(d.split_amount_2 || '0');
-            } else {
-              paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + o.total;
-            }
-          }
-
           const closedShifts = closedShiftsRes.shifts || [];
           const lastShift = closedShifts.length > 0 ? closedShifts[0] : null;
 
@@ -103,7 +89,6 @@ export default function DashboardPage() {
             activeShift: shiftRes.shift,
             lowStockItems: lowStockRes.items || [],
             lastShift,
-            paymentBreakdown,
           };
         })
       );
@@ -142,35 +127,22 @@ export default function DashboardPage() {
     return getTopSellingItems(allOrders, 10);
   }, [branchData]);
 
-  // Chart data
+  // Chart data — capped so the chart stays readable as the branch count grows;
+  // the remaining branches are still listed (and searchable-by-eye) in the cards below.
+  const CHART_LIMIT = 8;
   const chartData = useMemo(() =>
     branchData
       .filter(d => d.revenue > 0)
+      .slice(0, CHART_LIMIT)
       .map((d, i) => ({ name: d.branch.name, revenue: d.revenue, fill: i === 0 ? '#DA834D' : '#4C2E24' })),
     [branchData]
   );
+  const chartOverflow = Math.max(0, branchData.filter(d => d.revenue > 0).length - CHART_LIMIT);
 
-  // Alerts
-  const alerts = useMemo(() => {
-    const items: { type: 'warning' | 'error'; message: string }[] = [];
-
-    for (const d of branchData) {
-      if (!d.activeShift) {
-        items.push({ type: 'warning', message: `${d.branch.name} has no open shift today` });
-      }
-      if (d.lowStockItems.length > 0) {
-        items.push({ type: 'warning', message: `${d.branch.name} has ${d.lowStockItems.length} item${d.lowStockItems.length !== 1 ? 's' : ''} low on stock` });
-      }
-      if (d.lastShift?.over_short != null && d.lastShift.over_short < -100) {
-        items.push({ type: 'error', message: `${d.branch.name} last shift was short ${formatCurrency(Math.abs(d.lastShift.over_short))}` });
-      }
-    }
-    return items;
-  }, [branchData]);
-
-  const pmLabels: Record<string, string> = {
-    cash: 'Cash', gcash: 'GCash', grab: 'Grab',
-    debit_credit: 'Card', employee_charge: 'Emp',
+  const branchTypeLabels: Record<string, string> = {
+    event: 'Event',
+    branch: '',
+    commissary: 'Commissary',
   };
 
   if (loading) {
@@ -179,8 +151,7 @@ export default function DashboardPage() {
         <div className='hidden xl:block'><TopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
         <div className='xl:hidden'><MobileTopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
         <div className='flex flex-col items-center justify-center py-20 gap-4'>
-          <LoadingSpinner size='lg' />
-          <p className='text-sm text-secondary/60'>Loading dashboard...</p>
+          <PageLoader text="Loading dashboard…" />
         </div>
       </>
     );
@@ -201,19 +172,24 @@ export default function DashboardPage() {
             change={totals.revenueChange}
             showChange={yesterdayRevenue > 0}
           />
-          <StatCard label='Orders' value={totals.orders.toString()} />
-          <StatCard label='Avg Order' value={formatCurrency(totals.avgOrder)} />
+          <StatCard label='Orders Today' value={totals.orders.toLocaleString()} />
+          <StatCard label='Average Order' value={formatCurrency(totals.avgOrder)} />
           <StatCard
-            label='Active Branches'
+            label='Branches With a Shift Open'
             value={`${totals.activeBranches} / ${branchData.length}`}
-            accent={totals.activeBranches === branchData.length}
+            accent={branchData.length > 0 && totals.activeBranches === branchData.length}
           />
         </div>
 
         {/* Section 2: Revenue by Branch Chart */}
         {chartData.length > 0 && (
           <div className='bg-white rounded-2xl border border-gray-200 p-4'>
-            <h2 className='text-sm font-bold text-secondary mb-3'>Revenue by Branch</h2>
+            <div className='flex items-center justify-between mb-3'>
+              <h2 className='text-sm font-semibold text-secondary'>Revenue by Branch</h2>
+              {chartOverflow > 0 && (
+                <span className='text-2.5 text-secondary/40'>Top {CHART_LIMIT} shown · {chartOverflow} more below</span>
+              )}
+            </div>
             <div style={{ height: Math.max(120, chartData.length * 48) }}>
               <ResponsiveContainer width='100%' height='100%'>
                 <BarChart data={chartData} layout='vertical' margin={{ left: 0, right: 16 }}>
@@ -221,7 +197,7 @@ export default function DashboardPage() {
                   <YAxis type='category' dataKey='name' width={100} tick={{ fontSize: 11, fill: '#4C2E24' }} />
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
-                    contentStyle={{ borderRadius: 12, fontSize: 12, border: '1px solid #e5e7eb' }}
+                    contentStyle={{ borderRadius: 2, fontSize: 12, border: '1px solid #e5e7eb' }}
                   />
                   <Bar dataKey='revenue' radius={[0, 6, 6, 0]} barSize={24} fill='#4C2E24' opacity={0.6} />
                 </BarChart>
@@ -231,115 +207,106 @@ export default function DashboardPage() {
         )}
 
         {/* Section 3: Branch Cards */}
-        <div>
-          <h2 className='text-sm font-bold text-secondary mb-3'>Branches</h2>
-          <div className='grid grid-cols-1 xl:grid-cols-2 gap-3'>
-            {branchData.map((d) => (
-              <button
-                key={d.branch.id}
-                onClick={() => router.push(`/${d.branch.id}/store`)}
-                className='bg-white rounded-2xl border border-gray-200 p-4 text-left hover:border-accent hover:shadow-md transition-all group'
-              >
-                {/* Header */}
-                <div className='flex items-center justify-between mb-3'>
-                  <div className='flex items-center gap-2'>
-                    <span className={`w-2.5 h-2.5 rounded-full ${d.activeShift ? 'bg-success animate-pulse' : 'bg-gray-300'}`} />
-                    <span className='text-sm font-bold text-secondary'>{d.branch.name}</span>
-                  </div>
-                  <svg className='w-4 h-4 text-secondary/30 group-hover:text-accent transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-                  </svg>
-                </div>
-
-                {/* Stats Row */}
-                <div className='flex items-baseline gap-4 mb-3'>
-                  <div>
-                    <p className='text-lg font-bold text-secondary'>{formatCurrency(d.revenue)}</p>
-                    <p className='text-xs text-secondary/40'>revenue</p>
-                  </div>
-                  <div>
-                    <p className='text-sm font-bold text-secondary'>{d.orderCount}</p>
-                    <p className='text-xs text-secondary/40'>orders</p>
-                  </div>
-                </div>
-
-                {/* Payment Breakdown */}
-                {Object.keys(d.paymentBreakdown).length > 0 && (
-                  <div className='flex flex-wrap gap-1.5 mb-3'>
-                    {Object.entries(d.paymentBreakdown)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([method, amount]) => (
-                        <span key={method} className='px-2 py-0.5 bg-secondary/5 rounded-full text-xs text-secondary/60'>
-                          {pmLabels[method] || method} {formatCurrency(amount)}
+        {branchData.length > 0 && (
+          <div>
+            <div className='flex items-center justify-between mb-3'>
+              <h2 className='text-sm font-semibold text-secondary'>Branches</h2>
+              <span className='text-2.5 text-secondary/40'>{branchData.length} active today</span>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3'>
+              {branchData.map((d) => {
+                const revenueShare = totals.revenue > 0 ? (d.revenue / totals.revenue) * 100 : 0;
+                const typeLabel = branchTypeLabels[d.branch.type ?? 'branch'];
+                return (
+                  <button
+                    key={d.branch.id}
+                    onClick={() => router.push(`/${d.branch.id}/store`)}
+                    className='bg-white rounded-2xl border border-gray-200 p-4 text-left hover:border-accent hover:shadow-sm transition-all group'
+                  >
+                    {/* Header */}
+                    <div className='flex items-center justify-between gap-2'>
+                      <div className='flex items-center gap-2 min-w-0'>
+                        <span className={`size-2 shrink-0 rounded-full ${d.activeShift ? 'bg-success animate-pulse' : 'bg-gray-300'}`} />
+                        <span className='text-sm font-semibold text-secondary truncate'>{d.branch.name}</span>
+                        {typeLabel && (
+                          <span className='shrink-0 px-1.5 py-0.5 rounded-full text-2.5 font-medium bg-accent/10 text-accent'>
+                            {typeLabel}
+                          </span>
+                        )}
+                      </div>
+                      <div className='flex items-center gap-1.5 shrink-0'>
+                        <span className={`text-2.5 font-semibold px-2 py-0.5 rounded-full ${
+                          d.activeShift ? 'text-success bg-success/10' : 'text-secondary/40 bg-gray-100'
+                        }`}>
+                          {d.activeShift ? 'Open' : 'No Shift'}
                         </span>
-                      ))}
-                  </div>
-                )}
+                        <svg className='size-4 shrink-0 text-secondary/30 group-hover:text-accent transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                        </svg>
+                      </div>
+                    </div>
 
-                {/* Bottom Indicators */}
-                <div className='flex items-center gap-3 flex-wrap'>
-                  {d.lowStockItems.length > 0 && (
-                    <span className='text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium'>
-                      {d.lowStockItems.length} low stock
-                    </span>
-                  )}
-                  {d.lastShift?.over_short != null && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      d.lastShift.over_short >= 0
-                        ? 'text-success bg-success/10'
-                        : 'text-error bg-error/10'
-                    }`}>
-                      {d.lastShift.over_short >= 0 ? '+' : ''}{formatCurrency(d.lastShift.over_short)}
-                    </span>
-                  )}
-                  {!d.activeShift && (
-                    <span className='text-xs text-secondary/40 bg-gray-100 px-2 py-0.5 rounded-full'>
-                      No shift
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+                    {/* Revenue */}
+                    <div className='flex items-center gap-2 mt-3'>
+                      <p className='text-2xl font-bold text-secondary tabular-nums'>{formatCurrency(d.revenue)}</p>
+                      {revenueShare > 0 && (
+                        <span className='text-2.5 font-semibold text-secondary/40'>{revenueShare.toFixed(0)}% of total</span>
+                      )}
+                    </div>
 
-        {/* Section 4: Top Selling Items */}
-        {topItems.length > 0 && (
-          <div className='bg-white rounded-2xl border border-gray-200 p-4'>
-            <h2 className='text-sm font-bold text-secondary mb-3'>Top Selling Items Today</h2>
-            <div className='space-y-2'>
-              {topItems.map((item, i) => (
-                <div key={item.id} className='flex items-center gap-3'>
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    i < 3 ? 'bg-accent/10 text-accent' : 'bg-gray-100 text-secondary/40'
-                  }`}>
-                    {i + 1}
-                  </span>
-                  <span className='text-xs text-secondary font-medium flex-1 truncate'>{item.name}</span>
-                  <span className='text-xs text-secondary/50 shrink-0'>{item.quantity} sold</span>
-                  <span className='text-xs font-bold text-secondary shrink-0'>{formatCurrency(item.revenue)}</span>
-                </div>
-              ))}
+                    {/* Orders / Avg */}
+                    <div className='grid grid-cols-2 divide-x divide-gray-100 border-y border-gray-100 mt-3 py-2.5'>
+                      <div className='px-0.5'>
+                        <p className='text-2.5 font-semibold text-secondary/40 uppercase tracking-wide'>Orders</p>
+                        <p className='text-sm font-semibold text-secondary tabular-nums mt-0.5'>{d.orderCount}</p>
+                      </div>
+                      <div className='pl-3'>
+                        <p className='text-2.5 font-semibold text-secondary/40 uppercase tracking-wide'>Avg Order</p>
+                        <p className='text-sm font-semibold text-secondary tabular-nums mt-0.5'>{formatCurrency(d.avgOrder)}</p>
+                      </div>
+                    </div>
+
+                    {/* Alerts — only shown when there's something worth flagging */}
+                    {(d.lowStockItems.length > 0 || d.lastShift?.over_short != null) && (
+                      <div className='flex items-center gap-1.5 flex-wrap mt-3'>
+                        {d.lowStockItems.length > 0 && (
+                          <span className='text-2.5 font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full'>
+                            {d.lowStockItems.length} Low Stock
+                          </span>
+                        )}
+                        {d.lastShift?.over_short != null && (
+                          <span className={`text-2.5 font-semibold px-2 py-0.5 rounded-full ${
+                            d.lastShift.over_short >= 0
+                              ? 'text-success bg-success/10'
+                              : 'text-error bg-error/10'
+                          }`}>
+                            {d.lastShift.over_short >= 0 ? '+' : ''}{formatCurrency(d.lastShift.over_short)} Last Shift
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Section 5: Alerts */}
-        {alerts.length > 0 && (
+        {/* Section 4: Top Selling Items */}
+        {topItems.length > 0 && (
           <div className='bg-white rounded-2xl border border-gray-200 p-4'>
-            <h2 className='text-sm font-bold text-secondary mb-3'>Needs Attention</h2>
+            <h2 className='text-sm font-semibold text-secondary mb-3'>Top Selling Items Today</h2>
             <div className='space-y-2'>
-              {alerts.map((alert, i) => (
-                <div
-                  key={i}
-                  className={`flex items-start gap-2 px-3 py-2 rounded-xl ${
-                    alert.type === 'error' ? 'bg-error/5' : 'bg-amber-50'
-                  }`}
-                >
-                  <svg className={`w-4 h-4 shrink-0 mt-0.5 ${alert.type === 'error' ? 'text-error' : 'text-amber-500'}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
-                  </svg>
-                  <p className={`text-xs ${alert.type === 'error' ? 'text-error' : 'text-amber-700'}`}>{alert.message}</p>
+              {topItems.map((item, i) => (
+                <div key={item.id} className='flex items-center gap-3'>
+                  <span className={`size-6 rounded-full flex items-center justify-center text-2.5 font-bold shrink-0 ${
+                    i < 3 ? 'bg-accent/10 text-accent' : 'bg-gray-100 text-secondary/40'
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <span className='text-3 text-secondary font-medium flex-1 truncate'>{item.name}</span>
+                  <span className='text-2.5 text-secondary/50 shrink-0'>{item.quantity} Sold</span>
+                  <span className='text-3 font-semibold text-secondary tabular-nums shrink-0'>{formatCurrency(item.revenue)}</span>
                 </div>
               ))}
             </div>
@@ -348,8 +315,9 @@ export default function DashboardPage() {
 
         {/* Empty State */}
         {branchData.length === 0 && (
-          <div className='flex flex-col items-center justify-center py-12'>
-            <p className='text-sm text-secondary/40'>No active branches found</p>
+          <div className='flex flex-col items-center justify-center py-12 gap-1'>
+            <p className='text-sm font-medium text-secondary/50'>No active branches yet</p>
+            <p className='text-2.5 text-secondary/30'>Branches with sales today will show up here</p>
           </div>
         )}
       </div>
@@ -366,14 +334,14 @@ function StatCard({ label, value, change, showChange, accent }: {
 }) {
   return (
     <div className={`bg-white rounded-2xl border border-gray-200 p-4 ${accent ? 'ring-1 ring-success/30' : ''}`}>
-      <p className='text-xs text-secondary/50 mb-1'>{label}</p>
-      <p className='text-xl font-bold text-secondary'>{value}</p>
+      <p className='text-2.5 font-semibold text-secondary/50 uppercase tracking-wide mb-1.5'>{label}</p>
+      <p className='text-xl font-bold text-secondary tabular-nums'>{value}</p>
       {showChange && change !== undefined && (
-        <div className={`flex items-center gap-1 mt-1 ${change >= 0 ? 'text-success' : 'text-error'}`}>
-          <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+        <div className={`flex items-center gap-1 mt-1.5 ${change >= 0 ? 'text-success' : 'text-error'}`}>
+          <svg className='size-3 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d={change >= 0 ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
           </svg>
-          <span className='text-xs font-semibold'>{Math.abs(change).toFixed(1)}% vs yesterday</span>
+          <span className='text-2.5 font-semibold'>{Math.abs(change).toFixed(1)}% vs Yesterday</span>
         </div>
       )}
     </div>
