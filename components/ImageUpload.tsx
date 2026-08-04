@@ -114,14 +114,14 @@ export default function ImageUpload({
                 type="button"
                 onClick={triggerFileInput}
                 disabled={uploading}
-                className="px-4 py-2 bg-primary hover:bg-primary/50 text-secondary rounded-lg font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 bg-primary hover:bg-primary/50 text-secondary rounded-lg font-medium transition-all active:bg-primary/50 disabled:opacity-50"
               >
                 {uploading ? 'Uploading...' : 'Change'}
               </button>
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="px-4 py-2 bg-error hover:bg-error/50 text-white rounded-lg font-medium transition-all hover:scale-105 active:scale-95"
+                className="px-4 py-2 bg-error hover:bg-error/50 text-white rounded-lg font-medium transition-all active:bg-error/70"
               >
                 Remove
               </button>

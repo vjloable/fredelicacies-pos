@@ -249,7 +249,7 @@ export default function DeleteConfirmationModal({
 						<div className='flex flex-col sm:flex-row gap-3 sm:gap-4'>
 							<button
 								onClick={handleClose}
-								className='w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-xs sm:text-sm'>
+								className='w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all active:bg-gray-300 text-xs sm:text-sm'>
 								Cancel
 							</button>
 							<button
@@ -261,8 +261,8 @@ export default function DeleteConfirmationModal({
 												deleteOption === "soft"
 													? "bg-orange-500 hover:bg-orange-600"
 													: "bg-red-500 hover:bg-red-600"
-										  } text-white hover:scale-105 cursor-pointer`
-										: "bg-gray-200 text-gray-400 hover:scale-100 active:scale-100 cursor-not-allowed"
+										  } text-white cursor-pointer`
+										: "bg-gray-200 text-gray-400 cursor-not-allowed"
 								}`}>
 								{deleteOption === "soft"
 									? "Deactivate Branch"

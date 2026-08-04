@@ -274,7 +274,7 @@ export default function SignUpPage() {
                   isLoading || 
                   validationErrors.emailTaken
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
+                    : "bg-accent hover:bg-accent/90 text-white active:bg-light-accent active:text-accent"
                 }`}
               >
                 {isLoading ? (

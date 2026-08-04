@@ -191,7 +191,7 @@ export default function ShiftReportModal() {
           <button
             onClick={handlePrint}
             disabled={printing}
-            className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all active:bg-light-accent disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -200,7 +200,7 @@ export default function ShiftReportModal() {
           </button>
           <button
             onClick={() => shift.dismissShiftReport()}
-            className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+            className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all active:bg-secondary/70"
           >
             Done
           </button>

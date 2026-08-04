@@ -193,7 +193,7 @@ export default function BranchesPage() {
 				<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 hover:shadow-sm active:scale-95'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:shadow-sm active:bg-light-accent'>
 						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />
@@ -214,7 +214,7 @@ export default function BranchesPage() {
 					</div>
 					<button
 						onClick={handleAddBranch}
-						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 hover:shadow-sm active:scale-95'>
+						className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:shadow-sm active:bg-light-accent'>
 						<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-md font-black text-3'>
 							<div className='size-4'>
 								<PlusIcon className='drop-shadow-lg' />

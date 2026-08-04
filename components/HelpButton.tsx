@@ -24,7 +24,7 @@ export default function HelpButton({ steps, variant = 'inline', className = '' }
       <>
         <button
           onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-          className={`w-8 h-8 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary hover:text-secondary flex items-center justify-center transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${className}`}
+          className={`w-8 h-8 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary hover:text-secondary flex items-center justify-center transition-all active:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${className}`}
           aria-label="Help"
         >
           {questionIcon}

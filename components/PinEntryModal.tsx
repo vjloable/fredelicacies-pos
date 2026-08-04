@@ -212,26 +212,26 @@ export default function PinEntryModal({
 								key={digit}
 								onClick={() => handleKeyPress(digit)}
 								disabled={loading || currentPin.length >= 4}
-								className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+								className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:bg-accent active:text-white transition-all duration-150 disabled:opacity-40 cursor-pointer">
 								{digit}
 							</button>
 						))}
 						<button
 							onClick={handleClear}
 							disabled={loading}
-							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:scale-95 transition-all duration-150 cursor-pointer">
+							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:bg-accent active:text-white transition-all duration-150 cursor-pointer">
 							Clear
 						</button>
 						<button
 							onClick={() => handleKeyPress("0")}
 							disabled={loading || currentPin.length >= 4}
-							className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:scale-95 transition-all duration-150 disabled:opacity-40 cursor-pointer">
+							className="h-16 rounded-xl bg-background text-secondary text-xl font-semibold hover:bg-light-accent active:bg-accent active:text-white transition-all duration-150 disabled:opacity-40 cursor-pointer">
 							0
 						</button>
 						<button
 							onClick={handleBackspace}
 							disabled={loading}
-							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:scale-95 transition-all duration-150 cursor-pointer flex items-center justify-center">
+							className="h-16 rounded-xl bg-background text-secondary text-xs font-medium hover:bg-light-accent active:bg-accent active:text-white transition-all duration-150 cursor-pointer flex items-center justify-center">
 							<svg
 								className="w-6 h-6"
 								fill="none"
@@ -259,7 +259,7 @@ export default function PinEntryModal({
 					<button
 						onClick={handleSubmit}
 						disabled={loading || currentPin.length < 4}
-						className="flex-1 h-12 rounded-xl bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center">
+						className="flex-1 h-12 rounded-xl bg-accent text-white font-semibold hover:opacity-90 active:bg-light-accent active:text-accent transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center">
 						{loading ? (
 							<LoadingSpinner className="border-white" />
 						) : mode === "setup" && step === "enter" ? (

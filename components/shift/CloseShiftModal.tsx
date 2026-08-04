@@ -107,7 +107,7 @@ export default function CloseShiftModal() {
                   <button
                     key={qa}
                     onClick={() => setAmount(qa.toString())}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:bg-accent/20 ${
                       parsedAmount === qa
                         ? 'bg-accent text-primary'
                         : 'bg-secondary/10 text-secondary hover:bg-secondary/20'
@@ -145,13 +145,13 @@ export default function CloseShiftModal() {
             <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
               <button
                 onClick={shift.dismissCloseShiftModal}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all active:bg-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all active:bg-secondary/70"
               >
                 Close Shift
               </button>

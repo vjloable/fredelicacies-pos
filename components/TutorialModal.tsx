@@ -97,7 +97,7 @@ export default function TutorialModal({ isOpen, steps, onClose }: TutorialModalP
           {!isFirst && (
             <button
               onClick={() => setCurrent(c => c - 1)}
-              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all active:bg-gray-200"
             >
               ← Back
             </button>
@@ -112,7 +112,7 @@ export default function TutorialModal({ isOpen, steps, onClose }: TutorialModalP
           )}
           <button
             onClick={() => isLast ? handleClose() : setCurrent(c => c + 1)}
-            className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+            className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all active:bg-light-accent"
           >
             {isLast ? 'Got it' : 'Next →'}
           </button>

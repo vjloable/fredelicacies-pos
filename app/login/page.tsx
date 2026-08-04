@@ -222,7 +222,7 @@ function LoginContent() {
 											className={`w-full py-3 rounded-md font-semibold transition-all hover:shadow-sm ${
 												resetLoading
 													? "bg-gray-300 text-gray-500 cursor-not-allowed"
-													: "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
+													: "bg-accent hover:bg-accent/90 text-white active:bg-light-accent active:text-accent"
 											}`}
 										>
 											{resetLoading ? (
@@ -336,7 +336,7 @@ function LoginContent() {
 								className={`w-full py-3 rounded-md font-semibold transition-all hover:shadow-sm ${
 									isLoading
 										? "bg-gray-300 text-gray-500 cursor-not-allowed"
-										: "bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95"
+										: "bg-accent hover:bg-accent/90 text-white active:bg-light-accent active:text-accent"
 								}`}>
 								{isLoading ? (
 									<div className='flex items-center justify-center gap-2'>

@@ -144,7 +144,7 @@ export default function ResetPasswordPage() {
                                     className={`w-full py-3 rounded-md font-semibold transition-all hover:shadow-sm ${
                                         loading
                                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95'
+                                            : 'bg-accent hover:bg-accent/90 text-white active:bg-light-accent active:text-accent'
                                     }`}
                                 >
                                     {loading ? (

@@ -158,7 +158,7 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
                   <button
                     key={qa}
                     onClick={() => setAmount(qa.toString())}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:bg-accent/20 ${
                       parsedAmount === qa
                         ? 'bg-accent text-primary'
                         : 'bg-secondary/10 text-secondary hover:bg-secondary/20'
@@ -229,14 +229,14 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
             <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
               <button
                 onClick={handleClose}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all active:bg-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex-1 py-2.5 bg-accent hover:bg-accent/80 text-primary rounded-xl text-xs font-semibold transition-all active:bg-light-accent disabled:opacity-40 disabled:pointer-events-none"
               >
                 Drop {parsedAmount > 0 ? formatCurrency(parsedAmount) : ''}
               </button>

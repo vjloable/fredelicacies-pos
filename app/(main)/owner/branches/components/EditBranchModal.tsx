@@ -285,7 +285,7 @@ export default function EditBranchModal({
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
               <button
                 onClick={onClose}
-                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 text-xs sm:text-sm"
+                className="w-full sm:flex-1 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all active:bg-gray-300 text-xs sm:text-sm"
               >
                 Cancel
               </button>
@@ -294,8 +294,8 @@ export default function EditBranchModal({
                 disabled={!branchData.name.trim() || !branchData.address.trim() || !hasChanges}
                 className={`w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-xs sm:text-sm ${
                   branchData.name.trim() && branchData.address.trim() && hasChanges
-                    ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                    : 'bg-secondary/20 text-secondary/40 hover:scale-100 active:scale-100 cursor-not-allowed'
+                    ? 'bg-accent hover:bg-accent text-primary text-shadow-lg cursor-pointer'
+                    : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
                 }`}
               >
                 {hasChanges ? 'Update Branch' : 'No Changes'}

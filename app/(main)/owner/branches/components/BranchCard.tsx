@@ -52,7 +52,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 		<div
 			key={branch.branchId}
 			onClick={handleCardClick}
-			className={`group bg-white rounded-2xl border border-gray-200 flex flex-col overflow-hidden transition-all duration-200 hover:border-accent hover:shadow-sm active:scale-95 ${onClick ? "cursor-pointer" : ""}`}>
+			className={`group bg-white rounded-2xl border border-gray-200 flex flex-col overflow-hidden transition-all duration-200 hover:border-accent hover:shadow-sm active:bg-accent/10 ${onClick ? "cursor-pointer" : ""}`}>
 			<div className='relative h-32 sm:h-40 w-full bg-accent flex items-center justify-center overflow-hidden group-hover:bg-accent/10 transition-all duration-200'>
 				{branch.imgUrl ? (
 					<Image

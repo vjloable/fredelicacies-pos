@@ -164,7 +164,7 @@ export default function TopBar({
 				<div className='flex items-center gap-2 sm:gap-4 flex-1 overflow-x-auto'>
 					<button
 						onClick={toggleDrawer}
-						className='ml-6 my-4.25 h-14 w-14 min-w-14 bg-primary rounded-xl flex justify-center items-center hover:scale-105 hover:shadow-md transition-all cursor-pointer shrink-0'>
+						className='ml-6 my-4.25 h-14 w-14 min-w-14 bg-primary rounded-xl flex justify-center items-center hover:shadow-md transition-all cursor-pointer shrink-0'>
 						<MenuBurgerIcon className="text-secondary" />
 					</button>
 
@@ -216,7 +216,7 @@ export default function TopBar({
 									} ${
 										isTimeTracking
 											? "opacity-50 cursor-not-allowed"
-											: "hover:scale-105"
+											: ""
 									}`}
 									title={
 										timeTracking.isWorking
@@ -298,7 +298,7 @@ export default function TopBar({
 								shift.canManageShift ? (
 									<button
 										onClick={() => shift.requestCloseShift()}
-										className='h-14 px-3 py-3 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-3 border border-success/30 cursor-pointer hover:bg-secondary/10 hover:text-secondary hover:border-secondary transition-all hover:scale-105'
+										className='h-14 px-3 py-3 flex bg-success/10 rounded-xl text-success gap-2 items-center font-medium text-3 border border-success/30 cursor-pointer hover:bg-secondary/10 hover:text-secondary hover:border-secondary transition-all'
 										title='Click to close shift'
 									>
 										<span className='w-2 h-2 bg-success rounded-full animate-pulse' />
@@ -313,7 +313,7 @@ export default function TopBar({
 							) : shift.canManageShift ? (
 								<button
 									onClick={() => shift.requestOpenShift()}
-									className='h-14 px-3 py-3 flex bg-accent/10 rounded-xl text-accent gap-2 items-center font-medium text-3 border border-accent/30 cursor-pointer hover:bg-accent hover:text-primary transition-all hover:scale-105'
+									className='h-14 px-3 py-3 flex bg-accent/10 rounded-xl text-accent gap-2 items-center font-medium text-3 border border-accent/30 cursor-pointer hover:bg-accent hover:text-primary transition-all'
 									title='Click to open shift'
 								>
 									<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
