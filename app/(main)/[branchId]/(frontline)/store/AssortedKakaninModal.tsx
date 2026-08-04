@@ -316,7 +316,7 @@ export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: 
                             onClick={() => decrement(item)}
                             disabled={qty <= 0}
                             aria-label={`Remove one ${item.name}`}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary/8 text-secondary text-lg font-bold disabled:opacity-30 hover:bg-secondary/15 active:scale-90 transition-all"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary/8 text-secondary text-lg font-bold disabled:opacity-30 hover:bg-secondary/15 active:bg-secondary/25 transition-all"
                           >
                             −
                           </button>
@@ -333,7 +333,7 @@ export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: 
                           <button
                             onClick={() => increment(item)}
                             aria-label={`Add one ${item.name}`}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-bundle/15 text-bundle text-lg font-bold hover:bg-bundle/25 active:scale-90 transition-all"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-bundle/15 text-bundle text-lg font-bold hover:bg-bundle/25 active:bg-bundle/35 transition-all"
                           >
                             +
                           </button>
@@ -393,7 +393,7 @@ export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: 
                   disabled={!allValid}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
                     allValid
-                      ? 'bg-accent text-white hover:bg-accent/90 active:scale-[0.98]'
+                      ? 'bg-accent text-white hover:bg-accent/90 active:bg-light-accent active:text-accent'
                       : 'bg-secondary/15 text-secondary/40 cursor-not-allowed'
                   }`}
                 >

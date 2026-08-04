@@ -934,7 +934,7 @@ export default function StoreScreen() {
 							<button
 								type='button'
 								onClick={() => setShowWildcardModal(true)}
-								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:bg-bundle/20 transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
 									<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeLinecap='round' strokeLinejoin='round'>
 										<circle cx='10.5' cy='10.5' r='8' strokeWidth={1.5} />
 										<circle cx='10.5' cy='6.4' r='1.5' fill='currentColor' stroke='none' />
@@ -950,7 +950,7 @@ export default function StoreScreen() {
 							<button
 								type='button'
 								onClick={() => setShowAssortedModal(true)}
-								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+								className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:bg-bundle/20 transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
 									<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round'>
 										<ellipse cx='12' cy='14' rx='9' ry='6' />
 										<ellipse cx='12' cy='12' rx='9' ry='6' />
@@ -966,7 +966,7 @@ export default function StoreScreen() {
 								<button
 									type='button'
 									onClick={() => setShowFoodHouseModal(true)}
-									className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:scale-[0.98] transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
+									className='group relative rounded-xl border border-bundle/30 bg-bundle/5 hover:border-bundle hover:bg-bundle/10 hover:shadow-sm active:bg-bundle/20 transition-all duration-200 flex flex-row items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle'>
 										<svg className='w-6 h-6 text-bundle group-hover:rotate-3 transition-transform duration-300' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={1.6} strokeLinecap='round' strokeLinejoin='round'>
 											<path d='M4 3v7a3 3 0 003 3v8M7 3v5M10 3v5M17 3c-1.5 1.5-2 4-2 7s.5 4 2 4v7' />
 										</svg>
@@ -980,7 +980,7 @@ export default function StoreScreen() {
           <div className='grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2'>
             {groupedItems.map(group => (
               <button key={group.id} onClick={() => setActiveStoreCategory(group.id)}
-                className='group relative h-28 rounded-xl border border-gray-200 bg-primary hover:border-accent hover:bg-accent/5 hover:shadow-sm active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-1.5 px-2 py-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+                className='group relative h-28 rounded-xl border border-gray-200 bg-primary hover:border-accent hover:bg-accent/5 hover:shadow-sm active:bg-accent/15 transition-all duration-200 flex flex-col items-center justify-center gap-1.5 px-2 py-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
                 {group.icon ? (
                   <span className='shrink-0' style={{ color: group.color }}><CategoryIcon icon={group.icon} className='w-8 h-8' /></span>
                 ) : (
@@ -997,7 +997,7 @@ export default function StoreScreen() {
         {activeStoreCategory && !isSearching && (
           <div className='flex items-center gap-3'>
             <button onClick={() => setActiveStoreCategory(null)} aria-label='Back to categories' title='Back to categories'
-              className='h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+              className='h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all active:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'>
               <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' /></svg>
             </button>
             <nav aria-label='Breadcrumb' className='flex items-center gap-1.5 min-w-0'>
@@ -1040,7 +1040,7 @@ export default function StoreScreen() {
 												className={`group bg-primary rounded-xl border overflow-hidden transition-all duration-200
 													${isOutOfStock
 														? 'opacity-50 cursor-not-allowed border-gray-100'
-														: 'cursor-pointer border-gray-200 hover:border-accent hover:shadow-sm active:scale-95'
+														: 'cursor-pointer border-gray-200 hover:border-accent hover:shadow-sm active:bg-accent/10'
 													}`}>
 
 												{/* Image */}
@@ -2068,7 +2068,7 @@ export default function StoreScreen() {
 
 			<button
 				onClick={() => setShowOrderMenu(!showOrderMenu)}
-				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full hover:shadow-sm hover:scale-101 transition-all font-medium text-xs gap-3'>
+				className='flex xl:hidden justify-between items-center fixed bottom-6 left-0 right-0 mx-6 z-40 px-6 py-3 bg-accent text-primary rounded-full hover:shadow-sm transition-all font-medium text-xs gap-3'>
 				<div className='flex-1 flex justify-between items-center text-primary'>
 					<span className='text-xs'>
 						{cart.length === 0

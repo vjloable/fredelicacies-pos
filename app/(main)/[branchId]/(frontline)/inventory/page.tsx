@@ -51,7 +51,7 @@ export default function InventoryScreen() {
 	const { user } = useAuth();
 	// Items are created ONLY at the commissary; branches carry the commissary menu
 	// automatically, so branches cannot create items.
-	const canCreateItems = currentBranch?.type === 'commissary';
+	const canCreateItems = currentBranch?.type ==='commissary';
 	const { date: todayFormatted } = useDateTime();
 	const [categories, setCategories] = useState<Category[]>([]);
 	// True once categories have arrived at least once (cache or network) — gates
@@ -62,9 +62,9 @@ export default function InventoryScreen() {
 	const [error, setError] = useState<string | null>(null);
 	const [isClient, setIsClient] = useState(false);
 	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id);
-	const [activeTab, setActiveTab] = useState<'items' | 'bundles'>('items');
+	const [activeTab, setActiveTab] = useState<'items' |'bundles'>('items');
 	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-	const UNCAT = '__uncategorized__'; // sentinel folder for items with no category
+	const UNCAT ='__uncategorized__'; // sentinel folder for items with no category
 	const [inventorySearch, setInventorySearch] = useState('');
 	const [showCategoryForm, setShowCategoryForm] = useState(false);
 	const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -96,7 +96,7 @@ export default function InventoryScreen() {
 	const [showPublishModal, setShowPublishModal] = useState(false);
 	const [auditMode, setAuditMode] = useState(false);
 	const [auditInputs, setAuditInputs] = useState<Record<string, string>>({});
-	const [auditResolutions, setAuditResolutions] = useState<Record<string, { type: 'force_carryover' | 'force_wastage'; reason: string } | null>>({});
+	const [auditResolutions, setAuditResolutions] = useState<Record<string, { type:'force_carryover' |'force_wastage'; reason: string } | null>>({});
 	const [lockingAudit, setLockingAudit] = useState(false);
 	const [showCarryOverAllConfirm, setShowCarryOverAllConfirm] = useState(false);
 
@@ -167,7 +167,7 @@ export default function InventoryScreen() {
 	const requiresEodAudit = (categoryId: string | null): boolean => {
 		if (!categoryId) return false;
 		if (auditCategoryId) return categoryId === auditCategoryId;
-		return eodPolicies.some(p => p.category_id === categoryId && p.eod_policy === 'carryover');
+		return eodPolicies.some(p => p.category_id === categoryId && p.eod_policy ==='carryover');
 	};
 
 	// Toggle resolve selection
@@ -180,7 +180,7 @@ export default function InventoryScreen() {
 	};
 
 	// Resolve selected uncarried items
-	const confirmResolve = async (resolution: 'carry_over' | 'destock') => {
+	const confirmResolve = async (resolution:'carry_over' |'destock') => {
 		if (!currentBranch || selectedForResolve.size === 0) return;
 		setResolving(true);
 		const selectedItems = items.filter(item => selectedForResolve.has(item.id));
@@ -201,7 +201,7 @@ export default function InventoryScreen() {
 			const resolutions: Record<string, null> = {};
 			for (const item of auditCategoryItems) {
 				if (!eodLocks.some(l => l.item_id === item.id)) {
-					inputs[item.id] = '';
+					inputs[item.id] ='';
 					resolutions[item.id] = null;
 				}
 			}
@@ -219,7 +219,7 @@ export default function InventoryScreen() {
 		for (const item of auditCategoryItems) {
 			if (eodLocks.some(l => l.item_id === item.id)) continue; // already locked
 			const input = auditInputs[item.id];
-			if (input === '' || input === undefined) continue;
+			if (input ==='' || input === undefined) continue;
 			const expectedStock = parseInt(input) || 0;
 			const discrepancy = item.stock - expectedStock;
 			const resolution = discrepancy !== 0 ? auditResolutions[item.id] ?? undefined : undefined;
@@ -247,11 +247,11 @@ export default function InventoryScreen() {
 	const allAuditInputsReady = auditCategoryItems.every(item => {
 		if (eodLocks.some(l => l.item_id === item.id)) return true; // already locked
 		const input = auditInputs[item.id];
-		if (input === '' || input === undefined) return false;
+		if (input ==='' || input === undefined) return false;
 		const expectedStock = parseInt(input) || 0;
 		const discrepancy = item.stock - expectedStock;
 		if (discrepancy !== 0 && !auditResolutions[item.id]) return false;
-		if (auditResolutions[item.id]?.type === 'force_carryover' && !auditResolutions[item.id]?.reason?.trim()) return false;
+		if (auditResolutions[item.id]?.type ==='force_carryover' && !auditResolutions[item.id]?.reason?.trim()) return false;
 		return true;
 	});
 
@@ -326,15 +326,15 @@ export default function InventoryScreen() {
 		const wastageItems: { item_id: string; item_name: string; quantity_wasted: number; cost_per_unit: number }[] = [];
 		for (const item of selectedItems) {
 			const oldStock = item.stock;
-			const { error: updateError } = currentBranch.type !== 'commissary'
+			const { error: updateError } = currentBranch.type !=='commissary'
 				? await inventoryRepository.setBranchStock(currentBranch.id, item.id, { stock: 0 })
 				: await updateInventoryItem(item.id, { stock: 0 });
 			if (!updateError && oldStock > 0) {
 				void logActivity({
 					branchId: currentBranch.id,
 					userId: user?.id ?? null,
-					action: 'stock_removed',
-					entityType: 'inventory',
+					action:'stock_removed',
+					entityType:'inventory',
 					entityId: item.id,
 					details: { item_name: item.name, old_stock: oldStock, new_stock: 0, delta: oldStock },
 				});
@@ -361,9 +361,9 @@ export default function InventoryScreen() {
 	const invQ = inventorySearch.trim().toLowerCase();
 	const searchResults = invQ
 		? items.filter(item => {
-			const catName = categories.find(c => c.id === item.category_id)?.name ?? 'Uncategorized';
+			const catName = categories.find(c => c.id === item.category_id)?.name ??'Uncategorized';
 			return item.name.toLowerCase().includes(invQ)
-				|| (item.barcode ?? '').toLowerCase().includes(invQ)
+				|| (item.barcode ??'').toLowerCase().includes(invQ)
 				|| catName.toLowerCase().includes(invQ);
 		})
 		: [];
@@ -417,12 +417,12 @@ export default function InventoryScreen() {
 												</div>
 											) : (
 												<div>
-													<p className="text-2.5 text-secondary/40 mb-1">{searchResults.length} {searchResults.length === 1 ? 'result' : 'results'}</p>
+													<p className="text-2.5 text-secondary/40 mb-1">{searchResults.length} {searchResults.length === 1 ?'result' :'results'}</p>
 													<div className="divide-y divide-secondary/10 border-y border-secondary/10">
 														{searchResults.map((item) => {
 															const cat = categories.find(c => c.id === item.category_id);
-															const catName = cat?.name ?? 'Uncategorized';
-															const catColor = cat?.color?.trim() || '#9CA3AF';
+															const catName = cat?.name ??'Uncategorized';
+															const catColor = cat?.color?.trim() ||'#9CA3AF';
 															return (
 																<button
 																	key={item.id}
@@ -494,9 +494,9 @@ export default function InventoryScreen() {
 									<button
 										onClick={() => setActiveTab('items')}
 										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
-											activeTab === 'items'
-												? 'bg-accent text-primary text-shadow-lg'
-												: 'bg-gray-200 text-secondary hover:bg-gray-300'
+											activeTab ==='items'
+												?'bg-accent text-primary text-shadow-lg'
+												:'bg-gray-200 text-secondary hover:bg-gray-300'
 										}`}
 									>
 										Pieces
@@ -504,9 +504,9 @@ export default function InventoryScreen() {
 									<button
 										onClick={() => setActiveTab('bundles')}
 										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
-											activeTab === 'bundles'
-												? 'bg-amber-500 text-white'
-												: 'bg-gray-200 text-secondary hover:bg-gray-300'
+											activeTab ==='bundles'
+												?'bg-amber-500 text-white'
+												:'bg-gray-200 text-secondary hover:bg-gray-300'
 										}`}
 									>
 										Bundles
@@ -514,7 +514,7 @@ export default function InventoryScreen() {
 								</div>
 
 								{/* Items View */}
-								{activeTab === 'items' && (
+								{activeTab ==='items' && (
 									<>
 										{/* Level 0: Folder Grid — shown when no category is selected */}
 										{activeCategoryId === null && (
@@ -523,7 +523,7 @@ export default function InventoryScreen() {
 												<div className='flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2 mb-4'>
 													<button
 														onClick={() => { setEditingCategory(null); setShowCategoryForm(true); }}
-														className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-accent hover:bg-accent/90 ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+														className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm bg-accent hover:bg-accent/90 active:bg-light-accent active:text-accent ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 													>
 														<div className='size-4 text-primary drop-shadow-lg'>
 															<PlusIcon />
@@ -534,21 +534,21 @@ export default function InventoryScreen() {
 													{categories.length > 0 && (
 														<button
 															onClick={() => setManageCategories(prev => !prev)}
-															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm
-																${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}
-																${manageCategories ? 'bg-secondary text-white' : 'bg-secondary/10 text-secondary hover:bg-secondary/20'}`}
+															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
+																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
+																${manageCategories ?'bg-secondary text-white active:bg-secondary/70' :'bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30'}`}
 														>
 															<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
 															</svg>
-															<span>{manageCategories ? 'DONE' : 'MANAGE'}</span>
+															<span>{manageCategories ?'DONE' :'MANAGE'}</span>
 														</button>
 													)}
 													{/* Publish Menu (owner, commissary branch only) */}
-													{isOwner && currentBranch?.type === 'commissary' && (
+													{isOwner && currentBranch?.type ==='commissary' && (
 														<button
 															onClick={() => setShowPublishModal(true)}
-															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20 ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20 active:bg-bundle/30 ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 															title="Copy this branch's menu to other branches"
 														>
 															<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -561,7 +561,7 @@ export default function InventoryScreen() {
 													{isOwner && (
 														<button
 															onClick={() => setShowAuditConfigModal(true)}
-															className={`h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+															className={`h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 															title='Audit Configuration'
 														>
 															<svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -586,7 +586,7 @@ export default function InventoryScreen() {
 														</p>
 														<button
 															onClick={() => { setEditingCategory(null); setShowCategoryForm(true); }}
-															className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'
+															className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 active:bg-light-accent active:text-accent transition-all font-black text-shadow-lg'
 														>
 															<PlusIcon className='w-4 h-4 drop-shadow-md' />
 															<span className='mt-0.5'>ADD YOUR FIRST CATEGORY</span>
@@ -597,12 +597,12 @@ export default function InventoryScreen() {
 														{categories.map((cat) => (
 															<div
 																key={cat.id}
-																className={`group relative aspect-square rounded-xl border transition-all ${cat.is_hidden ? 'opacity-50 border-gray-200' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
+																className={`group relative aspect-square rounded-xl border transition-all ${cat.is_hidden ?'opacity-50 border-gray-200' :'border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}
 															>
 																{/* Main clickable area */}
 																<button
 																	onClick={() => { if (!manageCategories) setActiveCategoryId(cat.id ?? null); }}
-																	className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl w-full h-full ${manageCategories ? 'cursor-default pb-12' : ''}`}
+																	className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl w-full h-full ${manageCategories ?'cursor-default pb-12' :''}`}
 																>
 																	{cat.icon ? (
 																		<span className='shrink-0' style={{ color: cat.color }}><CategoryIcon icon={cat.icon} className='w-10 h-10 sm:w-12 sm:h-12' /></span>
@@ -612,17 +612,17 @@ export default function InventoryScreen() {
 																			style={{ backgroundColor: cat.color }}
 																		/>
 																	)}
-																	<span className={`text-3 sm:text-3.5 font-semibold text-center leading-tight line-clamp-3 ${cat.is_hidden ? 'text-secondary/40' : 'text-secondary'}`}>
+																	<span className={`text-3 sm:text-3.5 font-semibold text-center leading-tight line-clamp-3 ${cat.is_hidden ?'text-secondary/40' :'text-secondary'}`}>
 																		{cat.name}
 																	</span>
 																</button>
 																{/* Manage actions — large touch targets as a bottom action bar */}
 																{canAccessPOS && (
-																	<div className={`absolute bottom-0 left-0 right-0 flex rounded-b-xl overflow-hidden border-t border-gray-200 bg-white/95 backdrop-blur-sm transition-opacity ${manageCategories ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+																	<div className={`absolute bottom-0 left-0 right-0 flex rounded-b-xl overflow-hidden border-t border-gray-200 bg-white/95 backdrop-blur-sm transition-opacity ${manageCategories ?'opacity-100' :'opacity-0 pointer-events-none'}`}>
 																		<button
 																			onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(cat); }}
-																			className={`flex-1 flex items-center justify-center py-3 transition-colors active:scale-95 ${cat.is_hidden ? 'text-error bg-error/10' : 'text-secondary/60 hover:text-secondary hover:bg-gray-100'}`}
-																			title={cat.is_hidden ? 'Hidden — tap to show' : 'Visible — tap to hide'}
+																			className={`flex-1 flex items-center justify-center py-3 transition-colors ${cat.is_hidden ?'text-error bg-error/10 active:bg-error/30' :'text-secondary/60 hover:text-secondary hover:bg-gray-100 active:bg-gray-200'}`}
+																			title={cat.is_hidden ?'Hidden — tap to show' :'Visible — tap to hide'}
 																		>
 																			{cat.is_hidden ? (
 																				<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -637,14 +637,14 @@ export default function InventoryScreen() {
 																		</button>
 																		<button
 																			onClick={(e) => { e.stopPropagation(); setEditingCategory(cat); setShowCategoryForm(true); }}
-																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-accent hover:bg-accent/10 transition-colors active:scale-95'
+																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors'
 																			title='Edit'
 																		>
 																			<EditIcon className='w-5 h-5' />
 																		</button>
 																		<button
 																			onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
-																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-error hover:bg-error/10 transition-colors active:scale-95'
+																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-error hover:bg-error/10 active:bg-error/20 transition-colors'
 																			title='Delete'
 																		>
 																			<DeleteIcon className='w-5 h-5' />
@@ -678,7 +678,7 @@ export default function InventoryScreen() {
 														{isOwner && (
 															<button
 																onClick={() => setShowAuditConfigModal(true)}
-																className={`sm:hidden h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+																className={`sm:hidden h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 																title='Audit Configuration'
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -695,14 +695,14 @@ export default function InventoryScreen() {
 																<button
 																	onClick={() => confirmResolve('carry_over')}
 																	disabled={resolving}
-																	className={`h-12 px-3 flex items-center rounded-lg transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-success text-white text-3 font-black ${resolving ? 'opacity-50' : ''}`}
+																	className={`h-12 px-3 flex items-center rounded-lg transition-all active:bg-success/70 hover:shadow-sm bg-success text-white text-3 font-black ${resolving ?'opacity-50' :''}`}
 																>
 																	CARRY OVER {selectedForResolve.size}
 																</button>
 																<button
 																	onClick={() => confirmResolve('destock')}
 																	disabled={resolving}
-																	className={`h-12 px-3 flex items-center rounded-lg transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-error text-white text-3 font-black ${resolving ? 'opacity-50' : ''}`}
+																	className={`h-12 px-3 flex items-center rounded-lg transition-all active:bg-error/70 hover:shadow-sm bg-error text-white text-3 font-black ${resolving ?'opacity-50' :''}`}
 																>
 																	DESTOCK {selectedForResolve.size}
 																</button>
@@ -711,20 +711,20 @@ export default function InventoryScreen() {
 														{isOwner && folderUncarriedItems.length > 0 && (
 															<button
 																onClick={() => { setResolveMode(prev => !prev); setSelectedForResolve(new Set()); }}
-																className={`h-12 px-3 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm
-																	${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}
-																	${resolveMode ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+																className={`h-12 px-3 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
+																	${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
+																	${resolveMode ?'bg-amber-500 text-white active:bg-amber-600' :'bg-amber-100 text-amber-700 hover:bg-amber-200 active:bg-amber-300'}`}
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
 																</svg>
-																<span>{resolveMode ? 'DONE' : `RESOLVE ${folderUncarriedItems.length}`}</span>
+																<span>{resolveMode ?'DONE' : `RESOLVE ${folderUncarriedItems.length}`}</span>
 															</button>
 														)}
 														{destockMode && selectedForDestock.size > 0 && (
 															<button
 																onClick={() => setShowDestockConfirm(true)}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-error text-white ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-error/70 hover:shadow-sm bg-error text-white ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 															>
 																<svg fill='currentColor' stroke='currentColor' viewBox='0 0 15 15' className='w-4 h-4'>
 																	<path d='M0.89502 7.50028H14.3021' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
@@ -735,10 +735,10 @@ export default function InventoryScreen() {
 														<button
 															onClick={() => { setDestockMode(prev => !prev); setSelectedForDestock(new Set()); }}
 															disabled={auditMode}
-															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm
-																${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}
-																${auditMode ? 'opacity-40 cursor-not-allowed' : ''}
-																${destockMode ? 'bg-error text-white' : 'bg-error/10 text-error hover:bg-error/20'}`}
+															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
+																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
+																${auditMode ?'opacity-40 cursor-not-allowed' :''}
+																${destockMode ?'bg-error text-white active:bg-error/70' :'bg-error/10 text-error hover:bg-error/20 active:bg-error/30'}`}
 														>
 															<div className='size-4'>
 																{destockMode ? (
@@ -751,22 +751,22 @@ export default function InventoryScreen() {
 																	</svg>
 																)}
 															</div>
-															<span>{destockMode ? 'DONE' : 'DESTOCK'}</span>
+															<span>{destockMode ?'DONE' :'DESTOCK'}</span>
 														</button>
 														{/* AUDIT button — only when inside the audit category folder */}
 														{isOwner && activeCategoryId === auditCategoryId && (
 															<button
 																onClick={toggleAuditMode}
 																disabled={destockMode}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm
-																	${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}
-																	${destockMode ? 'opacity-40 cursor-not-allowed' : ''}
-																	${auditMode ? 'bg-secondary text-white' : 'bg-secondary/10 text-secondary hover:bg-secondary/20'}`}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
+																	${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
+																	${destockMode ?'opacity-40 cursor-not-allowed' :''}
+																	${auditMode ?'bg-secondary text-white active:bg-secondary/70' :'bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30'}`}
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' />
 																</svg>
-																<span>{auditMode ? 'DONE' : 'AUDIT'}</span>
+																<span>{auditMode ?'DONE' :'AUDIT'}</span>
 															</button>
 														)}
 														{/* Lock All button — only in audit folder while audit mode active */}
@@ -774,21 +774,21 @@ export default function InventoryScreen() {
 															<button
 																onClick={handleLockAllAudit}
 																disabled={!allAuditInputsReady || lockingAudit}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm
-																	${!allAuditInputsReady || lockingAudit ? 'opacity-40 cursor-not-allowed' : ''}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-secondary/70 hover:shadow-sm
+																	${!allAuditInputsReady || lockingAudit ?'opacity-40 cursor-not-allowed' :''}
 																	bg-secondary text-white`}
 															>
 																<svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
 																</svg>
-																<span>{lockingAudit ? 'LOCKING…' : 'LOCK ALL'}</span>
+																<span>{lockingAudit ?'LOCKING…' :'LOCK ALL'}</span>
 															</button>
 														)}
 														{/* Carry Over All — only in audit folder when all items locked */}
-														{isOwner && activeCategoryId === auditCategoryId && allAuditItemsLocked && auditCategoryItems.length > 0 && eodSession?.status !== 'submitted' && (
+														{isOwner && activeCategoryId === auditCategoryId && allAuditItemsLocked && auditCategoryItems.length > 0 && eodSession?.status !=='submitted' && (
 															<button
 																onClick={() => setShowCarryOverAllConfirm(true)}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-success text-white ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-success/70 hover:shadow-sm bg-success text-white ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
@@ -801,9 +801,9 @@ export default function InventoryScreen() {
 														<button
 															onClick={() => setShowItemForm(true)}
 															disabled={auditMode}
-															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-accent hover:bg-accent/90
-																${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}
-																${auditMode ? 'opacity-40 cursor-not-allowed' : ''}`}
+															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-light-accent active:text-accent hover:shadow-sm bg-accent hover:bg-accent/90
+																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
+																${auditMode ?'opacity-40 cursor-not-allowed' :''}`}
 														>
 															<div className='size-4 text-primary drop-shadow-lg'>
 																<PlusIcon />
@@ -815,7 +815,7 @@ export default function InventoryScreen() {
 														{isOwner && (
 															<button
 																onClick={() => setShowAuditConfigModal(true)}
-																className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}
+																className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
 																title='Audit Configuration'
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -831,15 +831,15 @@ export default function InventoryScreen() {
 												{(() => {
 													const isUncat = activeCategoryId === UNCAT;
 													const activeCat = categories.find(c => c.id === activeCategoryId);
-													const folderName = isUncat ? 'Uncategorized' : (activeCat?.name ?? 'Category');
-													const folderColor = isUncat ? '#9CA3AF' : (activeCat?.color?.trim() || '#6B7280');
+													const folderName = isUncat ?'Uncategorized' : (activeCat?.name ??'Category');
+													const folderColor = isUncat ?'#9CA3AF' : (activeCat?.color?.trim() ||'#6B7280');
 													return (
 														<div className='flex items-center gap-3 mb-4 min-w-0'>
 															<button
 																onClick={handleBackToGrid}
 																aria-label='Back to categories'
 																title='Back to categories'
-																className='h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+																className='h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 active:bg-gray-200 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
@@ -885,11 +885,11 @@ export default function InventoryScreen() {
 																		{eodLocks.filter(l => l.discrepancy !== 0).length} disc.
 																	</span>
 																)}
-																{eodSession?.status === 'submitted' && (
+																{eodSession?.status ==='submitted' && (
 																	<span className='text-xs bg-success/10 text-success px-1.5 py-0.5 rounded-full font-semibold'>Submitted</span>
 																)}
 															</div>
-															<svg className={`w-3.5 h-3.5 text-secondary/40 transition-transform ${eodPanelOpen ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+															<svg className={`w-3.5 h-3.5 text-secondary/40 transition-transform ${eodPanelOpen ?'rotate-180' :''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
 															</svg>
 														</button>
@@ -922,8 +922,8 @@ export default function InventoryScreen() {
 																							<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
 																						</svg>
 																					) : (
-																						<span className={`shrink-0 font-bold ${lock.resolution ? 'text-secondary/40' : 'text-error'}`}>
-																							{lock.discrepancy > 0 ? '+' : ''}{lock.discrepancy}
+																						<span className={`shrink-0 font-bold ${lock.resolution ?'text-secondary/40' :'text-error'}`}>
+																							{lock.discrepancy > 0 ?'+' :''}{lock.discrepancy}
 																						</span>
 																					)}
 																				</div>
@@ -931,10 +931,10 @@ export default function InventoryScreen() {
 																		</div>
 																	</>
 																)}
-																{eodLocks.length > 0 && eodSession?.status !== 'submitted' && (
+																{eodLocks.length > 0 && eodSession?.status !=='submitted' && (
 																	<button
 																		onClick={() => setShowSubmitEOD(true)}
-																		className='w-full mt-1 py-2 bg-secondary hover:bg-secondary/80 text-primary text-xs font-bold rounded-lg transition-all hover:scale-105 active:scale-95'
+																		className='w-full mt-1 py-2 bg-secondary hover:bg-secondary/80 active:bg-secondary/60 text-primary text-xs font-bold rounded-lg transition-all'
 																	>
 																		Submit End-of-Day & Carry Over →
 																	</button>
@@ -945,7 +945,7 @@ export default function InventoryScreen() {
 												)}
 
 												{/* Items List */}
-												<div className={`space-y-1 ${!canAccessPOS ? 'blur-[1px] pointer-events-none' : ''}`}>
+												<div className={`space-y-1 ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}>
 													{inventorySearchUI}
 																	{inventorySearch.trim() ? null : filteredItems.length === 0 ? (
 														<div className='text-center py-10 text-secondary/40 text-xs'>
@@ -955,7 +955,7 @@ export default function InventoryScreen() {
 														filteredItems.map((item) => {
 															const isExpanded = expandedItems.has(item.id);
 															return (
-																<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ? 'border-error/30' : resolveMode && item.uncarried_stock > 0 ? 'border-amber-400/50' : 'border-gray-100'}`}>
+																<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ?'border-error/30' : resolveMode && item.uncarried_stock > 0 ?'border-amber-400/50' :'border-gray-100'}`}>
 																	<div
 																		role='button'
 																		tabIndex={0}
@@ -965,7 +965,7 @@ export default function InventoryScreen() {
 																			else toggleExpandItem(item.id);
 																		}}
 																		onKeyDown={(e) => {
-																			if (e.key === 'Enter' || e.key === ' ') {
+																			if (e.key ==='Enter' || e.key ==='') {
 																				e.preventDefault();
 																				if (destockMode) toggleDestockSelection(item.id);
 																				else if (resolveMode && item.uncarried_stock > 0) toggleResolveSelection(item.id);
@@ -977,10 +977,10 @@ export default function InventoryScreen() {
 																		{resolveMode && item.uncarried_stock > 0 && (
 																			<button
 																				onClick={(e) => { e.stopPropagation(); toggleResolveSelection(item.id); }}
-																				className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full border transition-all hover:scale-110 active:scale-95 ${
+																				className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
 																					selectedForResolve.has(item.id)
-																						? 'bg-amber-500 border-amber-500 text-white'
-																						: 'border-amber-400/40 bg-transparent hover:border-amber-500'
+																						?'bg-amber-500 border-amber-500 text-white active:bg-amber-600'
+																						:'border-amber-400/40 bg-transparent hover:border-amber-500 active:bg-amber-100'
 																				}`}
 																			>
 																				{selectedForResolve.has(item.id) && (
@@ -993,10 +993,10 @@ export default function InventoryScreen() {
 																		{destockMode && (
 																			<button
 																				onClick={(e) => { e.stopPropagation(); toggleDestockSelection(item.id); }}
-																				className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full border transition-all hover:scale-110 active:scale-95 ${
+																				className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
 																					selectedForDestock.has(item.id)
-																						? 'bg-error border-error text-white'
-																						: 'border-error/40 bg-transparent hover:border-error'
+																						?'bg-error border-error text-white active:bg-error/70'
+																						:'border-error/40 bg-transparent hover:border-error active:bg-error/10'
 																				}`}
 																			>
 																				{selectedForDestock.has(item.id) && (
@@ -1006,7 +1006,7 @@ export default function InventoryScreen() {
 																				)}
 																			</button>
 																		)}
-																		<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: getCategoryColor(categories, item.category_id || '') }} />
+																		<span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: getCategoryColor(categories, item.category_id ||'') }} />
 																		<div className='w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center'>
 																			{item.img_url ? (
 																				<Image src={item.img_url} alt={item.name} width={48} height={48} className='w-full h-full object-cover' />
@@ -1018,7 +1018,7 @@ export default function InventoryScreen() {
 																		</div>
 																		<span className='text-sm font-semibold text-secondary truncate flex-1 min-w-0'>{item.name}</span>
 																		{item.is_custom ? (
-																					<span className='text-xs font-semibold text-bundle shrink-0 tabular-nums px-2 py-0.5 rounded-full bg-bundle/10'>{(item.measurement ?? 0) + (item.unit ? ` ${item.unit}` : '')}</span>
+																					<span className='text-xs font-semibold text-bundle shrink-0 tabular-nums px-2 py-0.5 rounded-full bg-bundle/10'>{(item.measurement ?? 0) + (item.unit ? ` ${item.unit}` :'')}</span>
 																				) : (
 																					<span className='text-sm text-secondary/60 shrink-0 tabular-nums'>{formatCurrency(item.price)}</span>
 																				)}
@@ -1028,10 +1028,10 @@ export default function InventoryScreen() {
 																			</span>
 																		) : (
 																			<span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums text-center ${
-																				item.stock === 0 ? 'bg-error/10 text-error' : item.stock <= 5 ? 'bg-accent/10 text-accent' : 'bg-secondary/10 text-secondary/60'
-																			}`}>{item.stock === 0 ? 'Out' : item.stock <= 5 ? `Low ${item.stock}` : item.stock}</span>
+																				item.stock === 0 ?'bg-error/10 text-error' : item.stock <= 5 ?'bg-accent/10 text-accent' :'bg-secondary/10 text-secondary/60'
+																			}`}>{item.stock === 0 ?'Out' : item.stock <= 5 ? `Low ${item.stock}` : item.stock}</span>
 																		)}
-																		<button onClick={(e) => { e.stopPropagation(); openEditModal(item); }} className='shrink-0 p-2.5 hover:bg-light-accent rounded-lg transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																		<button onClick={(e) => { e.stopPropagation(); openEditModal(item); }} className='shrink-0 p-2.5 hover:bg-light-accent active:bg-accent/20 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 																			<EditIcon className='w-5 h-5' />
 																		</button>
 																		{isOwner && canAccessPOS && requiresEodAudit(item.category_id) && (() => {
@@ -1039,9 +1039,9 @@ export default function InventoryScreen() {
 																			return (
 																				<button
 																					onClick={(e) => { e.stopPropagation(); setLockingItem(item); }}
-																					title={lock ? 'Locked for End-of-Day' : 'Lock for End-of-Day audit'}
-																					className={`shrink-0 p-2.5 rounded-lg transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${
-																						lock ? 'text-secondary bg-secondary/10 hover:bg-secondary/20' : 'text-secondary/30 hover:bg-gray-100 hover:text-secondary'
+																					title={lock ?'Locked for End-of-Day' :'Lock for End-of-Day audit'}
+																					className={`shrink-0 p-2.5 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${
+																						lock ?'text-secondary bg-secondary/10 hover:bg-secondary/20 active:bg-secondary/30' :'text-secondary/30 hover:bg-gray-100 hover:text-secondary active:bg-gray-200'
 																					}`}
 																				>
 																					<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -1054,8 +1054,8 @@ export default function InventoryScreen() {
 																				</button>
 																			);
 																		})()}
-																		<button onClick={(e) => { e.stopPropagation(); toggleExpandItem(item.id); }} className='shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
-																			<svg className={`w-4 h-4 text-secondary/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																		<button onClick={(e) => { e.stopPropagation(); toggleExpandItem(item.id); }} className='shrink-0 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																			<svg className={`w-4 h-4 text-secondary/40 transition-transform ${isExpanded ?'rotate-180' :''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																				<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
 																			</svg>
 																		</button>
@@ -1073,8 +1073,8 @@ export default function InventoryScreen() {
 																				</div>
 																			);
 																		}
-																		const inputVal = auditInputs[item.id] ?? '';
-																		const expectedStock = inputVal !== '' ? (parseInt(inputVal) || 0) : null;
+																		const inputVal = auditInputs[item.id] ??'';
+																		const expectedStock = inputVal !=='' ? (parseInt(inputVal) || 0) : null;
 																		const discrepancy = expectedStock !== null ? item.stock - expectedStock : null;
 																		const hasDiscrepancy = discrepancy !== null && discrepancy !== 0;
 																		const resolution = auditResolutions[item.id];
@@ -1087,7 +1087,7 @@ export default function InventoryScreen() {
 																						inputMode='numeric'
 																						value={inputVal}
 																						onChange={(e) => {
-																							if (e.target.value === '' || /^[0-9]*$/.test(e.target.value)) {
+																							if (e.target.value ==='' || /^[0-9]*$/.test(e.target.value)) {
 																								setAuditInputs(prev => ({ ...prev, [item.id]: e.target.value }));
 																								setAuditResolutions(prev => ({ ...prev, [item.id]: null }));
 																							}
@@ -1102,8 +1102,8 @@ export default function InventoryScreen() {
 																								<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
 																							</svg>
 																						) : (
-																							<span className={`text-xs font-bold shrink-0 ${discrepancy > 0 ? 'text-accent' : 'text-error'}`}>
-																								{discrepancy > 0 ? '+' : ''}{discrepancy}
+																							<span className={`text-xs font-bold shrink-0 ${discrepancy > 0 ?'text-accent' :'text-error'}`}>
+																								{discrepancy > 0 ?'+' :''}{discrepancy}
 																							</span>
 																						)
 																					)}
@@ -1113,12 +1113,12 @@ export default function InventoryScreen() {
 																						<button
 																							onClick={() => setAuditResolutions(prev => ({
 																								...prev,
-																								[item.id]: { type: 'force_carryover', reason: prev[item.id]?.reason ?? '' },
+																								[item.id]: { type:'force_carryover', reason: prev[item.id]?.reason ??'' },
 																							}))}
 																							className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-																								resolution?.type === 'force_carryover'
-																									? 'bg-accent text-primary'
-																									: 'bg-accent/10 text-accent hover:bg-accent/20'
+																								resolution?.type ==='force_carryover'
+																									?'bg-accent text-primary'
+																									:'bg-accent/10 text-accent hover:bg-accent/20'
 																							}`}
 																						>
 																							Carry Over
@@ -1126,23 +1126,23 @@ export default function InventoryScreen() {
 																						<button
 																							onClick={() => setAuditResolutions(prev => ({
 																								...prev,
-																								[item.id]: { type: 'force_wastage', reason: '' },
+																								[item.id]: { type:'force_wastage', reason:'' },
 																							}))}
 																							className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-																								resolution?.type === 'force_wastage'
-																									? 'bg-error text-primary'
-																									: 'bg-error/10 text-error hover:bg-error/20'
+																								resolution?.type ==='force_wastage'
+																									?'bg-error text-primary'
+																									:'bg-error/10 text-error hover:bg-error/20'
 																							}`}
 																						>
 																							Wastage
 																						</button>
-																						{resolution?.type === 'force_carryover' && (
+																						{resolution?.type ==='force_carryover' && (
 																							<input
 																								type='text'
 																								value={resolution.reason}
 																								onChange={(e) => setAuditResolutions(prev => ({
 																									...prev,
-																									[item.id]: { type: 'force_carryover', reason: e.target.value },
+																									[item.id]: { type:'force_carryover', reason: e.target.value },
 																								}))}
 																								className='flex-1 px-2 py-1 text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
 																								placeholder='Reason (required)'
@@ -1169,8 +1169,8 @@ export default function InventoryScreen() {
 																				</span>
 																			)}
 																			{item.stock <= 5 && (
-																				<span className={`text-xs font-medium ${item.stock === 0 ? 'text-error' : 'text-accent'}`}>
-																					{item.stock === 0 ? 'Out of stock' : `Only ${item.stock} left`}
+																				<span className={`text-xs font-medium ${item.stock === 0 ?'text-error' :'text-accent'}`}>
+																					{item.stock === 0 ?'Out of stock' : `Only ${item.stock} left`}
 																				</span>
 																			)}
 																		</div>
@@ -1186,7 +1186,7 @@ export default function InventoryScreen() {
 								)}
 
 								{/* Bundles View */}
-								{activeTab === 'bundles' && (
+								{activeTab ==='bundles' && (
 									<BundlesView categoryFilter={activeCategoryId} categories={categories} />
 								)}
 							</div>
@@ -1214,7 +1214,7 @@ export default function InventoryScreen() {
 								onClose={() => setLockingItem(null)}
 								onLocked={(lock) => {
 									setEodLocks(prev => [...prev.filter(l => l.item_id !== lock.item_id), lock]);
-									if (!eodSession) getEodLocks(currentBranch?.id ?? '', new Date().toISOString().slice(0, 10)).then(({ session }) => setEodSession(session));
+									if (!eodSession) getEodLocks(currentBranch?.id ??'', new Date().toISOString().slice(0, 10)).then(({ session }) => setEodSession(session));
 									setLockingItem(null);
 								}}
 								onUnlocked={() => {
@@ -1234,7 +1234,7 @@ export default function InventoryScreen() {
 								onClose={() => setShowSubmitEOD(false)}
 								onSubmitted={() => {
 									setShowSubmitEOD(false);
-									setEodSession(prev => prev ? { ...prev, status: 'submitted' } : prev);
+									setEodSession(prev => prev ? { ...prev, status:'submitted' } : prev);
 								}}
 								onError={handleError}
 							/>
@@ -1249,7 +1249,7 @@ export default function InventoryScreen() {
 						/>
 
 						<AddCategoryModal
-							branchId={currentBranch?.id || ''}
+							branchId={currentBranch?.id ||''}
 							isOpen={showCategoryForm}
 							editingCategory={editingCategory ?? undefined}
 							onClose={() => { setShowCategoryForm(false); setEditingCategory(null); }}
@@ -1276,12 +1276,12 @@ export default function InventoryScreen() {
 									<div className='flex gap-3'>
 										<button
 											onClick={cancelDeleteCategory}
-											className='flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-secondary rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+											className='flex-1 py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 											Cancel
 										</button>
 										<button
 											onClick={confirmDeleteCategory}
-											className='flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+											className='flex-1 py-3 bg-error hover:bg-error/50 active:bg-error/30 text-white rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 											Delete
 										</button>
 									</div>
@@ -1303,7 +1303,7 @@ export default function InventoryScreen() {
 						)}
 
 						{/* Publish Menu (owner, commissary branch only) */}
-						{isOwner && currentBranch?.type === 'commissary' && user && (
+						{isOwner && currentBranch?.type ==='commissary' && user && (
 							<PublishMenuModal
 								isOpen={showPublishModal}
 								onClose={() => setShowPublishModal(false)}
@@ -1329,7 +1329,7 @@ export default function InventoryScreen() {
 										Carry Over All Audited Items?
 									</h3>
 									<p className='text-xs text-secondary/60 text-center mb-4'>
-										{eodLocks.length} audited item{eodLocks.length !== 1 ? 's' : ''} will carry their locked stock to tomorrow.
+										{eodLocks.length} audited item{eodLocks.length !== 1 ?'s' :''} will carry their locked stock to tomorrow.
 									</p>
 									<div className='max-h-36 overflow-y-auto space-y-1 mb-5'>
 										{eodLocks.map(lock => (
@@ -1342,7 +1342,7 @@ export default function InventoryScreen() {
 									<div className='flex gap-3'>
 										<button
 											onClick={() => setShowCarryOverAllConfirm(false)}
-											className='flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95'
+											className='flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-xl text-sm font-semibold transition-all'
 										>
 											Cancel
 										</button>
@@ -1352,9 +1352,9 @@ export default function InventoryScreen() {
 												const { error } = await submitEOD(currentBranch.id, user?.id ?? null, eodSession.id, eodLocks);
 												if (error) { handleError('Failed to carry over. Please try again.'); return; }
 												setShowCarryOverAllConfirm(false);
-												setEodSession(prev => prev ? { ...prev, status: 'submitted' } : prev);
+												setEodSession(prev => prev ? { ...prev, status:'submitted' } : prev);
 											}}
-											className='flex-1 py-2.5 bg-success hover:bg-success/80 text-white rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95'
+											className='flex-1 py-2.5 bg-success hover:bg-success/80 active:bg-success/60 text-white rounded-xl text-sm font-semibold transition-all'
 										>
 											Carry Over
 										</button>
@@ -1373,7 +1373,7 @@ export default function InventoryScreen() {
 										</svg>
 									</div>
 									<h3 className='text-base text-center font-bold text-secondary mb-1'>
-										Zero out stock for {selectedForDestock.size} item{selectedForDestock.size !== 1 ? 's' : ''}?
+										Zero out stock for {selectedForDestock.size} item{selectedForDestock.size !== 1 ?'s' :''}?
 									</h3>
 									<div className='mt-3 mb-5 max-h-36 overflow-y-auto space-y-1'>
 										{items.filter(i => selectedForDestock.has(i.id)).map(i => (
@@ -1387,16 +1387,16 @@ export default function InventoryScreen() {
 										<button
 											onClick={() => setShowDestockConfirm(false)}
 											disabled={destocking}
-											className='flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50'
+											className='flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-xl text-sm font-semibold transition-all disabled:opacity-50'
 										>
 											Cancel
 										</button>
 										<button
 											onClick={confirmDestock}
 											disabled={destocking}
-											className='flex-1 py-2.5 bg-error hover:bg-error/80 text-white rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50'
+											className='flex-1 py-2.5 bg-error hover:bg-error/80 active:bg-error/60 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50'
 										>
-											{destocking ? 'Destocking…' : 'Destock'}
+											{destocking ?'Destocking…' :'Destock'}
 										</button>
 									</div>
 								</div>

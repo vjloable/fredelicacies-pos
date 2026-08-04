@@ -626,7 +626,7 @@ export default function AddBundleModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
               >
                 Cancel
               </button>
@@ -635,7 +635,7 @@ export default function AddBundleModal({
                 disabled={!isValid}
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                   isValid
-                    ? 'bg-accent hover:bg-accent/90 text-white hover:scale-105 cursor-pointer'
+                    ? 'bg-accent hover:bg-accent/90 text-white cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
                 }`}
               >

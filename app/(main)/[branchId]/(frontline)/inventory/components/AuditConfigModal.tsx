@@ -140,14 +140,14 @@ export default function AuditConfigModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !hasChanged}
-            className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
+            className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 active:bg-secondary/60 text-primary rounded-xl text-xs font-semibold transition-all disabled:opacity-40 disabled:"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

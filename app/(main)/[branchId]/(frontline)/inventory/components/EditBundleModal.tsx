@@ -700,13 +700,13 @@ export default function EditBundleModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="flex-1 py-2 bg-error/10 hover:bg-error/40 active:bg-error/60 text-error rounded-lg font-semibold transition-all cursor-pointer"
               >
                 Delete
               </button>
               <button
                 onClick={onClose}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
+                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
               >
                 Cancel
               </button>
@@ -715,7 +715,7 @@ export default function EditBundleModal({
                 disabled={!isValid}
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                   isValid
-                    ? 'bg-accent hover:bg-accent/90 text-white hover:scale-105 cursor-pointer'
+                    ? 'bg-accent hover:bg-accent/90 text-white cursor-pointer'
                     : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
                 }`}
               >
@@ -748,7 +748,7 @@ export default function EditBundleModal({
                       </button>
                       <button
                         onClick={handleDelete}
-                        className="flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
+                        className="flex-1 py-3 bg-error hover:bg-error/50 active:bg-error/30 text-white rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
                       >
                         Delete
                       </button>

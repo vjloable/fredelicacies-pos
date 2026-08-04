@@ -187,7 +187,7 @@ export default function CartItemEditor({
 						<button
 							onClick={() => onQuantityChange(-1)}
 							aria-label="Decrease quantity"
-							className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-primary active:scale-90 transition-all"
+							className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-primary active:bg-light-accent transition-all"
 						>
 							<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeWidth={2.5} d="M5 12h14" /></svg>
 						</button>
@@ -204,7 +204,7 @@ export default function CartItemEditor({
 						<button
 							onClick={() => onQuantityChange(1)}
 							aria-label="Increase quantity"
-							className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-primary active:scale-90 transition-all"
+							className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-primary active:bg-light-accent transition-all"
 						>
 							<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeWidth={2.5} d="M12 5v14M5 12h14" /></svg>
 						</button>
@@ -215,7 +215,7 @@ export default function CartItemEditor({
 				<div className="px-5 pb-5 pt-3">
 					<button
 						onClick={onClose}
-						className="w-full h-13 rounded-2xl bg-accent text-primary font-bold text-shadow-md hover:bg-accent/90 active:scale-[0.98] transition-all"
+						className="w-full h-13 rounded-2xl bg-accent text-primary font-bold text-shadow-md hover:bg-accent/90 active:bg-light-accent active:text-accent transition-all"
 					>
 						Done
 					</button>

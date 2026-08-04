@@ -4,8 +4,8 @@ import {
   buildReceiptItems,
   buildSplitPaymentDetails,
   buildPaymentDetails,
-} from '@/app/(main)/[branchId]/(worker)/store/orderBuilder';
-import type { CartLine } from '@/app/(main)/[branchId]/(worker)/store/checkoutTypes';
+} from '@/app/(main)/[branchId]/(frontline)/store/orderBuilder';
+import type { CartLine } from '@/app/(main)/[branchId]/(frontline)/store/checkoutTypes';
 
 const base = (over: Partial<CartLine> = {}): CartLine => ({
   id: 'i1',

@@ -88,7 +88,7 @@ export default function CommissaryDashboardPage() {
 					{isManager && (
 						<Link
 							href={`/${branchId}/transfers/new`}
-							className="shrink-0 h-12 px-4 inline-flex items-center gap-2 rounded-lg bg-accent text-primary text-3 font-black hover:bg-accent/90 hover:shadow-sm transition-all hover:scale-105 active:scale-95"
+							className="shrink-0 h-12 px-4 inline-flex items-center gap-2 rounded-lg bg-accent text-primary text-3 font-black hover:bg-accent/90 hover:shadow-sm transition-all active:bg-light-accent active:text-accent"
 						>
 							<svg className="w-4 h-4 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
 							<span className="text-shadow-md">NEW TRANSFER</span>

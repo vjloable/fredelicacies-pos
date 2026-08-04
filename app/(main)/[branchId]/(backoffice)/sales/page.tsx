@@ -30,9 +30,9 @@ import type { InventoryItem } from "@/types/domain/inventory";
 import HelpButton from "@/components/HelpButton";
 import { salesSteps } from "@/components/TutorialSteps";
 import { useBranch } from "@/contexts/BranchContext";
-import SearchIcon from "../../(worker)/store/icons/SearchIcon";
+import SearchIcon from "../../(frontline)/store/icons/SearchIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
-import LogoIcon from "../../(worker)/store/icons/LogoIcon";
+import LogoIcon from "../../(frontline)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
 import { formatReceiptWithLogo, formatDailySalesESC, formatShiftReportESC } from "@/lib/esc_formatter";
 import { getActiveShift, getShiftsByBranch, computeShiftReportData } from "@/services/shiftService";
@@ -860,7 +860,7 @@ export default function SalesScreen() {
 						<div ref={actionsMenuRef} className="relative shrink-0">
 							<button
 								onClick={() => setShowActionsMenu(v => !v)}
-								className='w-8 h-8 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary flex items-center justify-center transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+								className='w-8 h-8 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary flex items-center justify-center transition-all active:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 								aria-label="Actions"
 							>
 								<svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>

@@ -5,7 +5,7 @@ import UserIcon from "@/components/icons/UserIcon";
 import CalendarIcon from "@/components/icons/CalendarIcon";
 import ClockIcon from "@/components/icons/ClockIcon";
 import RefreshIcon from "@/components/icons/RefreshIcon";
-import OrderCartIcon from "@/app/(main)/[branchId]/(worker)/store/icons/OrderCartIcon";
+import OrderCartIcon from "@/app/(main)/[branchId]/(frontline)/store/icons/OrderCartIcon";
 import TextLogo from "@/components/icons/TextLogo";
 import { useDrawer } from "@/components/Drawer";
 import { useDateTime } from "@/contexts/DateTimeContext";
@@ -205,7 +205,7 @@ export default function MobileTopBar({
 								timeTracking.isWorking
 									? "bg-success/10 text-success border border-success hover:bg-secondary/10 hover:border-secondary"
 									: "bg-secondary/10 text-secondary border border-secondary hover:bg-success/10 hover:border-success"
-							} ${isTimeTracking ? "opacity-50" : "hover:scale-105"}`}>
+							} ${isTimeTracking ? "opacity-50" : ""}`}>
 							<span
 								className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
 									timeTracking.isWorking

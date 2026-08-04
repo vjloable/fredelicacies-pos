@@ -220,7 +220,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
             </div>
             <button
           onClick={() => setShowAddModal(true)}
-          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 active:scale-95 hover:shadow-sm"
+          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
         >
           <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
             <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
@@ -232,7 +232,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
           {/* Assorted Kakanin — permanent, undeletable special config */}
           <button
             onClick={() => setShowAssortedConfig(true)}
-            className="w-full mb-4 flex items-center gap-3 rounded-xl border border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:scale-[0.99] transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+            className="w-full mb-4 flex items-center gap-3 rounded-xl border border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:bg-bundle/10 transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
           >
             <div className="w-10 h-10 rounded-lg bg-bundle/10 shrink-0 flex items-center justify-center text-bundle">
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
@@ -258,7 +258,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
           {/* Food House — permanent, undeletable special config */}
           <button
             onClick={() => setShowFoodHouseConfig(true)}
-            className="w-full mb-4 flex items-center gap-3 rounded-xl border border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:scale-[0.99] transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+            className="w-full mb-4 flex items-center gap-3 rounded-xl border border-dashed border-bundle/40 hover:border-bundle hover:shadow-sm active:bg-bundle/10 transition-all p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
           >
             <div className="w-10 h-10 rounded-lg bg-bundle/10 shrink-0 flex items-center justify-center text-bundle">
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
@@ -320,7 +320,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               <button onClick={() => setSelectedCat(null)} aria-label="Back to bundle folders" title="Back to folders"
-                className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-400 active:bg-gray-200 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
@@ -341,7 +341,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
             </div>
             <button
           onClick={() => setShowAddModal(true)}
-          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 active:scale-95 hover:shadow-sm"
+          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
         >
           <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
             <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>

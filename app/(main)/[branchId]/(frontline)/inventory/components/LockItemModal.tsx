@@ -153,13 +153,13 @@ export default function LockItemModal({
                 <div className="flex gap-2">
                   <button
                     onClick={handleUnlock}
-                    className="flex-1 py-2 bg-error/10 hover:bg-error/20 text-error rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-2 bg-error/10 hover:bg-error/20 active:bg-error/30 text-error rounded-lg text-xs font-semibold transition-all"
                   >
                     Unlock
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-secondary rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-lg text-xs font-semibold transition-all"
                   >
                     Close
                   </button>
@@ -211,14 +211,14 @@ export default function LockItemModal({
                 <div className="flex gap-2">
                   <button
                     onClick={onClose}
-                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-secondary rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-lg text-xs font-semibold transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleLockAttempt}
                     disabled={expectedInput === ''}
-                    className="flex-1 py-2 bg-secondary hover:bg-secondary/80 text-primary rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
+                    className="flex-1 py-2 bg-secondary hover:bg-secondary/80 active:bg-secondary/60 text-primary rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:"
                   >
                     <span className="flex items-center justify-center gap-1.5">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,14 +301,14 @@ export default function LockItemModal({
                 <div className="flex gap-2">
                   <button
                     onClick={() => setDiscrepancyStep('resolve')}
-                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-secondary rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-lg text-xs font-semibold transition-all"
                   >
                     Back
                   </button>
                   <button
                     onClick={() => handleLock({ type: 'force_carryover', reason: carryoverReason })}
                     disabled={!carryoverReason.trim()}
-                    className="flex-1 py-2 bg-accent hover:bg-accent/80 text-primary rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
+                    className="flex-1 py-2 bg-accent hover:bg-accent/80 active:bg-light-accent active:text-accent text-primary rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:"
                   >
                     Confirm
                   </button>

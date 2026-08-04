@@ -539,7 +539,7 @@ export default function AddItemModal({
                 <div className="flex gap-3 mt-5">
                   <button
                     onClick={useKindWizard ? () => setKind(null) : onClose}
-                    className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+                    className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
                   >
                     {useKindWizard ? 'Back' : 'Cancel'}
                   </button>
@@ -548,8 +548,8 @@ export default function AddItemModal({
                     disabled={!canAdd}
                     className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                       canAdd
-                        ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                        : 'bg-gray-100 text-secondary/50 hover:scale-100 active:scale-100 cursor-not-allowed'
+                        ? 'bg-accent hover:bg-accent active:bg-light-accent active:text-accent text-primary text-shadow-lg cursor-pointer'
+                        : 'bg-gray-100 text-secondary/50 cursor-not-allowed'
                     }`}
                   >
                     Add {useKindWizard ? meta.label : 'Item'}

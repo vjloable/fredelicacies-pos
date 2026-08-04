@@ -11,9 +11,9 @@ import CreateWorkerModal from "@/app/(main)/owner/users/components/CreateWorkerM
 import EditWorkerModal from "@/app/(main)/owner/users/components/EditWorkerModal";
 import DeleteWorkerModal from "@/app/(main)/owner/users/components/DeleteWorkerModal";
 import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
-import AssignBranchModal from "@/app/(main)/[branchId]/(manager)/management/components/AssignBranchModal";
-import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
-import AttendanceView from "@/app/(main)/[branchId]/(manager)/management/components/AttendanceView";
+import AssignBranchModal from "@/app/(main)/[branchId]/(backoffice)/management/components/AssignBranchModal";
+import WorkerDetailModal from "@/app/(main)/[branchId]/(backoffice)/management/components/WorkerDetailModal";
+import AttendanceView from "@/app/(main)/[branchId]/(backoffice)/management/components/AttendanceView";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -513,7 +513,7 @@ export default function ManagementPage() {
 									{viewMode === "workers" && (
 										<button
 											onClick={handleCreateWorker}
-											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 active:scale-95'>
+											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold active:bg-light-accent'>
 											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3'>
 												<div className='w-4 h-4'> 
 													<PlusIcon className='drop-shadow-sm' />

@@ -161,7 +161,7 @@ export default function DiscountsScreen() {
 								</p>
 								<button
 									onClick={handleCreateDiscount}
-									className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg hover:scale-105 active:scale-95'>
+									className='text-3 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all font-black text-shadow-lg active:bg-light-accent active:text-accent'>
 									<PlusIcon className='size-5 drop-shadow-xl' />
 									<span className='mt-0.5'>
 										ADD YOUR FIRST DISCOUNT CODE
@@ -240,7 +240,7 @@ export default function DiscountsScreen() {
 									</h2>
 									<button
 										onClick={handleCreateDiscount}
-										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:scale-105 hover:shadow-sm active:scale-95'>
+										className='bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold hover:shadow-sm active:bg-light-accent'>
 										<div className='flex flex-row items-center gap-2 text-primary text-shadow-lg font-black text-3'>
 											<div className='w-4 h-4'>
 												<PlusIcon className='drop-shadow-lg' />

@@ -202,7 +202,7 @@ export default function CustomBundlePickerModal({
                       <button
                         onClick={() => decrement(item)}
                         disabled={qty <= 0}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-secondary/10 text-secondary font-bold disabled:opacity-30 hover:bg-secondary/20 active:scale-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-secondary/10 text-secondary font-bold disabled:opacity-30 hover:bg-secondary/20 active:bg-secondary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
                       >
                         −
                       </button>
@@ -212,7 +212,7 @@ export default function CustomBundlePickerModal({
                       <button
                         onClick={() => increment(item)}
                         disabled={!canAdd}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-bundle/20 text-bundle font-bold disabled:opacity-30 hover:bg-bundle/30 active:scale-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-bundle/20 text-bundle font-bold disabled:opacity-30 hover:bg-bundle/30 active:bg-bundle/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle"
                       >
                         +
                       </button>
@@ -275,7 +275,7 @@ export default function CustomBundlePickerModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
+              className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg text-sm font-semibold transition-all active:bg-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
             >
               Cancel
             </button>
@@ -284,7 +284,7 @@ export default function CustomBundlePickerModal({
               disabled={totalPicked !== maxPieces || !overridePriceValid}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                 totalPicked === maxPieces && overridePriceValid
-                  ? 'bg-accent hover:bg-accent/90 text-white hover:scale-105 active:scale-95 cursor-pointer'
+                  ? 'bg-accent hover:bg-accent/90 text-white active:bg-light-accent active:text-accent cursor-pointer'
                   : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
               }`}
             >

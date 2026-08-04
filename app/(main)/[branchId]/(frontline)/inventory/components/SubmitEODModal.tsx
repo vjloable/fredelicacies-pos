@@ -159,13 +159,13 @@ export default function SubmitEODModal({
             <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-secondary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-secondary rounded-xl text-xs font-semibold transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-primary rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 active:bg-secondary/60 text-primary rounded-xl text-xs font-semibold transition-all"
               >
                 Submit & Carry Over
               </button>

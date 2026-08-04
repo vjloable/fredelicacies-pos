@@ -379,12 +379,12 @@ export default function EditItemModal({
                       key={key}
                       type="button"
                       onClick={() => press(key)}
-                      className={`h-18 rounded-xl font-bold text-2xl flex items-center justify-center transition-all active:scale-95 ${
+                      className={`h-18 rounded-xl font-bold text-2xl flex items-center justify-center transition-all ${
                         key === 'C'
-                          ? 'bg-error/5 border border-error/30 text-error hover:bg-error/10'
+                          ? 'bg-error/5 border border-error/30 text-error hover:bg-error/10 active:bg-error/20'
                           : key === 'back'
-                          ? 'bg-secondary/5 border border-secondary/15 text-secondary/70 hover:bg-secondary/10'
-                          : 'bg-white border border-secondary/15 text-secondary hover:bg-gray-50 hover:shadow-sm hover:border-secondary/30'
+                          ? 'bg-secondary/5 border border-secondary/15 text-secondary/70 hover:bg-secondary/10 active:bg-secondary/20'
+                          : 'bg-white border border-secondary/15 text-secondary hover:bg-gray-50 hover:shadow-sm hover:border-secondary/30 active:bg-accent/10'
                       }`}
                     >
                       {key === 'back' ? '⌫' : key}
@@ -399,7 +399,7 @@ export default function EditItemModal({
                   disabled={amount <= 0}
                   className={`w-full h-14 mt-2 rounded-xl font-bold text-lg transition-all ${
                     amount > 0
-                      ? 'bg-success text-white hover:brightness-105 hover:shadow-sm active:scale-95'
+                      ? 'bg-success text-white hover:brightness-105 hover:shadow-sm active:bg-success/70'
                       : 'bg-secondary/10 text-secondary/40 cursor-not-allowed'
                   }`}
                 >
@@ -418,24 +418,24 @@ export default function EditItemModal({
           {canDelete && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex-1 py-2 bg-error/10 hover:bg-error/40 text-error rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="flex-1 py-2 bg-error/10 hover:bg-error/40 active:bg-error/60 text-error rounded-lg font-semibold transition-all cursor-pointer"
             >
               Remove
             </button>
           )}
           <button
             onClick={closeModal}
-            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-secondary rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+            className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
           >
             Cancel
           </button>
           <button
             onClick={saveItemEdit}
             disabled={!localEditingItem.name.trim()}
-            className={`flex-1 py-2 rounded-lg font-semibold transition-all active:scale-95 ${
+            className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
               localEditingItem.name.trim()
-                ? 'bg-accent hover:bg-accent text-primary text-shadow-lg hover:scale-105 cursor-pointer'
-                : 'bg-gray-100 text-secondary/50 hover:scale-100 cursor-not-allowed'
+                ? 'bg-accent hover:bg-accent active:bg-light-accent active:text-accent text-primary text-shadow-lg cursor-pointer'
+                : 'bg-gray-100 text-secondary/50 cursor-not-allowed'
             }`}
           >
             Save
@@ -520,7 +520,7 @@ export default function EditItemModal({
                   </button>
                   <button
                     onClick={() => handleDeleteItem(localEditingItem.id)}
-                    className="flex-1 py-3 bg-error hover:bg-error/50 text-white rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 py-3 bg-error hover:bg-error/50 active:bg-error/30 text-white rounded-xl font-semibold transition-all"
                   >
                     Remove
                   </button>

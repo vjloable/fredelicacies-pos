@@ -11,8 +11,8 @@ import CreateWorkerModal from "./components/CreateWorkerModal";
 import EditWorkerModal from "./components/EditWorkerModal";
 import DeleteWorkerModal from "./components/DeleteWorkerModal";
 import TimeInOutModal from "./components/TimeInOutModal";
-import AssignBranchModal from "../../[branchId]/(manager)/management/components/AssignBranchModal";
-import WorkerDetailModal from "@/app/(main)/[branchId]/(manager)/management/components/WorkerDetailModal";
+import AssignBranchModal from "../../[branchId]/(backoffice)/management/components/AssignBranchModal";
+import WorkerDetailModal from "@/app/(main)/[branchId]/(backoffice)/management/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
 import AdvancedReporting from "./components/AdvancedReporting";
 import WorkScheduleManagement from "./components/WorkScheduleManagement";
@@ -335,7 +335,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:scale-105 hover:shadow-sm active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
 								<div className='size-4'>
 									<PlusIcon className='drop-shadow-lg' />
 								</div>
@@ -376,7 +376,7 @@ export default function WorkersPage() {
 									heightClassName="h-10.5"
 									valueAlignment={"left"}
 									padding=''
-									borderClassName="shadow-sm" 
+									borderClassName="shadow-sm"
 								/>
 							</div>
 						)}
@@ -385,7 +385,7 @@ export default function WorkersPage() {
 						{viewMode === "workers" && (
 							<button
 								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:scale-105 hover:shadow-sm active:scale-95'>
+								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
 								<div className='size-4'>
 									<PlusIcon className='drop-shadow-lg' />
 								</div>

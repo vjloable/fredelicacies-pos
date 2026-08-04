@@ -54,7 +54,7 @@ export default function CartLine({
 	const isWhole = item.priceMode === "whole" && item.wholePrice != null;
 	const displayLineTotal = isWhole ? (item.wholePrice as number) : item.price * item.quantity;
 	const sideBtn =
-		"shrink-0 w-14 rounded-2xl bg-light-accent hover:bg-accent active:scale-95 transition-all flex items-center justify-center group/side";
+		"shrink-0 w-14 rounded-2xl bg-light-accent hover:bg-accent active:bg-accent/80 transition-all flex items-center justify-center group/side";
 	const sideSymbol = "text-3xl font-bold leading-none text-secondary group-hover/side:text-primary select-none";
 
 	return (

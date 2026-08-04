@@ -4,7 +4,7 @@ import {
 	WorkerFilters as WorkerFiltersType,
 	UserRole,
 } from "@/types/WorkerTypes";
-import SearchIcon from "@/app/(main)/[branchId]/(worker)/store/icons/SearchIcon";
+import SearchIcon from "@/app/(main)/[branchId]/(frontline)/store/icons/SearchIcon";
 import DropdownField from "@/components/DropdownField";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
