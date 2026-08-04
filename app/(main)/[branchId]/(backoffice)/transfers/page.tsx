@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import {
@@ -15,7 +15,7 @@ import type { TransferWithItems } from "@/types/domain/transfer";
 import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
-import PlusIcon from "@/components/icons/PlusIcon";
+import RequestFromCommissaryModal from "./components/RequestFromCommissaryModal";
 
 function totalPcs(t: TransferWithItems): number {
   return t.items.reduce((s, i) => s + (i.quantity_sent ?? 0), 0);
@@ -164,14 +164,14 @@ function KanbanCard({
             <button
               onClick={handleConfirm}
               disabled={busy}
-              className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--success) text-white text-2.5 font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
+              className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--success) text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--success)/70 disabled:opacity-50"
             >
               {busy ? "…" : "Confirm"}
             </button>
             <button
               onClick={(e) => { e.preventDefault(); setDeclining(true); setReason(""); }}
               disabled={busy}
-              className="h-7 px-2.5 inline-flex items-center rounded-lg border border-(--error)/30 text-(--error) text-2.5 font-bold hover:bg-(--error)/10 transition-all active:scale-95 disabled:opacity-50"
+              className="h-7 px-2.5 inline-flex items-center rounded-lg border border-(--error)/30 text-(--error) text-2.5 font-bold hover:bg-(--error)/10 transition-all active:bg-(--error)/20 disabled:opacity-50"
             >
               Decline
             </button>
@@ -193,7 +193,7 @@ function KanbanCard({
           <button
             onClick={handleDeclineSubmit}
             disabled={busy}
-            className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--error) text-white text-2.5 font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
+            className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--error) text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--error)/70 disabled:opacity-50"
           >
             {busy ? "…" : "Confirm decline"}
           </button>
@@ -235,17 +235,24 @@ function Lane({
 
 export default function TransfersListPage() {
   const params = useParams();
+  const router = useRouter();
   const branchId = typeof params.branchId === "string" ? params.branchId : "";
   const { user, getUserRoleForBranch, hasManagerPrivileges } = useAuth();
   const { currentBranch, allBranches } = useBranch();
 
-  const commissary = allBranches.find((b) => b.type === "commissary" && b.id !== branchId);
-  const showRequestFromCommissary = !!commissary && currentBranch?.type !== "commissary";
+  // Any branch other than this one can be the source of a pull request (the commissary
+  // guard only forbids the commissary as a *destination*, enforced server-side too).
+  // Commissaries are listed first since they're the usual source.
+  const requestSourceBranches = allBranches
+    .filter((b) => b.id !== branchId)
+    .sort((a, b) => (a.type === "commissary" ? -1 : 0) - (b.type === "commissary" ? -1 : 0));
+  const showRequestFromCommissary = requestSourceBranches.length > 0 && currentBranch?.type !== "commissary";
 
   const isManager = hasManagerPrivileges(branchId);
 
   const [loading, setLoading] = useState(true);
   const [transfers, setTransfers] = useState<TransferWithItems[]>([]);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   useEffect(() => {
     if (!branchId) return;
@@ -303,25 +310,16 @@ export default function TransfersListPage() {
           {isManager && (
             <div className="flex items-center gap-2 shrink-0">
               {showRequestFromCommissary && (
-                <Link
-                  href={`/${branchId}/transfers/new?mode=pull`}
-                  className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20"
+                <button
+                  onClick={() => setShowRequestModal(true)}
+                  className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-bundle/30 hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m0 0l-5-5m5 5l5-5" />
                   </svg>
-                  <span>REQUEST FROM COMMISSARY</span>
-                </Link>
+                  <span>REQUEST</span>
+                </button>
               )}
-              <Link
-                href={`/${branchId}/transfers/new`}
-                className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:scale-105 active:scale-95 hover:shadow-sm bg-accent hover:bg-accent/90"
-              >
-                <div className="size-4 text-primary drop-shadow-lg">
-                  <PlusIcon />
-                </div>
-                <span className="text-primary text-shadow-md">NEW TRANSFER</span>
-              </Link>
             </div>
           )}
         </div>
@@ -377,6 +375,20 @@ export default function TransfersListPage() {
           </p>
         )}
       </div>
+
+      {showRequestModal && requestSourceBranches.length > 0 && user && (
+        <RequestFromCommissaryModal
+          branchId={branchId}
+          branchName={currentBranch?.name ?? "this branch"}
+          sourceBranches={requestSourceBranches}
+          userId={user.id}
+          onClose={() => setShowRequestModal(false)}
+          onCreated={(transferId) => {
+            setShowRequestModal(false);
+            router.push(`/${branchId}/transfers/${transferId}`);
+          }}
+        />
+      )}
     </div>
   );
 }
