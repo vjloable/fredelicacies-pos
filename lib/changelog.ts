@@ -26,6 +26,40 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.2.0',
+    features: [
+      {
+        title: 'Bundle Variants',
+        description: 'Bundles can now have different sizes or types under one card, each with its own price.',
+        iconPath: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+        steps: [
+          'On the store screen, tap a bundle that has variants',
+          'Pick the size or type you want from the list shown',
+          'The price updates automatically — add it to the order',
+        ],
+      },
+      {
+        title: 'Send Stock to Any Branch',
+        description: 'The commissary can now send stock straight to a branch, even without a request.',
+        iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+        steps: [
+          'Go to Distribution and tap "Send to Branch"',
+          'Pick the branch, then the items and quantities to send',
+          'Confirm — the branch will see it as an incoming delivery',
+        ],
+      },
+      {
+        title: 'Small fixes',
+        description: 'A few minor performance optimizations to make the app feel a little snappier.',
+        iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+        steps: [
+          'Pages and menus load a bit faster',
+          'Small visual polish across a few screens',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.1.3',
     features: [
       {
