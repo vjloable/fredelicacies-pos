@@ -238,7 +238,7 @@ export default function CustomBundlePickerModal({
               <span className="text-xs font-medium text-secondary">Override selling price</span>
               {priceOverride && (
                 <span className="text-xs text-secondary/40 ml-auto">
-                  Fixed: {bundle.price.toFixed(2)}
+                  Fixed: {(bundle.price ?? 0).toFixed(2)}
                 </span>
               )}
             </label>
@@ -254,7 +254,7 @@ export default function CustomBundlePickerModal({
                     value={overridePriceInput}
                     onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) setOverridePriceInput(e.target.value); }}
                     onFocus={e => e.target.select()}
-                    placeholder={bundle.price.toFixed(2)}
+                    placeholder={(bundle.price ?? 0).toFixed(2)}
                     className={`w-full pl-7 pr-3 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-bundle/50 focus:border-transparent ${
                       overridePriceInput && !overridePriceValid
                         ? 'border-error/50 bg-error/5'

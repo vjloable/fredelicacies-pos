@@ -88,8 +88,9 @@ export function useCheckoutTotals(input: UseCheckoutTotalsInput): CheckoutTotals
 	});
 	const total = computeTotal(subtotal, effectiveDiscountForTotal);
 
-	// Regular items require a cashier-entered selling price before the order can be placed.
-	const unpricedItemCount = cart.filter(i => isCashierPriced(i) && i.isPriced === false).length;
+	// Regular items — and bundles with no suggested default price — require a
+	// cashier-entered selling price before the order can be placed.
+	const unpricedItemCount = cart.filter(i => (isCashierPriced(i) || i.type === 'bundle') && i.isPriced === false).length;
 
 	const {
 		amount1Num: splitAmount1Num,

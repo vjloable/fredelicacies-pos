@@ -4,10 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import OrderCartIcon from "./icons/OrderCartIcon";
-import type { InventoryItem, Category, BundleWithComponents, BundleComponent } from "@/types/domain";
+import type { InventoryItem, Category, BundleWithComponents, BundleComponent, BundleGroupWithVariants } from "@/types/domain";
 import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock } from "@/services/inventoryService";
 import { subscribeToCategories } from "@/services/categoryService";
 import { subscribeToBundles, calculateBundleAvailability } from "@/services/bundleService";
+import { subscribeToBundleGroups } from "@/services/bundleGroupService";
 import SearchIcon from "./icons/SearchIcon";
 import { loadSettingsFromLocal } from "@/services/settingsService";
 import { createOrder } from "@/services/orderService";
@@ -43,7 +44,9 @@ import WriteOffModal from "@/components/shift/WriteOffModal";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PageLoader from "@/components/PageLoader";
+import ClockInGate from "@/components/ClockInGate";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
+import BundleGroupPickerModal from "./BundleGroupPickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
 import WildcardBundleModal, { type WildcardBundleResult } from "./WildcardBundleModal";
 
@@ -147,6 +150,7 @@ export default function StoreScreen() {
 	const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [bundles, setBundles] = useState<BundleWithComponents[]>([]);
+	const [bundleGroups, setBundleGroups] = useState<BundleGroupWithVariants[]>([]);
 	const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [hideOutOfStock, setHideOutOfStock] = useState(false);
@@ -167,6 +171,7 @@ export default function StoreScreen() {
 	const [showOrderMenu, setShowOrderMenu] = useState<boolean>(false);
 	const [successOrderId, setSuccessOrderId] = useState<string>("");
 	const [customBundleTarget, setCustomBundleTarget] = useState<BundleWithComponents | null>(null);
+	const [pendingBundleGroup, setPendingBundleGroup] = useState<Extract<DisplayItem, { type: 'bundle_group' }> | null>(null);
 	const [showWildcardModal, setShowWildcardModal] = useState(false);
 	const [showAssortedModal, setShowAssortedModal] = useState(false);
 	const [showFoodHouseModal, setShowFoodHouseModal] = useState(false);
@@ -181,7 +186,9 @@ export default function StoreScreen() {
 		removeFromCart,
 		updateCartItemPricing,
 		updateCartItemGrabPricing,
-	} = useCart({ bundles, inventoryItems, onRequestCustomBundle: setCustomBundleTarget });
+		updateBundleComponentQuantity,
+		addBundleComponent,
+	} = useCart({ bundles, inventoryItems, onRequestCustomBundle: setCustomBundleTarget, onRequestBundleGroupPicker: setPendingBundleGroup });
 	const {
 		paymentMethod, setPaymentMethod,
 		splitMethod1, setSplitMethod1,
@@ -199,12 +206,6 @@ export default function StoreScreen() {
 		handleManualDiscountChange,
 	} = usePayment({ cart, setCart });
 	const [b1t1PickerTarget, setB1T1PickerTarget] = useState<{ id: string; name: string; quantity: number } | null>(null);
-	const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
-	const toggleBundle = (id: string) => setExpandedBundles(prev => {
-		const next = new Set(prev);
-		next.has(id) ? next.delete(id) : next.add(id);
-		return next;
-	});
 
 	// Ensure we're on the client before running data subscriptions
 	useEffect(() => {
@@ -241,6 +242,21 @@ export default function StoreScreen() {
 
 		const unsubscribe = subscribeToBundles(currentBranch.id, (bundlesData) => {
 			setBundles(bundlesData);
+		});
+
+		return () => {
+			if (unsubscribe) {
+				unsubscribe();
+			}
+		};
+	}, [isClient, currentBranch]);
+
+	// Subscribe to bundle groups (single-type bundles)
+	useEffect(() => {
+		if (!isClient || !currentBranch) return;
+
+		const unsubscribe = subscribeToBundleGroups(currentBranch.id, (groupsData) => {
+			setBundleGroups(groupsData);
 		});
 
 		return () => {
@@ -300,10 +316,11 @@ export default function StoreScreen() {
 			? item.category_ids
 			: item.category_id ? [item.category_id] : [];
 
-		// Hide items if all their categories are hidden (or they have no visible category)
-		const isVisible = itemCategoryIds.length === 0
+		// Hide items if all their categories are hidden (or they have no visible category),
+		// or if the item itself is toggled hidden.
+		const isVisible = item.status !== 'inactive' && (itemCategoryIds.length === 0
 			? !categories.find(c => c.id === String(item.category_id))?.is_hidden
-			: itemCategoryIds.some(catId => !categories.find(c => c.id === catId)?.is_hidden);
+			: itemCategoryIds.some(catId => !categories.find(c => c.id === catId)?.is_hidden));
 
 		// First apply search filter
 		const matchesSearch =
@@ -337,7 +354,7 @@ export default function StoreScreen() {
 		}));
 
 		const bundleItems = bundles
-			.filter(b => b.status === 'active')
+			.filter(b => b.status === 'active' && !b.bundle_group_id)
 			.map(bundle => ({
 				id: bundle.id,
 				name: bundle.name,
@@ -382,8 +399,45 @@ export default function StoreScreen() {
 				return isVisible && matchesSearch && matchesCategory && hasAvailability;
 			});
 
-		return [...items, ...bundleItems];
-	}, [filteredItems, bundles, bundleAvailability, searchQuery, hideOutOfStock, selectedCategories, selectedCategory, categories, getCategoryName]);
+		const groupItems: Extract<DisplayItem, { type: 'bundle_group' }>[] = bundleGroups
+			.filter(g => g.status === 'active' && g.variants.length > 0)
+			.map(group => ({
+				id: group.id,
+				name: group.name,
+				img_url: group.img_url,
+				description: group.description,
+				type: 'bundle_group' as const,
+				availability: Math.max(0, ...group.variants.map(v => bundleAvailability.get(v.id) ?? 0)),
+				category_id: group.category_id,
+				category_ids: group.category_ids,
+				variants: group.variants,
+			}))
+			.filter(group => {
+				const groupCategoryIds: string[] = group.category_ids?.length
+					? group.category_ids
+					: group.category_id ? [group.category_id] : [];
+
+				const isVisible = groupCategoryIds.length === 0
+					? true
+					: groupCategoryIds.some(catId => !categories.find(c => c.id === catId)?.is_hidden);
+
+				const matchesSearch =
+					searchQuery === "" ||
+					group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+					group.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+				const matchesCategory =
+					selectedCategories.length === 0 ||
+					selectedCategory === "All" ||
+					groupCategoryIds.some(catId => selectedCategories.includes(getCategoryName(catId)));
+
+				const hasAvailability = hideOutOfStock ? group.availability > 0 : true;
+
+				return isVisible && matchesSearch && matchesCategory && hasAvailability;
+			});
+
+		return [...items, ...bundleItems, ...groupItems];
+	}, [filteredItems, bundles, bundleGroups, bundleAvailability, searchQuery, hideOutOfStock, selectedCategories, selectedCategory, categories, getCategoryName]);
 
 	// Group displayItems by category for sectioned rendering
 	const groupedItems = useMemo(() => {
@@ -453,7 +507,7 @@ export default function StoreScreen() {
 			inventory_item: ai.inventory_item,
 		}));
 		const components = [...pickedComponents, ...additionalAsComponents];
-		const finalPrice = overridePrice !== undefined ? overridePrice : bundle.price;
+		const finalPrice = overridePrice !== undefined ? overridePrice : (bundle.price ?? 0);
 		setCart(prev => [...prev, {
 			id: `${bundle.id}_custom_${Date.now()}`,
 			bundleId: bundle.id,
@@ -469,7 +523,7 @@ export default function StoreScreen() {
 			type: 'bundle',
 			is_custom: true,
 			isPriceOverride: overridePrice !== undefined,
-			originalPrice: overridePrice !== undefined ? bundle.price : undefined,
+			originalPrice: overridePrice !== undefined ? (bundle.price ?? 0) : undefined,
 			components,
 		}]);
 		setCustomBundleTarget(null);
@@ -813,7 +867,7 @@ export default function StoreScreen() {
 				</div>{" "}
 
 				{/* Search Section - Fixed */}
-				<div className={`px-4 py-2 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
+				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} showButton={false} className='px-4 py-2'>
 					<div className='relative'>
 						<input
 							type='text'
@@ -832,10 +886,10 @@ export default function StoreScreen() {
 							)}
 						</div>
 					</div>
-				</div>
+				</ClockInGate>
 
 				{/* Results Header - Fixed */}
-				<div className={`flex items-center justify-between px-4 py-1 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
+				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} showButton={false} className='flex items-center justify-between px-4 py-1'>
 					<div className='flex flex-col'>
 						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
@@ -846,12 +900,12 @@ export default function StoreScreen() {
 							</p>
 						)}
 					</div>
-				</div>
+				</ClockInGate>
 
 				{/* Category selection now uses the folder grid below */}
 
 				{/* Menu Items - Scrollable */}
-				<div className={`flex-1 overflow-y-auto px-4 py-4 ${!canAccessPOS && !timeTracking.loading ? "blur-[1px] pointer-events-none" : ""}`}>
+				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} className='flex-1 overflow-y-auto px-4 py-4'>
 					{loading ? (
 						<PageLoader text="Loading menu…" />
 					) : inventoryItems.length === 0 ? (
@@ -1021,7 +1075,9 @@ export default function StoreScreen() {
 								<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2'>
 									{group.items.map((item, index) => {
 										const isBundle = item.type === 'bundle';
-										const availableStock = isBundle ? item.availability : getAvailableStock(item.id || "0");
+										// Bundle groups carry their own precomputed availability (max across
+										// variants), same as bundles — only plain items look up live stock.
+										const availableStock = item.type === 'item' ? getAvailableStock(item.id || "0") : item.availability;
 										const isOutOfStock = availableStock <= 0;
 										const cartItem = cart.find(
 											(cartItem) => cartItem.id === item.id && (cartItem.type || 'item') === item.type
@@ -1064,7 +1120,7 @@ export default function StoreScreen() {
 													{isOutOfStock && (
 														<div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
 															<span className='text-white text-2.5 font-bold select-none tracking-wide uppercase'>
-																{isBundle ? 'Unavailable' : 'Out of Stock'}
+																{item.type === 'item' ? 'Out of Stock' : 'Unavailable'}
 															</span>
 														</div>
 													)}
@@ -1084,7 +1140,7 @@ export default function StoreScreen() {
 													<div className='flex items-center justify-between gap-1 mt-1'>
 														{isBundle ? (
 															<span className='text-accent font-bold text-xs'>
-																{formatCurrency(item.price)}
+																{item.price != null ? formatCurrency(item.price) : 'Set price'}
 															</span>
 														) : (
 															<span />
@@ -1108,7 +1164,7 @@ export default function StoreScreen() {
 						))}
 					</div>
 					)}
-				</div>
+				</ClockInGate>
 			</div>
 
 			{/* Mobile Order Menu Overlay - visible below xl: breakpoint (< 1280px) */}
@@ -1237,15 +1293,19 @@ export default function StoreScreen() {
 													className='flex flex-col w-full bg-white py-1.5'>
 													<CartLine
 											item={item}
-											openable={isCashierPriced(item)}
-											expanded={expandedBundles.has(item.id)}
+											openable={isCashierPriced(item) || item.type === 'bundle'}
 											showB1T1={appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom}
 											onOpen={() => setEditingCartId(item.id)}
 											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
 											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
 											onRemove={() => removeFromCart(item.id)}
-											onToggleExpand={() => toggleBundle(item.id)}
 											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+											availableComponents={item.type === 'bundle' && !item.is_custom ? inventoryItems : undefined}
+											onComponentQuantityChange={item.type === 'bundle' && !item.is_custom ? (invId: string, qty: number) => {
+												const current = item.components?.find(c => c.inventory_item_id === invId)?.quantity ?? 0;
+												updateBundleComponentQuantity(item.id, invId, qty - current);
+											} : undefined}
+											onAddComponent={item.type === 'bundle' && !item.is_custom ? (inv) => addBundleComponent(item.id, inv) : undefined}
 										/>
 										<AnimatePresence>
 														<motion.div
@@ -1449,15 +1509,19 @@ export default function StoreScreen() {
 										className='flex flex-col w-full bg-white py-1.5'>
 										<CartLine
 											item={item}
-											openable={isCashierPriced(item)}
-											expanded={expandedBundles.has(item.id)}
+											openable={isCashierPriced(item) || item.type === 'bundle'}
 											showB1T1={appliedDiscount?.type === 'b1t1' && !item.isB1T1 && !item.is_custom}
 											onOpen={() => setEditingCartId(item.id)}
 											onDec={() => updateQuantity(item.id, -1, item.type || 'item')}
 											onInc={() => updateQuantity(item.id, 1, item.type || 'item')}
 											onRemove={() => removeFromCart(item.id)}
-											onToggleExpand={() => toggleBundle(item.id)}
 											onMarkB1T1={() => setB1T1PickerTarget({ id: item.id, name: item.name, quantity: item.quantity })}
+											availableComponents={item.type === 'bundle' && !item.is_custom ? inventoryItems : undefined}
+											onComponentQuantityChange={item.type === 'bundle' && !item.is_custom ? (invId: string, qty: number) => {
+												const current = item.components?.find(c => c.inventory_item_id === invId)?.quantity ?? 0;
+												updateBundleComponentQuantity(item.id, invId, qty - current);
+											} : undefined}
+											onAddComponent={item.type === 'bundle' && !item.is_custom ? (inv) => addBundleComponent(item.id, inv) : undefined}
 										/>
 										<AnimatePresence>
 											<motion.div
@@ -1974,6 +2038,32 @@ export default function StoreScreen() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{pendingBundleGroup && (
+				<BundleGroupPickerModal
+					group={pendingBundleGroup}
+					bundleAvailability={bundleAvailability}
+					onConfirm={(variant) => {
+						addToCart({
+							id: variant.id,
+							name: variant.name,
+							price: variant.price,
+							grab_price: variant.grab_price ?? null,
+							img_url: variant.img_url,
+							description: variant.description,
+							type: 'bundle',
+							availability: bundleAvailability.get(variant.id) || 0,
+							components: variant.components,
+							is_custom: false,
+							max_pieces: variant.max_pieces,
+							category_id: variant.category_id,
+							category_ids: variant.category_ids,
+						});
+						setPendingBundleGroup(null);
+					}}
+					onClose={() => setPendingBundleGroup(null)}
+				/>
 			)}
 
 			{editingCartId && (() => {

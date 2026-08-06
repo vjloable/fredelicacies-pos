@@ -12,7 +12,7 @@ export interface B1T1PickedItem {
   inventoryItemId: string;
   itemName: string;
   itemImgUrl?: string | null;
-  regularPrice: number;
+  regularPrice: number | null;
   quantity: number;
   item: InventoryItem;
 }
@@ -149,7 +149,7 @@ export default function B1T1PickerModal({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-secondary truncate">{item.name}</p>
-                      <p className="text-xs text-secondary/50">{formatCurrency(item.price)}</p>
+                      <p className="text-xs text-secondary/50">{item.price != null ? formatCurrency(item.price) : 'Unpriced'}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button

@@ -3,7 +3,7 @@
 // Extracted from the StoreScreen god-component so the cart line shape and the
 // payment-method unions can be reused by the checkout hooks (useCheckoutTotals,
 // useCart) without duplicating the inline type literals.
-import type { InventoryItem, BundleComponent } from "@/types/domain";
+import type { InventoryItem, BundleComponent, BundleWithComponents } from "@/types/domain";
 
 export type PaymentMethod =
 	| 'cash'
@@ -32,7 +32,7 @@ export type CartLine = {
 	isFoodHouse?: boolean;
 	components?: BundleComponent[];
 	isB1T1?: boolean;
-	regularPrice?: number;
+	regularPrice?: number | null;
 	isPriceOverride?: boolean;
 	isPriced?: boolean;
 	originalPrice?: number;
@@ -53,7 +53,7 @@ export type DisplayItem =
 	| {
 		id: string;
 		name: string;
-		price: number;
+		price: number | null;
 		grab_price?: number | null;
 		img_url: string | null | undefined;
 		type: 'bundle';
@@ -64,4 +64,15 @@ export type DisplayItem =
 		description?: string | null;
 		is_custom?: boolean;
 		max_pieces?: number | null;
+	}
+	| {
+		id: string; // bundle_groups.id
+		name: string;
+		img_url: string | null | undefined;
+		type: 'bundle_group';
+		availability: number; // max availability across variants
+		description?: string | null;
+		category_id?: string | null;
+		category_ids?: string[];
+		variants: BundleWithComponents[];
 	};
