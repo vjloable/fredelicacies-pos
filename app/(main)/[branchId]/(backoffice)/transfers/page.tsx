@@ -16,6 +16,7 @@ import PageLoader from "@/components/PageLoader";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import RequestFromCommissaryModal from "./components/RequestFromCommissaryModal";
+import SendToBranchModal from "./components/SendToBranchModal";
 
 function totalPcs(t: TransferWithItems): number {
   return t.items.reduce((s, i) => s + (i.quantity_sent ?? 0), 0);
@@ -108,7 +109,7 @@ function KanbanCard({
   return (
     <div className="bg-white border border-secondary/10 rounded-lg p-3 flex flex-col gap-2">
       {err && (
-        <div className="px-2 py-1 rounded-md bg-(--error)/5 border border-(--error)/20 text-2.5 text-(--error)">{err}</div>
+        <div className="px-2 py-1 rounded-md bg-(--error)/5 border border-(--error)/20 text-2.5 text-error">{err}</div>
       )}
 
       {/* Card body — link to detail */}
@@ -122,24 +123,24 @@ function KanbanCard({
       </Link>
 
       {/* Status tag or action row */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap mt-2">
         {isAwaitingRequest && (
-          <span className="px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-amber-100 text-amber-700">Awaiting fulfilment</span>
+          <span className="px-4 py-0.5 rounded-full text-[10px] font-bold border border-amber-100 text-amber-700">Awaiting fulfilment</span>
         )}
         {isOutgoingTransit && (
-          <span className="px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-accent/10 text-accent">In transit</span>
+          <span className="px-4 py-0.5 rounded-full text-[10px] font-bold border border-accent/10 text-accent">In transit</span>
         )}
         {isIncomingTransit && (
           <Link
             href={`/${branchId}/transfers/${t.id}`}
-            className="px-2 py-0.5 rounded-lg bg-accent/10 text-accent text-2.5 font-bold hover:bg-accent/20 transition-colors"
+            className="px-4 py-0.5 rounded-lg border border-accent/10 text-accent text-[10px] font-bold hover:bg-accent/20 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             Receive →
           </Link>
         )}
         {isCompleted && t.status === "received" && (
-          <span className="px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-(--success)/10 text-(--success)">Received</span>
+          <span className="px-4 py-0.5 rounded-full text-[10px] font-bold border border-success/10 text-success">Received</span>
         )}
         {isCompleted && t.status === "cancelled" && (() => {
           const isPull = t.direction === "pull";
@@ -164,14 +165,14 @@ function KanbanCard({
             <button
               onClick={handleConfirm}
               disabled={busy}
-              className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--success) text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--success)/70 disabled:opacity-50"
+              className="h-7 px-2.5 inline-flex items-center rounded-lg bg-success text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--success)/70 disabled:opacity-50"
             >
               {busy ? "…" : "Confirm"}
             </button>
             <button
               onClick={(e) => { e.preventDefault(); setDeclining(true); setReason(""); }}
               disabled={busy}
-              className="h-7 px-2.5 inline-flex items-center rounded-lg border border-(--error)/30 text-(--error) text-2.5 font-bold hover:bg-(--error)/10 transition-all active:bg-(--error)/20 disabled:opacity-50"
+              className="h-7 px-2.5 inline-flex items-center rounded-lg border border-error/30 text-error text-2.5 font-bold hover:bg-error/10 transition-all active:bg-error/20 disabled:opacity-50"
             >
               Decline
             </button>
@@ -193,7 +194,7 @@ function KanbanCard({
           <button
             onClick={handleDeclineSubmit}
             disabled={busy}
-            className="h-7 px-2.5 inline-flex items-center rounded-lg bg-(--error) text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--error)/70 disabled:opacity-50"
+            className="h-7 px-2.5 inline-flex items-center rounded-lg bg-error text-white text-2.5 font-bold hover:opacity-90 transition-all active:bg-(--error)/70 disabled:opacity-50"
           >
             {busy ? "…" : "Confirm decline"}
           </button>
@@ -248,11 +249,18 @@ export default function TransfersListPage() {
     .sort((a, b) => (a.type === "commissary" ? -1 : 0) - (b.type === "commissary" ? -1 : 0));
   const showRequestFromCommissary = requestSourceBranches.length > 0 && currentBranch?.type !== "commissary";
 
+  // The commissary is the universal producer — it only ships inventory out, so its
+  // counterparts are every non-commissary branch, and it gets a "Send" button instead
+  // of "Request" (mirrors the guard in transferService.assertTransferAllowed).
+  const sendDestinationBranches = allBranches.filter((b) => b.id !== branchId && b.type !== "commissary");
+  const showSendToBranch = currentBranch?.type === "commissary" && sendDestinationBranches.length > 0;
+
   const isManager = hasManagerPrivileges(branchId);
 
   const [loading, setLoading] = useState(true);
   const [transfers, setTransfers] = useState<TransferWithItems[]>([]);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
 
   useEffect(() => {
     if (!branchId) return;
@@ -320,6 +328,17 @@ export default function TransfersListPage() {
                   <span>REQUEST</span>
                 </button>
               )}
+              {showSendToBranch && (
+                <button
+                  onClick={() => setShowSendModal(true)}
+                  className="h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-bundle/30 hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-5 5m5-5l5 5" />
+                  </svg>
+                  <span>SEND</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -385,6 +404,20 @@ export default function TransfersListPage() {
           onClose={() => setShowRequestModal(false)}
           onCreated={(transferId) => {
             setShowRequestModal(false);
+            router.push(`/${branchId}/transfers/${transferId}`);
+          }}
+        />
+      )}
+
+      {showSendModal && sendDestinationBranches.length > 0 && user && (
+        <SendToBranchModal
+          branchId={branchId}
+          branchName={currentBranch?.name ?? "the commissary"}
+          destinationBranches={sendDestinationBranches}
+          userId={user.id}
+          onClose={() => setShowSendModal(false)}
+          onCreated={(transferId) => {
+            setShowSendModal(false);
             router.push(`/${branchId}/transfers/${transferId}`);
           }}
         />
