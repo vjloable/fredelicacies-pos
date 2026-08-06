@@ -26,7 +26,7 @@ function mapCategoryIds(raw: any): InventoryItem {
 // ─── Centralized menu (Phase 2) ──────────────────────────────────────────────
 // Memoized lookup of the single commissary branch id (the menu source).
 let commissaryIdCache: string | null | undefined;
-async function getCommissaryId(): Promise<string | null> {
+export async function getCommissaryId(): Promise<string | null> {
   if (commissaryIdCache !== undefined) return commissaryIdCache;
   const { data } = await supabase
     .from('branches')
@@ -70,7 +70,7 @@ export const inventoryRepository = {
       .insert({
         branch_id: branchId,
         name: data.name,
-        price: data.price ?? 0,
+        price: data.price ?? null,
         category_id: categoryIds[0] ?? null,
         description: data.description || null,
         stock: data.stock || 0,
@@ -83,6 +83,7 @@ export const inventoryRepository = {
         unit_type: data.unit_type ?? null,
         unit: data.unit ?? null,
         measurement: data.measurement ?? null,
+        is_source_piece: data.is_source_piece ?? false,
       })
       .select()
       .single();

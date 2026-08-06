@@ -84,6 +84,7 @@ export default function AddItemModal({
   });
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [stockInput, setStockInput] = useState('');
+  const [priceInput, setPriceInput] = useState('');
   const [code, setCode] = useState('');
   const [codeTouched, setCodeTouched] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
@@ -102,6 +103,7 @@ export default function AddItemModal({
   const [unitType, setUnitType] = useState<InventoryUnitType | ''>('');
   const [unit, setUnit] = useState('');
   const [measurementInput, setMeasurementInput] = useState('');
+  const [isSourcePiece, setIsSourcePiece] = useState(false);
 
   const selectUnitType = (t: InventoryUnitType) => {
     setUnitType(t);
@@ -141,12 +143,14 @@ export default function AddItemModal({
     setNewItem({ name: "", stock: 0, description: "", img_url: "" });
     setSelectedCategoryIds([]);
     setStockInput('');
+    setPriceInput('');
     setCode('');
     setCodeTouched(false);
     setKind(null);
     setUnitType('');
     setUnit('');
     setMeasurementInput('');
+    setIsSourcePiece(false);
   };
 
   const chooseKind = (k: InventoryItemKind) => {
@@ -166,6 +170,12 @@ export default function AddItemModal({
       onError('Please enter a valid stock amount');
       return;
     }
+
+    if (priceInput !== '' && (isNaN(parseFloat(priceInput)) || parseFloat(priceInput) < 0)) {
+      onError('Please enter a valid price');
+      return;
+    }
+    const finalPrice = priceInput !== '' ? parseFloat(priceInput) : null;
 
     // Ingredients must declare a unit of measure and measurement.
     let measurement: number | undefined;
@@ -188,13 +198,14 @@ export default function AddItemModal({
         category_ids: selectedCategoryIds,
         category_id: selectedCategoryIds[0] || undefined,
         stock: finalStock,
+        price: finalPrice,
         code: code || undefined,
         description: newItem.description || undefined,
         img_url: newItem.img_url || undefined,
         kind: effectiveKind,
         ...(isIngredient
           ? { is_custom: true, unit_type: unitType as InventoryUnitType, unit, measurement }
-          : {}),
+          : { is_source_piece: isSourcePiece }),
       };
 
       const { error } = await createInventoryItem(currentBranch!.id, itemData);
@@ -397,6 +408,32 @@ export default function AddItemModal({
                         inputMode="numeric"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-medium text-secondary mb-2">
+                        Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                        <input
+                          type="text"
+                          value={priceInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                              setPriceInput(value);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                          }}
+                          onFocus={(e) => e.target.select()}
+                          className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="0.00"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <p className="text-xs text-secondary/50 mt-1">Suggested default — still editable in the order cart</p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -460,6 +497,24 @@ export default function AddItemModal({
                       </div>
                     </div>
                   </div>
+
+                  {/* Source piece flag — sellable pieces usable as-is or inside bundles */}
+                  {!isIngredient && (
+                    <label className="flex items-start gap-2.5 rounded-lg border border-secondary/20 p-3 cursor-pointer select-none hover:border-secondary/40 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isSourcePiece}
+                        onChange={(e) => setIsSourcePiece(e.target.checked)}
+                        className="mt-0.5 w-3.5 h-3.5 rounded shrink-0 accent-accent"
+                      />
+                      <span>
+                        <span className="block text-xs font-semibold text-secondary">Source piece</span>
+                        <span className="block text-xs text-secondary/50 leading-snug mt-0.5">
+                          Sellable individually and usable as a component inside bilao/combo bundles.
+                        </span>
+                      </span>
+                    </label>
+                  )}
 
                   {/* Ingredient unit of measure */}
                   {isIngredient && (

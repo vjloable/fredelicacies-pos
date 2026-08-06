@@ -12,7 +12,9 @@ export interface InventoryItem {
   category_ids?: string[]; // populated from inventory_item_categories junction table
   name: string;
   description: string | null;
-  price: number;
+  // Suggested default price only — the cashier can leave this unset and price
+  // the item in the order cart at checkout, like bundles.
+  price: number | null;
   cost: number | null;
   grab_price: number | null;
   stock: number;
@@ -33,6 +35,9 @@ export interface InventoryItem {
   unit_type: InventoryUnitType | null;
   unit: string | null;
   measurement: number | null;
+  // Native/atomic form of a kakanin piece, sellable standalone and/or usable
+  // as a bundle component inside bilao/combo bundles. Informational only.
+  is_source_piece: boolean;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -40,7 +45,7 @@ export interface InventoryItem {
 
 export interface CreateInventoryItemData {
   name: string;
-  price?: number;
+  price?: number | null;
   category_id?: string;
   category_ids?: string[];
   description?: string;
@@ -54,12 +59,13 @@ export interface CreateInventoryItemData {
   unit_type?: InventoryUnitType | null;
   unit?: string | null;
   measurement?: number | null;
+  is_source_piece?: boolean;
 }
 
 export interface UpdateInventoryItemData {
   name?: string;
   description?: string;
-  price?: number;
+  price?: number | null;
   stock?: number;
   uncarried_stock?: number;
   category_id?: string;
@@ -73,4 +79,5 @@ export interface UpdateInventoryItemData {
   unit_type?: InventoryUnitType | null;
   unit?: string | null;
   measurement?: number | null;
+  is_source_piece?: boolean;
 }

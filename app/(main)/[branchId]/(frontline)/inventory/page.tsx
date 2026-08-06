@@ -12,10 +12,9 @@ import BundlesView from "./components/BundlesView";
 import LockItemModal from "./components/LockItemModal";
 import SubmitEODModal from "./components/SubmitEODModal";
 import AuditConfigModal from "./components/AuditConfigModal";
-import PublishMenuModal from "./components/PublishMenuModal";
 import type { InventoryItem, Category } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
-import { subscribeToInventoryItems, updateInventoryItem } from "@/services/inventoryService";
+import { subscribeToInventoryItems, updateInventoryItem, duplicateInventoryItem } from "@/services/inventoryService";
 import { inventoryRepository } from "@/lib/repositories";
 import { logActivity } from "@/services/activityLogService";
 import { recordWastage } from "@/services/wastageService";
@@ -36,10 +35,12 @@ import { inventorySteps } from "@/components/TutorialSteps";
 import EditIcon from "../store/icons/EditIcon";
 import PlusIcon from "../../../../../components/icons/PlusIcon";
 import DeleteIcon from "../store/icons/DeleteIcon";
+import DuplicateIcon from "../store/icons/DuplicateIcon";
 import { formatCurrency } from "@/lib/currency_formatter";
 import EmptyInventory from "./illustrations/EmptyInventory";
 import InventoryIcon from "@/components/icons/SidebarNav/InventoryIcon";
 import PageLoader from "@/components/PageLoader";
+import ClockInGate from "@/components/ClockInGate";
 import { usePOSAccessControl } from "@/contexts/TimeTrackingContext";
 
 interface Item extends InventoryItem {
@@ -47,7 +48,7 @@ interface Item extends InventoryItem {
 }
 
 export default function InventoryScreen() {
-	const { currentBranch, refreshBranches, availableBranches } = useBranch();
+	const { currentBranch, refreshBranches } = useBranch();
 	const { user } = useAuth();
 	// Items are created ONLY at the commissary; branches carry the commissary menu
 	// automatically, so branches cannot create items.
@@ -93,7 +94,6 @@ export default function InventoryScreen() {
 	const [resolving, setResolving] = useState(false);
 	// Audit config & inline audit state
 	const [showAuditConfigModal, setShowAuditConfigModal] = useState(false);
-	const [showPublishModal, setShowPublishModal] = useState(false);
 	const [auditMode, setAuditMode] = useState(false);
 	const [auditInputs, setAuditInputs] = useState<Record<string, string>>({});
 	const [auditResolutions, setAuditResolutions] = useState<Record<string, { type:'force_carryover' |'force_wastage'; reason: string } | null>>({});
@@ -269,6 +269,29 @@ export default function InventoryScreen() {
 		setError(errorMessage);
 	};
 
+	const handleDuplicateItem = async (item: InventoryItem) => {
+		if (!currentBranch) return;
+		const { id, error: dupError } = await duplicateInventoryItem(currentBranch.id, item);
+		if (dupError) {
+			handleError('Failed to duplicate item. Please try again.');
+			return;
+		}
+		void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'item_created', entityType: 'inventory', entityId: id ?? undefined, details: { name: `${item.name} (Copy)`, duplicated_from: item.name } });
+	};
+
+	// Show/hide toggle — flips the shared menu status, so it hides the item from
+	// every branch's Store instantly without deactivating/deleting it.
+	const handleToggleItemVisibility = async (item: InventoryItem) => {
+		if (!currentBranch) return;
+		const nextStatus = item.status === 'active' ? 'inactive' : 'active';
+		const { error: toggleError } = await updateInventoryItem(item.id, { status: nextStatus });
+		if (toggleError) {
+			handleError('Failed to update item visibility. Please try again.');
+			return;
+		}
+		void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'item_status_changed', entityType: 'inventory', entityId: item.id, details: { name: item.name, status: nextStatus } });
+	};
+
 	const handleDeleteCategory = (category: Category) => {
 		const categoryItems = items.filter((item) => item.category_id === category.id);
 		if (categoryItems.length > 0) {
@@ -338,7 +361,7 @@ export default function InventoryScreen() {
 					entityId: item.id,
 					details: { item_name: item.name, old_stock: oldStock, new_stock: 0, delta: oldStock },
 				});
-				wastageItems.push({ item_id: item.id, item_name: item.name, quantity_wasted: oldStock, cost_per_unit: item.price });
+				wastageItems.push({ item_id: item.id, item_name: item.name, quantity_wasted: oldStock, cost_per_unit: item.price ?? 0 });
 			}
 		}
 		if (wastageItems.length > 0) {
@@ -488,7 +511,8 @@ export default function InventoryScreen() {
 						{loading && <PageLoader text="Loading inventory…" />}
 
 						{!loading && (
-							<div className='flex-1 px-6 overflow-y-auto pb-6'>
+							<ClockInGate active={!canAccessPOS} branchId={currentBranch?.id} className='flex-1 overflow-y-auto'>
+							<div className='px-6 pt-4 pb-6'>
 								{/* Tab Navigation */}
 								<div className='flex gap-2 mb-4'>
 									<button
@@ -523,7 +547,7 @@ export default function InventoryScreen() {
 												<div className='flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2 mb-4'>
 													<button
 														onClick={() => { setEditingCategory(null); setShowCategoryForm(true); }}
-														className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm bg-accent hover:bg-accent/90 active:bg-light-accent active:text-accent ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+														className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm bg-accent hover:bg-accent/90 active:bg-light-accent active:text-accent`}
 													>
 														<div className='size-4 text-primary drop-shadow-lg'>
 															<PlusIcon />
@@ -535,7 +559,6 @@ export default function InventoryScreen() {
 														<button
 															onClick={() => setManageCategories(prev => !prev)}
 															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
-																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
 																${manageCategories ?'bg-secondary text-white active:bg-secondary/70' :'bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30'}`}
 														>
 															<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -544,24 +567,11 @@ export default function InventoryScreen() {
 															<span>{manageCategories ?'DONE' :'MANAGE'}</span>
 														</button>
 													)}
-													{/* Publish Menu (owner, commissary branch only) */}
-													{isOwner && currentBranch?.type ==='commissary' && (
-														<button
-															onClick={() => setShowPublishModal(true)}
-															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm bg-bundle/10 text-bundle hover:bg-bundle/20 active:bg-bundle/30 ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
-															title="Copy this branch's menu to other branches"
-														>
-															<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-																<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 19V5m0 0l-5 5m5-5l5 5' />
-															</svg>
-															<span>PUBLISH MENU</span>
-														</button>
-													)}
 													{/* Audit config cog (owner only) */}
 													{isOwner && (
 														<button
 															onClick={() => setShowAuditConfigModal(true)}
-															className={`h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+															className={`h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary`}
 															title='Audit Configuration'
 														>
 															<svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -678,7 +688,7 @@ export default function InventoryScreen() {
 														{isOwner && (
 															<button
 																onClick={() => setShowAuditConfigModal(true)}
-																className={`sm:hidden h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+																className={`sm:hidden h-12 w-12 shrink-0 flex items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary`}
 																title='Audit Configuration'
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -712,7 +722,6 @@ export default function InventoryScreen() {
 															<button
 																onClick={() => { setResolveMode(prev => !prev); setSelectedForResolve(new Set()); }}
 																className={`h-12 px-3 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
-																	${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
 																	${resolveMode ?'bg-amber-500 text-white active:bg-amber-600' :'bg-amber-100 text-amber-700 hover:bg-amber-200 active:bg-amber-300'}`}
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -724,7 +733,7 @@ export default function InventoryScreen() {
 														{destockMode && selectedForDestock.size > 0 && (
 															<button
 																onClick={() => setShowDestockConfirm(true)}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-error/70 hover:shadow-sm bg-error text-white ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-error/70 hover:shadow-sm bg-error text-white`}
 															>
 																<svg fill='currentColor' stroke='currentColor' viewBox='0 0 15 15' className='w-4 h-4'>
 																	<path d='M0.89502 7.50028H14.3021' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
@@ -736,7 +745,6 @@ export default function InventoryScreen() {
 															onClick={() => { setDestockMode(prev => !prev); setSelectedForDestock(new Set()); }}
 															disabled={auditMode}
 															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
-																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
 																${auditMode ?'opacity-40 cursor-not-allowed' :''}
 																${destockMode ?'bg-error text-white active:bg-error/70' :'bg-error/10 text-error hover:bg-error/20 active:bg-error/30'}`}
 														>
@@ -759,7 +767,6 @@ export default function InventoryScreen() {
 																onClick={toggleAuditMode}
 																disabled={destockMode}
 																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all hover:shadow-sm
-																	${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
 																	${destockMode ?'opacity-40 cursor-not-allowed' :''}
 																	${auditMode ?'bg-secondary text-white active:bg-secondary/70' :'bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30'}`}
 															>
@@ -788,7 +795,7 @@ export default function InventoryScreen() {
 														{isOwner && activeCategoryId === auditCategoryId && allAuditItemsLocked && auditCategoryItems.length > 0 && eodSession?.status !=='submitted' && (
 															<button
 																onClick={() => setShowCarryOverAllConfirm(true)}
-																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-success/70 hover:shadow-sm bg-success text-white ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+																className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-success/70 hover:shadow-sm bg-success text-white`}
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 																	<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M5 13l4 4L19 7' />
@@ -802,7 +809,6 @@ export default function InventoryScreen() {
 															onClick={() => setShowItemForm(true)}
 															disabled={auditMode}
 															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-light-accent active:text-accent hover:shadow-sm bg-accent hover:bg-accent/90
-																${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}
 																${auditMode ?'opacity-40 cursor-not-allowed' :''}`}
 														>
 															<div className='size-4 text-primary drop-shadow-lg'>
@@ -815,7 +821,7 @@ export default function InventoryScreen() {
 														{isOwner && (
 															<button
 																onClick={() => setShowAuditConfigModal(true)}
-																className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}
+																className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-all active:bg-secondary/20 hover:bg-secondary/10 text-secondary/40 hover:text-secondary`}
 																title='Audit Configuration'
 															>
 																<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -945,7 +951,7 @@ export default function InventoryScreen() {
 												)}
 
 												{/* Items List */}
-												<div className={`space-y-1 ${!canAccessPOS ?'blur-[1px] pointer-events-none' :''}`}>
+												<div className='space-y-1'>
 													{inventorySearchUI}
 																	{inventorySearch.trim() ? null : filteredItems.length === 0 ? (
 														<div className='text-center py-10 text-secondary/40 text-xs'>
@@ -955,7 +961,7 @@ export default function InventoryScreen() {
 														filteredItems.map((item) => {
 															const isExpanded = expandedItems.has(item.id);
 															return (
-																<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${destockMode ?'border-error/30' : resolveMode && item.uncarried_stock > 0 ?'border-amber-400/50' :'border-gray-100'}`}>
+																<div key={item.id} className={`bg-primary rounded-lg border overflow-hidden transition-colors ${item.status === 'inactive' ?'opacity-50' :''} ${destockMode ?'border-error/30' : resolveMode && item.uncarried_stock > 0 ?'border-amber-400/50' :'border-gray-100'}`}>
 																	<div
 																		role='button'
 																		tabIndex={0}
@@ -1020,7 +1026,7 @@ export default function InventoryScreen() {
 																		{item.is_custom ? (
 																					<span className='text-xs font-semibold text-bundle shrink-0 tabular-nums px-2 py-0.5 rounded-full bg-bundle/10'>{(item.measurement ?? 0) + (item.unit ? ` ${item.unit}` :'')}</span>
 																				) : (
-																					<span className='text-sm text-secondary/60 shrink-0 tabular-nums'>{formatCurrency(item.price)}</span>
+																					<span className='text-sm text-secondary/60 shrink-0 tabular-nums'>{item.price != null ? formatCurrency(item.price) : <span className='text-secondary/40 italic'>Unpriced</span>}</span>
 																				)}
 																		{item.uncarried_stock > 0 ? (
 																			<span className='shrink-0 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums bg-amber-100 text-amber-700' title={`(${item.uncarried_stock} uncarried) + ${item.stock - item.uncarried_stock} new`}>
@@ -1034,6 +1040,29 @@ export default function InventoryScreen() {
 																		<button onClick={(e) => { e.stopPropagation(); openEditModal(item); }} className='shrink-0 p-2.5 hover:bg-light-accent active:bg-accent/20 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
 																			<EditIcon className='w-5 h-5' />
 																		</button>
+																		{canCreateItems && (
+																			<button onClick={(e) => { e.stopPropagation(); handleDuplicateItem(item); }} title='Duplicate item' className='shrink-0 p-2.5 hover:bg-light-accent active:bg-accent/20 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																				<DuplicateIcon className='w-4.5 h-4.5' />
+																			</button>
+																		)}
+																		{canCreateItems && (
+																			<button
+																				onClick={(e) => { e.stopPropagation(); handleToggleItemVisibility(item); }}
+																				title={item.status === 'inactive' ? 'Hidden — tap to show' : 'Visible — tap to hide'}
+																				className={`shrink-0 p-2.5 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${item.status === 'inactive' ? 'text-error hover:bg-error/10 active:bg-error/20' : 'text-secondary/40 hover:bg-gray-100 hover:text-secondary active:bg-gray-200'}`}
+																			>
+																				{item.status === 'inactive' ? (
+																					<svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' />
+																					</svg>
+																				) : (
+																					<svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+																						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+																					</svg>
+																				)}
+																			</button>
+																		)}
 																		{isOwner && canAccessPOS && requiresEodAudit(item.category_id) && (() => {
 																			const lock = eodLocks.find(l => l.item_id === item.id);
 																			return (
@@ -1163,7 +1192,7 @@ export default function InventoryScreen() {
 																			{item.cost && item.cost > 0 && (
 																				<span className='text-xs text-secondary/60'>Cost: {formatCurrency(item.cost)}</span>
 																			)}
-																			{item.cost && item.cost > 0 && (
+																			{item.cost && item.cost > 0 && item.price != null && (
 																				<span className='text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded'>
 																					{(((item.price - item.cost) / item.price) * 100).toFixed(0)}% margin
 																				</span>
@@ -1190,6 +1219,7 @@ export default function InventoryScreen() {
 									<BundlesView categoryFilter={activeCategoryId} categories={categories} />
 								)}
 							</div>
+							</ClockInGate>
 						)}
 
 						{/* Modal Components */}
@@ -1299,20 +1329,6 @@ export default function InventoryScreen() {
 								onClose={() => setShowAuditConfigModal(false)}
 								onSaved={() => { setShowAuditConfigModal(false); refreshBranches(); }}
 								onError={handleError}
-							/>
-						)}
-
-						{/* Publish Menu (owner, commissary branch only) */}
-						{isOwner && currentBranch?.type ==='commissary' && user && (
-							<PublishMenuModal
-								isOpen={showPublishModal}
-								onClose={() => setShowPublishModal(false)}
-								userId={user.id}
-								sourceBranchId={currentBranch.id}
-								sourceBranchName={currentBranch.name}
-								subBranches={availableBranches
-									.filter((b) => b.id !== currentBranch.id)
-									.map((b) => ({ id: b.id, name: b.name }))}
 							/>
 						)}
 

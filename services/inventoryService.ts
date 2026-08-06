@@ -11,6 +11,31 @@ export const createInventoryItem = async (
   return { id: createdItem?.id || null, error };
 };
 
+// Duplicate an existing item as a new menu entry — copies menu fields (name gets a
+// "(Copy)" suffix), starts stock at 0, and drops the code/barcode so the unique
+// constraint on code doesn't collide.
+export const duplicateInventoryItem = async (
+  branchId: string,
+  source: InventoryItem
+): Promise<{ id: string | null; error: any }> => {
+  const duplicateData: CreateInventoryItemData = {
+    name: `${source.name} (Copy)`,
+    category_id: source.category_id ?? undefined,
+    category_ids: source.category_ids,
+    description: source.description ?? undefined,
+    stock: 0,
+    img_url: source.img_url ?? undefined,
+    status: source.status,
+    kind: source.kind,
+    is_custom: source.is_custom,
+    unit_type: source.unit_type,
+    unit: source.unit,
+    measurement: source.measurement,
+    is_source_piece: source.is_source_piece,
+  };
+  return createInventoryItem(branchId, duplicateData);
+};
+
 // Get all inventory items for a branch
 export const getInventoryItems = async (branchId: string): Promise<{ items: InventoryItem[]; error: any }> => {
   return await inventoryRepository.getByBranch(branchId);

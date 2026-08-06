@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import SafeImage from '@/components/SafeImage';
-import type { BundleWithComponents, InventoryItem, Category } from '@/types/domain';
-import { subscribeToBundles } from '@/services/bundleService';
+import type { BundleGroupWithVariants, BundleWithComponents, InventoryItem, Category } from '@/types/domain';
+import { subscribeToBundles, duplicateBundle, updateBundle } from '@/services/bundleService';
+import { subscribeToBundleGroups, deleteBundleGroup, duplicateBundleGroup, setBundleGroupStatus } from '@/services/bundleGroupService';
 import { subscribeToInventoryItems } from '@/services/inventoryService';
 import { calculateBundleAvailability } from '@/services/bundleService';
 import { validateAndReactivateBundle } from '@/services/catalogSyncService';
@@ -11,8 +12,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getCategoryColor } from '@/services/categoryService';
 import { useBranch } from '@/contexts/BranchContext';
 import { formatCurrency } from '@/lib/currency_formatter';
+import { logActivity } from '@/services/activityLogService';
 import PlusIcon from '@/components/icons/PlusIcon';
 import EditIcon from '../../store/icons/EditIcon';
+import DuplicateIcon from '../../store/icons/DuplicateIcon';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddBundleModal from './AddBundleModal';
 import EditBundleModal from './EditBundleModal';
@@ -30,8 +33,14 @@ interface BundlesViewProps {
 
 export default function BundlesView({ categoryFilter, categories }: BundlesViewProps) {
   const { currentBranch } = useBranch();
+  // Bundles now live only on the commissary and reflect directly to every
+  // branch — only the commissary can author them.
+  const canManageBundles = currentBranch?.type === 'commissary';
   const { user } = useAuth();
   const [bundles, setBundles] = useState<BundleWithComponents[]>([]);
+  const [groups, setGroups] = useState<BundleGroupWithVariants[]>([]);
+  // Individual variants render only via their parent group's tile, not as their own row.
+  const ungroupedBundles = bundles.filter(b => !b.bundle_group_id);
   const [reactivating, setReactivating] = useState<string | null>(null);
   const [reactivationError, setReactivationError] = useState<string | null>(null);
   // Bundles get their own category selection; seed from the parent folder selection.
@@ -39,8 +48,12 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
   useEffect(() => { setSelectedCat(categoryFilter); }, [categoryFilter]);
   const filteredBundles =
     selectedCat === null ? [] :
-    selectedCat === UNCAT ? bundles.filter(b => !b.category_id) :
-    bundles.filter(b => b.category_id === selectedCat);
+    selectedCat === UNCAT ? ungroupedBundles.filter(b => !b.category_id) :
+    ungroupedBundles.filter(b => b.category_id === selectedCat);
+  const filteredGroups =
+    selectedCat === null ? [] :
+    selectedCat === UNCAT ? groups.filter(g => !g.category_id) :
+    groups.filter(g => g.category_id === selectedCat);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [bundleAvailability, setBundleAvailability] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -50,7 +63,17 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
   const [showAssortedConfig, setShowAssortedConfig] = useState(false);
   const [showFoodHouseConfig, setShowFoodHouseConfig] = useState(false);
   const [editingBundle, setEditingBundle] = useState<BundleWithComponents | null>(null);
+  const [editingGroup, setEditingGroup] = useState<BundleGroupWithVariants | null>(null);
   const [expandedBundles, setExpandedBundles] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleExpandGroup = (id: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedBundles(prev => {
@@ -81,6 +104,13 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
     return () => unsubscribe();
   }, [currentBranch]);
 
+  // Subscribe to bundle groups
+  useEffect(() => {
+    if (!currentBranch) return;
+    const unsubscribe = subscribeToBundleGroups(currentBranch.id, setGroups);
+    return () => unsubscribe();
+  }, [currentBranch]);
+
   // Subscribe to inventory
   useEffect(() => {
     if (!currentBranch) return;
@@ -106,12 +136,75 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
 
   const handleEditBundle = (bundle: BundleWithComponents) => {
     setEditingBundle(bundle);
+    setEditingGroup(null);
     setShowEditModal(true);
+  };
+
+  const handleEditGroup = (group: BundleGroupWithVariants) => {
+    if (group.variants.length === 0) return;
+    setEditingGroup(group);
+    setEditingBundle(group.variants[0]);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteGroup = async (group: BundleGroupWithVariants) => {
+    if (!currentBranch) return;
+    const { error: delError } = await deleteBundleGroup(currentBranch.id, group.id);
+    if (delError) {
+      setError('Failed to delete bundle group. Please try again.');
+      return;
+    }
+    void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_group_deleted', entityType: 'bundle_group', entityId: group.id, details: { name: group.name } });
+  };
+
+  const handleDuplicateGroup = async (group: BundleGroupWithVariants) => {
+    if (!currentBranch) return;
+    const { id, error: dupError } = await duplicateBundleGroup(currentBranch.id, group);
+    if (dupError) {
+      setError('Failed to duplicate bundle group. Please try again.');
+      return;
+    }
+    void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_group_created', entityType: 'bundle_group', entityId: id ?? undefined, details: { name: `${group.name} (Copy)`, duplicated_from: group.name } });
+  };
+
+  const handleDuplicateBundle = async (bundle: BundleWithComponents) => {
+    if (!currentBranch) return;
+    const { id, error: dupError } = await duplicateBundle(currentBranch.id, bundle);
+    if (dupError) {
+      setError('Failed to duplicate bundle. Please try again.');
+      return;
+    }
+    void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_created', entityType: 'bundle', entityId: id ?? undefined, details: { name: `${bundle.name} (Copy)`, duplicated_from: bundle.name } });
+  };
+
+  // Show/hide toggles — flip status only, hiding instantly from every branch's
+  // Store without deleting or touching composition.
+  const handleToggleBundleVisibility = async (bundle: BundleWithComponents) => {
+    if (!currentBranch) return;
+    const nextStatus = bundle.status === 'active' ? 'inactive' : 'active';
+    const { error: toggleError } = await updateBundle(bundle.id, { status: nextStatus });
+    if (toggleError) {
+      setError('Failed to update bundle visibility. Please try again.');
+      return;
+    }
+    void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_status_changed', entityType: 'bundle', entityId: bundle.id, details: { name: bundle.name, status: nextStatus } });
+  };
+
+  const handleToggleGroupVisibility = async (group: BundleGroupWithVariants) => {
+    if (!currentBranch) return;
+    const nextStatus = group.status === 'active' ? 'inactive' : 'active';
+    const { error: toggleError } = await setBundleGroupStatus(currentBranch.id, group.id, nextStatus);
+    if (toggleError) {
+      setError('Failed to update bundle group visibility. Please try again.');
+      return;
+    }
+    void logActivity({ branchId: currentBranch.id, userId: user?.id ?? null, action: 'bundle_group_status_changed', entityType: 'bundle_group', entityId: group.id, details: { name: group.name, status: nextStatus } });
   };
 
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setEditingBundle(null);
+    setEditingGroup(null);
   };
 
   if (loading) {
@@ -151,10 +244,11 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
     // Bundle list will refresh via realtime subscription.
   };
 
-  // Folder data: categories that actually contain bundles, plus an uncategorized bucket.
+  // Folder data: categories that actually contain bundles or groups, plus an uncategorized bucket.
   const catCounts = new Map<string, number>();
   let uncatCount = 0;
-  bundles.forEach(b => { if (b.category_id) catCounts.set(b.category_id, (catCounts.get(b.category_id) || 0) + 1); else uncatCount++; });
+  ungroupedBundles.forEach(b => { if (b.category_id) catCounts.set(b.category_id, (catCounts.get(b.category_id) || 0) + 1); else uncatCount++; });
+  groups.forEach(g => { if (g.category_id) catCounts.set(g.category_id, (catCounts.get(g.category_id) || 0) + 1); else uncatCount++; });
   const folderCats = categories.filter(c => catCounts.has(c.id));
   const currentCatName = selectedCat === UNCAT ? 'Uncategorized'
     : selectedCat ? (categories.find(c => c.id === selectedCat)?.name ?? 'Category')
@@ -215,18 +309,20 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
             <div>
               <h2 className="text-2.5 font-bold uppercase tracking-wide text-secondary/45">Bundles</h2>
               <p className="text-2.5 text-secondary/40 mt-0.5">
-                {bundles.length} {bundles.length === 1 ? 'bundle' : 'bundles'}
+                {ungroupedBundles.length + groups.length} {ungroupedBundles.length + groups.length === 1 ? 'bundle' : 'bundles'}
               </p>
             </div>
-            <button
-          onClick={() => setShowAddModal(true)}
-          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
-        >
-          <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
-            <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
-            <span className="mt-0.5">ADD BUNDLE</span>
-          </div>
-        </button>
+            {canManageBundles && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
+          >
+            <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
+              <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
+              <span className="mt-0.5">ADD BUNDLE</span>
+            </div>
+          </button>
+        )}
           </div>
 
           {/* Assorted Kakanin — permanent, undeletable special config */}
@@ -277,7 +373,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
             </svg>
           </button>
 
-          {bundles.length === 0 ? (
+          {ungroupedBundles.length === 0 && groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10">
               <div className="w-20 h-20 rounded-full border border-bundle/40 flex items-center justify-center text-bundle/80 mb-4">
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,30 +431,108 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
                   <span className="text-sm font-bold text-secondary truncate">{currentCatName}</span>
                 </nav>
                 <p className="text-2.5 text-secondary/40 mt-0.5">
-                  {filteredBundles.length} {filteredBundles.length === 1 ? 'bundle' : 'bundles'}
+                  {filteredBundles.length + filteredGroups.length} {filteredBundles.length + filteredGroups.length === 1 ? 'bundle' : 'bundles'}
                 </p>
               </div>
             </div>
-            <button
-          onClick={() => setShowAddModal(true)}
-          className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
-        >
-          <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
-            <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
-            <span className="mt-0.5">ADD BUNDLE</span>
-          </div>
-        </button>
+            {canManageBundles && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="shrink-0 bg-accent text-secondary text-3 h-12 px-4 flex items-center justify-center rounded-lg hover:bg-accent/90 active:bg-light-accent transition-all font-semibold hover:shadow-sm"
+          >
+            <div className="flex flex-row items-center gap-2 text-primary text-shadow-md font-black text-3">
+              <div className="size-4"><PlusIcon className="drop-shadow-lg" /></div>
+              <span className="mt-0.5">ADD BUNDLE</span>
+            </div>
+          </button>
+        )}
           </div>
 
-          {filteredBundles.length === 0 ? (
+          {filteredBundles.length === 0 && filteredGroups.length === 0 ? (
             <div className="py-12 text-center text-xs text-secondary/50">No bundles in this category.</div>
           ) : (
             <div className="space-y-1">
+          {filteredGroups.map((group) => {
+            const isGroupExpanded = expandedGroups.has(group.id);
+            return (
+              <div key={group.id} className={`bg-primary rounded-lg border border-bundle/30 overflow-hidden transition-colors ${group.status === 'inactive' ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getCategoryColor(categories, group.category_id || '') }} />
+                  <div className="w-8 h-8 rounded bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center">
+                    {group.img_url ? (
+                      <SafeImage src={group.img_url} alt={group.name} />
+                    ) : (
+                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs font-semibold text-secondary truncate flex-1 min-w-0">{group.name}</span>
+                  <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-bundle/20 text-bundle rounded">
+                    {group.variants.length} {group.variants.length === 1 ? 'variant' : 'variants'}
+                  </span>
+                  {canManageBundles && (
+                    <>
+                      <button onClick={() => handleEditGroup(group)} className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                        <EditIcon className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDuplicateGroup(group)} title="Duplicate group" className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                        <DuplicateIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleGroupVisibility(group)}
+                        title={group.status === 'inactive' ? 'Hidden — tap to show' : 'Visible — tap to hide'}
+                        className={`shrink-0 p-1.5 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${group.status === 'inactive' ? 'text-error hover:bg-error/10' : 'text-secondary/40 hover:bg-gray-100 hover:text-secondary'}`}
+                      >
+                        {group.status === 'inactive' ? (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                      <button onClick={() => handleDeleteGroup(group)} title="Delete group" className="shrink-0 p-1.5 text-error hover:bg-error/10 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => toggleExpandGroup(group.id)} className="shrink-0 p-1.5 hover:bg-gray-100 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                    <svg className={`w-3 h-3 text-secondary/50 transition-transform ${isGroupExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {isGroupExpanded && (
+                  <div className="px-3 pb-2 pt-2 border-t border-gray-100 ml-11 space-y-1.5">
+                    {group.variants.map(variant => {
+                      const variantAvailability = bundleAvailability.get(variant.id) || 0;
+                      return (
+                        <div key={variant.id} className="flex items-center gap-2 text-xs">
+                          <span className="flex-1 min-w-0 truncate text-secondary/80">{variant.variant_label || variant.name}</span>
+                          <span className="text-secondary/50 tabular-nums shrink-0">{variant.price != null ? formatCurrency(variant.price) : 'Unpriced'}</span>
+                          <span className={`font-bold shrink-0 w-8 text-center tabular-nums ${variantAvailability === 0 ? 'text-error' : variantAvailability <= 5 ? 'text-accent' : 'text-secondary/50'}`}>
+                            {variantAvailability}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {filteredBundles.map((bundle) => {
             const availability = bundleAvailability.get(bundle.id) || 0;
             const isExpanded = expandedBundles.has(bundle.id);
             return (
-              <div key={bundle.id} className="bg-primary rounded-lg border border-gray-100 overflow-hidden transition-colors">
+              <div key={bundle.id} className={`bg-primary rounded-lg border border-gray-100 overflow-hidden transition-colors ${bundle.status === 'inactive' ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-2 px-2 py-1.5">
                   {/* Category dot */}
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getCategoryColor(categories, bundle.category_id || '') }} />
@@ -381,7 +555,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
                   )}
 
                   {/* Price */}
-                  <span className="text-xs text-secondary/60 shrink-0 tabular-nums">{formatCurrency(bundle.price)}</span>
+                  <span className="text-xs text-secondary/60 shrink-0 tabular-nums">{bundle.price != null ? formatCurrency(bundle.price) : 'Unpriced'}</span>
 
                   {/* Availability */}
                   <span className={`text-xs font-bold shrink-0 w-8 text-center tabular-nums ${
@@ -390,10 +564,37 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
                     {bundle.is_custom ? '∞' : availability}
                   </span>
 
-                  {/* Edit button */}
-                  <button onClick={() => handleEditBundle(bundle)} className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
-                    <EditIcon className="w-4 h-4" />
-                  </button>
+                  {canManageBundles && (
+                    <>
+                      {/* Edit button */}
+                      <button onClick={() => handleEditBundle(bundle)} className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                        <EditIcon className="w-4 h-4" />
+                      </button>
+
+                      {/* Duplicate button */}
+                      <button onClick={() => handleDuplicateBundle(bundle)} title="Duplicate bundle" className="shrink-0 p-1.5 hover:bg-light-accent rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
+                        <DuplicateIcon className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Show/hide toggle */}
+                      <button
+                        onClick={() => handleToggleBundleVisibility(bundle)}
+                        title={bundle.status === 'inactive' ? 'Hidden — tap to show' : 'Visible — tap to hide'}
+                        className={`shrink-0 p-1.5 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${bundle.status === 'inactive' ? 'text-error hover:bg-error/10' : 'text-secondary/40 hover:bg-gray-100 hover:text-secondary'}`}
+                      >
+                        {bundle.status === 'inactive' ? (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </>
+                  )}
 
                   {/* Expand button */}
                   <button onClick={() => toggleExpand(bundle.id)} className="shrink-0 p-1.5 hover:bg-gray-100 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1">
@@ -462,6 +663,7 @@ export default function BundlesView({ categoryFilter, categories }: BundlesViewP
         <EditBundleModal
           isOpen={showEditModal}
           bundle={editingBundle}
+          bundleGroup={editingGroup ?? undefined}
           inventory={inventory}
           categories={categories}
           onClose={handleCloseEditModal}

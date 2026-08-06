@@ -4,15 +4,19 @@ import { useState, useRef, useEffect } from 'react';
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ImageUpload from '@/components/ImageUpload';
 import { createBundle } from '@/services/bundleService';
+import { createBundleGroup } from '@/services/bundleGroupService';
 import type { InventoryItem, Category } from '@/types/domain';
 import PlusIcon from '@/components/icons/PlusIcon';
-import DropdownField from '@/components/DropdownField';
+import ItemFolderPicker from './ItemFolderPicker';
+import QuantityStepper from './QuantityStepper';
+import VariantRow, { type VariantDraft } from './VariantRow';
 import { useBranch } from '@/contexts/BranchContext';
-// DropdownField kept for component/additional item selectors
 import { useAuth } from '@/contexts/AuthContext';
 import { logActivity } from '@/services/activityLogService';
-import { formatCurrency } from '@/lib/currency_formatter';
-import Image from 'next/image';
+
+type BundleMode = 'fixed' | 'custom' | 'group';
+let variantKeySeq = 0;
+const nextVariantKey = () => `new-${++variantKeySeq}`;
 
 interface AddBundleModalProps {
   isOpen: boolean;
@@ -44,12 +48,38 @@ export default function AddBundleModal({
   const [grabPriceInput, setGrabPriceInput] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
-  const [isCustom, setIsCustom] = useState(false);
+  const [bundleMode, setBundleMode] = useState<BundleMode>('fixed');
+  const isCustom = bundleMode === 'custom';
   const [maxPieces, setMaxPieces] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedAdditionalItems, setSelectedAdditionalItems] = useState<SelectedComponent[]>([]);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const [variantRows, setVariantRows] = useState<VariantDraft[]>([]);
+  const [expandedVariantKey, setExpandedVariantKey] = useState<string | null>(null);
+
+  const switchMode = (mode: BundleMode) => {
+    setBundleMode(mode);
+    setMaxPieces('');
+    setSelectedComponents([]);
+    setVariantRows([]);
+    setExpandedVariantKey(null);
+  };
+
+  const addVariantRow = () => {
+    const key = nextVariantKey();
+    setVariantRows(prev => [...prev, { key, variantLabel: '', price: '', grabPrice: '', components: [] }]);
+    setExpandedVariantKey(key);
+  };
+
+  const updateVariantRow = (key: string, patch: Partial<VariantDraft>) => {
+    setVariantRows(prev => prev.map(v => (v.key === key ? { ...v, ...patch } : v)));
+  };
+
+  const removeVariantRow = (key: string) => {
+    setVariantRows(prev => prev.filter(v => v.key !== key));
+    setExpandedVariantKey(prev => (prev === key ? null : prev));
+  };
 
   useEffect(() => {
     if (!categoryDropdownOpen) return;
@@ -68,9 +98,8 @@ export default function AddBundleModal({
     item => !selectedComponents.find(comp => comp.inventoryItemId === item.id)
   );
 
-  const handleSelectItem = (itemName: string) => {
-    const item = inventory.find(i => i.name === itemName);
-    if (!item || !item.id) return;
+  const handleSelectItem = (item: InventoryItem) => {
+    if (!item.id) return;
 
     setSelectedComponents([
       ...selectedComponents,
@@ -86,17 +115,18 @@ export default function AddBundleModal({
     setSelectedComponents(selectedComponents.filter(c => c.inventoryItemId !== inventoryItemId));
   };
 
+  // Quantity can sit at 0 while the cashier is editing — zero-quantity rows are
+  // filtered out of the payload at submit time rather than force-floored here.
   const handleUpdateQuantity = (inventoryItemId: string, quantity: number) => {
     setSelectedComponents(selectedComponents.map(c =>
       c.inventoryItemId === inventoryItemId
-        ? { ...c, quantity: Math.max(1, quantity) }
+        ? { ...c, quantity: Math.max(0, quantity) }
         : c
     ));
   };
 
-  const handleSelectAdditionalItem = (itemName: string) => {
-    const item = inventory.find(i => i.name === itemName);
-    if (!item || !item.id) return;
+  const handleSelectAdditionalItem = (item: InventoryItem) => {
+    if (!item.id) return;
     setSelectedAdditionalItems(prev => [...prev, { inventoryItemId: item.id!, quantity: 1, item }]);
   };
 
@@ -106,21 +136,75 @@ export default function AddBundleModal({
 
   const handleUpdateAdditionalQty = (inventoryItemId: string, quantity: number) => {
     setSelectedAdditionalItems(prev => prev.map(a =>
-      a.inventoryItemId === inventoryItemId ? { ...a, quantity: Math.max(1, quantity) } : a
+      a.inventoryItemId === inventoryItemId ? { ...a, quantity: Math.max(0, quantity) } : a
     ));
   };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      onError('Please enter a bundle name');
+      onError(bundleMode === 'group' ? 'Please enter a group name' : 'Please enter a bundle name');
       return;
     }
 
-    const finalPrice = parseFloat(priceInput);
-    if (isNaN(finalPrice) || finalPrice <= 0) {
+    if (bundleMode === 'group') {
+      if (variantRows.length === 0) {
+        onError('Please add at least one variant');
+        return;
+      }
+      for (const v of variantRows) {
+        if (!v.variantLabel.trim()) {
+          onError('Please enter a label for every variant');
+          return;
+        }
+        if (v.price !== '' && (isNaN(parseFloat(v.price)) || parseFloat(v.price) < 0)) {
+          onError('Please enter a valid price for every variant');
+          return;
+        }
+        if (v.components.filter(c => c.quantity > 0).length === 0) {
+          onError('Please add at least one component to every variant');
+          return;
+        }
+      }
+
+      setLoading(true);
+      try {
+        const { id, error } = await createBundleGroup(currentBranch!.id, {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          img_url: imgUrl || undefined,
+          category_id: selectedCategoryIds[0] || null,
+          category_ids: selectedCategoryIds,
+          status: 'active',
+          variants: variantRows.map(v => ({
+            variantLabel: v.variantLabel.trim(),
+            price: v.price !== '' ? parseFloat(v.price) : null,
+            grab_price: v.grabPrice !== '' ? parseFloat(v.grabPrice) : null,
+            components: v.components.filter(c => c.quantity > 0).map(c => ({ inventoryItemId: c.inventoryItemId, quantity: c.quantity })),
+          })),
+        });
+
+        if (error) {
+          onError('Failed to create bundle group. Please try again.');
+          return;
+        }
+        void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'bundle_group_created', entityType: 'bundle_group', entityId: id ?? undefined, details: { name: name.trim(), variantCount: variantRows.length } });
+
+        resetForm();
+        onClose();
+      } catch (error) {
+        console.error('Error creating bundle group:', error);
+        onError('Failed to create bundle group. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (priceInput !== '' && (isNaN(parseFloat(priceInput)) || parseFloat(priceInput) < 0)) {
       onError('Please enter a valid price');
       return;
     }
+    const finalPrice = priceInput !== '' ? parseFloat(priceInput) : null;
 
     if (isCustom) {
       const pieces = parseInt(maxPieces);
@@ -128,7 +212,7 @@ export default function AddBundleModal({
         onError('Please enter a valid maximum number of pieces');
         return;
       }
-    } else if (selectedComponents.length === 0) {
+    } else if (selectedComponents.filter(c => c.quantity > 0).length === 0) {
       onError('Please add at least one item to the bundle');
       return;
     }
@@ -150,15 +234,19 @@ export default function AddBundleModal({
 
       const components = isCustom
         ? []
-        : selectedComponents.map(c => ({
-            inventoryItemId: c.inventoryItemId,
-            quantity: c.quantity
-          }));
+        : selectedComponents
+            .filter(c => c.quantity > 0)
+            .map(c => ({
+              inventoryItemId: c.inventoryItemId,
+              quantity: c.quantity
+            }));
 
-      const additionalItems = selectedAdditionalItems.map(a => ({
-        inventoryItemId: a.inventoryItemId,
-        quantity: a.quantity,
-      }));
+      const additionalItems = selectedAdditionalItems
+        .filter(a => a.quantity > 0)
+        .map(a => ({
+          inventoryItemId: a.inventoryItemId,
+          quantity: a.quantity,
+        }));
 
       const { id, error } = await createBundle(currentBranch!.id, bundleData, components, additionalItems);
 
@@ -168,17 +256,7 @@ export default function AddBundleModal({
       }
       void logActivity({ branchId: currentBranch!.id, userId: user?.id ?? null, action: 'bundle_created', entityType: 'bundle', entityId: id ?? undefined, details: { name: bundleData.name, price: bundleData.price, is_custom: bundleData.is_custom, categories: selectedCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) } });
 
-      // Reset form
-      setName('');
-      setDescription('');
-      setPriceInput('');
-      setImgUrl('');
-      setSelectedComponents([]);
-      setSelectedAdditionalItems([]);
-      setIsCustom(false);
-      setMaxPieces('');
-      setGrabPriceInput('');
-      setSelectedCategoryIds([]);
+      resetForm();
       onClose();
     } catch (error) {
       console.error('Error creating bundle:', error);
@@ -188,27 +266,47 @@ export default function AddBundleModal({
     }
   };
 
-  const isValid = name.trim() &&
-    priceInput &&
-    !isNaN(parseFloat(priceInput)) &&
-    parseFloat(priceInput) > 0 &&
-    (isCustom
-      ? (!!maxPieces && !isNaN(parseInt(maxPieces)) && parseInt(maxPieces) >= 1)
-      : selectedComponents.length > 0
-    );
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setPriceInput('');
+    setImgUrl('');
+    setSelectedComponents([]);
+    setSelectedAdditionalItems([]);
+    setBundleMode('fixed');
+    setMaxPieces('');
+    setGrabPriceInput('');
+    setSelectedCategoryIds([]);
+    setVariantRows([]);
+    setExpandedVariantKey(null);
+  };
+
+  const isValid = !!name.trim() && (
+    bundleMode === 'group'
+      ? variantRows.length > 0 && variantRows.every(v =>
+          v.variantLabel.trim() &&
+          (v.price === '' || (!isNaN(parseFloat(v.price)) && parseFloat(v.price) >= 0)) &&
+          v.components.some(c => c.quantity > 0)
+        )
+      : (priceInput === '' || (!isNaN(parseFloat(priceInput)) && parseFloat(priceInput) >= 0)) &&
+        (isCustom
+          ? (!!maxPieces && !isNaN(parseInt(maxPieces)) && parseInt(maxPieces) >= 1)
+          : selectedComponents.some(c => c.quantity > 0)
+        )
+  );
 
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={!loading ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-xl p-5 max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading Screen */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-3">
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
             <LoadingSpinner size="lg" className="border-bundle" />
             <div className="text-center">
               <p className="text-sm font-semibold text-secondary">Creating Bundle...</p>
@@ -218,412 +316,398 @@ export default function AddBundleModal({
         ) : (
           <>
             {/* Modal Header */}
-            <div className="text-center mb-4">
-              <div className="w-10 h-10 bg-bundle/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-secondary/10 shrink-0">
+              <div className="w-10 h-10 bg-bundle/20 rounded-xl flex items-center justify-center shrink-0">
                 <PlusIcon className='size-5 text-bundle'/>
               </div>
-              <h3 className="text-sm font-bold text-secondary mb-1">
-                Create New Bundle
-              </h3>
-              <p className="text-xs text-secondary opacity-70">
-                Combine multiple items into a special offer
-              </p>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-secondary">
+                  Create New Bundle
+                </h3>
+                <p className="text-xs text-secondary opacity-70">
+                  Combine multiple items into a special offer
+                </p>
+              </div>
+            </div>
+
+            {/* Bundle Mode Toggle */}
+            <div className="px-6 py-3 border-b border-secondary/10 flex justify-center shrink-0">
+              <div className="inline-flex rounded-lg border border-secondary/20 p-1 bg-secondary/5">
+                {([
+                  ['fixed', 'Non-custom Bundle'],
+                  ['custom', 'Custom Bundle'],
+                  ['group', 'Single-type Bundle'],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => switchMode(mode)}
+                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                      bundleMode === mode ? 'bg-bundle text-white' : 'text-secondary/60 hover:text-secondary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Form */}
-            <div className="space-y-4">
-              {/* Bundle Name and Description */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-2">
-                    Bundle Name <span className="text-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
-                    placeholder="Enter bundle name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-2">
-                    Price <span className="text-error">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
-                    <input
-                      type="text"
-                      value={priceInput}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                          setPriceInput(value);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (['e', 'E', '+', '-'].includes(e.key)) {
-                          e.preventDefault();
-                        }
-                      }}
-                      onFocus={(e) => e.target.select()}
-                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
-                      placeholder="0.00"
-                      inputMode="decimal"
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
 
-              {/* Grab Price */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-2">
-                    Grab Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary font-thin">₱</span>
-                    <input
-                      type="text"
-                      value={grabPriceInput}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                          setGrabPriceInput(value);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
-                      }}
-                      onFocus={(e) => e.target.select()}
-                      onBlur={() => {
-                        if (grabPriceInput !== '' && isNaN(parseFloat(grabPriceInput))) {
-                          setGrabPriceInput('');
-                        }
-                      }}
-                      className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
-                      placeholder="0.00"
-                      inputMode="decimal"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-medium text-secondary mb-2">
-                  Description
-                  <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-3 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent resize-none"
-                  placeholder="Enter bundle description"
-                  rows={3}
-                />
-              </div>
-
-              {/* Image Upload */}
-              <ImageUpload
-                currentImageUrl={imgUrl}
-                onImageUpload={(imageUrl) => setImgUrl(imageUrl)}
-                onImageRemove={() => setImgUrl('')}
-                bucket="bundle-images"
-                compact
-              />
-
-              {/* Categories */}
-              {categories.length > 0 && (
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-2">
-                    Categories
-                    <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
-                  </label>
-                  <div className="relative" ref={categoryDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setCategoryDropdownOpen(o => !o)}
-                      className="w-full min-h-9.5 px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
-                    >
-                      {selectedCategoryIds.length === 0 ? (
-                        <span className="text-secondary/40 text-3">Select categories...</span>
-                      ) : (
-                        selectedCategoryIds.map(id => {
-                          const cat = categories.find(c => c.id === id);
-                          if (!cat) return null;
-                          return (
-                            <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
-                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
-                              {cat.name}
-                              <span
-                                onClick={(e) => { e.stopPropagation(); setSelectedCategoryIds(prev => prev.filter(i => i !== id)); }}
-                                className="ml-0.5 hover:text-error cursor-pointer leading-none"
-                              >×</span>
-                            </span>
-                          );
-                        })
-                      )}
-                      <svg className={`w-4 h-4 text-secondary/40 ml-auto shrink-0 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {categoryDropdownOpen && (
-                      <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
-                        {categories.map(cat => (
-                          <label
-                            key={cat.id}
-                            className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedCategoryIds.includes(cat.id)}
-                              onChange={() => setSelectedCategoryIds(prev =>
-                                prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
-                              )}
-                              className="w-3.5 h-3.5 rounded shrink-0 accent-accent"
-                            />
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
-                            <span className="text-xs text-secondary">{cat.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Custom Bundle Toggle */}
-              <div className="border-t border-secondary/20 pt-4">
-                <div className="flex items-center justify-between">
+                {/* Left column — identity */}
+                <div className="flex flex-col gap-4 min-h-0">
                   <div>
-                    <p className="text-xs font-semibold text-secondary">Custom Bundle</p>
-                    <p className="text-xs text-secondary/50">Customers choose their own pieces at checkout</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustom(!isCustom);
-                      setMaxPieces('');
-                      setSelectedComponents([]);
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1 ${
-                      isCustom ? 'bg-bundle' : 'bg-secondary/20'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        isCustom ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Max Pieces Input (custom only) */}
-                {isCustom && (
-                  <div className="mt-3">
                     <label className="block text-xs font-medium text-secondary mb-2">
-                      Max Pieces <span className="text-error">*</span>
+                      {bundleMode === 'group' ? 'Group Name' : 'Bundle Name'} <span className="text-error">*</span>
                     </label>
                     <input
-                      type="number"
-                      value={maxPieces}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || (/^\d+$/.test(val) && parseInt(val) >= 1)) {
-                          setMaxPieces(val);
-                        }
-                      }}
-                      min="1"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
-                      placeholder="e.g. 5"
+                      placeholder={bundleMode === 'group' ? 'e.g. Macaroons Bilao' : 'Enter bundle name'}
                     />
-                    <p className="text-xs text-secondary/50 mt-1">
-                      Customers must pick exactly this many pieces from your inventory
-                    </p>
                   </div>
-                )}
-              </div>
 
-              {/* Component Selector (fixed bundles only) */}
-              {!isCustom && (
-                <div className="border-t border-secondary/20 pt-6">
-                  <label className="block text-xs font-medium text-secondary mb-3">
-                    Bundle Components <span className="text-error">*</span>
-                  </label>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary mb-2">
+                      Description
+                      <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-3 py-2 text-3 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+                      placeholder="Enter bundle description"
+                      rows={3}
+                    />
+                  </div>
 
-                  {/* Item Selector Dropdown */}
-                  {availableItems.length > 0 ? (
-                    <div className="mb-4">
-                      <DropdownField
-                        options={availableItems.map(item => item.name)}
-                        defaultValue="Select an item to add..."
-                        dropdownPosition="bottom-left"
-                        dropdownOffset={{ top: 3, left: 0 }}
-                        onChange={(itemName) => {
-                          handleSelectItem(itemName);
-                        }}
-                        height={44}
-                        roundness="lg"
-                        valueAlignment="left"
-                        shadow={false}
-                        maxDropdownHeight={180}
-                        constrainWidth
-                        searchable
-                        autoDirection
-                      />
-                    </div>
-                  ) : selectedComponents.length > 0 ? (
-                    <div className="mb-4 text-xs text-secondary/70 text-center py-2 bg-gray-50 rounded-lg">
-                      All available items have been added to the bundle
-                    </div>
-                  ) : (
-                    <div className="mb-4 text-xs text-red-500 text-center py-2 bg-red-50 rounded-lg">
-                      No inventory items available. Please add items to your inventory first.
-                    </div>
-                  )}
-
-                  {/* Selected Components List */}
-                  {selectedComponents.length > 0 && (
-                    <div className="space-y-2 max-h-50 overflow-y-auto">
-                      {selectedComponents.map((component) => (
-                        <div
-                          key={component.inventoryItemId}
-                          className="flex items-center gap-3 p-2 bg-bundle/10 rounded-lg border border-bundle/40"
+                  {categories.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-medium text-secondary mb-2">
+                        Categories
+                        <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                      </label>
+                      <div className="relative" ref={categoryDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryDropdownOpen(o => !o)}
+                          className="w-full min-h-9.5 px-3 py-1.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent flex items-center flex-wrap gap-1.5 text-left bg-white"
                         >
-                          {/* Item Image */}
-                          <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                            {component.item.img_url ? (
-                              <Image
-                                src={component.item.img_url}
-                                alt={component.item.name}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                              </svg>
-                            )}
+                          {selectedCategoryIds.length === 0 ? (
+                            <span className="text-secondary/40 text-3">Select categories...</span>
+                          ) : (
+                            selectedCategoryIds.map(id => {
+                              const cat = categories.find(c => c.id === id);
+                              if (!cat) return null;
+                              return (
+                                <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                                  {cat.name}
+                                  <span
+                                    onClick={(e) => { e.stopPropagation(); setSelectedCategoryIds(prev => prev.filter(i => i !== id)); }}
+                                    className="ml-0.5 hover:text-error cursor-pointer leading-none"
+                                  >×</span>
+                                </span>
+                              );
+                            })
+                          )}
+                          <svg className={`w-4 h-4 text-secondary/40 ml-auto shrink-0 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {categoryDropdownOpen && (
+                          <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white border border-secondary/20 rounded-lg max-h-36 overflow-y-auto">
+                            {categories.map(cat => (
+                              <label
+                                key={cat.id}
+                                className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-secondary/10 select-none"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategoryIds.includes(cat.id)}
+                                  onChange={() => setSelectedCategoryIds(prev =>
+                                    prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                                  )}
+                                  className="w-3.5 h-3.5 rounded shrink-0 accent-accent"
+                                />
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cat.color?.trim() || '#6B7280' }} />
+                                <span className="text-xs text-secondary">{cat.name}</span>
+                              </label>
+                            ))}
                           </div>
-
-                          {/* Item Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-secondary truncate">
-                              {component.item.name}
-                            </div>
-                            <div className="text-xs text-secondary/50">
-                              Stock: {component.item.stock} • {formatCurrency(component.item.price)}
-                            </div>
-                          </div>
-
-                          {/* Quantity Selector */}
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs text-secondary/70">Qty:</label>
-                            <input
-                              type="number"
-                              value={component.quantity}
-                              onChange={(e) => handleUpdateQuantity(component.inventoryItemId, parseInt(e.target.value) || 1)}
-                              min="1"
-                              className="w-16 px-2 py-1 text-center text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                            />
-                          </div>
-
-                          {/* Remove Button */}
-                          <button aria-label="Close"
-                            onClick={() => handleRemoveComponent(component.inventoryItemId)}
-                            className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {selectedComponents.length === 0 && (
-                    <div className="text-center py-5 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                      <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                      <p className="text-xs text-gray-500">No items added yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Select items from the dropdown above</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Additional Items — always deducted on every order (e.g. packaging) */}
-              <div className="border-t border-secondary/20 pt-4">
-                <div className="mb-3">
-                  <p className="text-xs font-semibold text-secondary">Additional Items</p>
-                  <p className="text-xs text-secondary/50">Always deducted when this bundle is ordered (e.g. packaging)</p>
-                </div>
-
-                {/* Dropdown to pick additional item */}
-                {inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id)).length > 0 && (
-                  <div className="mb-3">
-                    <DropdownField
-                      options={inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id)).map(i => i.name)}
-                      defaultValue="Add an item..."
-                      dropdownPosition="bottom-left"
-                      dropdownOffset={{ top: 3, left: 0 }}
-                      onChange={handleSelectAdditionalItem}
-                      height={44}
-                      roundness="lg"
-                      valueAlignment="left"
-                      shadow={false}
-                      maxDropdownHeight={180}
-                      constrainWidth
-                      searchable
-                      autoDirection
+                  <div className="flex-1 min-h-40">
+                    <ImageUpload
+                      currentImageUrl={imgUrl}
+                      onImageUpload={(imageUrl) => setImgUrl(imageUrl)}
+                      onImageRemove={() => setImgUrl('')}
+                      bucket="bundle-images"
+                      stretch
                     />
                   </div>
-                )}
+                </div>
 
-                {/* Selected additional items list */}
-                {selectedAdditionalItems.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedAdditionalItems.map(ai => (
-                      <div key={ai.inventoryItemId} className="flex items-center gap-3 p-2 bg-secondary/5 rounded-lg border border-secondary/20">
-                        <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                          {ai.item.img_url ? (
-                            <Image src={ai.item.img_url} alt={ai.item.name} width={32} height={32} className="w-full h-full object-cover" />
-                          ) : (
-                            <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-secondary truncate">{ai.item.name}</p>
-                          <p className="text-[10px] text-secondary/50">Stock: {ai.item.stock}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-secondary/60">Qty:</span>
-                          <input
-                            type="number"
-                            value={ai.quantity}
-                            onChange={e => handleUpdateAdditionalQty(ai.inventoryItemId, parseInt(e.target.value) || 1)}
-                            min="1"
-                            className="w-14 px-2 py-1 text-center text-xs border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                          />
-                        </div>
-                        <button aria-label="Close" onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                {/* Right column — pricing, composition */}
+                <div className="space-y-5 min-w-0">
+                  {/* Pricing (not shown in group mode — each variant carries its own) */}
+                  {bundleMode !== 'group' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-secondary mb-2">
+                        Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                        <input
+                          type="text"
+                          value={priceInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                              setPriceInput(value);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (['e', 'E', '+', '-'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onFocus={(e) => e.target.select()}
+                          className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="0.00"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <p className="text-xs text-secondary/50 mt-1">Suggested default — still editable in the order cart</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-secondary mb-2">
+                        Grab Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary font-thin">₱</span>
+                        <input
+                          type="text"
+                          value={grabPriceInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                              setGrabPriceInput(value);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                          }}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => {
+                            if (grabPriceInput !== '' && isNaN(parseFloat(grabPriceInput))) {
+                              setGrabPriceInput('');
+                            }
+                          }}
+                          className="w-full pl-8 pr-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="0.00"
+                          inputMode="decimal"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  )}
+
+                  {/* Max Pieces (custom bundles only) */}
+                  {bundleMode === 'custom' && (
+                    <div className="rounded-lg border border-secondary/20 p-3.5">
+                      <label className="block text-xs font-medium text-secondary mb-2">
+                        Max Pieces <span className="text-error">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={maxPieces}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (/^\d+$/.test(val) && parseInt(val) >= 1)) {
+                            setMaxPieces(val);
+                          }
+                        }}
+                        min="1"
+                        className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                        placeholder="e.g. 5"
+                      />
+                      <p className="text-xs text-secondary/50 mt-1">
+                        Customers must pick exactly this many pieces from your inventory
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Variants (single-type bundle only) */}
+                  {bundleMode === 'group' && (
+                    <div className="rounded-lg border border-secondary/20 p-3.5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-secondary">Variants <span className="text-error">*</span></p>
+                        <button
+                          type="button"
+                          onClick={addVariantRow}
+                          className="px-2.5 py-1 text-xs font-semibold text-bundle bg-bundle/10 hover:bg-bundle/20 rounded-md transition-colors"
+                        >
+                          + Add Variant
                         </button>
                       </div>
-                    ))}
+                      {variantRows.length > 0 ? (
+                        <div className="space-y-2 max-h-96 overflow-y-auto pr-0.5">
+                          {variantRows.map(variant => (
+                            <VariantRow
+                              key={variant.key}
+                              variant={variant}
+                              expanded={expandedVariantKey === variant.key}
+                              onToggleExpand={() => setExpandedVariantKey(prev => (prev === variant.key ? null : variant.key))}
+                              onChange={(patch) => updateVariantRow(variant.key, patch)}
+                              onRemove={() => removeVariantRow(variant.key)}
+                              inventory={inventory}
+                              categories={categories}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-secondary/40 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                          No variants added yet — add a size/prefix like &quot;Small - 50pcs - Round container&quot;
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Component Selector (fixed bundles only) */}
+                  {bundleMode === 'fixed' && (
+                    <div className="rounded-lg border border-secondary/20 p-3.5">
+                      <label className="block text-xs font-medium text-secondary mb-3">
+                        Bundle Components <span className="text-error">*</span>
+                      </label>
+
+                      {/* Item Selector — browse by category or search */}
+                      {availableItems.length > 0 ? (
+                        <div className="mb-3">
+                          <ItemFolderPicker
+                            items={availableItems}
+                            categories={categories}
+                            onSelect={handleSelectItem}
+                            placeholder="Select an item to add…"
+                          />
+                        </div>
+                      ) : selectedComponents.length > 0 ? (
+                        <div className="mb-3 text-xs text-secondary/70 text-center py-2 bg-gray-50 rounded-lg">
+                          All available items have been added to the bundle
+                        </div>
+                      ) : (
+                        <div className="mb-3 text-xs text-red-500 text-center py-2 bg-red-50 rounded-lg">
+                          No inventory items available. Please add items to your inventory first.
+                        </div>
+                      )}
+
+                      {/* Selected Components List */}
+                      {selectedComponents.length > 0 && (
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-0.5">
+                          {selectedComponents.map((component) => (
+                            <div
+                              key={component.inventoryItemId}
+                              className="flex items-center gap-2 p-2 bg-bundle/10 rounded-lg border border-bundle/40"
+                            >
+                              {/* Item Name */}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-secondary truncate text-3.5">
+                                  {component.item.name}
+                                </div>
+                                <div className="text-xs text-secondary/50">
+                                  Stock: {component.item.stock}
+                                </div>
+                              </div>
+
+                              <QuantityStepper
+                                value={component.quantity}
+                                onChange={(next) => handleUpdateQuantity(component.inventoryItemId, next)}
+                              />
+
+                              {/* Remove Button */}
+                              <button aria-label="Close"
+                                onClick={() => handleRemoveComponent(component.inventoryItemId)}
+                                className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedComponents.length === 0 && (
+                        <div className="text-center py-5 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                          <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                          <p className="text-xs text-gray-500">No items added yet</p>
+                          <p className="text-xs text-gray-400 mt-1">Select items from the dropdown above</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Additional Items — always deducted on every order (e.g. packaging); not used in group mode since each variant's own component list already covers it */}
+                  {bundleMode !== 'group' && (
+                  <div className="rounded-lg border border-secondary/20 p-3.5">
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold text-secondary">Additional Items</p>
+                      <p className="text-xs text-secondary/50">Always deducted when this bundle is ordered (e.g. packaging)</p>
+                    </div>
+
+                    {/* Item Selector — browse by category or search */}
+                    {inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id)).length > 0 && (
+                      <div className="mb-3">
+                        <ItemFolderPicker
+                          items={inventory.filter(i => !selectedAdditionalItems.find(a => a.inventoryItemId === i.id))}
+                          categories={categories}
+                          onSelect={handleSelectAdditionalItem}
+                          placeholder="Add an item…"
+                        />
+                      </div>
+                    )}
+
+                    {/* Selected additional items list */}
+                    {selectedAdditionalItems.length > 0 ? (
+                      <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                        {selectedAdditionalItems.map(ai => (
+                          <div key={ai.inventoryItemId} className="flex items-center gap-2 p-2 bg-secondary/5 rounded-lg border border-secondary/20">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-secondary truncate">{ai.item.name}</p>
+                              <p className="text-[10px] text-secondary/50">Stock: {ai.item.stock}</p>
+                            </div>
+                            <QuantityStepper
+                              value={ai.quantity}
+                              onChange={(next) => handleUpdateAdditionalQty(ai.inventoryItemId, next)}
+                            />
+                            <button aria-label="Close" onClick={() => handleRemoveAdditionalItem(ai.inventoryItemId)} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-secondary/40 text-center py-2">No additional items set</p>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-xs text-secondary/40 text-center py-2">No additional items set</p>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-3 px-6 py-4 border-t border-secondary/10 shrink-0">
               <button
                 onClick={onClose}
                 className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bundle focus-visible:ring-offset-1"
@@ -639,7 +723,7 @@ export default function AddBundleModal({
                     : 'bg-secondary/20 text-secondary/40 cursor-not-allowed'
                 }`}
               >
-                Create Bundle
+                {bundleMode === 'group' ? 'Create Bundle Group' : 'Create Bundle'}
               </button>
             </div>
           </>

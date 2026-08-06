@@ -44,6 +44,11 @@ export type {
   BundleWithComponents,
   CreateBundleData,
   UpdateBundleData,
+  BundleGroup,
+  BundleGroupWithVariants,
+  BundleGroupVariantInput,
+  CreateBundleGroupData,
+  UpdateBundleGroupData,
 } from './bundle';
 
 export type {

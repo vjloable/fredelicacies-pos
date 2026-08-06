@@ -47,6 +47,7 @@ export default function EditItemModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
+  const [priceInput, setPriceInput] = useState('');
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Click-outside for category dropdown
@@ -72,6 +73,7 @@ export default function EditItemModal({
       );
       setShowDeleteConfirm(false); // Reset delete confirmation when new item is loaded
       setCustomAmount(''); // Reset stock keypad for the newly loaded item
+      setPriceInput(editingItem.price != null ? String(editingItem.price) : '');
     }
   }, [editingItem]);
 
@@ -91,19 +93,27 @@ export default function EditItemModal({
       return;
     }
 
+    if (priceInput !== '' && (isNaN(parseFloat(priceInput)) || parseFloat(priceInput) < 0)) {
+      onError('Please enter a valid price');
+      return;
+    }
+    const finalPrice = priceInput !== '' ? parseFloat(priceInput) : null;
+
     setLoading(true);
     try {
       // Non-commissary branches can only ever touch stock — menu fields
-      // (name/description/categories/image/code) are commissary-only.
+      // (name/description/categories/image/code/price) are commissary-only.
       const updates: UpdateInventoryItemData = isCommissary
         ? {
             name: localEditingItem.name,
             stock: localEditingItem.stock,
             description: localEditingItem.description || undefined,
+            price: finalPrice,
             category_ids: selectedCategoryIds,
             category_id: selectedCategoryIds[0] || undefined,
             img_url: localEditingItem.img_url || undefined,
             code: localEditingItem.code || undefined,
+            is_source_piece: !!localEditingItem.is_source_piece,
           }
         : { stock: localEditingItem.stock };
 
@@ -253,6 +263,34 @@ export default function EditItemModal({
             />
           </div>
 
+          {/* Price */}
+          <div>
+            <label className="block text-xs font-medium text-secondary mb-2">
+              Price <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+              <input
+                type="text"
+                value={priceInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                    setPriceInput(value);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+                }}
+                onFocus={(e) => e.target.select()}
+                className="w-full pl-8 pr-3 py-2 h-9.5 text-3 border border-secondary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                placeholder="0.00"
+                inputMode="decimal"
+              />
+            </div>
+            <p className="text-xs text-secondary/50 mt-1">Suggested default — still editable in the order cart</p>
+          </div>
+
           {/* Categories */}
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
@@ -327,6 +365,24 @@ export default function EditItemModal({
               rows={3}
             />
           </div>
+
+          {/* Source piece flag — sellable pieces usable as-is or inside bundles */}
+          {localEditingItem.kind !== 'ingredient' && (
+            <label className="flex items-start gap-2.5 rounded-lg border border-secondary/20 p-3 cursor-pointer select-none hover:border-secondary/40 transition-colors">
+              <input
+                type="checkbox"
+                checked={!!localEditingItem.is_source_piece}
+                onChange={(e) => setLocalEditingItem({ ...localEditingItem, is_source_piece: e.target.checked })}
+                className="mt-0.5 w-3.5 h-3.5 rounded shrink-0 accent-accent"
+              />
+              <span>
+                <span className="block text-xs font-semibold text-secondary">Source piece</span>
+                <span className="block text-xs text-secondary/50 leading-snug mt-0.5">
+                  Sellable individually and usable as a component inside bilao/combo bundles.
+                </span>
+              </span>
+            </label>
+          )}
         </>
         )}
 

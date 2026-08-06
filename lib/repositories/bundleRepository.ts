@@ -1,6 +1,16 @@
 // Bundle Repository - Handles bundle data access with components
 import { supabase } from '@/lib/supabase';
 import type { Bundle, BundleAdditionalItem, BundleComponent, BundleWithComponents, CreateBundleData, UpdateBundleData } from '@/types/domain/bundle';
+import { getCommissaryId } from './inventoryRepository';
+
+// Bundles are only ever authored at the commissary — like inventory items, they
+// reflect directly to every branch at read time (no per-branch copies, no
+// publish step). Resolve the given branch to the commissary's, since that's
+// where the actual bundle rows live.
+async function resolveMenuBranchId(branchId: string): Promise<string> {
+  const commissaryId = await getCommissaryId();
+  return commissaryId ?? branchId;
+}
 // A bundle component references a branch-local item id, but the app operates on
 // COMMISSARY ids, so translate the component's item id to its commissary source
 // (the embedded item carries commissary_item_id). Keeps availability and stock
@@ -43,6 +53,8 @@ export const bundleRepository = {
         max_pieces: data.is_custom ? (data.max_pieces ?? null) : null,
         category_id: categoryIds[0] ?? null,
         status: data.status || 'active',
+        bundle_group_id: data.bundle_group_id ?? null,
+        variant_label: data.variant_label ?? null,
       })
       .select()
       .single();
@@ -73,10 +85,11 @@ export const bundleRepository = {
 
   // Get all bundles for a branch (without components)
   async getByBranch(branchId: string): Promise<{ bundles: Bundle[]; error: any }> {
+    const menuBranchId = await resolveMenuBranchId(branchId);
     const { data, error } = await supabase
       .from('bundles')
       .select('*, bundle_categories(category_id)')
-      .eq('branch_id', branchId)
+      .eq('branch_id', menuBranchId)
       .order('name', { ascending: true });
 
     const bundles: Bundle[] = (data || []).map(({ bundle_categories: bc, ...bundle }) => ({
@@ -89,11 +102,13 @@ export const bundleRepository = {
 
   // Get all bundles with their components
   async getByBranchWithComponents(branchId: string): Promise<{ bundles: BundleWithComponents[]; error: any }> {
-    // First get bundles
+    // Bundles live only on the commissary branch — every other branch reads
+    // that same set directly (no per-branch copies).
+    const menuBranchId = await resolveMenuBranchId(branchId);
     const { data: bundles, error: bundlesError } = await supabase
       .from('bundles')
       .select('*')
-      .eq('branch_id', branchId)
+      .eq('branch_id', menuBranchId)
       .order('name', { ascending: true });
 
     if (bundlesError || !bundles) {
@@ -311,6 +326,8 @@ export const bundleRepository = {
       callback(bundles);
     });
 
+    // Bundles live on the commissary branch regardless of which branch is
+    // watching, so listen unfiltered rather than by this branch's own id.
     const bundleChannel = supabase
       .channel(`bundles-${branchId}`)
       .on(
@@ -319,7 +336,6 @@ export const bundleRepository = {
           event: '*',
           schema: 'public',
           table: 'bundles',
-          filter: `branch_id=eq.${branchId}`,
         },
         () => {
           this.getByBranchWithComponents(branchId).then(({ bundles }) => {

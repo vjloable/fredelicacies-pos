@@ -56,6 +56,33 @@ export const createBundle = async (
   return { id: bundle.id, error: null };
 };
 
+// Duplicate an existing bundle (bilao/combo) — copies pricing, composition, and
+// additional items as a new bundle whose name gets a "(Copy)" suffix.
+export const duplicateBundle = async (
+  branchId: string,
+  source: BundleWithComponents
+): Promise<{ id: string | null; error: any }> => {
+  const duplicateData: CreateBundleData = {
+    name: `${source.name} (Copy)`,
+    price: source.price,
+    grab_price: source.grab_price,
+    description: source.description ?? undefined,
+    img_url: source.img_url ?? undefined,
+    is_custom: source.is_custom,
+    max_pieces: source.max_pieces,
+    category_id: source.category_id ?? undefined,
+    category_ids: source.category_ids,
+    status: 'active',
+  };
+
+  const components = source.is_custom
+    ? []
+    : (source.components ?? []).map(c => ({ inventoryItemId: c.inventory_item_id, quantity: c.quantity }));
+  const additionalItems = (source.additional_items ?? []).map(a => ({ inventoryItemId: a.inventory_item_id, quantity: a.quantity }));
+
+  return createBundle(branchId, duplicateData, components, additionalItems);
+};
+
 // Update bundle
 export const updateBundle = async (
   id: string,

@@ -7,6 +7,7 @@ export { branchRepository } from './branchRepository';
 export { categoryRepository } from './categoryRepository';
 export { inventoryRepository } from './inventoryRepository';
 export { bundleRepository } from './bundleRepository';
+export { bundleGroupRepository } from './bundleGroupRepository';
 export { orderRepository } from './orderRepository';
 export { discountRepository } from './discountRepository';
 export { workerRepository } from './workerRepository';
