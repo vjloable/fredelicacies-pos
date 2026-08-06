@@ -87,7 +87,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
 							{branch.name}
 						</h2>
 						{branch.type && TYPE_BADGE[branch.type] && (
-							<span className={`px-2 py-0.5 rounded-full text-2.5 font-bold ${TYPE_BADGE[branch.type]!.className}`}>
+							<span className={`px-3 py-0.5 rounded-full text-[10px] font-semibold ${TYPE_BADGE[branch.type]!.className}`}>
 								{TYPE_BADGE[branch.type]!.label}
 							</span>
 						)}

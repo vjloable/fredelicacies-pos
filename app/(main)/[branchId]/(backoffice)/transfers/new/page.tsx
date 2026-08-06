@@ -54,7 +54,7 @@ function ItemRow({
         {showStock && (
           <p className="text-2.5 text-secondary/50">
             {outOfStock ? (
-              <span className="text-(--error)">Out of stock</span>
+              <span className="text-error">Out of stock</span>
             ) : (
               <>
                 Available: <span className="tabular-nums">{available}</span>

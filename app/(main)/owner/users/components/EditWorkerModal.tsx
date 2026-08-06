@@ -244,7 +244,7 @@ export default function EditWorkerModal({
 			<div className='bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto'>
 				{loading ? (
 					<div className='text-center py-16 px-8'>
-						<LoadingSpinner size='lg' />
+						<LoadingSpinner size='lg' className='mx-auto' />
 						<p className='text-secondary/70 mt-4'>Saving changes…</p>
 					</div>
 				) : (

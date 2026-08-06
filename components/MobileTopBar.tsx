@@ -21,6 +21,7 @@ import { useShift } from "@/contexts/ShiftContext";
 import OpenShiftModal from "@/components/shift/OpenShiftModal";
 import CloseShiftModal from "@/components/shift/CloseShiftModal";
 import ShiftReportModal from "@/components/shift/ShiftReportModal";
+import RoleBadge from "@/components/RoleBadge";
 
 interface MobileTopBarProps {
 	title?: string;
@@ -41,7 +42,7 @@ export default function MobileTopBar({
 }: MobileTopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
-	const { user, isUserOwner } = useAuth();
+	const { user, effectiveRole } = useAuth();
 	const { currentBranch } = useBranch();
 	const shift = useShift();
 	const [isRefreshing, setIsRefreshing] = useState(false);
@@ -187,14 +188,7 @@ export default function MobileTopBar({
 					<span>{userDisplayName}</span>
 				</div>
 
-				{isUserOwner() && (
-					<div className='flex-1 h-12 px-3 py-2 flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-xs'>
-						<span className='w-7 h-7 bg-light-accent rounded-full flex items-center justify-center text-secondary text-xs font-bold'>
-							O
-						</span>
-						<span>Owner</span>
-					</div>
-				)}
+				{effectiveRole && <RoleBadge role={effectiveRole} variant='mobile' />}
 				{showTimeTracking &&
 					timeTracking.worker &&
 					!timeTracking.worker.isOwner && (

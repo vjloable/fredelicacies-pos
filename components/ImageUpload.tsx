@@ -13,6 +13,9 @@ interface ImageUploadProps {
   className?: string;
   bucket?: 'branch-logos' | 'inventory-images' | 'bundle-images' | 'profile-images'; // Supabase storage bucket
   compact?: boolean; // Smaller preview/upload area for modals
+  // Fill the height of the parent flex/grid cell instead of a fixed height —
+  // e.g. to match the height of a sibling column. Parent must provide the height.
+  stretch?: boolean;
   // When set, the stored file is named after this (e.g. the branch name) and the
   // previous object is deleted on replace/remove — no orphaned files in storage.
   objectName?: string;
@@ -25,6 +28,7 @@ export default function ImageUpload({
   className = '',
   bucket = 'inventory-images', // Default to inventory bucket
   compact = false,
+  stretch = false,
   objectName,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -86,17 +90,17 @@ export default function ImageUpload({
   };
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`${stretch ? 'h-full flex flex-col gap-3' : 'space-y-3'} ${className}`}>
       <label className="block text-xs font-medium text-secondary mb-2">
         Item Image <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
       </label>
-      
+
       {/* Image Preview or Upload Area */}
-      <div className="relative">
+      <div className={`relative ${stretch ? 'flex-1 min-h-0' : ''}`}>
         {currentImageUrl ? (
           // Image Preview
-          <div className="relative group">
-            <div className={`w-full ${compact ? 'h-45' : 'h-75'} bg-secondary/5 rounded-xl overflow-hidden border border-secondary/20 relative`}>
+          <div className={`relative group ${stretch ? 'h-full' : ''}`}>
+            <div className={`w-full ${stretch ? 'h-full' : compact ? 'h-45' : 'h-75'} bg-secondary/5 rounded-xl overflow-hidden border border-secondary/20 relative`}>
               <Image
                 src={currentImageUrl}
                 alt="Item preview"
@@ -131,7 +135,7 @@ export default function ImageUpload({
           // Upload Area
           <div 
             onClick={triggerFileInput}
-            className={`group w-full ${compact ? 'h-28' : 'h-48'} border border-dashed border-secondary/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all`}
+            className={`group w-full ${stretch ? 'h-full' : compact ? 'h-28' : 'h-48'} border border-dashed border-secondary/50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all`}
           >
             {uploading ? (
               <div className="flex flex-col items-center">

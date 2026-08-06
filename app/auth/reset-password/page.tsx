@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
                     <div className='p-8'>
                         {!ready && !success ? (
                             <div className='text-center py-8'>
-                                <LoadingSpinner size='lg' />
+                                <LoadingSpinner size='lg' className='mx-auto' />
                                 <p className='text-xs text-secondary/60 mt-4'>Verifying reset link...</p>
                             </div>
                         ) : success ? (

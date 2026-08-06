@@ -27,7 +27,7 @@ export default function WriteOffModal({ isOpen, onClose, inventoryItems }: Write
   if (!isOpen) return null;
 
   const parsedQty = parseInt(quantity) || 0;
-  const calculatedAmount = selectedItem ? parsedQty * selectedItem.price : 0;
+  const calculatedAmount = selectedItem ? parsedQty * (selectedItem.price ?? 0) : 0;
   const parsedAmount = amount !== '' ? parseFloat(amount) || 0 : calculatedAmount;
   const maxStock = selectedItem ? (selectedItem.stock ?? 0) : 0;
   const canSubmit = selectedItem && parsedQty > 0 && parsedQty <= maxStock && parsedAmount >= 0;
@@ -155,7 +155,7 @@ export default function WriteOffModal({ isOpen, onClose, inventoryItems }: Write
                         <span className="text-xs text-secondary font-medium truncate">{item.name}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-xs text-secondary/50">{item.stock ?? 0} left</span>
-                          <span className="text-xs font-bold text-accent">{formatCurrency(item.price)}</span>
+                          <span className="text-xs font-bold text-accent">{item.price != null ? formatCurrency(item.price) : 'Unpriced'}</span>
                         </div>
                       </button>
                     ))}
@@ -170,7 +170,7 @@ export default function WriteOffModal({ isOpen, onClose, inventoryItems }: Write
                   <div className="flex items-center justify-between bg-accent/5 border border-accent/20 rounded-xl p-3">
                     <div>
                       <p className="text-xs font-bold text-secondary">{selectedItem.name}</p>
-                      <p className="text-xs text-secondary/50">{formatCurrency(selectedItem.price)} × unit · {maxStock} in stock</p>
+                      <p className="text-xs text-secondary/50">{selectedItem.price != null ? formatCurrency(selectedItem.price) : 'Unpriced'} × unit · {maxStock} in stock</p>
                     </div>
                     <button
                       onClick={() => setSelectedItem(null)}

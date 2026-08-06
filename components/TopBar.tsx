@@ -20,6 +20,7 @@ import { useShift } from "@/contexts/ShiftContext";
 import OpenShiftModal from "@/components/shift/OpenShiftModal";
 import CloseShiftModal from "@/components/shift/CloseShiftModal";
 import ShiftReportModal from "@/components/shift/ShiftReportModal";
+import RoleBadge from "@/components/RoleBadge";
 
 
 interface TopBarProps {
@@ -37,7 +38,7 @@ export default function TopBar({
 }: TopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
-	const { user, isUserOwner } = useAuth();
+	const { user, effectiveRole } = useAuth();
 	const { currentBranch } = useBranch();
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isTimeTracking, setIsTimeTracking] = useState(false);
@@ -187,19 +188,8 @@ export default function TopBar({
 						</svg>
 					</button>
 
-					{/* Owner Badge */}
-					{isUserOwner() && (
-						<div className='shrink-0'>
-							<div className='h-14 px-3 py-3 text-center flex bg-primary rounded-xl text-secondary gap-2 items-center font-medium text-3 lg:text-3 '>
-								<span className='w-8 h-8 bg-light-accent rounded-full flex items-center justify-center text-secondary text-base font-bold'>
-									O
-								</span>
-								<span className='text-secondary font-medium'>
-									Owner
-								</span>
-							</div>
-						</div>
-					)}
+					{/* Role Badge */}
+					{effectiveRole && <RoleBadge role={effectiveRole} />}
 
 					{/* Work Status Badge - Only for workers and managers, not admins */}
 					{showTimeTracking &&

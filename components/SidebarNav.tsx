@@ -239,12 +239,12 @@ export default function SidebarNav() {
 										{currentBranch.name}
 									</h3>
 									{currentBranch.type && currentBranch.type !== 'branch' && (
-										<span className='px-1.5 py-0.5 rounded-full text-2.5 font-bold bg-accent/15 text-accent capitalize'>
+										<span className='px-3 py-0.5 rounded-full text-[10px] font-semibold bg-accent/15 text-accent capitalize'>
 											{currentBranch.type}
 										</span>
 									)}
 								</div>
-								<p className='text-[12px] text-secondary/70 mt-1 leading-tight'>
+								<p className='text-[12px] text-secondary/70 mt-5 leading-tight'>
 									{currentBranch.address}
 								</p>
 						</div>
@@ -259,7 +259,7 @@ export default function SidebarNav() {
 								clearCurrentBranch();
 								router.push("/owner/branches");
 							}}
-							className='w-full flex items-center gap-2 rounded-lg border border-gray-200 bg-primary px-3 py-2 text-3 font-semibold text-secondary hover:border-accent/30 hover:bg-accent/5 hover:text-accent transition-colors'>
+							className='w-full flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-3 font-semibold text-secondary hover:border-accent/30 hover:bg-accent/5 hover:text-accent transition-colors'>
 							<svg
 								className='size-4 shrink-0'
 								fill='none'
