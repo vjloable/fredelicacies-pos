@@ -48,6 +48,39 @@ export const shiftRepository = {
     return { shift, error };
   },
 
+  async getUnreconciledAutoClosedShift(branchId: string): Promise<{ shift: Shift | null; error: any }> {
+    const { data, error } = await supabase
+      .from('shifts')
+      .select('*')
+      .eq('branch_id', branchId)
+      .eq('auto_closed', true)
+      .eq('reconciled', false)
+      .order('opened_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return { shift: data, error };
+  },
+
+  async reconcile(
+    shiftId: string,
+    data: { actual_cash: number; over_short: number; remarks?: string },
+  ): Promise<{ shift: Shift | null; error: any }> {
+    const { data: shift, error } = await supabase
+      .from('shifts')
+      .update({
+        actual_cash: data.actual_cash,
+        over_short: data.over_short,
+        remarks: data.remarks || null,
+        reconciled: true,
+      })
+      .eq('id', shiftId)
+      .select()
+      .single();
+
+    return { shift, error };
+  },
+
   async getById(id: string): Promise<{ shift: Shift | null; error: any }> {
     const { data, error } = await supabase
       .from('shifts')

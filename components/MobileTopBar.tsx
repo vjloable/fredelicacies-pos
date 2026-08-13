@@ -21,6 +21,7 @@ import { useShift } from "@/contexts/ShiftContext";
 import OpenShiftModal from "@/components/shift/OpenShiftModal";
 import CloseShiftModal from "@/components/shift/CloseShiftModal";
 import ShiftReportModal from "@/components/shift/ShiftReportModal";
+import ReconcileShiftModal from "@/components/shift/ReconcileShiftModal";
 import RoleBadge from "@/components/RoleBadge";
 
 interface MobileTopBarProps {
@@ -149,6 +150,7 @@ export default function MobileTopBar({
 			<OpenShiftModal />
 			<CloseShiftModal />
 			<ShiftReportModal />
+			<ReconcileShiftModal />
 
 			{/* PIN Verification Modal */}
 			{showPinModal && user && (

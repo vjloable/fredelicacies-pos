@@ -12,6 +12,8 @@ export interface Shift {
   over_short: number | null;
   remarks: string | null;
   status: 'open' | 'closed';
+  auto_closed: boolean;
+  reconciled: boolean;
   created_at: string;
   updated_at: string;
 }
