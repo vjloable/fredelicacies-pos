@@ -14,8 +14,6 @@ import {
   openShift as openShiftService,
   closeShift as closeShiftService,
   getActiveShift,
-  getUnreconciledAutoClosedShift,
-  reconcileShift as reconcileShiftService,
 } from '@/services/shiftService';
 import { createSafeDrop, getDropsByShift } from '@/services/safeDropService';
 import { supabase } from '@/lib/supabase';
@@ -41,12 +39,10 @@ interface ShiftContextValue {
   showCloseShiftModal: boolean;
   showShiftReport: boolean;
   shiftReportData: ShiftReportData | null;
-  pendingReconcileShift: Shift | null;
 
   // Actions
   openShift: (beginningCash: number) => Promise<void>;
   closeShift: (actualCash: number, remarks?: string) => Promise<void>;
-  reconcileShift: (actualCash: number, remarks?: string) => Promise<void>;
   addSafeDrop: (amount: number, receiverId: string) => Promise<void>;
   addWriteOff: (data: {
     type: WriteOffType;
@@ -84,10 +80,8 @@ const noopShift: ShiftContextValue = {
   showCloseShiftModal: false,
   showShiftReport: false,
   shiftReportData: null,
-  pendingReconcileShift: null,
   openShift: noop,
   closeShift: noop,
-  reconcileShift: noop,
   addSafeDrop: noop,
   addWriteOff: noop,
   refreshShift: noop,
@@ -122,7 +116,6 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
   const [showShiftReport, setShowShiftReport] = useState(false);
   const [shiftReportData, setShiftReportData] = useState<ShiftReportData | null>(null);
-  const [pendingReconcileShift, setPendingReconcileShift] = useState<Shift | null>(null);
 
   const isExempt = isUserOwner();
   const hasActiveShift = isExempt || !!activeShift;
@@ -162,19 +155,6 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
         setWriteOffs([]);
       }
       if (!cancelled) setShiftChecked(true);
-    })();
-
-    return () => { cancelled = true; };
-  }, [currentBranch]);
-
-  // Check for an auto-closed shift still awaiting a cash-count confirmation.
-  useEffect(() => {
-    if (!currentBranch) return;
-    let cancelled = false;
-
-    (async () => {
-      const { shift } = await getUnreconciledAutoClosedShift(currentBranch.id);
-      if (!cancelled) setPendingReconcileShift(shift);
     })();
 
     return () => { cancelled = true; };
@@ -260,25 +240,6 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       setShowShiftReport(true);
     }
   }, [activeShift, user, currentBranch]);
-
-  const reconcileShift = useCallback(async (actualCash: number, remarks?: string) => {
-    if (!pendingReconcileShift || !user || !currentBranch) return;
-    setLoading(true);
-    setError(null);
-    const { error: err } = await reconcileShiftService(
-      pendingReconcileShift.id,
-      currentBranch.id,
-      user.uid,
-      actualCash,
-      remarks,
-    );
-    setLoading(false);
-    if (err) {
-      setError(err.message || 'Failed to reconcile shift');
-      return;
-    }
-    setPendingReconcileShift(null);
-  }, [pendingReconcileShift, user, currentBranch]);
 
   const addSafeDrop = useCallback(async (amount: number, receiverId: string) => {
     if (!activeShift || !user || !currentBranch) return;
@@ -379,10 +340,8 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
         showCloseShiftModal,
         showShiftReport,
         shiftReportData,
-        pendingReconcileShift,
         openShift,
         closeShift,
-        reconcileShift,
         addSafeDrop,
         addWriteOff,
         refreshShift,

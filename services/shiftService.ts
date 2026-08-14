@@ -103,49 +103,6 @@ export async function closeShift(
   return { shift, reportData, error: null };
 }
 
-// Auto-closed shift from a previous business day awaiting a cash count confirmation.
-export async function getUnreconciledAutoClosedShift(
-  branchId: string,
-): Promise<{ shift: Shift | null; error: any }> {
-  return shiftRepository.getUnreconciledAutoClosedShift(branchId);
-}
-
-export async function reconcileShift(
-  shiftId: string,
-  branchId: string,
-  userId: string,
-  actualCash: number,
-  remarks?: string,
-): Promise<{ shift: Shift | null; error: any }> {
-  const { shift: currentShift, error: fetchError } = await shiftRepository.getById(shiftId);
-  if (fetchError || !currentShift) {
-    return { shift: null, error: fetchError || { message: 'Shift not found' } };
-  }
-
-  const overShort = actualCash - (currentShift.expected_cash ?? 0);
-  const { shift, error } = await shiftRepository.reconcile(shiftId, {
-    actual_cash: actualCash,
-    over_short: overShort,
-    remarks,
-  });
-
-  if (error || !shift) {
-    log.error('Failed to reconcile shift', new Error(error?.message || 'Unknown'), { shiftId });
-    return { shift: null, error };
-  }
-
-  void logActivity({
-    branchId,
-    userId,
-    action: 'shift_reconciled',
-    entityType: 'shift',
-    entityId: shiftId,
-    details: { actual_cash: actualCash, over_short: overShort, remarks },
-  });
-
-  return { shift, error: null };
-}
-
 export async function getShiftsByBranch(
   branchId: string,
   options?: { startDate?: string; endDate?: string; status?: 'open' | 'closed' }
