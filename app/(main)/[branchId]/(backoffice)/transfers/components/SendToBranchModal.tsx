@@ -90,6 +90,9 @@ export default function SendToBranchModal({
   // Kiosk drill-down state: this branch's categories + which folder is open.
   const [sourceCategories, setSourceCategories] = useState<Category[]>([]);
   const [pickerCategoryId, setPickerCategoryId] = useState<string | null>(null);
+  // Which pool the picker is showing — mirrors the inventory tabs. Products drill down
+  // by category; Ingredients and Misc are separate flat, category-less lists.
+  const [pickerKind, setPickerKind] = useState<"products" | "ingredients" | "misc">("products");
   // Item pending a quantity choice (opens the quantity sheet).
   const [qtyItem, setQtyItem] = useState<InventoryItem | null>(null);
   const [qtyDraft, setQtyDraft] = useState<string>("");
@@ -127,6 +130,17 @@ export default function SendToBranchModal({
     [sourceItems]
   );
 
+  // Split by kind, matching the inventory tabs.
+  const productPool = useMemo(
+    () => activeItems.filter(i => i.kind === "product"),
+    [activeItems]
+  );
+  // Ingredients and Misc are separate flat lists, selected by the picker toggle.
+  const supplyPool = useMemo(
+    () => activeItems.filter(i => (pickerKind === "misc" ? i.kind === "item" : i.kind === "ingredient")),
+    [activeItems, pickerKind]
+  );
+
   // An item belongs to a category via the multi-category junction when present, else its
   // single category_id. UNCAT collects items with no category at all.
   const itemInCategory = (item: InventoryItem, catId: string) => {
@@ -139,7 +153,7 @@ export default function SendToBranchModal({
     return item.category_id === catId;
   };
 
-  // Folder grid: only categories that actually contain items, plus an Uncategorized folder.
+  // Folder grid: only PRODUCT categories that actually contain items, plus an Uncategorized folder.
   const categoryFolders = useMemo(() => {
     const folders = sourceCategories
       .slice()
@@ -148,32 +162,41 @@ export default function SendToBranchModal({
         id: c.id,
         name: c.name,
         color: c.color?.trim() || "#6B7280",
-        count: activeItems.filter(i => itemInCategory(i, c.id)).length,
+        count: productPool.filter(i => itemInCategory(i, c.id)).length,
       }))
       .filter(f => f.count > 0);
-    const uncatCount = activeItems.filter(i => itemInCategory(i, UNCAT)).length;
+    const uncatCount = productPool.filter(i => itemInCategory(i, UNCAT)).length;
     if (uncatCount > 0) {
       folders.push({ id: UNCAT, name: "Uncategorized", color: "#9CA3AF", count: uncatCount });
     }
     return folders;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceCategories, activeItems]);
+  }, [sourceCategories, productPool]);
 
   const folderItems = useMemo(() => {
     if (pickerCategoryId === null) return [];
-    return activeItems
+    return productPool
       .filter(i => itemInCategory(i, pickerCategoryId))
       .sort((a, b) => a.name.localeCompare(b.name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeItems, pickerCategoryId]);
+  }, [productPool, pickerCategoryId]);
+
+  // Ingredients / Misc — flat, sorted, optionally search-filtered (by active pool).
+  const supplyResults = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return supplyPool
+      .filter(i => !q || i.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [supplyPool, search]);
 
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return [];
-    return activeItems
+    const pool = pickerKind === "products" ? productPool : supplyPool;
+    return pool
       .filter(i => i.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [activeItems, search]);
+  }, [productPool, supplyPool, pickerKind, search]);
 
   const activeFolderName =
     pickerCategoryId === UNCAT
@@ -335,6 +358,21 @@ export default function SendToBranchModal({
                   </span>
                 </div>
 
+                {/* Kind toggle — mirrors the inventory tabs */}
+                <div className="flex gap-1 p-1 mb-3 bg-secondary/5 rounded-lg">
+                  {([["products", "Products"], ["ingredients", "Ingredients"], ["misc", "Misc"]] as const).map(([k, label]) => (
+                    <button
+                      key={k}
+                      onClick={() => { setPickerKind(k); setPickerCategoryId(null); setSearch(""); }}
+                      className={`flex-1 py-1.5 rounded-md text-2.5 font-semibold transition-colors ${
+                        pickerKind === k ? "bg-white text-accent shadow-sm" : "text-secondary/50 hover:text-secondary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Search */}
                 <div className="relative mb-3">
                   <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,6 +389,18 @@ export default function SendToBranchModal({
 
                 {loadingItems ? (
                   <PageLoader text="Loading items…" />
+                ) : pickerKind !== "products" ? (
+                  supplyResults.length === 0 ? (
+                    <p className="text-xs text-secondary/40 text-center py-6">
+                      {search.trim() ? "No items match." : pickerKind === "ingredients" ? "No ingredients to send." : "No items to send."}
+                    </p>
+                  ) : (
+                    <div className="max-h-96 overflow-y-auto -mx-1">
+                      {supplyResults.map(item => (
+                        <ItemRow key={item.id} item={item} qty={picked.get(item.id) ?? 0} onPick={() => openQty(item)} />
+                      ))}
+                    </div>
+                  )
                 ) : search.trim() ? (
                   searchResults.length === 0 ? (
                     <p className="text-xs text-secondary/40 text-center py-6">No items match.</p>

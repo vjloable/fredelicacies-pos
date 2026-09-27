@@ -12,7 +12,7 @@ import BundlesView from "./components/BundlesView";
 import LockItemModal from "./components/LockItemModal";
 import SubmitEODModal from "./components/SubmitEODModal";
 import AuditConfigModal from "./components/AuditConfigModal";
-import type { InventoryItem, Category } from "@/types/domain";
+import type { InventoryItem, Category, InventoryItemKind } from "@/types/domain";
 import type { EodItemLock, EodSession } from "@/types/domain/eod";
 import { subscribeToInventoryItems, updateInventoryItem, duplicateInventoryItem } from "@/services/inventoryService";
 import { inventoryRepository } from "@/lib/repositories";
@@ -63,13 +63,20 @@ export default function InventoryScreen() {
 	const [error, setError] = useState<string | null>(null);
 	const [isClient, setIsClient] = useState(false);
 	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id);
-	const [activeTab, setActiveTab] = useState<'items' |'bundles'>('items');
+	const [activeTab, setActiveTab] = useState<'products' | 'supplies'>('products');
+	// Sub-toggles within each top-level tab. Products carries Bundles (same category
+	// folders); Supplies separates Ingredients from Misc (both flat, category-less).
+	const [productsSubTab, setProductsSubTab] = useState<'products' | 'bundles'>('products');
+	const [suppliesSubTab, setSuppliesSubTab] = useState<'ingredients' | 'misc'>('ingredients');
 	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 	const UNCAT ='__uncategorized__'; // sentinel folder for items with no category
 	const [inventorySearch, setInventorySearch] = useState('');
+	const [supplySearch, setSupplySearch] = useState(''); // Supplies flat-list search
 	const [showCategoryForm, setShowCategoryForm] = useState(false);
 	const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 	const [showItemForm, setShowItemForm] = useState(false);
+	// Which kinds the Add-item wizard may offer — set by the tab/folder the user adds from.
+	const [addRestrict, setAddRestrict] = useState<InventoryItemKind[] | null>(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
@@ -373,23 +380,40 @@ export default function InventoryScreen() {
 		setDestockMode(false);
 	};
 
-	// Filtered items based on active category (null = folder grid, no item list)
+	// Kind split — Products (kakanin) carry categories; Ingredients & Misc do not.
+	const productItems = items.filter(item => item.kind === 'product');
+	// The Supplies tab shows one kind at a time via its sub-toggle: Ingredients (raw
+	// materials) or Misc (internal supplies/equipment, kind 'item').
+	const supplyItems = items.filter(item =>
+		suppliesSubTab === 'ingredients' ? item.kind === 'ingredient' : item.kind === 'item');
+
+	// Filtered items based on active category (null = folder grid, no item list).
+	// The Products tab is the only category-organised view, so it scopes to products.
 	const filteredItems = activeCategoryId
 		? (activeCategoryId === UNCAT
-			? items.filter(item => !item.category_id)
-			: items.filter(item => item.category_id === activeCategoryId))
+			? productItems.filter(item => !item.category_id)
+			: productItems.filter(item => item.category_id === activeCategoryId))
 		: [];
 
-	// Global item search (breadcrumb directory results) across every category.
+	// Global item search (breadcrumb directory results) across every product category.
 	const invQ = inventorySearch.trim().toLowerCase();
 	const searchResults = invQ
-		? items.filter(item => {
+		? productItems.filter(item => {
 			const catName = categories.find(c => c.id === item.category_id)?.name ??'Uncategorized';
 			return item.name.toLowerCase().includes(invQ)
 				|| (item.barcode ??'').toLowerCase().includes(invQ)
 				|| catName.toLowerCase().includes(invQ);
 		})
 		: [];
+
+	// Ingredients & Misc — a flat, category-less list with its own search.
+	const supQ = supplySearch.trim().toLowerCase();
+	const supplyFiltered = supplyItems
+		.filter(item => !supQ
+			|| item.name.toLowerCase().includes(supQ)
+			|| (item.code ??'').toLowerCase().includes(supQ)
+			|| (item.barcode ??'').toLowerCase().includes(supQ))
+		.sort((a, b) => a.name.localeCompare(b.name));
 
 	// Items in current folder that have uncarried stock (for folder-scoped RESOLVE)
 	const folderUncarriedItems = filteredItems.filter(item => item.uncarried_stock > 0);
@@ -404,6 +428,22 @@ export default function InventoryScreen() {
 		setAuditMode(false);
 		setAuditInputs({});
 		setAuditResolutions({});
+	};
+
+	// The tab bar is one flat row of four views, grouped as Products/Bundles and
+	// Ingredients/Misc. Selecting a view sets its owning tab + sub-tab together.
+	type InventoryView = 'products' | 'bundles' | 'ingredients' | 'misc';
+	const currentView: InventoryView = activeTab === 'products' ? productsSubTab : suppliesSubTab;
+	const selectView = (view: InventoryView) => {
+		if (view === 'products' || view === 'bundles') {
+			setActiveTab('products');
+			setProductsSubTab(view);
+			handleBackToGrid();
+		} else {
+			setActiveTab('supplies');
+			setSuppliesSubTab(view);
+			setSupplySearch('');
+		}
 	};
 
 	const inventorySearchUI = (
@@ -513,33 +553,36 @@ export default function InventoryScreen() {
 						{!loading && (
 							<ClockInGate active={!canAccessPOS} branchId={currentBranch?.id} className='flex-1 overflow-y-auto'>
 							<div className='px-6 pt-4 pb-6'>
-								{/* Tab Navigation */}
-								<div className='flex gap-2 mb-4'>
-									<button
-										onClick={() => setActiveTab('items')}
-										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
-											activeTab ==='items'
-												?'bg-accent text-primary text-shadow-lg'
-												:'bg-gray-200 text-secondary hover:bg-gray-300'
-										}`}
-									>
-										Pieces
-									</button>
-									<button
-										onClick={() => setActiveTab('bundles')}
-										className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
-											activeTab ==='bundles'
-												?'bg-amber-500 text-white'
-												:'bg-gray-200 text-secondary hover:bg-gray-300'
-										}`}
-									>
-										Bundles
-									</button>
+								{/* Tab Navigation — one flat row; a divider groups Products/Bundles apart from Ingredients/Misc */}
+								<div className='flex flex-wrap items-center gap-2 mb-4'>
+									{([
+										['products', 'Products'],
+										['bundles', 'Bundles'],
+										['divider', ''],
+										['ingredients', 'Ingredients'],
+										['misc', 'Misc'],
+									] as const).map(([key, label]) => key === 'divider' ? (
+										<div key='divider' aria-hidden='true' className='w-px h-6 bg-secondary/15 mx-1' />
+									) : (
+										<button
+											key={key}
+											onClick={() => selectView(key)}
+											className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
+												currentView === key
+													?'bg-accent text-primary text-shadow-lg'
+													:'bg-gray-200 text-secondary hover:bg-gray-300'
+											}`}
+										>
+											{label}
+										</button>
+									))}
 								</div>
 
-								{/* Items View */}
-								{activeTab ==='items' && (
+								{/* Products View */}
+								{activeTab ==='products' && (
 									<>
+										{productsSubTab ==='products' && (
+										<>
 										{/* Level 0: Folder Grid — shown when no category is selected */}
 										{activeCategoryId === null && (
 											<div>
@@ -663,8 +706,8 @@ export default function InventoryScreen() {
 																)}
 															</div>
 														))}
-															{/* Uncategorized folder — items with no category */}
-															{items.filter(i => !i.category_id).length > 0 && (
+															{/* Uncategorized folder — products with no category */}
+															{productItems.filter(i => !i.category_id).length > 0 && (
 																<button
 																	onClick={() => setActiveCategoryId(UNCAT)}
 																	className='group relative aspect-square rounded-xl border border-dashed border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
@@ -806,7 +849,7 @@ export default function InventoryScreen() {
 														{/* ADD ITEM — pre-targets current folder (commissary-only when centralized) */}
 														{canCreateItems && (
 														<button
-															onClick={() => setShowItemForm(true)}
+															onClick={() => { setAddRestrict(['product']); setShowItemForm(true); }}
 															disabled={auditMode}
 															className={`h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-light-accent active:text-accent hover:shadow-sm bg-accent hover:bg-accent/90
 																${auditMode ?'opacity-40 cursor-not-allowed' :''}`}
@@ -814,7 +857,7 @@ export default function InventoryScreen() {
 															<div className='size-4 text-primary drop-shadow-lg'>
 																<PlusIcon />
 															</div>
-															<span className='text-primary text-shadow-md'>ADD ITEM</span>
+															<span className='text-primary text-shadow-md'>ADD PRODUCT</span>
 														</button>
 														)}
 														{/* Audit config cog (owner only) — desktop */}
@@ -1211,12 +1254,131 @@ export default function InventoryScreen() {
 												</div>
 											</div>
 										)}
+										</>
+										)}
+
+										{productsSubTab ==='bundles' && (
+											<BundlesView categoryFilter={activeCategoryId} categories={categories} />
+										)}
 									</>
 								)}
 
-								{/* Bundles View */}
-								{activeTab ==='bundles' && (
-									<BundlesView categoryFilter={activeCategoryId} categories={categories} />
+								{/* Supplies View — flat, category-less list (Ingredients or Misc) */}
+								{activeTab ==='supplies' && (
+									<div>
+										{/* Toolbar */}
+										<div className='flex flex-col sm:flex-row sm:items-center justify-end gap-2 mb-4'>
+											{canCreateItems && (
+												<button
+													onClick={() => { setAddRestrict(suppliesSubTab === 'ingredients' ? ['ingredient'] : ['item']); setShowItemForm(true); }}
+													className='h-12 px-4 flex items-center gap-2 rounded-lg font-black text-3 transition-all active:bg-light-accent active:text-accent hover:shadow-sm bg-accent hover:bg-accent/90'
+												>
+													<div className='size-4 text-primary drop-shadow-lg'>
+														<PlusIcon />
+													</div>
+													<span className='text-primary text-shadow-md'>{suppliesSubTab === 'ingredients' ?'ADD INGREDIENT' :'ADD ITEM'}</span>
+												</button>
+											)}
+										</div>
+
+										{/* Search */}
+										<div className='relative mb-4'>
+											<svg className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40 pointer-events-none' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+												<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+											</svg>
+											<input
+												type='text'
+												value={supplySearch}
+												onChange={(e) => setSupplySearch(e.target.value)}
+												placeholder={suppliesSubTab === 'ingredients' ?'Search ingredients…' :'Search miscellaneous items…'}
+												className='w-full h-11 pl-10 pr-9 text-3 rounded-lg border border-secondary/20 bg-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent'
+											/>
+											{supplySearch && (
+												<button
+													onClick={() => setSupplySearch('')}
+													aria-label='Clear search'
+													className='absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 inline-flex items-center justify-center rounded-md text-secondary/40 hover:text-secondary hover:bg-secondary/10 transition-colors'
+												>
+													<svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' /></svg>
+												</button>
+											)}
+										</div>
+
+										{/* List */}
+										{supplyFiltered.length === 0 ? (
+											<div className='text-center py-16 px-4'>
+												<h3 className='text-4 font-semibold text-secondary mb-2'>
+													{supplySearch.trim() ?'No matches' : suppliesSubTab === 'ingredients' ?'No ingredients yet' :'No items yet'}
+												</h3>
+												<p className='text-3 text-secondary/60 max-w-md mx-auto'>
+													{supplySearch.trim()
+														? `Nothing matches “${supplySearch.trim()}”.`
+														: canCreateItems
+															? (suppliesSubTab === 'ingredients'
+																?'Add raw ingredients measured by volume, weight, or pieces here. These carry no categories.'
+																:'Add internal supplies or equipment you only need to keep stock of here. These carry no categories.')
+															: (suppliesSubTab === 'ingredients'
+																?'Ingredients sent from the commissary will appear here.'
+																:'Supplies sent from the commissary will appear here.')}
+												</p>
+											</div>
+										) : (
+											<div className='space-y-1'>
+												{supplyFiltered.map((item) => (
+													<div key={item.id} className={`bg-primary rounded-lg border border-gray-100 overflow-hidden transition-colors ${item.status === 'inactive' ?'opacity-50' :''}`}>
+														<div className='flex items-center gap-3 px-3 py-2.5'>
+															<div className='w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center'>
+																{item.img_url ? (
+																	<Image src={item.img_url} alt={item.name} width={48} height={48} className='w-full h-full object-cover' />
+																) : (
+																	<svg className='w-6 h-6 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+																		<path fillRule='evenodd' d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z' clipRule='evenodd' />
+																	</svg>
+																)}
+															</div>
+															<div className='flex-1 min-w-0'>
+																<p className='text-sm font-semibold text-secondary truncate'>{item.name}</p>
+																{item.kind === 'ingredient' && item.is_custom ? (
+																	<p className='text-2.5 text-bundle'>{(item.measurement ?? 0) + (item.unit ? ` ${item.unit}` :'')} per unit</p>
+																) : item.price != null ? (
+																	<p className='text-2.5 text-secondary/50'>{formatCurrency(item.price)}</p>
+																) : null}
+															</div>
+															<span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums text-center ${
+																item.stock === 0 ?'bg-error/10 text-error' : item.stock <= 5 ?'bg-accent/10 text-accent' :'bg-secondary/10 text-secondary/60'
+															}`}>{item.stock === 0 ?'Out' : item.stock <= 5 ? `Low ${item.stock}` : item.stock}</span>
+															<button onClick={() => openEditModal(item)} className='shrink-0 p-2.5 hover:bg-light-accent active:bg-accent/20 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																<EditIcon className='w-5 h-5' />
+															</button>
+															{canCreateItems && (
+																<button onClick={() => handleDuplicateItem(item)} title='Duplicate item' className='shrink-0 p-2.5 hover:bg-light-accent active:bg-accent/20 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1'>
+																	<DuplicateIcon className='w-4.5 h-4.5' />
+																</button>
+															)}
+															{canCreateItems && (
+																<button
+																	onClick={() => handleToggleItemVisibility(item)}
+																	title={item.status === 'inactive' ?'Hidden — tap to show' :'Visible — tap to hide'}
+																	className={`shrink-0 p-2.5 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${item.status === 'inactive' ?'text-error hover:bg-error/10 active:bg-error/20' :'text-secondary/40 hover:bg-gray-100 hover:text-secondary active:bg-gray-200'}`}
+																>
+																	{item.status === 'inactive' ? (
+																		<svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' />
+																		</svg>
+																	) : (
+																		<svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+																			<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+																		</svg>
+																	)}
+																</button>
+															)}
+														</div>
+													</div>
+												))}
+											</div>
+										)}
+									</div>
 								)}
 							</div>
 							</ClockInGate>
@@ -1273,8 +1435,9 @@ export default function InventoryScreen() {
 						<AddItemModal
 							isOpen={showItemForm}
 							categories={categories}
-							initialCategoryId={activeCategoryId && activeCategoryId !== UNCAT ? activeCategoryId : undefined}
-							onClose={() => setShowItemForm(false)}
+							initialCategoryId={activeTab === 'products' && activeCategoryId && activeCategoryId !== UNCAT ? activeCategoryId : undefined}
+							restrictKinds={addRestrict ?? undefined}
+							onClose={() => { setShowItemForm(false); setAddRestrict(null); }}
 							onError={handleError}
 						/>
 

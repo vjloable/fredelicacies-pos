@@ -62,6 +62,9 @@ interface AddItemModalProps {
   isOpen: boolean;
   categories: Category[];
   initialCategoryId?: string;
+  // Limits which kinds the wizard offers. Products tab passes ['product'] (skips the
+  // choice step); Ingredients & Misc passes ['item','ingredient']. Omit for all three.
+  restrictKinds?: InventoryItemKind[];
   onClose: () => void;
   onError: (error: string) => void;
 }
@@ -70,6 +73,7 @@ export default function AddItemModal({
   isOpen,
   categories,
   initialCategoryId,
+  restrictKinds,
   onClose,
   onError
 }: AddItemModalProps) {
@@ -93,10 +97,17 @@ export default function AddItemModal({
   // The Item / Product / Ingredient wizard applies to selling branches, events, and the commissary.
   const useKindWizard = currentBranch?.type === 'commissary' || currentBranch?.type === 'branch' || currentBranch?.type === 'event';
 
+  // The kinds this invocation may create (the caller restricts by inventory tab).
+  const availableKinds = restrictKinds && restrictKinds.length > 0
+    ? KIND_ORDER.filter(k => restrictKinds.includes(k))
+    : KIND_ORDER;
+  // When only one kind is allowed there's nothing to choose — skip straight to the form.
+  const canGoBack = useKindWizard && availableKinds.length > 1;
+
   // Wizard: the user first picks a kind (Item / Product / Ingredient), then fills the tailored form.
   const [kind, setKind] = useState<InventoryItemKind | null>(null);
-  const effectiveKind: InventoryItemKind = useKindWizard ? (kind ?? 'item') : 'item';
-  const showChoice = useKindWizard && kind === null;
+  const effectiveKind: InventoryItemKind = useKindWizard ? (kind ?? availableKinds[0] ?? 'item') : 'item';
+  const showChoice = canGoBack && kind === null;
   const isIngredient = effectiveKind === 'ingredient';
 
   // Ingredient unit of measure.
@@ -121,12 +132,13 @@ export default function AddItemModal({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [categoryDropdownOpen]);
 
-  // Start each open at the choice step (commissary) and pre-seed category from a folder.
+  // Start each open at the choice step (or the sole allowed kind) and pre-seed category from a folder.
   useEffect(() => {
     if (!isOpen) return;
-    setKind(null);
+    setKind(availableKinds.length === 1 ? availableKinds[0] : null);
     if (initialCategoryId) setSelectedCategoryIds([initialCategoryId]);
-  }, [isOpen, initialCategoryId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialCategoryId, restrictKinds]);
 
   // Auto-suggest a SKU from category + name (e.g. "BEV-CFLT"), left editable.
   useEffect(() => {
@@ -160,6 +172,8 @@ export default function AddItemModal({
       setUnit('');
       setMeasurementInput('');
     }
+    // Only products carry categories; ingredients & misc are category-less.
+    if (k !== 'product') setSelectedCategoryIds([]);
   };
 
   const addItem = async () => {
@@ -268,7 +282,7 @@ export default function AddItemModal({
 
                 {/* Full-bleed to the modal edges; rows re-pad their content to align with the rest. */}
                 <div className="-mx-5 divide-y divide-secondary/10 border-y border-secondary/10">
-                  {KIND_ORDER.map((k) => (
+                  {availableKinds.map((k) => (
                     <button
                       key={k}
                       type="button"
@@ -306,7 +320,7 @@ export default function AddItemModal({
               >
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  {useKindWizard && (
+                  {canGoBack && (
                     <button
                       onClick={() => setKind(null)}
                       className="shrink-0 p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-secondary/60"
@@ -317,11 +331,11 @@ export default function AddItemModal({
                       </svg>
                     </button>
                   )}
-                  <div className="w-10 h-10 rounded-xl border border-accent/30 flex items-center justify-center shrink-0 text-accent">
+                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${isIngredient ? 'border-bundle/40 bg-bundle/5 text-bundle' : 'border-accent/30 bg-accent/5 text-accent'}`}>
                     {useKindWizard ? meta.icon : <PlusIcon className="size-5 text-accent" />}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-secondary">
+                    <h3 className="text-base font-bold text-secondary">
                       {useKindWizard ? `New ${meta.label}` : 'Add New Item'}
                     </h3>
                     <p className="text-xs text-secondary opacity-70 truncate">
@@ -363,20 +377,21 @@ export default function AddItemModal({
                     </div>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-medium text-secondary mb-2">
+                      Description
+                      <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newItem.description}
+                      onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                      className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="Enter description"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-secondary mb-2">
-                        Description
-                        <span className="text-xs text-secondary/50 ml-1">(Optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={newItem.description}
-                        onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                        className="w-full px-3 py-2 text-3 h-9.5 rounded-lg border border-secondary/20 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent"
-                        placeholder="Enter description"
-                      />
-                    </div>
                     <div>
                       <label className="block text-xs font-medium text-secondary mb-2">
                         Initial Stock <span className="text-error">*</span>
@@ -436,7 +451,7 @@ export default function AddItemModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {effectiveKind === 'product' && (
                     <div>
                       <label className="block text-xs font-medium text-secondary mb-2">
                         Categories
@@ -496,7 +511,7 @@ export default function AddItemModal({
                         )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Source piece flag — sellable pieces usable as-is or inside bundles */}
                   {!isIngredient && (
@@ -520,28 +535,28 @@ export default function AddItemModal({
                   {isIngredient && (
                     <div className="rounded-lg border border-bundle/30 bg-bundle/5 p-3">
                       <p className="text-xs font-semibold text-secondary mb-3">Unit of measure</p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-secondary mb-2">
-                            Type <span className="text-error">*</span>
-                          </label>
-                          <div className="flex gap-1.5">
-                            {(Object.keys(UNIT_OPTIONS) as InventoryUnitType[]).map((t) => (
-                              <button
-                                key={t}
-                                type="button"
-                                onClick={() => selectUnitType(t)}
-                                className={`flex-1 py-1.5 rounded-md text-2.5 font-semibold border transition-colors ${
-                                  unitType === t
-                                    ? 'bg-bundle text-primary border-bundle'
-                                    : 'bg-white text-secondary border-secondary/20 hover:border-secondary/40'
-                                }`}
-                              >
-                                {UNIT_TYPE_LABEL[t]}
-                              </button>
-                            ))}
-                          </div>
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-secondary mb-2">
+                          Type <span className="text-error">*</span>
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {(Object.keys(UNIT_OPTIONS) as InventoryUnitType[]).map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => selectUnitType(t)}
+                              className={`h-9.5 rounded-md text-3 font-semibold border transition-colors ${
+                                unitType === t
+                                  ? 'bg-bundle text-primary border-bundle'
+                                  : 'bg-white text-secondary border-secondary/20 hover:border-secondary/40'
+                              }`}
+                            >
+                              {UNIT_TYPE_LABEL[t]}
+                            </button>
+                          ))}
                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-secondary mb-2">
                             Unit <span className="text-error">*</span>
@@ -593,10 +608,10 @@ export default function AddItemModal({
                 {/* Action Buttons */}
                 <div className="flex gap-3 mt-5">
                   <button
-                    onClick={useKindWizard ? () => setKind(null) : onClose}
+                    onClick={canGoBack ? () => setKind(null) : onClose}
                     className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-secondary rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
                   >
-                    {useKindWizard ? 'Back' : 'Cancel'}
+                    {canGoBack ? 'Back' : 'Cancel'}
                   </button>
                   <button
                     onClick={addItem}

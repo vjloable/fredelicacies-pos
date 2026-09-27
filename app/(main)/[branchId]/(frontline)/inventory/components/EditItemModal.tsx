@@ -291,7 +291,8 @@ export default function EditItemModal({
             <p className="text-xs text-secondary/50 mt-1">Suggested default — still editable in the order cart</p>
           </div>
 
-          {/* Categories */}
+          {/* Categories — products only; ingredients & misc are category-less */}
+          {localEditingItem.kind === 'product' && (
           <div>
             <label className="block text-xs font-medium text-secondary mb-2">
               Categories
@@ -351,6 +352,7 @@ export default function EditItemModal({
               )}
             </div>
           </div>
+          )}
 
           {/* Description */}
           <div>
