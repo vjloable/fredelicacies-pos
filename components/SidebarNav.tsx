@@ -2,6 +2,7 @@ import StoreIcon from "@/components/icons/SidebarNav/StoreIcon";
 import HorizontalLogo from "@/components/icons/SidebarNav/HorizontalLogo";
 import InventoryIcon from "@/components/icons/SidebarNav/InventoryIcon";
 import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
+import CashOnHandIcon from "@/components/icons/SidebarNav/CashOnHandIcon";
 import LogsIcon from "@/components/icons/SidebarNav/LogsIcon";
 import SettingsIcon from "./icons/SidebarNav/SettingsIcon";
 import LogoutIcon from "./icons/SidebarNav/LogoutIcon";
@@ -105,6 +106,7 @@ export default function SidebarNav() {
 		? [
 			{ href: "store", label: "Store", icon: StoreIcon },
 			{ href: "sales", label: "Sales", icon: SalesIcon },
+				{ href: "cash-on-hand", label: "Cash on Hand", icon: CashOnHandIcon },
 			...(isManagerForCurrentBranch || isUserOwner()
 				? [{ href: "discounts", label: "Discounts", icon: DiscountsIcon } as NavItem]
 				: []),

@@ -19,3 +19,4 @@ export { safeDropRepository } from './safeDropRepository';
 export { writeOffRepository } from './writeOffRepository';
 export { assortedKakaninRepository } from './assortedKakaninRepository';
 export { foodHouseRepository } from './foodHouseRepository';
+export { cashOnHandRepository } from './cashOnHandRepository';

@@ -131,3 +131,10 @@ export type {
   UpdateEodItemLockData,
   EodDailySummary,
 } from './eod';
+
+export type {
+  CashOnHand,
+  CashOnHandStatus,
+  CreateCashOnHandData,
+  CashOnHandEdit,
+} from './cashOnHand';

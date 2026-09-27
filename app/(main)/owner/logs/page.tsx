@@ -117,6 +117,8 @@ function formatDescription(log: ActivityLog): string {
     case "discount_deleted":    return `${who} deleted discount "${d.name ?? ""}"`;
     case "worker_added":        return `${who} added worker "${d.worker_name ?? ""}"`;
     case "worker_removed":      return `${who} removed worker "${d.worker_name ?? ""}"`;
+    case "cash_on_hand_set":    return `${who} set cash on hand · ₱${d.amount ?? 0}`;
+    case "cash_on_hand_updated": return `${who} updated cash on hand · ₱${d.old_amount ?? 0} → ₱${d.new_amount ?? 0}`;
     default:                    return `${who} · ${log.action.replace(/_/g, " ")}`;
   }
 }
@@ -140,6 +142,7 @@ function getIconCfg(action: string): IconCfg {
   if (action === "order_created")                       return { bg: "bg-accent/10", text: "text-accent" };
   if (action.startsWith("discount"))                    return { bg: "bg-purple-100", text: "text-purple-500" };
   if (action.startsWith("worker"))                      return { bg: "bg-pink-100", text: "text-pink-500" };
+  if (action.startsWith("cash_on_hand"))                return { bg: "bg-teal-100", text: "text-teal-600" };
   return { bg: "bg-secondary/10", text: "text-secondary" };
 }
 
