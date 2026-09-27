@@ -26,6 +26,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '5.4.0',
+    features: [
+      {
+        title: 'Cash on Hand',
+        description: 'Track how much cash is on hand each day, with a calendar to look back.',
+        iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+        steps: [
+          'Open Cash on Hand from the menu and tap "Set amount" to enter today\'s cash',
+          'Update it any time — every change is saved with who changed it and when',
+          'Tap "History" on any day to see all the edits for that day',
+          'Browse the calendar to check past days; each day closes on its own at midnight',
+        ],
+      },
+    ],
+  },
+  {
     version: '5.2.0',
     features: [
       {
