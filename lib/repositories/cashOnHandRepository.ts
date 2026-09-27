@@ -24,6 +24,22 @@ export const cashOnHandRepository = {
     return { entries: (data ?? []) as CashOnHand[], error };
   },
 
+  // Earliest recorded business_date for a branch (null if none yet). Used to
+  // distinguish real gap days from days that predate any record.
+  async getFirstRecordDate(
+    branchId: string
+  ): Promise<{ date: string | null; error: any }> {
+    const { data, error } = await supabase
+      .from('cash_on_hand')
+      .select('business_date')
+      .eq('branch_id', branchId)
+      .order('business_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    return { date: (data?.business_date as string | undefined) ?? null, error };
+  },
+
   // Get the row for a branch + date (read-only)
   async getForDate(
     branchId: string,

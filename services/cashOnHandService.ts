@@ -11,6 +11,12 @@ export async function getCashOnHandRange(
   return cashOnHandRepository.getByBranchRange(branchId, startDate, endDate);
 }
 
+export async function getFirstCashOnHandDate(
+  branchId: string,
+): Promise<{ date: string | null; error: any }> {
+  return cashOnHandRepository.getFirstRecordDate(branchId);
+}
+
 export async function getCashOnHandForDate(
   branchId: string,
   businessDate: string,

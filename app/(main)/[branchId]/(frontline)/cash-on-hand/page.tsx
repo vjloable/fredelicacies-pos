@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCashOnHandForDate,
+  getFirstCashOnHandDate,
   subscribeToCashOnHand,
 } from "@/services/cashOnHandService";
 import type { CashOnHand } from "@/types/domain/cashOnHand";
@@ -101,6 +102,7 @@ export default function CashOnHandPage() {
   const [viewMonth, setViewMonth] = useState(currentMonth);
   const [monthEntries, setMonthEntries] = useState<CashOnHand[]>([]);
   const [todayEntry, setTodayEntry] = useState<CashOnHand | null>(null);
+  const [firstRecordFetched, setFirstRecordFetched] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Modal state
@@ -149,11 +151,34 @@ export default function CashOnHandPage() {
     };
   }, [branchId, today]);
 
+  // Earliest record for the branch (used to keep days that predate any record
+  // neutral instead of flagging them as auto-ended gaps).
+  useEffect(() => {
+    if (!branchId) return;
+    let cancelled = false;
+    getFirstCashOnHandDate(branchId).then(({ date }) => {
+      if (!cancelled) setFirstRecordFetched(date);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [branchId]);
+
   const monthMap = useMemo(() => {
     const m = new Map<string, CashOnHand>();
     for (const e of monthEntries) m.set(e.business_date, e);
     return m;
   }, [monthEntries]);
+
+  // Effective earliest record: the fetched min, pulled earlier if a record was
+  // just added in the visible month (realtime updates monthEntries).
+  const firstRecordDate = useMemo(() => {
+    let earliest = firstRecordFetched;
+    for (const e of monthEntries) {
+      if (earliest === null || e.business_date < earliest) earliest = e.business_date;
+    }
+    return earliest;
+  }, [firstRecordFetched, monthEntries]);
 
   // Build the calendar grid cells (leading blanks + each day of the month)
   const cells = useMemo(() => {
@@ -298,12 +323,17 @@ export default function CashOnHandPage() {
                   const isFuture = date > today;
                   const isToday = date === today;
                   const isPast = date < today;
-                  const missingPast = !entry && isPast;
+                  // A real gap = a past day with no entry that falls on/after the
+                  // branch's first-ever record. Days before any record are just
+                  // "not tracked yet", not auto-ended.
+                  const missingPast =
+                    !entry && isPast && firstRecordDate !== null && date >= firstRecordDate;
 
                   let cls = "border-secondary/10 bg-white hover:bg-secondary/5";
                   if (isFuture) cls = "border-transparent bg-transparent text-secondary/25 cursor-default";
                   else if (missingPast) cls = "border-amber-200 bg-amber-50 hover:bg-amber-100";
                   else if (isToday) cls = "border-accent bg-accent/5 hover:bg-accent/10";
+                  else if (!entry) cls = "border-secondary/5 bg-secondary/5 hover:bg-secondary/10";
 
                   return (
                     <button
