@@ -39,6 +39,17 @@ export const changelog: ChangelogEntry[] = [
           'Browse the calendar to check past days; each day closes on its own at midnight',
         ],
       },
+      {
+        title: 'Products & Supplies',
+        description: 'Inventory is now split into Products and Supplies so items are easier to find.',
+        iconPath: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
+        steps: [
+          'Tap the Products tab for your kakanin and bundles, kept in category folders',
+          'Tap the Supplies tab for Ingredients and Misc items — one simple list each',
+          'Use the search box in Supplies to find any ingredient or item fast',
+          'Adding a new item now offers only the kinds that fit the tab you\'re in',
+        ],
+      },
     ],
   },
   {
