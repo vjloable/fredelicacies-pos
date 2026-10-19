@@ -27,6 +27,7 @@ export default function ShiftReportModal() {
   const shift = useShift();
   const { printReceipt } = useBluetoothPrinter();
   const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
 
   if (!shift.showShiftReport || !shift.shiftReportData) return null;
 
@@ -34,11 +35,14 @@ export default function ShiftReportModal() {
 
   const handlePrint = async () => {
     setPrinting(true);
+    setPrintError(null);
     try {
       const escData = await formatShiftReportESC(r);
-      await printReceipt(escData);
+      const ok = await printReceipt(escData);
+      if (!ok) setPrintError('Printer not connected. Connect the printer and tap Print again.');
     } catch (err) {
       console.error('Failed to print shift report:', err);
+      setPrintError('Printing failed. Check the printer and tap Print again.');
     } finally {
       setPrinting(false);
     }
@@ -98,6 +102,12 @@ export default function ShiftReportModal() {
             <ReportRow label="Opened" value={formatTime(r.shiftDetails.openedAt)} />
             <ReportRow label="Closed" value={formatTime(r.shiftDetails.closedAt)} />
             <ReportRow label="Duration" value={`${hours}h ${mins}m`} />
+            {r.shiftDetails.reportFrom !== r.shiftDetails.openedAt && (
+              <ReportRow
+                label="Sales from"
+                value={`${formatDate(r.shiftDetails.reportFrom)} ${formatTime(r.shiftDetails.reportFrom)}`}
+              />
+            )}
           </div>
 
           {/* Sales Summary */}
@@ -185,6 +195,10 @@ export default function ShiftReportModal() {
             </>
           )}
         </div>
+
+        {printError && (
+          <p className="px-5 pt-3 text-xs text-error shrink-0">{printError}</p>
+        )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-100 shrink-0 flex gap-3">

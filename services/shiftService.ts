@@ -110,6 +110,15 @@ export async function getShiftsByBranch(
   return shiftRepository.getByBranch(branchId, options);
 }
 
+const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000; // Asia/Manila is UTC+8, no DST
+
+// Midnight (Asia/Manila) of the day containing `iso`, as an ISO string
+function startOfManilaDay(iso: string): string {
+  const local = new Date(new Date(iso).getTime() + MANILA_OFFSET_MS);
+  local.setUTCHours(0, 0, 0, 0);
+  return new Date(local.getTime() - MANILA_OFFSET_MS).toISOString();
+}
+
 export async function computeShiftReportData(
   shift: Shift,
   branchId: string,
@@ -117,14 +126,19 @@ export async function computeShiftReportData(
   remarks: string | null,
 ): Promise<ShiftReportData> {
   const openedAt = shift.opened_at;
-  const closedAt = new Date().toISOString();
+  // Closed shifts (reprints) use their recorded close time; open shifts end at "now"
+  const closedAt = shift.closed_at ?? new Date().toISOString();
+  // Report only the close day's sales, even if the shift ran across several days
+  const dayStart = startOfManilaDay(closedAt);
+  const reportFrom = new Date(openedAt) > new Date(dayStart) ? openedAt : dayStart;
+  const inWindow = (createdAt: string) => new Date(createdAt) >= new Date(reportFrom);
 
-  // Fetch all orders during the shift time range
+  // Fetch all orders during the report window
   const { data: orders } = await supabase
     .from('orders')
     .select('*, discounts(type, name)')
     .eq('branch_id', branchId)
-    .gte('created_at', openedAt)
+    .gte('created_at', reportFrom)
     .lte('created_at', closedAt);
 
   const allOrders = orders || [];
@@ -179,11 +193,13 @@ export async function computeShiftReportData(
     .reduce((s: number, o: any) => s + o.total, 0);
 
   // Safe drops
-  const { drops } = await safeDropRepository.getByShift(shift.id);
+  const { drops: allDrops } = await safeDropRepository.getByShift(shift.id);
+  const drops = allDrops.filter(d => inWindow(d.created_at));
   const safeDropTotal = drops.reduce((s, d) => s + d.amount, 0);
 
   // Write-offs
-  const { writeOffs } = await writeOffRepository.getByShift(shift.id);
+  const { writeOffs: allWriteOffs } = await writeOffRepository.getByShift(shift.id);
+  const writeOffs = allWriteOffs.filter(w => inWindow(w.created_at));
   const freeWriteOffs = writeOffs.filter(w => w.type === 'free');
   const nearExpiryWriteOffs = writeOffs.filter(w => w.type === 'near_expiry');
 
@@ -211,6 +227,7 @@ export async function computeShiftReportData(
       beginningCash: shift.beginning_cash,
       openedAt,
       closedAt,
+      reportFrom,
     },
     salesSummary: {
       totalCash: cashSales + splitCashPortion,

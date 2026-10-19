@@ -441,6 +441,7 @@ export interface ShiftReportPrintData {
 		beginningCash: number;
 		openedAt: string;
 		closedAt: string;
+		reportFrom?: string;
 	};
 	salesSummary: {
 		totalCash: number;
@@ -513,6 +514,10 @@ export async function formatShiftReportESC(data: ShiftReportPrintData): Promise<
 	lines.push(t(totalRow("Change Fund:", formatAmount(data.shiftDetails.beginningCash))));
 	lines.push(t(`Opened: ${formatDate(new Date(data.shiftDetails.openedAt))}\n`));
 	lines.push(t(`Closed: ${formatDate(new Date(data.shiftDetails.closedAt))}\n`));
+	const { reportFrom, openedAt } = data.shiftDetails;
+	if (reportFrom && reportFrom !== openedAt) {
+		lines.push(t(`Sales from: ${formatDate(new Date(reportFrom))}\n`));
+	}
 	lines.push(t(divider()));
 
 	// Sales Summary

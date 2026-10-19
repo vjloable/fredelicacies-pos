@@ -35,6 +35,8 @@ export interface ShiftReportData {
     beginningCash: number;
     openedAt: string;
     closedAt: string;
+    // Start of the sales window: the later of openedAt and midnight (PH) of the close day
+    reportFrom: string;
   };
   salesSummary: {
     totalCash: number;

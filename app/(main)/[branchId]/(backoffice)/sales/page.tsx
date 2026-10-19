@@ -524,9 +524,11 @@ export default function SalesScreen() {
 			const actualCash = shift.actual_cash ?? shift.beginning_cash;
 			const reportData = await computeShiftReportData(shift, currentBranch.id, actualCash, shift.remarks ?? null);
 			const bytes = await formatShiftReportESC(reportData);
-			await printReceipt(bytes);
+			const ok = await printReceipt(bytes);
+			if (!ok) alert('Printer not connected. Connect the printer and try again.');
 		} catch (e) {
 			console.error("Shift report print failed:", e);
+			alert('Printing the shift report failed. Check the printer and try again.');
 		} finally {
 			setIsPrinting(false);
 		}
