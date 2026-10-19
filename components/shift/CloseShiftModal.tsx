@@ -24,8 +24,11 @@ export default function CloseShiftModal() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    await shift.closeShift(parsedAmount, remarks.trim() || undefined);
-    setSubmitting(false);
+    try {
+      await shift.closeShift(parsedAmount, remarks.trim() || undefined);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAmountChange = (value: string) => {

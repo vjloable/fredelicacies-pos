@@ -210,26 +210,43 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
     if (!activeShift || !user || !currentBranch) return;
     setLoading(true);
     setError(null);
-    const { reportData, error: err } = await closeShiftService(
-      activeShift.id,
-      currentBranch.id,
-      user.uid,
-      actualCash,
-      remarks,
-    );
-    setLoading(false);
-    if (err) {
-      setError(err.message || 'Failed to close shift');
+    let reportData: ShiftReportData | null = null;
+    try {
+      const result = await closeShiftService(
+        activeShift.id,
+        currentBranch.id,
+        user.uid,
+        actualCash,
+        remarks,
+      );
+      if (result.error) {
+        // PGRST116: update matched 0 rows — RLS denied the close
+        setError(result.error.code === 'PGRST116'
+          ? 'You are not allowed to close this shift. Ask the cashier who opened it or a manager.'
+          : result.error.message || 'Failed to close shift');
+        return;
+      }
+      reportData = result.reportData;
+    } catch (e) {
+      console.error('Close shift failed:', e);
+      setError('Could not close the shift. Check your internet connection and try again.');
       return;
+    } finally {
+      setLoading(false);
     }
 
-    // Auto-clock-out all workers still clocked in at this branch
-    const now = new Date().toISOString();
-    await supabase
-      .from('attendance')
-      .update({ clock_out: now })
-      .eq('branch_id', currentBranch.id)
-      .is('clock_out', null);
+    // Auto-clock-out all workers still clocked in at this branch.
+    // The shift is already closed here, so a failure must not block the report.
+    try {
+      const now = new Date().toISOString();
+      await supabase
+        .from('attendance')
+        .update({ clock_out: now })
+        .eq('branch_id', currentBranch.id)
+        .is('clock_out', null);
+    } catch (e) {
+      console.error('Auto clock-out after shift close failed:', e);
+    }
 
     setActiveShift(null);
     setSafeDrops([]);
