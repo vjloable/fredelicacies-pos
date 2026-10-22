@@ -142,6 +142,35 @@ export const userProfileRepository = {
     return { user: userWithRoles, error: null };
   },
 
+  // Event branches are open to every active worker at team-leader level (RLS: 0044).
+  // Appends a synthetic assignment per event branch the user isn't already assigned to.
+  // Only for the signed-in user — never for worker-management views of other users.
+  async withEventBranchAccess(user: UserWithRoles): Promise<UserWithRoles> {
+    const home = user.roleAssignments.find(a => a.isActive);
+    if (!home) return user;
+
+    const { data: eventBranches, error } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('type', 'event');
+    if (error || !eventBranches?.length) return user;
+
+    const assigned = new Set(user.roleAssignments.map(a => a.branchId));
+    const eventAssignments: RoleAssignment[] = eventBranches
+      .filter(b => !assigned.has(b.id))
+      .map(b => ({
+        // Attendance rows reference the worker's home workers row
+        workersTableId: home.workersTableId,
+        branchId: b.id,
+        role: 'team_leader',
+        assignedAt: home.assignedAt,
+        isActive: true,
+        viaEvent: true,
+      }));
+
+    return { ...user, roleAssignments: [...user.roleAssignments, ...eventAssignments] };
+  },
+
   // Subscribe to profile changes
   subscribe(userId: string, callback: (profile: UserProfile | null) => void) {
     // Initial fetch

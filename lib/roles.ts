@@ -36,6 +36,7 @@ export type AssignmentLike = {
   branchId: string;
   role: BranchRole;
   isActive?: boolean;
+  viaEvent?: boolean; // event-branch access; ignored when resolving the overall role
 };
 
 // The user's real (non-previewed) role — the highest tier their profile/assignments grant.
@@ -43,7 +44,7 @@ export function resolveRealRole(flags: ProfileFlags, assignments: AssignmentLike
   if (flags.is_admin) return 'admin';
   if (flags.is_owner) return 'owner';
   if (flags.is_manager) return 'manager';
-  const active = assignments.filter((a) => a.isActive !== false);
+  const active = assignments.filter((a) => a.isActive !== false && !a.viaEvent);
   if (active.some((a) => a.role === 'team_leader')) return 'team_leader';
   if (active.some((a) => a.role === 'cashier')) return 'cashier';
   return null;

@@ -149,6 +149,15 @@ describe('canManageWorkersInBranch', () => {
     const worker = makeWorker({ roleAssignments: [makeAssignment('b-1', 'cashier')] });
     expect(canManageWorkersInBranch(null, worker, 'b-1')).toBe(false);
   });
+
+  it('event-branch access cannot manage workers there', () => {
+    const worker = makeWorker({
+      roleAssignments: [makeAssignment('b-1', 'cashier'), { ...makeAssignment('event-1', 'team_leader'), viaEvent: true }],
+    });
+    expect(canManageWorkersInBranch(null, worker, 'event-1')).toBe(false);
+    expect(canAccessBranch(null, worker, 'event-1')).toBe(true);
+    expect(getUserRoleInBranch(worker, 'event-1')).toBe('team_leader');
+  });
 });
 
 // ---------------------------------------------------------------------------

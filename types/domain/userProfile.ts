@@ -42,6 +42,9 @@ export interface RoleAssignment {
   assignedAt: string | Date;
   assignedBy?: string;
   isActive: boolean;
+  // Synthetic team-leader access to an event branch (no workers row there).
+  // Grants branch operations only — never counts toward the user's overall role.
+  viaEvent?: boolean;
 }
 
 export interface UserWithRoles extends UserProfile {

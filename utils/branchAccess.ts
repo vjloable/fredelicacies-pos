@@ -84,8 +84,11 @@ export function canManageWorkersInBranch(
 	worker: Worker | null,
 	branchId: string
 ): boolean {
-	const role = getUserRoleInBranch(worker, branchId);
-	return role === "owner" || role === "team_leader";
+	if (worker?.isOwner) return true;
+	// Event-branch access is operational only, never worker management
+	return !!worker?.roleAssignments.some(
+		(a) => a.branchId === branchId && a.isActive && a.role === "team_leader" && !a.viaEvent
+	);
 }
 
 /**
@@ -113,7 +116,8 @@ export function canManageWorker(
 	// Get branches where current user is manager
 	const managerBranches = currentUser.roleAssignments
 		.filter(
-			(assignment) => assignment.role === "team_leader" && assignment.isActive
+			// Event-branch access is operational only, never worker management
+			(assignment) => assignment.role === "team_leader" && assignment.isActive && !assignment.viaEvent
 		)
 		.map((assignment) => assignment.branchId);
 
@@ -153,7 +157,8 @@ export function filterAccessibleWorkers(
 
 	const managerBranches = currentUser.roleAssignments
 		.filter(
-			(assignment) => assignment.role === "team_leader" && assignment.isActive
+			// Event-branch access is operational only, never worker management
+			(assignment) => assignment.role === "team_leader" && assignment.isActive && !assignment.viaEvent
 		)
 		.map((assignment) => assignment.branchId);
 

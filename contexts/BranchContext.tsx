@@ -135,7 +135,7 @@ export function BranchProvider({
       // Load all branches and current worker in parallel
       const [branchesResult, worker] = await Promise.all([
         branchService.getAllBranches(),
-        workerService.getWorker(user.id),
+        workerService.getWorker(user.id, true),
       ]);
 
       // Handle branches result

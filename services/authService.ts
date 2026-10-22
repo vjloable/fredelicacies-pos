@@ -47,7 +47,7 @@ export const authService = {
       return null;
     }
 
-    return user;
+    return user ? userProfileRepository.withEventBranchAccess(user) : null;
   },
 
   // Create user profile (called after auth user is created)

@@ -38,6 +38,9 @@ describe('resolveRealRole', () => {
   it('null when no flags and no assignments', () => {
     expect(resolveRealRole({}, [])).toBeNull();
   });
+  it('event-branch access does not promote a cashier to team_leader', () => {
+    expect(resolveRealRole({}, [cash('b1'), { ...tl('event-1'), viaEvent: true }])).toBe('cashier');
+  });
 });
 
 // ---------------------------------------------------------------------------

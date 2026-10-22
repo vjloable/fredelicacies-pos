@@ -18,6 +18,7 @@ export interface Worker {
     assignedAt: Date;
     assignedBy: string;
     isActive: boolean;
+    viaEvent?: boolean;
   }>;
   isOwner: boolean;
   currentStatus?: 'clocked_in' | 'clocked_out';
@@ -87,16 +88,20 @@ export const workerService = {
     }
   },
 
-  // Get worker by user ID
-  getWorker: async (userId: string): Promise<Worker | null> => {
+  // Get worker by user ID. includeEventBranches adds the signed-in user's
+  // open access to event branches (see userProfileRepository.withEventBranchAccess).
+  getWorker: async (userId: string, includeEventBranches = false): Promise<Worker | null> => {
     try {
       // Get user profile with role assignments
-      const { user, error } = await userProfileRepository.getWithRoles(userId);
+      const { user: baseUser, error } = await userProfileRepository.getWithRoles(userId);
 
-      if (error || !user) {
+      if (error || !baseUser) {
         console.error('Error fetching worker:', error);
         return null;
       }
+      const user = includeEventBranches
+        ? await userProfileRepository.withEventBranchAccess(baseUser)
+        : baseUser;
 
       // Get attendance status (for non-owners)
       let currentStatus: 'clocked_in' | 'clocked_out' | undefined;
@@ -128,6 +133,7 @@ export const workerService = {
           assignedAt: new Date(ra.assignedAt),
           assignedBy: '', // Not tracked in new schema
           isActive: ra.isActive,
+          viaEvent: ra.viaEvent,
         })),
         isOwner: user.is_owner,
         currentStatus,
