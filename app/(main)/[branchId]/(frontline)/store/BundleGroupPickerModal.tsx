@@ -8,6 +8,7 @@ import type { DisplayItem } from './checkoutTypes';
 interface BundleGroupPickerModalProps {
   group: Extract<DisplayItem, { type: 'bundle_group' }>;
   bundleAvailability: Map<string, number>;
+  showStock?: boolean; // false at event branches (stock untracked)
   onConfirm: (variant: BundleWithComponents) => void;
   onClose: () => void;
 }
@@ -19,6 +20,7 @@ interface BundleGroupPickerModalProps {
 export default function BundleGroupPickerModal({
   group,
   bundleAvailability,
+  showStock = true,
   onConfirm,
   onClose,
 }: BundleGroupPickerModalProps) {
@@ -77,9 +79,11 @@ export default function BundleGroupPickerModal({
                     {variant.grab_price != null ? ` · Grab ₱${variant.grab_price.toFixed(2)}` : ''}
                   </p>
                 </div>
-                <span className={`shrink-0 text-xs font-bold tabular-nums ${disabled ? 'text-error' : 'text-secondary/50'}`}>
-                  {disabled ? 'Out of stock' : `${availability} left`}
-                </span>
+                {showStock && (
+                  <span className={`shrink-0 text-xs font-bold tabular-nums ${disabled ? 'text-error' : 'text-secondary/50'}`}>
+                    {disabled ? 'Out of stock' : `${availability} left`}
+                  </span>
+                )}
               </button>
             );
           })}

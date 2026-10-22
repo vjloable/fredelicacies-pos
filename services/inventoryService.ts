@@ -137,6 +137,17 @@ export const getLowStockItems = async (
   return { items: lowStockItems, error: null };
 };
 
+// Event branches sell straight from the commissary and don't track stock:
+// items are always sellable and orders don't deduct.
+export const tracksStock = (branch?: { type?: string } | null): boolean => branch?.type !== 'event';
+
+// Stand-in stock for untracked items, so cart/bundle availability never blocks
+// (same sentinel the store uses for untracked lines like Food House dishes).
+export const UNTRACKED_STOCK = 999;
+
+export const withUntrackedStock = (items: InventoryItem[]): InventoryItem[] =>
+  items.map(item => ({ ...item, stock: UNTRACKED_STOCK, reserved_stock: 0, uncarried_stock: 0 }));
+
 // Available-to-sell stock = current stock minus reserved (transfers in flight)
 // minus uncarried (flagged at EOD as carryover/destock pending).
 export const getAvailableStock = (

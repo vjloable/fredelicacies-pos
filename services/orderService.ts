@@ -3,10 +3,23 @@ import type { OrderWithItems, BundleComponent } from '@/types/domain';
 import { logActivity } from '@/services/activityLogService';
 import { log, measureTime } from '@/lib/logging';
 import { supabase } from '@/lib/supabase';
+import { tracksStock } from '@/services/inventoryService';
+// Branch type rarely changes; cache it per branch for the stock-tracking check.
+const branchTypeCache = new Map<string, string | null>();
+async function getBranchType(branchId: string): Promise<string | null> {
+  if (branchTypeCache.has(branchId)) return branchTypeCache.get(branchId)!;
+  const { data } = await supabase.from('branches').select('type').eq('id', branchId).maybeSingle();
+  const type: string | null = data?.type ?? null;
+  if (type) branchTypeCache.set(branchId, type);
+  return type;
+}
+
 // Apply stock deltas for a branch. Item ids are commissary ids → route to the
-// branch's stock via increment_branch_stock.
+// branch's stock via increment_branch_stock. Event branches don't track stock,
+// so their orders and refunds leave stock untouched.
 async function applyStockDeltas(branchId: string, updates: Array<{ id: string; stock: number }>) {
   if (updates.length === 0) return;
+  if (!tracksStock({ type: (await getBranchType(branchId)) ?? undefined })) return;
   await inventoryRepository.bulkUpdateBranchStock(branchId, updates);
 }
 

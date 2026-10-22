@@ -5,7 +5,7 @@ import DropdownField from "@/components/DropdownField";
 import TopBar from "@/components/TopBar";
 import OrderCartIcon from "./icons/OrderCartIcon";
 import type { InventoryItem, Category, BundleWithComponents, BundleComponent, BundleGroupWithVariants } from "@/types/domain";
-import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock } from "@/services/inventoryService";
+import { subscribeToInventoryItems, getAvailableStock as getAvailableInventoryStock, tracksStock, withUntrackedStock } from "@/services/inventoryService";
 import { subscribeToCategories } from "@/services/categoryService";
 import { subscribeToBundles, calculateBundleAvailability } from "@/services/bundleService";
 import { subscribeToBundleGroups } from "@/services/bundleGroupService";
@@ -137,6 +137,8 @@ const SuccessToast = ({
 export default function StoreScreen() {
 	const { user } = useAuth(); // Get current authenticated user
 	const { currentBranch } = useBranch(); // Get current branch context
+	// Event branches: every item is always sellable, no stock counts shown
+	const stockTracked = tracksStock(currentBranch);
 	const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
 	const timeTracking = useTimeTracking({ autoRefresh: true }); // Get time tracking state
 	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id); // Get POS access control
@@ -219,7 +221,7 @@ export default function StoreScreen() {
 		setLoading(true);
 
 		const unsubscribe = subscribeToInventoryItems(currentBranch.id, (items: InventoryItem[]) => {
-			setInventoryItems(items);
+			setInventoryItems(tracksStock(currentBranch) ? items : withUntrackedStock(items));
 			setLoading(false);
 		});
 
@@ -1149,7 +1151,7 @@ export default function StoreScreen() {
 															<span className='text-xs font-medium px-1.5 py-0.5 rounded select-none bg-bundle/10 text-bundle'>
 																Mix & Match
 															</span>
-														) : !isOutOfStock && (
+														) : !isOutOfStock && stockTracked && (
 															<span className={`text-xs font-medium px-1.5 py-0.5 rounded select-none ${availableStock < 10 ? "bg-error/10 text-error" :stockColor}`}>
 																{availableStock} left
 															</span>
@@ -2044,6 +2046,7 @@ export default function StoreScreen() {
 				<BundleGroupPickerModal
 					group={pendingBundleGroup}
 					bundleAvailability={bundleAvailability}
+					showStock={stockTracked}
 					onConfirm={(variant) => {
 						addToCart({
 							id: variant.id,
@@ -2104,6 +2107,7 @@ export default function StoreScreen() {
 			{showWildcardModal && (
 				<WildcardBundleModal
 					inventory={inventoryItems}
+					showStock={stockTracked}
 					categories={categories}
 					onConfirm={handleWildcardConfirm}
 					onClose={() => setShowWildcardModal(false)}
@@ -2114,6 +2118,7 @@ export default function StoreScreen() {
 			{showAssortedModal && (
 				<AssortedKakaninModal
 					inventory={inventoryItems}
+					showStock={stockTracked}
 					onConfirm={handleAssortedConfirm}
 					onClose={() => setShowAssortedModal(false)}
 				/>
@@ -2133,6 +2138,7 @@ export default function StoreScreen() {
 				<CustomBundlePickerModal
 					bundle={customBundleTarget}
 					inventory={inventoryItems}
+					showStock={stockTracked}
 					onConfirm={(selections, overridePrice) => handleCustomBundleConfirm(customBundleTarget, selections, overridePrice)}
 					onClose={() => setCustomBundleTarget(null)}
 				/>

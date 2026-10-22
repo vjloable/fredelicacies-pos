@@ -26,6 +26,7 @@ export interface AssortedKakaninResult {
 
 interface Props {
   inventory: InventoryItem[];
+  showStock?: boolean; // false at event branches (stock untracked)
   onConfirm: (result: AssortedKakaninResult) => void;
   onClose: () => void;
 }
@@ -104,7 +105,7 @@ function ContainerSelect({
   );
 }
 
-export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: Props) {
+export default function AssortedKakaninModal({ inventory, showStock = true, onConfirm, onClose }: Props) {
   const { currentBranch } = useBranch();
   const [loading, setLoading] = useState(true);
   const [containerIds, setContainerIds] = useState<string[]>([]);
@@ -309,7 +310,7 @@ export default function AssortedKakaninModal({ inventory, onConfirm, onClose }: 
                         </div>
                         <div className="px-2 pt-1.5">
                           <p className="text-xs font-semibold text-secondary truncate">{item.name}</p>
-                          <p className="text-[10px] text-secondary/50">Stock: {item.stock}</p>
+                          {showStock && <p className="text-[10px] text-secondary/50">Stock: {item.stock}</p>}
                         </div>
                         <div className="flex items-center gap-1.5 p-2">
                           <button

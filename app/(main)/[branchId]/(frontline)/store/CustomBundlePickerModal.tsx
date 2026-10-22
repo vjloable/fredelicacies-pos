@@ -17,6 +17,7 @@ export interface PickedItem {
 interface CustomBundlePickerModalProps {
   bundle: BundleWithComponents;
   inventory: InventoryItem[];
+  showStock?: boolean; // false at event branches (stock untracked)
   onConfirm: (selections: PickedItem[], overridePrice?: number) => void;
   onClose: () => void;
 }
@@ -24,6 +25,7 @@ interface CustomBundlePickerModalProps {
 export default function CustomBundlePickerModal({
   bundle,
   inventory,
+  showStock = true,
   onConfirm,
   onClose,
 }: CustomBundlePickerModalProps) {
@@ -194,7 +196,7 @@ export default function CustomBundlePickerModal({
                     {/* Item info */}
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-secondary truncate">{item.name}</p>
-                      <p className="text-[10px] text-secondary/50">Stock: {item.stock}</p>
+                      {showStock && <p className="text-[10px] text-secondary/50">Stock: {item.stock}</p>}
                     </div>
 
                     {/* Quantity controls */}
