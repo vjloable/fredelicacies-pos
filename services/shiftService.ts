@@ -113,10 +113,27 @@ export async function getShiftsByBranch(
 const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000; // Asia/Manila is UTC+8, no DST
 
 // Midnight (Asia/Manila) of the day containing `iso`, as an ISO string
-function startOfManilaDay(iso: string): string {
+export function startOfManilaDay(iso: string): string {
   const local = new Date(new Date(iso).getTime() + MANILA_OFFSET_MS);
   local.setUTCHours(0, 0, 0, 0);
   return new Date(local.getTime() - MANILA_OFFSET_MS).toISOString();
+}
+
+// 'today' = current day's sales only (from midnight PH, or shift open if later);
+// 'full' = everything since the shift opened, across all days
+export type ShiftReportScope = 'today' | 'full';
+
+// True when the shift's sales window covers more than one PH calendar day,
+// i.e. 'today' and 'full' would print different reports
+export function shiftSpansMultipleDays(shift: Shift): boolean {
+  const end = shift.closed_at ?? new Date().toISOString();
+  return startOfManilaDay(shift.opened_at) !== startOfManilaDay(end);
+}
+
+// True when the shift was still running at some point today (PH)
+export function shiftOverlapsToday(shift: Shift): boolean {
+  if (!shift.closed_at) return true;
+  return new Date(shift.closed_at) >= new Date(startOfManilaDay(new Date().toISOString()));
 }
 
 export async function computeShiftReportData(
@@ -124,13 +141,14 @@ export async function computeShiftReportData(
   branchId: string,
   actualCash: number,
   remarks: string | null,
+  scope: ShiftReportScope = 'today',
 ): Promise<ShiftReportData> {
   const openedAt = shift.opened_at;
   // Closed shifts (reprints) use their recorded close time; open shifts end at "now"
   const closedAt = shift.closed_at ?? new Date().toISOString();
-  // Report only the close day's sales, even if the shift ran across several days
-  const dayStart = startOfManilaDay(closedAt);
-  const reportFrom = new Date(openedAt) > new Date(dayStart) ? openedAt : dayStart;
+  // 'today' excludes earlier days of a shift left unclosed across several days
+  const dayStart = startOfManilaDay(new Date().toISOString());
+  const reportFrom = scope === 'full' || new Date(openedAt) > new Date(dayStart) ? openedAt : dayStart;
   const inWindow = (createdAt: string) => new Date(createdAt) >= new Date(reportFrom);
 
   // Fetch all orders during the report window
@@ -170,6 +188,10 @@ export async function computeShiftReportData(
     }
   }
 
+  // Grab realizes only 73% (the remaining 27% is the platform fee)
+  const grabNet = grabSales * 0.73;
+  const totalSales = cashSales + splitCashPortion + gcashSales + grabSales + debitCreditSales + employeeChargeSales;
+
   // Discounts by type
   let employeeDiscountCount = 0, employeeDiscountTotal = 0;
   let scPwdDiscountCount = 0, scPwdDiscountTotal = 0;
@@ -188,10 +210,6 @@ export async function computeShiftReportData(
   }
 
   // Cash refunds
-  // Grab realizes only 73% (the remaining 27% is the platform fee)
-  const grabNet = grabSales * 0.73;
-  const totalSales = cashSales + splitCashPortion + gcashSales + grabSales + debitCreditSales + employeeChargeSales;
-
   const cashRefunds = refundedOrders
     .filter((o: any) => o.payment_method === 'cash')
     .reduce((s: number, o: any) => s + o.total, 0);
@@ -237,6 +255,7 @@ export async function computeShiftReportData(
       totalCash: cashSales + splitCashPortion,
       totalGCash: gcashSales,
       totalGrab: grabSales,
+      totalGrabNet: grabNet,
       totalDebitCredit: debitCreditSales,
       totalEmployeeCharge: employeeChargeSales,
       totalSales,
@@ -256,7 +275,6 @@ export async function computeShiftReportData(
       nearExpiryCount: nearExpiryWriteOffs.length,
       nearExpiryTotal: nearExpiryWriteOffs.reduce((s, w) => s + w.amount, 0),
     },
-      totalGrabNet: grabNet,
     cashMonitoring: {
       beginningCash: shift.beginning_cash,
       cashSales: totalCashInflow,

@@ -35,7 +35,10 @@ import SalesIcon from "@/components/icons/SidebarNav/SalesIcon";
 import LogoIcon from "../../(frontline)/store/icons/LogoIcon";
 import { DayPicker, WeekPicker, MonthPicker, YearPicker } from "./DatePickers";
 import { formatReceiptWithLogo, formatDailySalesESC, formatShiftReportESC } from "@/lib/esc_formatter";
-import { getActiveShift, getShiftsByBranch, computeShiftReportData } from "@/services/shiftService";
+import { getActiveShift, getShiftsByBranch, computeShiftReportData, shiftSpansMultipleDays } from "@/services/shiftService";
+import type { ShiftReportScope } from "@/services/shiftService";
+import type { Shift } from "@/types/domain/shift";
+import ShiftReportScopeModal from "@/components/shift/ShiftReportScopeModal";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 import { generateSalesReportPDF } from "@/lib/pdfGenerator";
 
@@ -257,6 +260,8 @@ export default function SalesScreen() {
 	const { printReceipt } = useBluetoothPrinter();
 	const { user, isManager, isUserOwner } = useAuth();
 	const [isPrinting, setIsPrinting] = useState(false);
+	// Multi-day shift waiting for the user to pick today-only vs whole-shift
+	const [scopePromptShift, setScopePromptShift] = useState<Shift | null>(null);
 	const [discounts, setDiscounts] = useState<Discount[]>([]);
 
 	// Subscribe to discounts for B1T1 detection in reprint
@@ -510,19 +515,35 @@ export default function SalesScreen() {
 	const handlePrintShiftReport = async () => {
 		if (isPrinting || !currentBranch) return;
 		setIsPrinting(true);
+		let shift: Shift | null = null;
 		try {
 			// Try active shift first, fall back to last closed shift
-			let shift = (await getActiveShift(currentBranch.id)).shift;
+			shift = (await getActiveShift(currentBranch.id)).shift;
 			if (!shift) {
 				const { shifts } = await getShiftsByBranch(currentBranch.id, { status: 'closed' });
 				shift = shifts?.[0] ?? null;
 			}
-			if (!shift) {
-				alert('No shift found for this branch.');
-				return;
-			}
+		} catch (e) {
+			console.error("Shift lookup failed:", e);
+		} finally {
+			setIsPrinting(false);
+		}
+		if (!shift) {
+			alert('No shift found for this branch.');
+			return;
+		}
+		// Single-day shift: today-only and whole-shift are the same report, so skip the prompt
+		if (shiftSpansMultipleDays(shift)) setScopePromptShift(shift);
+		else await printShiftReport(shift, 'full');
+	};
+
+	const printShiftReport = async (shift: Shift, scope: ShiftReportScope) => {
+		if (!currentBranch) return;
+		setScopePromptShift(null);
+		setIsPrinting(true);
+		try {
 			const actualCash = shift.actual_cash ?? shift.beginning_cash;
-			const reportData = await computeShiftReportData(shift, currentBranch.id, actualCash, shift.remarks ?? null);
+			const reportData = await computeShiftReportData(shift, currentBranch.id, actualCash, shift.remarks ?? null, scope);
 			const bytes = await formatShiftReportESC(reportData);
 			const ok = await printReceipt(bytes);
 			if (!ok) alert('Printer not connected. Connect the printer and try again.');
@@ -1804,6 +1825,14 @@ export default function SalesScreen() {
 					</div>
 				</div>
 			</div>
+		)}
+
+		{scopePromptShift && (
+			<ShiftReportScopeModal
+				shift={scopePromptShift}
+				onSelect={(scope) => printShiftReport(scopePromptShift, scope)}
+				onCancel={() => setScopePromptShift(null)}
+			/>
 		)}
 	</div>
 	);
