@@ -188,6 +188,10 @@ export async function computeShiftReportData(
   }
 
   // Cash refunds
+  // Grab realizes only 73% (the remaining 27% is the platform fee)
+  const grabNet = grabSales * 0.73;
+  const totalSales = cashSales + splitCashPortion + gcashSales + grabSales + debitCreditSales + employeeChargeSales;
+
   const cashRefunds = refundedOrders
     .filter((o: any) => o.payment_method === 'cash')
     .reduce((s: number, o: any) => s + o.total, 0);
@@ -235,7 +239,8 @@ export async function computeShiftReportData(
       totalGrab: grabSales,
       totalDebitCredit: debitCreditSales,
       totalEmployeeCharge: employeeChargeSales,
-      totalSales: cashSales + splitCashPortion + gcashSales + grabSales + debitCreditSales + employeeChargeSales,
+      totalSales,
+      totalNetSales: totalSales - grabSales + grabNet,
     },
     adjustments: {
       voidCount: voidedOrders.length,
@@ -251,6 +256,7 @@ export async function computeShiftReportData(
       nearExpiryCount: nearExpiryWriteOffs.length,
       nearExpiryTotal: nearExpiryWriteOffs.reduce((s, w) => s + w.amount, 0),
     },
+      totalGrabNet: grabNet,
     cashMonitoring: {
       beginningCash: shift.beginning_cash,
       cashSales: totalCashInflow,

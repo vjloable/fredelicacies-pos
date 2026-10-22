@@ -447,9 +447,11 @@ export interface ShiftReportPrintData {
 		totalCash: number;
 		totalGCash: number;
 		totalGrab: number;
+		totalGrabNet: number;
 		totalDebitCredit: number;
 		totalEmployeeCharge: number;
 		totalSales: number;
+		totalNetSales: number;
 	};
 	adjustments: {
 		voidCount: number;
@@ -528,6 +530,7 @@ export async function formatShiftReportESC(data: ShiftReportPrintData): Promise<
 	lines.push(t(totalRow("Total Cash:", formatAmount(ss.totalCash))));
 	lines.push(t(totalRow("Total GCash:", formatAmount(ss.totalGCash))));
 	lines.push(t(totalRow("Total Grab:", formatAmount(ss.totalGrab))));
+	lines.push(t(totalRow("Grab Net (73%):", formatAmount(ss.totalGrabNet))));
 	lines.push(t(totalRow("Total Debit/Credit:", formatAmount(ss.totalDebitCredit))));
 	if (ss.totalEmployeeCharge > 0) {
 		lines.push(t(totalRow("Employee Charge:", formatAmount(ss.totalEmployeeCharge))));
@@ -535,6 +538,7 @@ export async function formatShiftReportESC(data: ShiftReportPrintData): Promise<
 	lines.push(t(divider()));
 	lines.push(BOLD_ON);
 	lines.push(t(totalRow("TOTAL SALES:", formatAmount(ss.totalSales))));
+	lines.push(t(totalRow("NET SALES:", formatAmount(ss.totalNetSales))));
 	lines.push(BOLD_OFF);
 	lines.push(t(divider()));
 

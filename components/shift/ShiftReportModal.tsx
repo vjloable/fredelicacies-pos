@@ -116,10 +116,12 @@ export default function ShiftReportModal() {
             <ReportRow label="Cash" value={formatCurrency(r.salesSummary.totalCash)} />
             <ReportRow label="GCash" value={formatCurrency(r.salesSummary.totalGCash)} />
             <ReportRow label="Grab" value={formatCurrency(r.salesSummary.totalGrab)} />
+            <ReportRow label="Grab Net (73%)" value={formatCurrency(r.salesSummary.totalGrabNet)} />
             <ReportRow label="Debit/Credit" value={formatCurrency(r.salesSummary.totalDebitCredit)} />
             <ReportRow label="Employee Charge" value={formatCurrency(r.salesSummary.totalEmployeeCharge)} />
             <div className="border-t border-gray-100 mt-1 pt-1">
               <ReportRow label="Total Sales" value={formatCurrency(r.salesSummary.totalSales)} bold />
+              <ReportRow label="Net Sales" value={formatCurrency(r.salesSummary.totalNetSales)} bold />
             </div>
           </div>
 

@@ -42,9 +42,13 @@ export interface ShiftReportData {
     totalCash: number;
     totalGCash: number;
     totalGrab: number;
+    // Grab after the 27% platform fee (gross × 0.73)
+    totalGrabNet: number;
     totalDebitCredit: number;
     totalEmployeeCharge: number;
     totalSales: number;
+    // Total sales with Grab counted at net
+    totalNetSales: number;
   };
   adjustments: {
     voidCount: number;
