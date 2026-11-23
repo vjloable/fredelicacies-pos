@@ -18,14 +18,13 @@ const SHOTS = [
 type Step = 'consent' | 'capture' | 'saving' | 'done' | 'error';
 
 interface EnrollFaceModalProps {
-  branchId: string;
   /** Person on the kiosk staff list. */
   person: { id: string; name: string; enrolled: boolean };
   onClose: () => void;
   onEnrolled: () => void;
 }
 
-export default function EnrollFaceModal({ branchId, person, onClose, onEnrolled }: EnrollFaceModalProps) {
+export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollFaceModalProps) {
   const [step, setStep] = useState<Step>('consent');
   const [agreed, setAgreed] = useState(false);
   const [shot, setShot] = useState(0);
@@ -52,7 +51,7 @@ export default function EnrollFaceModal({ branchId, person, onClose, onEnrolled 
           embeddings.push(sample.embedding);
         }
         setStep('saving');
-        await faceAttendanceService.enroll(branchId, person.id, embeddings, FACE_MODEL);
+        await faceAttendanceService.enroll(person.id, embeddings, FACE_MODEL);
         setStep('done');
         onEnrolled();
       } catch (err) {
@@ -63,7 +62,7 @@ export default function EnrollFaceModal({ branchId, person, onClose, onEnrolled 
         if (abortRef.current === ctrl) abortRef.current = null;
       }
     })();
-  }, [step, ready, videoRef, branchId, person.id, onEnrolled]);
+  }, [step, ready, videoRef, person.id, onEnrolled]);
 
   const close = () => {
     abortRef.current?.abort();
@@ -93,8 +92,9 @@ export default function EnrollFaceModal({ branchId, person, onClose, onEnrolled 
                 photo of you is stored.
               </p>
               <p>
-                The template is used only for attendance. It is kept until you ask us to remove it or you leave the
-                company. You can ask a manager at any time to delete it, and a manager can always time you in manually
+                Each time you time in or out at the kiosk, the tablet&apos;s location is recorded with the time.
+                The template and these records are used only for attendance. The template is kept until you ask us to
+                remove it or you leave the company. You can ask a manager at any time to delete it, and a manager can always time you in manually
                 instead.
               </p>
               <p className='text-3 text-secondary/60'>Data Privacy Act of 2012 (RA 10173).</p>

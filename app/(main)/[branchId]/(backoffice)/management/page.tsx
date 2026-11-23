@@ -587,7 +587,7 @@ export default function ManagementPage() {
 									</div>
 								</>
 							) : viewMode === "staff" && canManageStaffAttendance ? (
-								<StaffAttendanceView branchId={branchId as string} />
+								<StaffAttendanceView />
 							) : (
 								/* Attendance View */
 								<AttendanceView 

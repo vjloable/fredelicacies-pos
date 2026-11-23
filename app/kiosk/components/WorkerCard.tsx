@@ -36,9 +36,7 @@ export default function WorkerCard({ worker, now, highlighted, onSelect }: Worke
     ? 'Face not set up — see a manager'
     : worker.blockedReason === 'STALE_SHIFT'
       ? 'Last shift not timed out — see a manager'
-      : worker.blockedReason === 'OPEN_ELSEWHERE'
-        ? 'Timed in at another branch'
-        : null;
+      : null;
 
   return (
     <button

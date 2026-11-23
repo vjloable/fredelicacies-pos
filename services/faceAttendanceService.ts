@@ -1,8 +1,10 @@
 // Client for the kiosk attendance service on the droplet (repo:
 // fredelicacies-face-attendance). It is separate from the POS cashier clock-in:
-// its own staff list (everyone at a branch, with or without a POS login) and
-// time records. Managers authenticate with their Supabase session; a paired
+// its own company-wide staff list (everyone, with or without a POS login; staff
+// rotate between branches) and time records, each tagged with the tablet used
+// and its GPS location. Managers authenticate with their Supabase session; a paired
 // kiosk tablet authenticates with its device token.
+import type { DeviceLocation, LocationError } from '@/lib/face/location';
 import { supabase } from '@/lib/supabase';
 
 const BASE_URL = process.env.NEXT_PUBLIC_FACE_API_URL ?? '';
@@ -26,8 +28,7 @@ const MESSAGES: Record<string, string> = {
   COOLDOWN: 'You just did this. Please wait a minute before trying again.',
   STATE_CHANGED: 'Your status just changed. Please check your name again.',
   STALE_SHIFT: 'Your last shift was never timed out. Ask a manager to fix it.',
-  OPEN_ELSEWHERE: 'You are still timed in at another branch. Ask a manager.',
-  EMPLOYEE_NOT_FOUND: 'This person is not on the active staff list of this branch.',
+  EMPLOYEE_NOT_FOUND: 'This person is not on the active staff list.',
   BRANCH_NOT_FOUND: 'Branch not found.',
   OPEN_SHIFT: 'Time this person out first.',
   OVERLAPS_PREVIOUS_SHIFT: 'That time overlaps their previous shift.',
@@ -123,7 +124,6 @@ export interface KioskWorker {
 export interface KioskRoster {
   serverTime: string;
   device: { id: string; label: string };
-  branch: { id: string; name: string } | null;
   workers: KioskWorker[];
 }
 
@@ -159,63 +159,60 @@ export interface TimeRecord {
   timeOutMethod: 'face' | 'manual' | null;
   /** Null while the shift is open. */
   minutes: number | null;
+  /** Name of the kiosk tablet used; null for manual entries. */
+  timeInDevice: string | null;
+  timeOutDevice: string | null;
+  /** Kiosk tablet location at the face check; null for manual entries or when unavailable. */
+  timeInLocation: DeviceLocation | null;
+  timeOutLocation: DeviceLocation | null;
 }
 
-const q = (branchId: string) => `branchId=${encodeURIComponent(branchId)}`;
-
 export const faceAttendanceService = {
-  // Manager
-  pairDevice: (branchId: string, label: string) =>
+  // Manager (company-wide; nothing is scoped to a branch)
+  pairDevice: (label: string) =>
     request<{ device: KioskDevice; token: string }>('/devices', {
       auth: 'manager',
       method: 'POST',
-      body: JSON.stringify({ branchId, label }),
+      body: JSON.stringify({ label }),
     }),
-  listDevices: (branchId: string) =>
-    request<{ devices: KioskDevice[] }>(`/devices?${q(branchId)}`, { auth: 'manager' }),
-  revokeDevice: (branchId: string, deviceId: string) =>
-    request<void>(`/devices/${deviceId}?${q(branchId)}`, { auth: 'manager', method: 'DELETE' }),
+  listDevices: () => request<{ devices: KioskDevice[] }>('/devices', { auth: 'manager' }),
+  revokeDevice: (deviceId: string) => request<void>(`/devices/${deviceId}`, { auth: 'manager', method: 'DELETE' }),
 
   // Staff list: anyone with manager access can view; adding/editing needs admin or owner (canAdmin).
-  listEmployees: (branchId: string) =>
-    request<{ canAdmin: boolean; employees: Employee[] }>(`/employees?${q(branchId)}`, { auth: 'manager' }),
-  addEmployee: (branchId: string, name: string, position: string | null) =>
+  listEmployees: () => request<{ canAdmin: boolean; employees: Employee[] }>('/employees', { auth: 'manager' }),
+  addEmployee: (name: string, position: string | null) =>
     request<{ employee: Employee }>('/employees', {
       auth: 'manager',
       method: 'POST',
-      body: JSON.stringify({ branchId, name, position }),
+      body: JSON.stringify({ name, position }),
     }),
-  updateEmployee: (
-    branchId: string,
-    employeeId: string,
-    changes: { name?: string; position?: string | null; active?: boolean },
-  ) =>
+  updateEmployee: (employeeId: string, changes: { name?: string; position?: string | null; active?: boolean }) =>
     request<{ ok: true }>(`/employees/${employeeId}`, {
       auth: 'manager',
       method: 'PATCH',
-      body: JSON.stringify({ branchId, ...changes }),
+      body: JSON.stringify(changes),
     }),
 
-  enroll: (branchId: string, employeeId: string, embeddings: number[][], model: string) =>
+  enroll: (employeeId: string, embeddings: number[][], model: string) =>
     request<{ captures: number }>('/enrollments', {
       auth: 'manager',
       method: 'POST',
-      body: JSON.stringify({ branchId, employeeId, consent: true, model, embeddings }),
+      body: JSON.stringify({ employeeId, consent: true, model, embeddings }),
     }),
-  deleteEnrollment: (branchId: string, employeeId: string) =>
-    request<{ deleted: number }>(`/enrollments/${employeeId}?${q(branchId)}`, { auth: 'manager', method: 'DELETE' }),
+  deleteEnrollment: (employeeId: string) =>
+    request<{ deleted: number }>(`/enrollments/${employeeId}`, { auth: 'manager', method: 'DELETE' }),
 
   // Time records
-  listRecords: (branchId: string, from: Date, to: Date) =>
+  listRecords: (from: Date, to: Date) =>
     request<{ records: TimeRecord[] }>(
-      `/attendance?${q(branchId)}&from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
+      `/attendance?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
       { auth: 'manager' },
     ),
-  manualPunch: (branchId: string, employeeId: string, action: KioskAction, at?: Date) =>
+  manualPunch: (employeeId: string, action: KioskAction, at?: Date) =>
     request<{ action: KioskAction; at: string }>(`/attendance/${action === 'time_in' ? 'time-in' : 'time-out'}`, {
       auth: 'manager',
       method: 'POST',
-      body: JSON.stringify({ branchId, employeeId, at: at?.toISOString() }),
+      body: JSON.stringify({ employeeId, at: at?.toISOString() }),
     }),
 
   // Kiosk
@@ -227,6 +224,8 @@ export const faceAttendanceService = {
     embedding: number[];
     antispoof: number;
     liveness: number;
+    location: DeviceLocation | null;
+    locationError: LocationError | null;
   }) =>
     request<{ action: KioskAction; at: string; name: string }>('/kiosk/punch', {
       auth: 'kiosk',

@@ -17,7 +17,7 @@ import {
   type TimeRecord,
 } from '@/services/faceAttendanceService';
 import ManualPunchModal from './ManualPunchModal';
-import { input, MethodBadge, panel } from './ui';
+import { input, LocationLink, MethodBadge, panel } from './ui';
 
 type Preset = 'today' | 'yesterday' | 'week' | 'last15' | 'month' | 'custom';
 
@@ -47,7 +47,12 @@ const PRESETS: { id: Preset; label: string }[] = [
 
 function downloadCsv(records: TimeRecord[], from: string, to: string) {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const header = ['Date', 'Name', 'Position', 'Time in', 'Time in via', 'Time out', 'Time out via', 'Hours'];
+  const header = [
+    'Date', 'Name', 'Position', 'Time in', 'Time in via', 'Time in tablet', 'Time in location', 'Time in accuracy (m)',
+    'Time out', 'Time out via', 'Time out tablet', 'Time out location', 'Time out accuracy (m)', 'Hours',
+  ];
+  const coords = (l: TimeRecord['timeInLocation']) => (l ? `${l.latitude},${l.longitude}` : '');
+  const acc = (l: TimeRecord['timeInLocation']) => (l ? String(Math.round(l.accuracy)) : '');
   const rows = [...records]
     .sort((a, b) => a.name.localeCompare(b.name) || a.timeIn.localeCompare(b.timeIn))
     .map((r) => [
@@ -56,8 +61,14 @@ function downloadCsv(records: TimeRecord[], from: string, to: string) {
       r.position ?? '',
       formatManilaTime(r.timeIn),
       r.timeInMethod,
+      r.timeInDevice ?? '',
+      coords(r.timeInLocation),
+      acc(r.timeInLocation),
       r.timeOut ? formatManilaTime(r.timeOut) : 'still in',
       r.timeOutMethod ?? '',
+      r.timeOutDevice ?? '',
+      coords(r.timeOutLocation),
+      acc(r.timeOutLocation),
       r.minutes === null ? '' : (r.minutes / 60).toFixed(2),
     ]);
   const csv = [header, ...rows].map((row) => row.map((c) => esc(String(c))).join(',')).join('\r\n');
@@ -69,7 +80,7 @@ function downloadCsv(records: TimeRecord[], from: string, to: string) {
   URL.revokeObjectURL(url);
 }
 
-export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
+export default function TimeRecordsPanel() {
   const today = manilaDate(new Date());
   const [preset, setPreset] = useState<Preset>('today');
   const [range, setRange] = useState(() => presetRange('today', today));
@@ -81,8 +92,8 @@ export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
   const load = useCallback(async () => {
     try {
       const [r, e] = await Promise.all([
-        faceAttendanceService.listRecords(branchId, manilaDayStart(range.from), manilaDayStart(addDays(range.to, 1))),
-        faceAttendanceService.listEmployees(branchId),
+        faceAttendanceService.listRecords(manilaDayStart(range.from), manilaDayStart(addDays(range.to, 1))),
+        faceAttendanceService.listEmployees(),
       ]);
       setRecords(r.records);
       setEmployees(e.employees.filter((x) => x.active));
@@ -90,7 +101,7 @@ export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
     } catch (err) {
       setError(faceErrorMessage(err));
     }
-  }, [branchId, range]);
+  }, [range]);
 
   useEffect(() => {
     load();
@@ -219,6 +230,7 @@ export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
                     <th className='py-2 pr-4 font-semibold'>Name</th>
                     <th className='py-2 pr-4 font-semibold'>Time in</th>
                     <th className='py-2 pr-4 font-semibold'>Time out</th>
+                    <th className='py-2 pr-4 font-semibold'>Tablet</th>
                     <th className='py-2 font-semibold text-right'>Hours</th>
                   </tr>
                 </thead>
@@ -230,16 +242,21 @@ export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
                       <td className='py-2 pr-4 whitespace-nowrap'>
                         {formatManilaTime(r.timeIn)}
                         <MethodBadge method={r.timeInMethod} />
+                        <LocationLink location={r.timeInLocation} />
                       </td>
                       <td className='py-2 pr-4 whitespace-nowrap'>
                         {r.timeOut ? (
                           <>
                             {formatManilaTime(r.timeOut)}
                             <MethodBadge method={r.timeOutMethod} />
+                            <LocationLink location={r.timeOutLocation} />
                           </>
                         ) : (
                           <span className='text-success font-semibold'>In</span>
                         )}
+                      </td>
+                      <td className='py-2 pr-4 text-xs text-secondary/70'>
+                        {[...new Set([r.timeInDevice, r.timeOutDevice].filter(Boolean))].join(' → ') || '—'}
                       </td>
                       <td className='py-2 text-right tabular-nums'>{r.minutes === null ? '—' : formatMinutes(r.minutes)}</td>
                     </tr>
@@ -253,7 +270,6 @@ export default function TimeRecordsPanel({ branchId }: { branchId: string }) {
 
       {punch && (
         <ManualPunchModal
-          branchId={branchId}
           action={punch.action}
           employee={punch.employee}
           choices={notIn}

@@ -1,35 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { branchService } from '@/services/branchService';
+import { getDeviceLocation } from '@/lib/face/location';
 import { faceAttendanceService, faceErrorMessage, kioskToken } from '@/services/faceAttendanceService';
-import type { Branch } from '@/types/domain/branch';
 
 const MANAGE_ROLES = new Set(['admin', 'owner', 'manager']);
 
-// One-time setup on the tablet: a manager signs in, picks the branch, and the
-// tablet receives its own device token. If the manager signed in only for this,
-// they are signed out again so the tablet is not left logged in.
+// One-time setup on the tablet: a manager signs in and names the tablet, and it
+// receives its own device token. Tablets aren't tied to a branch: every tablet
+// lists all staff, and its GPS location records where each punch happened.
+// If the manager signed in only for this, they are signed out again so the
+// tablet is not left logged in.
 export default function KioskPairing({ onPaired }: { onPaired: () => void }) {
   const { user, realRole, login, logout, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signedInHere, setSignedInHere] = useState(false);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [branchId, setBranchId] = useState('');
-  const [label, setLabel] = useState('Kiosk tablet');
+  const [label, setLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canPair = Boolean(user && realRole && MANAGE_ROLES.has(realRole));
-
-  useEffect(() => {
-    if (!canPair) return;
-    branchService.getAllBranches().then(({ branches }) => {
-      const active = (branches ?? []).filter((b) => b.status === 'active');
-      setBranches(active);
-      setBranchId((cur) => cur || active[0]?.id || '');
-    });
-  }, [canPair]);
 
   const signIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,8 +40,11 @@ export default function KioskPairing({ onPaired }: { onPaired: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const { token } = await faceAttendanceService.pairDevice(branchId, label.trim() || 'Kiosk tablet');
+      const { token } = await faceAttendanceService.pairDevice(label.trim() || 'Kiosk tablet');
       kioskToken.set(token);
+      // Ask for location permission now, while the manager is here, so the
+      // first person timing in isn't met with a browser prompt.
+      await getDeviceLocation();
       if (signedInHere) await logout();
       onPaired();
     } catch (err) {
@@ -68,7 +61,8 @@ export default function KioskPairing({ onPaired }: { onPaired: () => void }) {
       <div className='bg-white rounded-2xl p-8 max-w-md w-full shadow-sm'>
         <h1 className='text-6 font-bold text-secondary'>Set up attendance kiosk</h1>
         <p className='text-3.5 text-secondary/70 mt-1 mb-6'>
-          A manager or owner pairs this tablet to a branch once. After that, staff time in and out here without signing in.
+          A manager or owner pairs this tablet once. After that, any staff member can time in and out here without
+          signing in.
         </p>
 
         {authLoading ? (
@@ -91,23 +85,21 @@ export default function KioskPairing({ onPaired }: { onPaired: () => void }) {
         ) : (
           <div className='space-y-3'>
             <label className='block text-3 font-semibold text-secondary'>
-              Branch
-              <select className={`${input} mt-1`} value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className='block text-3 font-semibold text-secondary'>
               Tablet name
-              <input className={`${input} mt-1`} value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} />
+              <input
+                className={`${input} mt-1`}
+                value={label}
+                maxLength={60}
+                placeholder='e.g. Talisay front counter'
+                onChange={(e) => setLabel(e.target.value)}
+              />
             </label>
-            <button disabled={busy || !branchId} onClick={pair} className='w-full py-3 rounded-lg bg-accent text-primary font-black disabled:opacity-50'>
+            <button disabled={busy} onClick={pair} className='w-full py-3 rounded-lg bg-accent text-primary font-black disabled:opacity-50'>
               {busy ? 'Pairing…' : 'PAIR THIS TABLET'}
             </button>
-            <p className='text-3 text-secondary/60'>Signed in as {user.name}.</p>
+            <p className='text-3 text-secondary/60'>
+              Signed in as {user.name}. When the browser asks, allow location: it is recorded with each time in and out.
+            </p>
           </div>
         )}
 

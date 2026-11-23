@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { mapsUrl, type DeviceLocation } from '@/lib/face/location';
 
 // Small shared pieces for the Staff Attendance panels.
 
@@ -59,6 +60,23 @@ export const MethodBadge = ({ method }: { method: 'face' | 'manual' | null }) =>
       }`}>
       {method === 'face' ? 'FACE' : 'MANUAL'}
     </span>
+  ) : null;
+
+/**
+ * 📍 link to the kiosk tablet's location on Google Maps (± accuracy in the tooltip).
+ * Locations only reach this screen for admins, owners and managers: the
+ * Staff Attendance tab is limited to them and the API only returns records to them.
+ */
+export const LocationLink = ({ location }: { location: DeviceLocation | null }) =>
+  location ? (
+    <a
+      href={mapsUrl(location)}
+      target='_blank'
+      rel='noopener noreferrer'
+      title={`Tablet location (± ${Math.round(location.accuracy)} m)`}
+      className='ml-1 hover:opacity-70'>
+      📍
+    </a>
   ) : null;
 
 export const input = 'w-full border border-secondary/20 rounded-lg px-3 py-2 text-3.5 text-secondary bg-white';

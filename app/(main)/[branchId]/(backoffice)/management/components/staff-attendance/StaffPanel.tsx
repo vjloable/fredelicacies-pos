@@ -9,7 +9,7 @@ import { ConfirmModal, panel } from './ui';
 type Confirm = { kind: 'removeFace' | 'deactivate'; employee: Employee } | null;
 
 // Kiosk staff list. Admins/owners maintain it; managers enroll faces.
-export default function StaffPanel({ branchId }: { branchId: string }) {
+export default function StaffPanel() {
   const [employees, setEmployees] = useState<Employee[] | null>(null);
   const [canAdmin, setCanAdmin] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
@@ -21,14 +21,14 @@ export default function StaffPanel({ branchId }: { branchId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await faceAttendanceService.listEmployees(branchId);
+      const res = await faceAttendanceService.listEmployees();
       setEmployees(res.employees);
       setCanAdmin(res.canAdmin);
       setError(null);
     } catch (err) {
       setError(faceErrorMessage(err));
     }
-  }, [branchId]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -75,13 +75,13 @@ export default function StaffPanel({ branchId }: { branchId: string }) {
         )}
       </div>
       <p className='text-xs text-secondary/60 mb-4'>
-        Everyone who times in at this branch, with or without a POS login. This is separate from the POS cashier clock-in.
+        Everyone who times in at the kiosks, across all branches, with or without a POS login. This is separate from the POS cashier clock-in.
         {!canAdmin && ' Only admins and owners can add or edit staff.'}
       </p>
       {error && <p className='text-3.5 text-error mb-3'>{error}</p>}
 
       {shown.length === 0 ? (
-        <p className='text-3.5 text-secondary/50'>No staff yet.{canAdmin && ' Add the people who work at this branch.'}</p>
+        <p className='text-3.5 text-secondary/50'>No staff yet.{canAdmin && ' Add everyone who times in at the kiosks.'}</p>
       ) : (
         <ul className='divide-y divide-secondary/10'>
           {shown.map((e) => (
@@ -128,7 +128,7 @@ export default function StaffPanel({ branchId }: { branchId: string }) {
                   canAdmin && (
                     <button
                       disabled={busy}
-                      onClick={() => run(() => faceAttendanceService.updateEmployee(branchId, e.id, { active: true }))}
+                      onClick={() => run(() => faceAttendanceService.updateEmployee(e.id, { active: true }))}
                       className='text-xs font-semibold text-accent hover:underline'>
                       Reactivate
                     </button>
@@ -147,11 +147,10 @@ export default function StaffPanel({ branchId }: { branchId: string }) {
       )}
 
       {editing && (
-        <EmployeeFormModal branchId={branchId} employee={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={load} />
+        <EmployeeFormModal employee={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={load} />
       )}
       {enrolling && (
         <EnrollFaceModal
-          branchId={branchId}
           person={{ id: enrolling.id, name: enrolling.name, enrolled: enrolling.enrolled }}
           onClose={() => setEnrolling(null)}
           onEnrolled={load}
@@ -171,8 +170,8 @@ export default function StaffPanel({ branchId }: { branchId: string }) {
           onConfirm={() =>
             run(() =>
               confirm.kind === 'deactivate'
-                ? faceAttendanceService.updateEmployee(branchId, confirm.employee.id, { active: false })
-                : faceAttendanceService.deleteEnrollment(branchId, confirm.employee.id),
+                ? faceAttendanceService.updateEmployee(confirm.employee.id, { active: false })
+                : faceAttendanceService.deleteEnrollment(confirm.employee.id),
             )
           }
         />

@@ -6,8 +6,8 @@ import { ConfirmModal, panel } from './ui';
 
 const when = (iso: string | null) => (iso ? `${formatManilaDay(iso)}, ${formatManilaTime(iso)}` : 'never');
 
-// Kiosk tablets paired to this branch.
-export default function TabletsPanel({ branchId }: { branchId: string }) {
+// Kiosk tablets (company-wide; any tablet can be used by any staff member).
+export default function TabletsPanel() {
   const [devices, setDevices] = useState<KioskDevice[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<KioskDevice | null>(null);
@@ -15,12 +15,12 @@ export default function TabletsPanel({ branchId }: { branchId: string }) {
 
   const load = useCallback(async () => {
     try {
-      setDevices((await faceAttendanceService.listDevices(branchId)).devices);
+      setDevices((await faceAttendanceService.listDevices()).devices);
       setError(null);
     } catch (err) {
       setError(faceErrorMessage(err));
     }
-  }, [branchId]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -30,7 +30,7 @@ export default function TabletsPanel({ branchId }: { branchId: string }) {
     if (!revoking) return;
     setBusy(true);
     try {
-      await faceAttendanceService.revokeDevice(branchId, revoking.id);
+      await faceAttendanceService.revokeDevice(revoking.id);
       setRevoking(null);
       await load();
     } catch (err) {
@@ -45,7 +45,7 @@ export default function TabletsPanel({ branchId }: { branchId: string }) {
     <section className={panel}>
       <h3 className='font-bold text-secondary mb-1'>Kiosk tablets</h3>
       <p className='text-xs text-secondary/60 mb-4'>
-        To pair a tablet, open <span className='font-semibold'>pos.fredelicacies.com/kiosk</span> on it and sign in as a manager or owner.
+        To pair a tablet, open <span className='font-semibold'>pos.fredelicacies.com/kiosk</span> on it (or tap STAFF ATTENDANCE on the login page) and sign in as a manager, owner or admin. Name it after where it sits, e.g. “Talisay front counter”.
       </p>
       {error && <p className='text-3.5 text-error mb-3'>{error}</p>}
       {!devices ? (

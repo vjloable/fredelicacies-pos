@@ -4,12 +4,10 @@ import { input, Modal, primaryButton, secondaryButton } from './ui';
 
 // Add or rename a person on the kiosk staff list (admins and owners only).
 export default function EmployeeFormModal({
-  branchId,
   employee,
   onClose,
   onSaved,
 }: {
-  branchId: string;
   employee?: Employee;
   onClose: () => void;
   onSaved: () => void;
@@ -25,8 +23,8 @@ export default function EmployeeFormModal({
     setError(null);
     try {
       const pos = position.trim() || null;
-      if (employee) await faceAttendanceService.updateEmployee(branchId, employee.id, { name: name.trim(), position: pos });
-      else await faceAttendanceService.addEmployee(branchId, name.trim(), pos);
+      if (employee) await faceAttendanceService.updateEmployee(employee.id, { name: name.trim(), position: pos });
+      else await faceAttendanceService.addEmployee(name.trim(), pos);
       onSaved();
       onClose();
     } catch (err) {

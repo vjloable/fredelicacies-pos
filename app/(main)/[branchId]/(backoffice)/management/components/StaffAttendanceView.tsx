@@ -11,13 +11,18 @@ const SECTIONS: { id: Section; label: string }[] = [
   { id: 'tablets', label: 'Tablets' },
 ];
 
-// Management → Staff Attendance: the face kiosk system for everyone at the
-// branch. Separate from the POS cashier clock-in shown under "Attendance".
-export default function StaffAttendanceView({ branchId }: { branchId: string }) {
+// Management → Staff Attendance: the face kiosk system for all staff. It is
+// company-wide (staff rotate between branches; tablets record GPS location) and
+// separate from the POS cashier clock-in shown under "Attendance".
+export default function StaffAttendanceView() {
   const [section, setSection] = useState<Section>('records');
 
   return (
     <div className='space-y-4'>
+      <p className='text-xs text-secondary/60'>
+        Company-wide: all staff and tablets across every branch. Each time in and out records the tablet used and its
+        location.
+      </p>
       <div className='flex gap-2'>
         {SECTIONS.map((s) => (
           <button
@@ -30,9 +35,9 @@ export default function StaffAttendanceView({ branchId }: { branchId: string }) 
           </button>
         ))}
       </div>
-      {section === 'records' && <TimeRecordsPanel branchId={branchId} />}
-      {section === 'staff' && <StaffPanel branchId={branchId} />}
-      {section === 'tablets' && <TabletsPanel branchId={branchId} />}
+      {section === 'records' && <TimeRecordsPanel />}
+      {section === 'staff' && <StaffPanel />}
+      {section === 'tablets' && <TabletsPanel />}
     </div>
   );
 }

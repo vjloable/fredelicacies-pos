@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import FaceCamera from '@/components/face/FaceCamera';
 import { captureFace, FACE_MODEL } from '@/lib/face/engine';
+import { getDeviceLocation, type LocationResult } from '@/lib/face/location';
 import { FACE_HINTS, type FaceIssue } from '@/lib/face/quality';
 import { useCamera } from '@/lib/face/useCamera';
 import {
@@ -29,6 +30,7 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ action: KioskAction; at: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const locationRef = useRef<Promise<LocationResult> | null>(null);
   const { videoRef, ready, error: cameraError } = useCamera(step === 'scanning' || step === 'sending');
 
   const isTimeIn = worker.nextAction === 'time_in';
@@ -52,13 +54,18 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
 
     (async () => {
       try {
+        // Locate the tablet while the face is being scanned so it adds no wait.
+        locationRef.current ??= getDeviceLocation();
         const sample = await captureFace(videoRef.current!, { signal: ctrl.signal, onHint: setIssue });
         setStep('sending');
+        const where = await locationRef.current;
+        locationRef.current = null; // a retry takes a fresh reading
         const res = await faceAttendanceService.punch({
           workerId: worker.workerId,
           expected: worker.nextAction,
           model: FACE_MODEL,
           ...sample,
+          ...where,
         });
         setResult({ action: res.action, at: res.at });
         setStep('success');
@@ -101,8 +108,9 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
             </ul>
             <div className='text-3 text-secondary/70 bg-light-accent/40 rounded-lg p-3 mb-6'>
               <span className='font-semibold'>Privacy:</span> your face is checked on this tablet. Only a numeric face
-              template is sent to confirm it&apos;s you — no photo is taken or saved. It is used only for attendance,
-              as provided under the Data Privacy Act of 2012.
+              template is sent to confirm it&apos;s you — no photo is taken or saved. The tablet&apos;s location is
+              recorded with each time in and time out. Both are used only for attendance, as provided under the Data
+              Privacy Act of 2012.
             </div>
             <div className='flex gap-3'>
               <button onClick={close} className='flex-1 py-3 rounded-lg border border-secondary/20 text-secondary font-semibold'>

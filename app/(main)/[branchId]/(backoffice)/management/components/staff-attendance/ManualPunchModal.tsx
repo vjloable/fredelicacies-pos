@@ -4,7 +4,6 @@ import { faceAttendanceService, faceErrorMessage, type Employee, type KioskActio
 import { input, Modal, primaryButton, secondaryButton } from './ui';
 
 interface ManualPunchModalProps {
-  branchId: string;
   action: KioskAction;
   /** Fixed person (e.g. closing their open shift), or a list to choose from. */
   employee?: Employee;
@@ -15,7 +14,7 @@ interface ManualPunchModalProps {
 
 // Manager correction: time someone in or out by hand, optionally at an earlier
 // time (e.g. closing a shift they forgot to time out of). Recorded as MANUAL.
-export default function ManualPunchModal({ branchId, action, employee, choices = [], onClose, onDone }: ManualPunchModalProps) {
+export default function ManualPunchModal({ action, employee, choices = [], onClose, onDone }: ManualPunchModalProps) {
   const [employeeId, setEmployeeId] = useState(employee?.id ?? choices[0]?.id ?? '');
   const [when, setWhen] = useState(() => toManilaInput(new Date()));
   const [busy, setBusy] = useState(false);
@@ -26,7 +25,7 @@ export default function ManualPunchModal({ branchId, action, employee, choices =
     setBusy(true);
     setError(null);
     try {
-      await faceAttendanceService.manualPunch(branchId, employeeId, action, fromManilaInput(when));
+      await faceAttendanceService.manualPunch(employeeId, action, fromManilaInput(when));
       onDone();
       onClose();
     } catch (err) {

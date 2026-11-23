@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageLoader from '@/components/PageLoader';
 import { loadFaceEngine } from '@/lib/face/engine';
+import { isLocationBlocked } from '@/lib/face/location';
 import {
   FaceApiError,
   faceAttendanceService,
@@ -29,6 +30,7 @@ export default function KioskPage() {
   const [highlight, setHighlight] = useState<string | null>(null);
   const [confirmUnpair, setConfirmUnpair] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [locationBlocked, setLocationBlocked] = useState(false);
 
   useEffect(() => setPaired(Boolean(kioskToken.get())), []);
 
@@ -53,6 +55,7 @@ export default function KioskPage() {
     refresh();
     // Warm the face models in the background so the first scan starts quickly.
     loadFaceEngine().catch(() => {});
+    isLocationBlocked().then((blocked) => setLocationBlocked(blocked === true));
     const poll = setInterval(refresh, POLL_MS);
     const onVisible = () => document.visibilityState === 'visible' && refresh();
     document.addEventListener('visibilitychange', onVisible);
@@ -88,13 +91,7 @@ export default function KioskPage() {
 
   const selectWorker = (w: KioskWorker) => {
     if (!w.enrolled) return setNotice(`${w.name}: face not set up yet. Ask a manager to enroll you.`);
-    if (w.blockedReason) {
-      return setNotice(
-        w.blockedReason === 'STALE_SHIFT'
-          ? `${w.name}: your last shift was never timed out. Ask a manager to fix it.`
-          : `${w.name}: you are still timed in at another branch.`,
-      );
-    }
+    if (w.blockedReason) return setNotice(`${w.name}: your last shift was never timed out. Ask a manager to fix it.`);
     setSelected(w);
   };
 
@@ -115,8 +112,8 @@ export default function KioskPage() {
       <header className='shrink-0 px-6 pt-6 pb-4 bg-background'>
         <div className='flex items-end justify-between gap-4 mb-4'>
           <div>
-            <div className='text-3 font-semibold tracking-widest text-accent'>FREDELICACIES · ATTENDANCE</div>
-            <h1 className='text-7 font-bold text-secondary'>{roster?.branch?.name ?? 'Branch'}</h1>
+            <div className='text-3 font-semibold tracking-widest text-accent'>FREDELICACIES</div>
+            <h1 className='text-7 font-bold text-secondary'>Staff Attendance</h1>
           </div>
           <div className='text-right'>
             <div className='text-7 font-bold text-secondary tabular-nums'>{formatTime(now.toISOString())}</div>
@@ -133,12 +130,18 @@ export default function KioskPage() {
           className='w-full border border-secondary/20 rounded-xl px-4 py-3 text-4 text-secondary bg-white'
         />
         {error && <p className='mt-3 text-3.5 text-error'>{error}</p>}
+        {locationBlocked && (
+          <p className='mt-3 text-3.5 text-error'>
+            Location is blocked for this site, so time records here won&apos;t include the tablet&apos;s location. A manager
+            can allow it in the browser&apos;s site settings.
+          </p>
+        )}
         {notice && <p className='mt-3 text-3.5 font-semibold text-secondary bg-light-accent rounded-lg px-4 py-3'>{notice}</p>}
       </header>
 
       <main className='flex-1 overflow-y-auto px-6 pb-6'>
         {workers.length === 0 ? (
-          <p className='text-center text-secondary/60 py-16'>{search ? 'No name matches your search.' : 'No staff added for this branch yet. An admin adds them in Management → Staff Attendance.'}</p>
+          <p className='text-center text-secondary/60 py-16'>{search ? 'No name matches your search.' : 'No staff added yet. An admin adds them in Management → Staff Attendance → Staff.'}</p>
         ) : (
           <div className='grid grid-cols-3 gap-3'>
             {workers.map((w) => (
