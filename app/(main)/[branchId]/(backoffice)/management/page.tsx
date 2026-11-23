@@ -14,6 +14,7 @@ import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
 import AssignBranchModal from "@/app/(main)/[branchId]/(backoffice)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(backoffice)/management/components/WorkerDetailModal";
 import AttendanceView from "@/app/(main)/[branchId]/(backoffice)/management/components/AttendanceView";
+import StaffAttendanceView from "@/app/(main)/[branchId]/(backoffice)/management/components/StaffAttendanceView";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -27,8 +28,12 @@ export default function ManagementPage() {
 		user,
 		getUserRoleForBranch,
 		canAccessBranch,
+		isUserOwner,
+		isManager,
 		loading: authLoading,
 	} = useAuth();
+	// Staff Attendance (face kiosk for all staff): admins, owners and managers (mirrors face_access.can_manage).
+	const canManageStaffAttendance = isUserOwner() || isManager();
 	const { branchId } = useParams();
 	const [workers, setWorkers] = useState<Worker[]>([]);
 	const [branches, setBranches] = useState<Branch[]>([]);
@@ -51,7 +56,7 @@ export default function ManagementPage() {
 	>("time_in");
 
 	// View mode (only attendance and workers for managers)
-	const [viewMode, setViewMode] = useState<"workers" | "attendance">("workers");
+	const [viewMode, setViewMode] = useState<"workers" | "attendance" | "staff">("workers");
 
 	// Filters and sorting
 	const [filters, setFilters] = useState<WorkerFiltersType>({
@@ -507,6 +512,17 @@ export default function ManagementPage() {
 											}`}>
 											Attendance
 										</button>
+										{canManageStaffAttendance && (
+											<button
+												onClick={() => setViewMode("staff")}
+												className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+													viewMode === "staff"
+														? "bg-white text-secondary shadow-sm"
+														: "text-secondary/60 hover:text-secondary"
+												}`}>
+												Staff Attendance
+											</button>
+										)}
 									</div>
 
 									{/* Add Worker Button - only show in workers view */}
@@ -570,6 +586,8 @@ export default function ManagementPage() {
 										)}
 									</div>
 								</>
+							) : viewMode === "staff" && canManageStaffAttendance ? (
+								<StaffAttendanceView branchId={branchId as string} />
 							) : (
 								/* Attendance View */
 								<AttendanceView 
