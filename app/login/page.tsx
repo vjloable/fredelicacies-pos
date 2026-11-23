@@ -361,6 +361,19 @@ function LoginContent() {
 							</p>
 						</div>
 
+						{/* Staff attendance kiosk: no login needed; the tablet is paired to a branch instead */}
+						<div className='mt-6 pt-6 border-t border-secondary/10'>
+							<Link
+								href='/kiosk'
+								className='flex w-full items-center justify-center gap-2 py-3 rounded-md border-2 border-accent text-accent font-semibold hover:bg-accent/5 transition-all'>
+								<svg className='w-4 h-4' fill='none' stroke='currentColor' strokeWidth={2} viewBox='0 0 24 24' aria-hidden='true'>
+									<path strokeLinecap='round' strokeLinejoin='round' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' />
+								</svg>
+								STAFF ATTENDANCE
+							</Link>
+							<p className='mt-2 text-center text-xs text-secondary/60'>Time in and out with your face</p>
+						</div>
+
 						{/* Footer */}
 						<div className='mt-6 text-center'>
 							<p className='text-xs text-secondary opacity-50'>
