@@ -1,18 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
 import FaceCamera from '@/components/face/FaceCamera';
 import { captureFace, FACE_MODEL } from '@/lib/face/engine';
-import { FACE_HINTS, type FaceIssue } from '@/lib/face/quality';
+import {
+  checkChin,
+  checkStraight,
+  checkTurn,
+  hintText,
+  MAX_YAW,
+  yawSide,
+  type FaceIssue,
+  type HeadAngle,
+  type PoseHint,
+} from '@/lib/face/quality';
 import { useCamera } from '@/lib/face/useCamera';
 import { faceAttendanceService, faceErrorMessage } from '@/services/faceAttendanceService';
 
 // Small natural variations make the enrollment robust to how people actually
-// stand at the kiosk, while staying inside the frontal-face quality limits.
-const SHOTS = [
-  'Look straight at the camera',
-  'Turn your head slightly to the left',
-  'Turn your head slightly to the right',
-  'Lower your chin a little',
-  'Look straight again and relax',
+// stand at the kiosk. Each shot waits until the pose is really taken and held
+// (measured against the person's own first, straight-on shot), so a shot can't
+// pass without the person moving. Left and right must be opposite sides; turns
+// stay small enough (≤ ~20°) that the template still matches frontal faces.
+interface PoseContext {
+  base: HeadAngle | null;
+  side: 1 | -1 | null;
+}
+const MAX_ENROLL_TURN = 0.35;
+const SHOTS: { prompt: string; check: (a: HeadAngle | null, ctx: PoseContext) => PoseHint | null }[] = [
+  { prompt: 'Look straight at the camera', check: (a) => checkStraight(a) },
+  { prompt: 'Turn your head slightly to the left', check: (a, c) => checkTurn(a, c.base!, { max: MAX_ENROLL_TURN }) },
+  {
+    prompt: 'Now turn slightly to the right',
+    check: (a, c) => checkTurn(a, c.base!, { side: c.side === 1 ? -1 : 1, max: MAX_ENROLL_TURN }),
+  },
+  { prompt: 'Look forward and lower your chin a little', check: (a, c) => checkChin(a, c.base!) },
+  { prompt: 'Look straight again and relax', check: (a, c) => checkStraight(a, c.base!) },
 ];
 
 type Step = 'consent' | 'capture' | 'saving' | 'done' | 'error';
@@ -28,7 +49,7 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
   const [step, setStep] = useState<Step>('consent');
   const [agreed, setAgreed] = useState(false);
   const [shot, setShot] = useState(0);
-  const [issue, setIssue] = useState<FaceIssue | null>('no_face');
+  const [issue, setIssue] = useState<FaceIssue | PoseHint | null>('no_face');
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { videoRef, ready, error: cameraError } = useCamera(step === 'capture');
@@ -44,10 +65,21 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
     (async () => {
       try {
         const embeddings: number[][] = [];
+        const ctx: PoseContext = { base: null, side: null };
         for (let i = 0; i < SHOTS.length; i++) {
           setShot(i);
-          await new Promise((r) => setTimeout(r, 900)); // time to follow the prompt
-          const sample = await captureFace(videoRef.current!, { frames: 2, timeoutMs: 30_000, signal: ctrl.signal, onHint: setIssue });
+          setIssue(null);
+          await new Promise((r) => setTimeout(r, 900)); // time to read the prompt
+          const sample = await captureFace(videoRef.current!, {
+            frames: 3, // hold the pose for a moment
+            timeoutMs: 30_000,
+            signal: ctrl.signal,
+            onHint: setIssue,
+            maxYaw: ctx.base ? Math.abs(ctx.base.yaw) + MAX_YAW : MAX_YAW,
+            pose: (a) => SHOTS[i]!.check(a, ctx),
+          });
+          if (i === 0) ctx.base = sample.angle;
+          if (i === 1 && ctx.base && sample.angle) ctx.side = yawSide(sample.angle, ctx.base);
           embeddings.push(sample.embedding);
         }
         setStep('saving');
@@ -121,13 +153,13 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
               <div className='text-3 font-semibold text-accent tracking-widest'>
                 SCAN {shot + 1} OF {SHOTS.length}
               </div>
-              <div className='text-4 font-bold text-secondary'>{SHOTS[shot]}</div>
+              <div className='text-4 font-bold text-secondary'>{SHOTS[shot]!.prompt}</div>
             </div>
             <FaceCamera
               videoRef={videoRef}
               cameraError={cameraError}
               state={issue ? 'guiding' : 'good'}
-              hint={!ready ? 'Starting camera…' : issue ? FACE_HINTS[issue] : 'Hold still…'}
+              hint={!ready ? 'Starting camera…' : issue ? hintText(issue) : 'Hold still…'}
             />
             <div className='flex justify-center gap-2 mt-4'>
               {SHOTS.map((_, i) => (
