@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// Self-hosted Supabase serves storage from its own domain, so allow whatever
+// host NEXT_PUBLIC_SUPABASE_URL points at alongside the hosted *.supabase.co.
+const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : undefined;
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ['jspdf', 'jspdf-autotable'],
   images: {
@@ -11,6 +17,15 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
         search: '',
       },
+      ...(supabaseHost && !supabaseHost.endsWith('.supabase.co')
+        ? [{
+            protocol: 'https' as const,
+            hostname: supabaseHost,
+            port: '',
+            pathname: '/storage/v1/object/public/**',
+            search: '',
+          }]
+        : []),
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000, // 1 year — safe because Supabase URLs are content-addressed (Date.now() prefix)
