@@ -47,7 +47,13 @@ const MESSAGES: Record<string, string> = {
 export const faceErrorMessage = (err: unknown): string => {
   // The server's own message covers codes the kiosk has no copy for (e.g. FORBIDDEN details).
   if (err instanceof FaceApiError) return MESSAGES[err.code] ?? err.message;
-  if (err instanceof Error && err.message === 'TIMEOUT') return "Couldn't get a clear look at your face. Please try again.";
+  if (err instanceof Error) {
+    // Raised by the on-tablet face check (lib/face/engine.ts, kiosk FaceCheckModal).
+    if (err.message === 'TIMEOUT') return "Couldn't get a clear look at your face. Please try again.";
+    if (err.message === 'NO_TURN') return "We didn't see you turn your head. Please try again and follow the prompts.";
+    if (err.message === 'LOST_FACE') return 'Keep your face in view the whole time. Please try again.';
+    if (err.message === 'FACE_CHANGED') return 'Only the same person should be in front of the camera. Please try again.';
+  }
   return 'Something went wrong. Please try again.';
 };
 
