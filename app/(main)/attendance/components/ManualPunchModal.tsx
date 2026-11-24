@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { fromManilaInput, toManilaInput } from '@/lib/manilaTime';
 import { faceAttendanceService, faceErrorMessage, type Employee, type KioskAction } from '@/services/faceAttendanceService';
-import { input, Modal, primaryButton, secondaryButton } from './ui';
+import { ErrorBanner, Icon, input, Modal, primaryButton, secondaryButton } from './ui';
 
 interface ManualPunchModalProps {
   action: KioskAction;
@@ -36,7 +36,11 @@ export default function ManualPunchModal({ action, employee, choices = [], onClo
   };
 
   return (
-    <Modal title={isIn ? 'Time in manually' : 'Time out manually'} subtitle={employee?.name} onClose={onClose}>
+    <Modal
+      title={isIn ? 'Time in manually' : 'Time out manually'}
+      subtitle={employee?.name}
+      icon={isIn ? <Icon.LogIn className='w-5 h-5' /> : <Icon.LogOut className='w-5 h-5' />}
+      onClose={onClose}>
       <div className='space-y-4'>
         {!employee && (
           <label className='block text-3 font-semibold text-secondary'>
@@ -54,14 +58,17 @@ export default function ManualPunchModal({ action, employee, choices = [], onClo
           {isIn ? 'Time in' : 'Time out'} (Philippine time)
           <input type='datetime-local' className={`${input} mt-1`} value={when} max={toManilaInput(new Date())} onChange={(e) => setWhen(e.target.value)} />
         </label>
-        <p className='text-3 text-secondary/60'>This is recorded as a manual entry under your name.</p>
-        {error && <p className='text-3.5 text-error'>{error}</p>}
+        <p className='flex items-start gap-2 text-3 text-secondary/60'>
+          <Icon.Info className='w-3.5 h-3.5 mt-0.5' />
+          Recorded as a manual entry under your name.
+        </p>
+        {error && <ErrorBanner message={error} />}
         <div className='flex gap-3'>
           <button onClick={onClose} className={secondaryButton}>
             Cancel
           </button>
           <button disabled={busy || !employeeId || !when} onClick={save} className={primaryButton}>
-            {busy ? 'Saving…' : isIn ? 'TIME IN' : 'TIME OUT'}
+            {busy ? 'Saving…' : isIn ? 'Time in' : 'Time out'}
           </button>
         </div>
       </div>

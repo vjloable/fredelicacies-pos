@@ -14,6 +14,7 @@ import {
 } from '@/lib/face/quality';
 import { useCamera } from '@/lib/face/useCamera';
 import { faceAttendanceService, faceErrorMessage } from '@/services/faceAttendanceService';
+import { Icon, primaryButton, secondaryButton } from './ui';
 
 // Small natural variations make the enrollment robust to how people actually
 // stand at the kiosk. Each shot waits until the pose is really taken and held
@@ -103,21 +104,27 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
 
   return (
     <div className='fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
-      <div className='bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full max-h-full overflow-y-auto'>
-        <div className='flex items-start justify-between mb-5'>
-          <div>
-            <h3 className='text-lg font-bold text-secondary'>{person.enrolled ? 'Re-enroll face' : 'Enroll face'}</h3>
-            <p className='text-xs text-secondary/70'>{person.name}</p>
+      <div role='dialog' aria-modal='true' aria-label='Enroll face' className='bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full max-h-full overflow-y-auto shadow-xl'>
+        <div className='flex items-start gap-3 mb-5'>
+          <span className='w-10 h-10 rounded-full bg-light-accent/60 text-accent flex items-center justify-center shrink-0'>
+            <Icon.Face className='w-5 h-5' />
+          </span>
+          <div className='flex-1 min-w-0'>
+            <h3 className='text-4.5 font-bold text-secondary leading-tight'>{person.enrolled ? 'Re-enroll face' : 'Enroll face'}</h3>
+            <p className='text-3 text-secondary/60 mt-0.5'>{person.name}</p>
           </div>
-          <button aria-label='Close' onClick={close} className='text-gray-400 hover:text-gray-600 p-2'>
-            ✕
+          <button aria-label='Close' onClick={close} className='-mr-2 -mt-1 p-2 rounded-lg text-secondary/40 hover:text-secondary hover:bg-secondary/5'>
+            <Icon.Close className='w-5 h-5' />
           </button>
         </div>
 
         {step === 'consent' && (
           <>
-            <div className='text-3.5 text-secondary space-y-3 bg-gray-50 rounded-lg p-4 mb-4'>
-              <p className='font-semibold'>Privacy notice — please read this to them</p>
+            <div className='text-3.5 text-secondary space-y-3 bg-background border border-secondary/10 rounded-lg p-4 mb-4'>
+              <p className='flex items-center gap-2 font-semibold'>
+                <Icon.Shield className='w-4 h-4 text-accent' />
+                Privacy notice: please read this to them
+              </p>
               <p>
                 Fredelicacies uses face verification to record your time in and time out at the branch kiosk. We will
                 take a few face scans now to create a <span className='font-semibold'>numeric face template</span>. No
@@ -131,18 +138,19 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
               </p>
               <p className='text-3 text-secondary/60'>Data Privacy Act of 2012 (RA 10173).</p>
             </div>
-            <label className='flex items-start gap-3 text-3.5 text-secondary mb-6'>
-              <input type='checkbox' className='mt-1' checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <label className='flex items-start gap-3 text-3.5 text-secondary mb-6 cursor-pointer'>
+              <input type='checkbox' className='mt-1 accent-accent w-4 h-4' checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
               <span>{person.name} has read or heard this notice and agrees to face enrollment.</span>
             </label>
             {person.enrolled && (
-              <p className='text-3 text-secondary/70 mb-4'>This replaces the face currently enrolled for {person.name}.</p>
+              <p className='flex items-start gap-2 text-3 text-secondary/70 mb-4'>
+                <Icon.Info className='w-3.5 h-3.5 mt-0.5' />
+                This replaces the face currently enrolled for {person.name}.
+              </p>
             )}
-            <button
-              disabled={!agreed}
-              onClick={() => setStep('capture')}
-              className='w-full py-3 rounded-lg bg-accent text-primary font-black disabled:opacity-40'>
-              START SCAN
+            <button disabled={!agreed} onClick={() => setStep('capture')} className={`${primaryButton} w-full py-3`}>
+              <Icon.Face />
+              Start scan
             </button>
           </>
         )}
@@ -169,23 +177,34 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
           </>
         )}
 
-        {step === 'saving' && <p className='text-center text-secondary py-10'>Saving face template…</p>}
+        {step === 'saving' && (
+          <div className='flex flex-col items-center gap-3 py-10 text-secondary'>
+            <span className='w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin' />
+            Saving face template…
+          </div>
+        )}
 
         {step === 'done' && (
           <div className='text-center py-6'>
-            <div className='text-5 font-bold text-success mb-2'>Face enrolled</div>
+            <span className='w-14 h-14 mx-auto mb-3 rounded-full bg-success/10 text-success flex items-center justify-center'>
+              <Icon.Check className='w-7 h-7' />
+            </span>
+            <div className='text-5 font-bold text-secondary mb-1'>Face enrolled</div>
             <p className='text-3.5 text-secondary/70 mb-6'>{person.name} can now time in and out at the kiosk.</p>
-            <button onClick={onClose} className='w-full py-3 rounded-lg bg-accent text-primary font-black'>
-              DONE
+            <button onClick={onClose} className={`${primaryButton} w-full py-3`}>
+              Done
             </button>
           </div>
         )}
 
         {step === 'error' && (
           <div className='text-center py-4'>
-            <p className='text-4 text-error font-semibold mb-6'>{error}</p>
+            <span className='w-14 h-14 mx-auto mb-3 rounded-full bg-error/10 text-error flex items-center justify-center'>
+              <Icon.Alert className='w-7 h-7' />
+            </span>
+            <p className='text-4 text-secondary font-semibold mb-6'>{error}</p>
             <div className='flex gap-3'>
-              <button onClick={close} className='flex-1 py-3 rounded-lg border border-secondary/20 text-secondary font-semibold'>
+              <button onClick={close} className={secondaryButton}>
                 Close
               </button>
               <button
@@ -195,8 +214,9 @@ export default function EnrollFaceModal({ person, onClose, onEnrolled }: EnrollF
                   setShot(0);
                   setStep('capture');
                 }}
-                className='flex-1 py-3 rounded-lg bg-accent text-primary font-black'>
-                RETAKE
+                className={primaryButton}>
+                <Icon.Restore />
+                Retake
               </button>
             </div>
           </div>

@@ -141,7 +141,7 @@ export default function KioskPage() {
 
       <main className='flex-1 overflow-y-auto px-6 pb-6'>
         {workers.length === 0 ? (
-          <p className='text-center text-secondary/60 py-16'>{search ? 'No name matches your search.' : 'No staff added yet. An admin adds them in Management → Staff Attendance → Staff.'}</p>
+          <p className='text-center text-secondary/60 py-16'>{search ? 'No name matches your search.' : 'No staff added yet. An admin or owner adds them under Attendance, Staff.'}</p>
         ) : (
           <div className='grid grid-cols-3 gap-3'>
             {workers.map((w) => (
@@ -166,7 +166,7 @@ export default function KioskPage() {
             <h2 className='text-5 font-bold text-secondary'>Unpair this tablet?</h2>
             <p className='text-3.5 text-secondary/70 mt-2 mb-6'>
               Staff won&apos;t be able to time in here until a manager pairs it again. To block it completely, also revoke it in
-              Management → Staff Attendance → Tablets.
+              Attendance, Tablets.
             </p>
             <div className='flex gap-3'>
               <button onClick={() => setConfirmUnpair(false)} className='flex-1 py-3 rounded-lg border border-secondary/20 text-secondary font-semibold'>

@@ -4,6 +4,7 @@ import {
   resolveEffectiveRole,
   canPreviewRoles,
   canManageRole,
+  canManageFaceAttendance,
   hasAllBranchAccess,
   outranks,
   PREVIEWABLE_ROLES,
@@ -115,5 +116,18 @@ describe('outranks', () => {
     expect(outranks('cashier', 'team_leader')).toBe(false);
     expect(outranks('manager', 'manager')).toBe(false);
     expect(outranks(null, 'cashier')).toBe(false);
+  });
+});
+
+describe('canManageFaceAttendance', () => {
+  it('allows managers and above', () => {
+    expect(canManageFaceAttendance('admin')).toBe(true);
+    expect(canManageFaceAttendance('owner')).toBe(true);
+    expect(canManageFaceAttendance('manager')).toBe(true);
+  });
+  it('blocks team leaders, cashiers and signed-out users', () => {
+    expect(canManageFaceAttendance('team_leader')).toBe(false);
+    expect(canManageFaceAttendance('cashier')).toBe(false);
+    expect(canManageFaceAttendance(null)).toBe(false);
   });
 });

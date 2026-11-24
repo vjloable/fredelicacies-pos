@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { faceAttendanceService, faceErrorMessage, type Employee } from '@/services/faceAttendanceService';
-import { input, Modal, primaryButton, secondaryButton } from './ui';
+import { ErrorBanner, Icon, input, Modal, primaryButton, secondaryButton } from './ui';
 
-// Add or rename a person on the kiosk staff list (admins and owners only).
+// Add or rename a person on the kiosk staff list.
 export default function EmployeeFormModal({
   employee,
   onClose,
@@ -35,7 +35,11 @@ export default function EmployeeFormModal({
   };
 
   return (
-    <Modal title={employee ? 'Edit staff' : 'Add staff'} subtitle='Shown on the attendance kiosk' onClose={onClose}>
+    <Modal
+      title={employee ? 'Edit staff' : 'Add staff'}
+      subtitle='Shown on the attendance kiosk'
+      icon={employee ? <Icon.Edit className='w-5 h-5' /> : <Icon.Plus className='w-5 h-5' />}
+      onClose={onClose}>
       <form onSubmit={save} className='space-y-4'>
         <label className='block text-3 font-semibold text-secondary'>
           Name
@@ -51,13 +55,13 @@ export default function EmployeeFormModal({
             onChange={(e) => setPosition(e.target.value)}
           />
         </label>
-        {error && <p className='text-3.5 text-error'>{error}</p>}
+        {error && <ErrorBanner message={error} />}
         <div className='flex gap-3'>
           <button type='button' onClick={onClose} className={secondaryButton}>
             Cancel
           </button>
           <button disabled={busy || !name.trim()} className={primaryButton}>
-            {busy ? 'Saving…' : employee ? 'SAVE' : 'ADD'}
+            {busy ? 'Saving…' : employee ? 'Save' : 'Add staff'}
           </button>
         </div>
       </form>

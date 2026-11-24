@@ -85,3 +85,9 @@ export function canManageRole(actor: EffectiveRole | null, target: EffectiveRole
 export function hasAllBranchAccess(role: EffectiveRole | null): boolean {
   return role === 'admin' || role === 'owner' || role === 'manager';
 }
+
+// Face attendance (staff list, enrollment, time records, kiosk tablets): manager
+// and above, matching face_access().can_manage on the face service. Team leaders
+// and cashiers only use the kiosk itself.
+export const canManageFaceAttendance = (role: EffectiveRole | null): boolean =>
+  role !== null && ROLE_RANK[role] >= ROLE_RANK.manager;

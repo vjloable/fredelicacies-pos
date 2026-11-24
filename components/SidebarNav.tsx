@@ -17,6 +17,8 @@ import ManagementIcon from "./icons/SidebarNav/ManagementIcon";
 import UsersIcon from "./icons/SidebarNav/UsersIcon";
 import DistributionIcon from "./icons/SidebarNav/DistributionIcon";
 import DashboardIcon from "./icons/SidebarNav/DashboardIcon";
+import AttendanceIcon from "./icons/SidebarNav/AttendanceIcon";
+import { canManageFaceAttendance } from "@/lib/roles";
 import VersionDisplay from "./VersionDisplay";
 import WhatsNewModal from "./WhatsNewModal";
 import {
@@ -35,7 +37,7 @@ interface NavItem {
 }
 
 export default function SidebarNav() {
-	const { logout, isUserOwner, hasManagerPrivileges } = useAuth();
+	const { logout, isUserOwner, hasManagerPrivileges, effectiveRole } = useAuth();
 	const { currentBranch, clearCurrentBranch } = useBranch();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [transferActionable, setTransferActionable] = useState(0);
@@ -90,7 +92,7 @@ export default function SidebarNav() {
 	const isPlainWorker = !isUserOwner() && !isManagerForCurrentBranch;
 
 	// Outside a branch, an owner/admin is looking at cross-branch tools only — a
-	// separate flat list (no functional grouping, since it's just five global pages).
+	// separate flat list (no functional grouping, since it's just a few global pages).
 	const isGlobalOwnerView = isUserOwner() && !currentBranch;
 
 	const globalNavItems: NavItem[] = [
@@ -98,6 +100,7 @@ export default function SidebarNav() {
 		{ href: "/owner/dashboard", label: "Dashboard", icon: DashboardIcon, ownerOnly: true },
 		{ href: "/owner/transfers", label: "Distribution", icon: DistributionIcon, ownerOnly: true },
 		{ href: "/owner/users", label: "Users", icon: UsersIcon, ownerOnly: true },
+		{ href: "/attendance", label: "Attendance", icon: AttendanceIcon, ownerOnly: true },
 		{ href: "/owner/logs", label: "Logs", icon: LogsIcon, ownerOnly: true },
 	];
 
@@ -129,8 +132,15 @@ export default function SidebarNav() {
 		: [];
 
 	// People — managing staff and access.
+	// Attendance is company-wide (absolute link, outside the branch) and only for
+	// managers and above; team leaders still get branch Management.
 	const peopleNavItems: NavItem[] = currentBranch && (isManagerForCurrentBranch || isUserOwner())
-		? [{ href: "management", label: "Management", icon: ManagementIcon } as NavItem]
+		? [
+			{ href: "management", label: "Management", icon: ManagementIcon } as NavItem,
+			...(canManageFaceAttendance(effectiveRole)
+				? [{ href: "/attendance", label: "Attendance", icon: AttendanceIcon } as NavItem]
+				: []),
+		  ]
 		: [];
 
 	// Insights — the commissary's own dashboard (its production overview).
