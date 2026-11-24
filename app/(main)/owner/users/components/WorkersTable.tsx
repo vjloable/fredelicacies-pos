@@ -13,8 +13,6 @@ interface WorkersTableProps {
 	loading?: boolean;
 	onEdit?: (worker: Worker) => void;
 	onDelete?: (worker: Worker) => void;
-	onTimeIn?: (worker: Worker) => void;
-	onTimeOut?: (worker: Worker) => void;
 	onAssignBranch?: (worker: Worker) => void;
 	onRowClick?: (worker: Worker) => void;
 	sortConfig?: SortConfig;
@@ -95,8 +93,6 @@ export default function WorkersTable({
 							{ key: "email", label: "Email", sortable: true },
 							{ key: "role", label: "Role", sortable: true },
 							{ key: "branches", label: "Branches", sortable: false },
-							{ key: "currentStatus", label: "Status", sortable: true },
-
 							{ key: "actions", label: "Actions", sortable: false },
 						]}
 					/>

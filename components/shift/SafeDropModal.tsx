@@ -22,7 +22,6 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
   const [receiverId, setReceiverId] = useState('');
   const [receiverSearch, setReceiverSearch] = useState('');
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [clockedInIds, setClockedInIds] = useState<Set<string>>(new Set());
   const [loadingWorkers, setLoadingWorkers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -33,21 +32,9 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
     setLoadingWorkers(true);
     (async () => {
       try {
-        const [allWorkers, clockedIn] = await Promise.all([
-          workerService.getWorkersByBranch(currentBranch.id),
-          workerService.getClockedInWorkers(currentBranch.id),
-        ]);
+        const allWorkers = await workerService.getWorkersByBranch(currentBranch.id);
         if (!cancelled) {
-          setClockedInIds(new Set(clockedIn.map(w => w.id)));
-          // Sort: clocked-in first, then alphabetical
-          const sorted = [...allWorkers].sort((a, b) => {
-            const aIn = clockedIn.some(c => c.id === a.id);
-            const bIn = clockedIn.some(c => c.id === b.id);
-            if (aIn && !bIn) return -1;
-            if (!aIn && bIn) return 1;
-            return a.name.localeCompare(b.name);
-          });
-          setWorkers(sorted);
+          setWorkers([...allWorkers].sort((a, b) => a.name.localeCompare(b.name)));
         }
       } catch {
         if (!cancelled) setWorkers([]);
@@ -193,25 +180,19 @@ export default function SafeDropModal({ isOpen, onClose }: SafeDropModalProps) {
                     <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
                       {workers
                         .filter(w => !receiverSearch || w.name.toLowerCase().includes(receiverSearch.toLowerCase()))
-                        .map((w) => {
-                          const isClockedIn = clockedInIds.has(w.id);
-                          return (
-                            <button
-                              key={w.id}
-                              onClick={() => setReceiverId(w.id)}
-                              className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all flex items-center gap-1.5 ${
-                                receiverId === w.id
-                                  ? 'bg-accent text-primary ring-2 ring-accent'
-                                  : 'bg-gray-50 text-secondary hover:bg-gray-100'
-                              }`}
-                            >
-                              {isClockedIn && (
-                                <span className="w-1.5 h-1.5 bg-success rounded-full shrink-0" title="Clocked in" />
-                              )}
-                              <span className="truncate">{w.name}</span>
-                            </button>
-                          );
-                        })}
+                        .map((w) => (
+                          <button
+                            key={w.id}
+                            onClick={() => setReceiverId(w.id)}
+                            className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all flex items-center gap-1.5 ${
+                              receiverId === w.id
+                                ? 'bg-accent text-primary ring-2 ring-accent'
+                                : 'bg-gray-50 text-secondary hover:bg-gray-100'
+                            }`}
+                          >
+                            <span className="truncate">{w.name}</span>
+                          </button>
+                        ))}
                     </div>
                   </>
                 )}

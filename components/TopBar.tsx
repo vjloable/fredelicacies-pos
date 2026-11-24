@@ -8,12 +8,8 @@ import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import LiveIndicator from "@/components/LiveIndicator";
-import { useState, useCallback } from "react";
-import { useTimeTracking } from "@/contexts/TimeTrackingContext";
-import { useBranch } from "@/contexts/BranchContext";
+import { useState } from "react";
 import MenuBurgerIcon from "@/components/icons/MenuBurger";
-import { workerService } from "@/services/workerService";
-import PinEntryModal from "@/components/PinEntryModal";
 import ProfileModal from "@/components/ProfileModal";
 import SafeImage from "@/components/SafeImage";
 import { useShift } from "@/contexts/ShiftContext";
@@ -26,31 +22,20 @@ import RoleBadge from "@/components/RoleBadge";
 interface TopBarProps {
 	title?: string;
 	icon?: React.ReactNode;
-	showTimeTracking?: boolean;
 	rightAction?: React.ReactNode;
 }
 
 export default function TopBar({
 	title,
 	icon,
-	showTimeTracking = true,
 	rightAction,
 }: TopBarProps) {
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
 	const { user, effectiveRole } = useAuth();
-	const { currentBranch } = useBranch();
-	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [isTimeTracking, setIsTimeTracking] = useState(false);
-	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
-	
+		const [isRefreshing, setIsRefreshing] = useState(false);
 	const shift = useShift();
 	const [showProfileModal, setShowProfileModal] = useState(false);
-
-	// PIN verification states
-	const [showPinModal, setShowPinModal] = useState(false);
-	const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
-	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
 
 	const handleRefresh = async () => {
 		if (isRefreshing) return;
@@ -67,80 +52,6 @@ export default function TopBar({
 
 	const userDisplayName = user?.display_name?.trim() || user?.name?.trim().split(' ')[0] || user?.email?.split("@")[0] || "Worker";
 
-	// Handle time tracking actions with PIN verification
-	const handleTimeTrackingClick = async () => {
-		const isExemptOwner = timeTracking.worker?.isOwner;
-
-		if (!timeTracking.worker || isExemptOwner || isTimeTracking || !user) return;
-
-		const action = timeTracking.isWorking ? 'clockOut' : 'clockIn';
-		setPendingAction(action);
-
-		// Check if user has a PIN set
-		try {
-			const hasPinSet = await workerService.hasPin(user.uid);
-			setPinMode(hasPinSet ? 'verify' : 'setup');
-			setShowPinModal(true);
-		} catch (error) {
-			console.error('Error checking PIN status:', error);
-			alert('Failed to check PIN status. Please try again.');
-		}
-	};
-
-	// Perform actual clock in after face verification
-	const performClockIn = useCallback(async () => {
-		if (!timeTracking.worker || isTimeTracking) return;
-
-		setIsTimeTracking(true);
-		try {
-			const branchId = currentBranch?.id || timeTracking.worker.roleAssignments[0]?.branchId;
-			if (!branchId) {
-				alert("No branch selected for time tracking");
-				return;
-			}
-			await timeTracking.clockIn(branchId, "Clock-in from TopBar (PIN Verified)");
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : 'Clock in failed';
-			alert(errorMessage);
-		} finally {
-			setIsTimeTracking(false);
-		}
-	}, [timeTracking, currentBranch, isTimeTracking]);
-
-	// Perform actual clock out after face verification
-	const performClockOut = useCallback(async () => {
-		if (!timeTracking.worker || isTimeTracking) return;
-
-		setIsTimeTracking(true);
-		try {
-			await timeTracking.clockOut("Clock-out from TopBar (PIN Verified)");
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : 'Clock out failed';
-			alert(errorMessage);
-		} finally {
-			setIsTimeTracking(false);
-		}
-	}, [timeTracking, isTimeTracking]);
-
-	// Handle PIN verification success
-	const handlePinSuccess = useCallback(async () => {
-		setShowPinModal(false);
-
-		if (pendingAction === 'clockIn') {
-			await performClockIn();
-		} else if (pendingAction === 'clockOut') {
-			await performClockOut();
-		}
-
-		setPendingAction(null);
-	}, [pendingAction, performClockIn, performClockOut]);
-
-	// Handle PIN modal cancel
-	const handlePinCancel = useCallback(() => {
-		setShowPinModal(false);
-		setPendingAction(null);
-	}, []);
-
 	return (
 		<>
 			<ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
@@ -149,16 +60,6 @@ export default function TopBar({
 			<OpenShiftModal />
 			<CloseShiftModal />
 			<ShiftReportModal />
-
-			{/* PIN Verification Modal */}
-			{showPinModal && user && (
-				<PinEntryModal
-					userId={user.uid}
-					mode={pinMode}
-					onSuccess={handlePinSuccess}
-					onCancel={handlePinCancel}
-				/>
-			)}
 
 			<div className='shrink-0'>
 			<div className='flex items-center justify-between h-22.5 w-full'>
@@ -190,96 +91,6 @@ export default function TopBar({
 
 					{/* Role Badge */}
 					{effectiveRole && <RoleBadge role={effectiveRole} />}
-
-					{/* Work Status Badge - Only for workers and managers, not admins */}
-					{showTimeTracking &&
-						timeTracking.worker &&
-						!timeTracking.worker.isOwner && (
-							<div className='shrink-0'>
-								<button
-									onClick={handleTimeTrackingClick}
-									disabled={isTimeTracking}
-									className={`relative h-14 px-3 py-3 text-center flex rounded-xl gap-2 items-center font-medium text-3 lg:text-3 cursor-pointer group transition-all duration-200 ${
-										timeTracking.isWorking
-											? "bg-success/10 text-success border border-success hover:border-secondary hover:bg-secondary/20 hover:shadow-lg"
-											: "bg-secondary/10 text-secondary border border-secondary hover:border-success hover:bg-success/20 hover:shadow-lg"
-									} ${
-										isTimeTracking
-											? "opacity-50 cursor-not-allowed"
-											: ""
-									}`}
-									title={
-										timeTracking.isWorking
-											? "Click to clock out"
-											: "Click to clock in"
-									}>
-									{/* Click indicator overlay */}
-									{!isTimeTracking && (
-										<div
-											className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 ${
-												timeTracking.isWorking
-													? "bg-secondary/10"
-													: "bg-success/10"
-											}`}
-										/>
-									)}
-
-									<span
-										className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-											timeTracking.isWorking
-												? "bg-success/10 text-success group-hover:bg-secondary/10 group-hover:text-secondary"
-												: "bg-secondary/10 text-secondary group-hover:bg-success/10 group-hover:text-success"
-										}`}>
-										{isTimeTracking ? (
-											<LoadingSpinner className="w-3! h-3! border-current" />
-										) : timeTracking.isWorking ? (
-											<LoadingSpinner className="w-3! h-3! border-success group-hover:border-secondary" />
-										) : (
-											<div className="border border-secondary group-hover:border-success rounded-full h-3 w-3"/>
-										)}
-									</span>
-									<div className={`relative z-10 flex flex-col items-start]
-											${timeTracking.isWorking 
-												? "text-success" 
-												: "text-secondary"
-											}
-										`}>
-										<span className={`font-semibold 
-												${timeTracking.isWorking 
-													? "group-hover:text-secondary" 
-													: "group-hover:text-success"
-												}
-											`}>
-											{isTimeTracking
-												? timeTracking.isWorking
-													? "Clocking out..."
-													: "Clocking in..."
-												: timeTracking.isWorking
-												? "Working"
-												: "Off Duty"}
-										</span>
-										{!isTimeTracking && (
-											<span
-												className={`text-xs ${
-													timeTracking.isWorking
-														? "opacity-70 group-hover:text-secondary"
-														: "opacity-70 group-hover:text-success"
-												}`}>
-												{timeTracking.isWorking
-													? timeTracking.workingDuration > 0
-														? `${Math.floor(
-																timeTracking.workingDuration / 60
-														  )}h ${
-																timeTracking.workingDuration % 60
-														  }m • Click to end`
-														: "Click to end"
-													: "Click to start"}
-											</span>
-										)}
-									</div>
-								</button>
-							</div>
-						)}
 
 					{/* Shift Control */}
 					{!shift.isExempt && (

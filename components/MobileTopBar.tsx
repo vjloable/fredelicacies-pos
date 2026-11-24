@@ -12,11 +12,7 @@ import { useDateTime } from "@/contexts/DateTimeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import LiveIndicator from "@/components/LiveIndicator";
-import { useState, useCallback } from "react";
-import { useTimeTracking } from "@/contexts/TimeTrackingContext";
-import { useBranch } from "@/contexts/BranchContext";
-import { workerService } from "@/services/workerService";
-import PinEntryModal from "@/components/PinEntryModal";
+import { useState } from "react";
 import { useShift } from "@/contexts/ShiftContext";
 import OpenShiftModal from "@/components/shift/OpenShiftModal";
 import CloseShiftModal from "@/components/shift/CloseShiftModal";
@@ -26,7 +22,6 @@ import RoleBadge from "@/components/RoleBadge";
 interface MobileTopBarProps {
 	title?: string;
 	icon?: React.ReactNode;
-	showTimeTracking?: boolean;
 	onOrderClick?: () => void;
 	topRightAction?: React.ReactNode;
 	rightAction?: React.ReactNode;
@@ -35,7 +30,6 @@ interface MobileTopBarProps {
 export default function MobileTopBar({
 	title,
 	icon,
-	showTimeTracking = true,
 	onOrderClick,
 	topRightAction,
 	rightAction,
@@ -43,17 +37,8 @@ export default function MobileTopBar({
 	const { toggle: toggleDrawer } = useDrawer();
 	const { date, time, isInternetTime, isLoading, forceSync } = useDateTime();
 	const { user, effectiveRole } = useAuth();
-	const { currentBranch } = useBranch();
 	const shift = useShift();
 	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [isTimeTracking, setIsTimeTracking] = useState(false);
-	const timeTracking = useTimeTracking({ autoRefresh: showTimeTracking });
-	
-	// PIN verification states
-	const [showPinModal, setShowPinModal] = useState(false);
-	const [pinMode, setPinMode] = useState<'setup' | 'verify'>('verify');
-	const [pendingAction, setPendingAction] = useState<'clockIn' | 'clockOut' | null>(null);
-
 	const handleRefresh = async () => {
 		if (isRefreshing) return;
 
@@ -69,96 +54,12 @@ export default function MobileTopBar({
 
 	const userDisplayName = user?.email?.split("@")[0] || "Worker";
 
-	// Handle time tracking actions with PIN verification
-	const handleTimeTrackingClick = async () => {
-		const isExemptOwner = timeTracking.worker?.isOwner;
-
-		if (!timeTracking.worker || isExemptOwner || isTimeTracking || !user) return;
-
-		const action = timeTracking.isWorking ? 'clockOut' : 'clockIn';
-		setPendingAction(action);
-
-		// Check if user has a PIN set
-		try {
-			const hasPinSet = await workerService.hasPin(user.uid);
-			setPinMode(hasPinSet ? 'verify' : 'setup');
-			setShowPinModal(true);
-		} catch (error) {
-			console.error('Error checking PIN status:', error);
-			alert('Failed to check PIN status. Please try again.');
-		}
-	};
-
-	// Perform actual clock in after face verification
-	const performClockIn = useCallback(async () => {
-		if (!timeTracking.worker || isTimeTracking) return;
-
-		setIsTimeTracking(true);
-		try {
-			const branchId = currentBranch?.id || timeTracking.worker.roleAssignments[0]?.branchId;
-			if (!branchId) {
-				alert("No branch selected for time tracking");
-				return;
-			}
-			await timeTracking.clockIn(branchId, "Clock-in from MobileTopBar (PIN Verified)");
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : 'Clock in failed';
-			alert(errorMessage);
-		} finally {
-			setIsTimeTracking(false);
-		}
-	}, [timeTracking, currentBranch, isTimeTracking]);
-
-	// Perform actual clock out after face verification
-	const performClockOut = useCallback(async () => {
-		if (!timeTracking.worker || isTimeTracking) return;
-
-		setIsTimeTracking(true);
-		try {
-			await timeTracking.clockOut("Clock-out from MobileTopBar (PIN Verified)");
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : 'Clock out failed';
-			alert(errorMessage);
-		} finally {
-			setIsTimeTracking(false);
-		}
-	}, [timeTracking, isTimeTracking]);
-
-	// Handle PIN verification success
-	const handlePinSuccess = useCallback(async () => {
-		setShowPinModal(false);
-
-		if (pendingAction === 'clockIn') {
-			await performClockIn();
-		} else if (pendingAction === 'clockOut') {
-			await performClockOut();
-		}
-
-		setPendingAction(null);
-	}, [pendingAction, performClockIn, performClockOut]);
-
-	// Handle PIN modal cancel
-	const handlePinCancel = useCallback(() => {
-		setShowPinModal(false);
-		setPendingAction(null);
-	}, []);
-
 	return (
 		<>
 			{/* Shift Modals */}
 			<OpenShiftModal />
 			<CloseShiftModal />
 			<ShiftReportModal />
-
-			{/* PIN Verification Modal */}
-			{showPinModal && user && (
-				<PinEntryModal
-					userId={user.uid}
-					mode={pinMode}
-					onSuccess={handlePinSuccess}
-					onCancel={handlePinCancel}
-				/>
-			)}
 
 			<div className='shrink-0 w-full'>
 			<div className='flex items-center justify-between h-17.5 px-4 '>
@@ -189,60 +90,6 @@ export default function MobileTopBar({
 				</div>
 
 				{effectiveRole && <RoleBadge role={effectiveRole} variant='mobile' />}
-				{showTimeTracking &&
-					timeTracking.worker &&
-					!timeTracking.worker.isOwner && (
-						<button
-							onClick={handleTimeTrackingClick}
-							disabled={isTimeTracking}
-							className={`flex-1 h-12 px-3 py-2 flex rounded-xl gap-2 items-center font-medium text-xs transition-all duration-200 cursor-pointer group ${
-								timeTracking.isWorking
-									? "bg-success/10 text-success border border-success hover:bg-secondary/10 hover:border-secondary"
-									: "bg-secondary/10 text-secondary border border-secondary hover:bg-success/10 hover:border-success"
-							} ${isTimeTracking ? "opacity-50" : ""}`}>
-							<span
-								className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-									timeTracking.isWorking
-										? "bg-success/10 text-success group-hover:bg-secondary/10"
-										: "bg-secondary/10 text-secondary group-hover:bg-success/10"
-								}`}> 
-								{isTimeTracking ? (
-									<LoadingSpinner className="w-3! h-3! border-current" />
-								) : timeTracking.isWorking ? (
-									<LoadingSpinner className="w-3! h-3! border-success group-hover:border-secondary" />
-								) : (
-									<div className="h-3 w-3 border border-secondary rounded-full group-hover:border-success"/>
-								)}
-							</span>
-							<span className={`font-bold 
-								${timeTracking.isWorking
-									? "opacity-70 group-hover:text-secondary"
-									: "opacity-70 group-hover:text-success"
-								}`
-							}> 
-							{timeTracking.isWorking ? "Working" : "Off Duty"}
-							</span>
-							{!isTimeTracking && (
-								<span
-									className={`text-xs truncate ${
-										timeTracking.isWorking
-											? "opacity-70 group-hover:text-secondary"
-											: "opacity-70 group-hover:text-success"
-									}`}>
-									{timeTracking.isWorking
-										? timeTracking.workingDuration > 0
-											? `${Math.floor(
-													timeTracking.workingDuration / 60
-												)}h ${
-													timeTracking.workingDuration % 60
-												}m`
-											: "Click to end"
-										: "Click to start"}
-								</span>
-							)}
-						</button>
-					)}
-
 				{/* Shift Control */}
 				{!shift.isExempt && (
 					shift.activeShift ? (

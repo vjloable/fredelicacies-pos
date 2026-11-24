@@ -40,8 +40,6 @@ import { formatCurrency } from "@/lib/currency_formatter";
 import EmptyInventory from "./illustrations/EmptyInventory";
 import InventoryIcon from "@/components/icons/SidebarNav/InventoryIcon";
 import PageLoader from "@/components/PageLoader";
-import ClockInGate from "@/components/ClockInGate";
-import { usePOSAccessControl } from "@/contexts/TimeTrackingContext";
 
 interface Item extends InventoryItem {
 	id: string;
@@ -62,7 +60,6 @@ export default function InventoryScreen() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isClient, setIsClient] = useState(false);
-	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id);
 	const [activeTab, setActiveTab] = useState<'products' | 'supplies'>('products');
 	// Sub-toggles within each top-level tab. Products carries Bundles (same category
 	// folders); Supplies separates Ingredients from Misc (both flat, category-less).
@@ -155,13 +152,13 @@ export default function InventoryScreen() {
 
 	// Subscribe to today's EOD locks (owner only)
 	useEffect(() => {
-		if (!isClient || !currentBranch || !canAccessPOS || !isOwner) return;
+		if (!isClient || !currentBranch || !isOwner) return;
 		const today = new Date().toISOString().slice(0, 10);
 		// Fetch session too on mount
 		getEodLocks(currentBranch.id, today).then(({ session }) => setEodSession(session));
 		const unsubscribe = subscribeToEodLocks(currentBranch.id, today, setEodLocks);
 		return () => { unsubscribe(); };
-	}, [isClient, currentBranch, canAccessPOS, isOwner]);
+	}, [isClient, currentBranch, isOwner]);
 
 	// Subscribe to EOD policies
 	useEffect(() => {
@@ -551,7 +548,7 @@ export default function InventoryScreen() {
 						{loading && <PageLoader text="Loading inventory…" />}
 
 						{!loading && (
-							<ClockInGate active={!canAccessPOS} branchId={currentBranch?.id} className='flex-1 overflow-y-auto'>
+							<div className='flex-1 overflow-y-auto'>
 							<div className='px-6 pt-4 pb-6'>
 								{/* Tab Navigation — one flat row; a divider groups Products/Bundles apart from Ingredients/Misc */}
 								<div className='flex flex-wrap items-center gap-2 mb-4'>
@@ -670,40 +667,38 @@ export default function InventoryScreen() {
 																	</span>
 																</button>
 																{/* Manage actions — large touch targets as a bottom action bar */}
-																{canAccessPOS && (
-																	<div className={`absolute bottom-0 left-0 right-0 flex rounded-b-xl overflow-hidden border-t border-gray-200 bg-white/95 backdrop-blur-sm transition-opacity ${manageCategories ?'opacity-100' :'opacity-0 pointer-events-none'}`}>
-																		<button
-																			onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(cat); }}
-																			className={`flex-1 flex items-center justify-center py-3 transition-colors ${cat.is_hidden ?'text-error bg-error/10 active:bg-error/30' :'text-secondary/60 hover:text-secondary hover:bg-gray-100 active:bg-gray-200'}`}
-																			title={cat.is_hidden ?'Hidden — tap to show' :'Visible — tap to hide'}
-																		>
-																			{cat.is_hidden ? (
-																				<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-																					<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' />
-																				</svg>
-																			) : (
-																				<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-																					<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
-																					<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
-																				</svg>
-																			)}
-																		</button>
-																		<button
-																			onClick={(e) => { e.stopPropagation(); setEditingCategory(cat); setShowCategoryForm(true); }}
-																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors'
-																			title='Edit'
-																		>
-																			<EditIcon className='w-5 h-5' />
-																		</button>
-																		<button
-																			onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
-																			className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-error hover:bg-error/10 active:bg-error/20 transition-colors'
-																			title='Delete'
-																		>
-																			<DeleteIcon className='w-5 h-5' />
-																		</button>
-																	</div>
-																)}
+																<div className={`absolute bottom-0 left-0 right-0 flex rounded-b-xl overflow-hidden border-t border-gray-200 bg-white/95 backdrop-blur-sm transition-opacity ${manageCategories ?'opacity-100' :'opacity-0 pointer-events-none'}`}>
+																	<button
+																		onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(cat); }}
+																		className={`flex-1 flex items-center justify-center py-3 transition-colors ${cat.is_hidden ?'text-error bg-error/10 active:bg-error/30' :'text-secondary/60 hover:text-secondary hover:bg-gray-100 active:bg-gray-200'}`}
+																		title={cat.is_hidden ?'Hidden — tap to show' :'Visible — tap to hide'}
+																	>
+																		{cat.is_hidden ? (
+																			<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																				<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' />
+																			</svg>
+																		) : (
+																			<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+																				<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+																				<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+																			</svg>
+																		)}
+																	</button>
+																	<button
+																		onClick={(e) => { e.stopPropagation(); setEditingCategory(cat); setShowCategoryForm(true); }}
+																		className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors'
+																		title='Edit'
+																	>
+																		<EditIcon className='w-5 h-5' />
+																	</button>
+																	<button
+																		onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
+																		className='flex-1 flex items-center justify-center py-3 border-l border-gray-200 text-secondary/60 hover:text-error hover:bg-error/10 active:bg-error/20 transition-colors'
+																		title='Delete'
+																	>
+																		<DeleteIcon className='w-5 h-5' />
+																	</button>
+																</div>
 															</div>
 														))}
 															{/* Uncategorized folder — products with no category */}
@@ -912,7 +907,7 @@ export default function InventoryScreen() {
 												})()}
 
 												{/* EOD Audit Panel — only in the audit category folder */}
-												{isOwner && canAccessPOS && activeCategoryId === auditCategoryId && (eodLocks.length > 0 || eodSession) && (
+												{isOwner && activeCategoryId === auditCategoryId && (eodLocks.length > 0 || eodSession) && (
 													<div className='mb-3 border border-secondary/15 rounded-xl overflow-hidden'>
 														<button
 															onClick={() => setEodPanelOpen(p => !p)}
@@ -1106,7 +1101,7 @@ export default function InventoryScreen() {
 																				)}
 																			</button>
 																		)}
-																		{isOwner && canAccessPOS && requiresEodAudit(item.category_id) && (() => {
+																		{isOwner && requiresEodAudit(item.category_id) && (() => {
 																			const lock = eodLocks.find(l => l.item_id === item.id);
 																			return (
 																				<button
@@ -1381,7 +1376,7 @@ export default function InventoryScreen() {
 									</div>
 								)}
 							</div>
-							</ClockInGate>
+							</div>
 						)}
 
 						{/* Modal Components */}

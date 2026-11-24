@@ -159,7 +159,7 @@ export const userProfileRepository = {
     const eventAssignments: RoleAssignment[] = eventBranches
       .filter(b => !assigned.has(b.id))
       .map(b => ({
-        // Attendance rows reference the worker's home workers row
+        // Event-branch access borrows the worker's home workers row
         workersTableId: home.workersTableId,
         branchId: b.id,
         role: 'team_leader',

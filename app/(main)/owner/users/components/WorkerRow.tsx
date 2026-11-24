@@ -1,7 +1,6 @@
 import React from "react";
 import { Worker } from "@/services/workerService";
 import { User } from "@/contexts/AuthContext";
-import StatusBadge from "./StatusBadge";
 import Image from "next/image";
 
 interface WorkerRowProps {
@@ -10,47 +9,11 @@ interface WorkerRowProps {
 	getBranchName: (branchId: string) => string;
 	onEdit?: (worker: Worker) => void;
 	onDelete?: (worker: Worker) => void;
-	onTimeIn?: (worker: Worker) => void;
-	onTimeOut?: (worker: Worker) => void;
 	onAssignBranch?: (worker: Worker) => void;
 	onRowClick?: (worker: Worker) => void;
 }
 
 // Action icons
-function TimeInIcon() {
-	return (
-		<svg
-			className='w-4 h-4'
-			fill='none'
-			stroke='currentColor'
-			viewBox='0 0 24 24'>
-			<path
-				strokeLinecap='round'
-				strokeLinejoin='round'
-				strokeWidth={2}
-				d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-			/>
-		</svg>
-	);
-}
-
-function TimeOutIcon() {
-	return (
-		<svg
-			className='w-4 h-4'
-			fill='none'
-			stroke='currentColor'
-			viewBox='0 0 24 24'>
-			<path
-				strokeLinecap='round'
-				strokeLinejoin='round'
-				strokeWidth={2}
-				d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-			/>
-		</svg>
-	);
-}
-
 function EditIcon() {
 	return (
 		<svg
@@ -119,8 +82,6 @@ export default function WorkerRow({
 	getBranchName,
 	onEdit,
 	onDelete,
-	onTimeIn,
-	onTimeOut,
 	onAssignBranch,
 	onRowClick,
 }: WorkerRowProps) {
@@ -139,8 +100,6 @@ export default function WorkerRow({
 
 	const canDelete = currentUser.is_owner;
 
-	const canTimeInOut = canEdit && !worker.isOwner;
-
 	// Debug logging to help identify the issue
 	console.log('🔍 WorkerRow permissions debug:', {
 		workerName: worker.name,
@@ -153,11 +112,7 @@ export default function WorkerRow({
 	return (
 		<tr
 			onClick={() => onRowClick?.(worker)}
-			className={`hover:bg-accent/10 cursor-pointer ${
-				!worker.isOwner && worker.currentStatus === "clocked_in"
-					? "bg-green-50"
-					: ""
-			}`}>
+			className='hover:bg-accent/10 cursor-pointer'>
 			{/* Worker Info */}
 			<td className='px-6 py-4 whitespace-nowrap'>
 				<div className='flex items-center'>
@@ -231,11 +186,6 @@ export default function WorkerRow({
 				</div>
 			</td>
 
-			{/* Status */}
-			<td className='px-6 py-4 whitespace-nowrap'>
-				<StatusBadge status={worker.currentStatus} isOwner={worker.isOwner} />
-			</td>
-
 			{/* Last Active */}
 			{/* <td className='px-6 py-4 whitespace-nowrap text-xs text-gray-500'>
 				{formatDate(worker.lastLoginAt)}
@@ -244,36 +194,6 @@ export default function WorkerRow({
 			{/* Actions */}
 			<td className='px-6 py-4 whitespace-nowrap text-right text-xs font-medium'>
 				<div className='flex items-center gap-2'>
-					{/* Time In/Out buttons */}
-					{canTimeInOut &&
-						worker.currentStatus === "clocked_out" &&
-						onTimeIn && (
-							<Tooltip label="Clock In">
-								<button
-									onClick={(e) => {
-										e.stopPropagation();
-										onTimeIn(worker);
-									}}
-									className='text-success hover:text-success/60 p-1 rounded hover:bg-success/10'>
-									<TimeInIcon />
-								</button>
-							</Tooltip>
-						)}
-					{canTimeInOut &&
-						worker.currentStatus === "clocked_in" &&
-						onTimeOut && (
-							<Tooltip label="Clock Out">
-								<button
-									onClick={(e) => {
-										e.stopPropagation();
-										onTimeOut(worker);
-									}}
-									className='text-error hover:text-error/60 p-1 rounded hover:bg-error/10'>
-									<TimeOutIcon />
-								</button>
-							</Tooltip>
-						)}
-
 					{/* Edit button */}
 					{canEdit && onEdit && (
 						<Tooltip label="Edit Worker">

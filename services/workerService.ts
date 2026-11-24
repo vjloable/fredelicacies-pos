@@ -1,9 +1,7 @@
 // Worker Service - Refactored for Supabase
 // Business logic for worker management
 import { userProfileRepository, workerRepository, authRepository } from '@/lib/repositories';
-import { attendanceService } from '@/services/attendanceService';
 import type { CreateUserProfileData } from '@/types/domain';
-import { hashPin, verifyPin } from '@/lib/pin';
 import { supabase } from '@/lib/supabase';
 
 // Worker interface for backward compatibility
@@ -21,10 +19,6 @@ export interface Worker {
     viaEvent?: boolean;
   }>;
   isOwner: boolean;
-  currentStatus?: 'clocked_in' | 'clocked_out';
-  currentBranchId?: string;
-  lastTimeIn?: Date;
-  lastTimeOut?: Date;
   profilePicture?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -103,24 +97,6 @@ export const workerService = {
         ? await userProfileRepository.withEventBranchAccess(baseUser)
         : baseUser;
 
-      // Get attendance status (for non-owners)
-      let currentStatus: 'clocked_in' | 'clocked_out' | undefined;
-      let currentBranchId: string | undefined;
-      let lastTimeIn: Date | undefined;
-      let lastTimeOut: Date | undefined;
-
-      if (!user.is_owner) {
-        // Get active attendance if any
-        const { attendance: activeAttendance } = await attendanceService.getActiveAttendanceByUserId(userId);
-        if (activeAttendance) {
-          currentStatus = 'clocked_in';
-          currentBranchId = activeAttendance.branch_id;
-          lastTimeIn = new Date(activeAttendance.clock_in);
-        } else {
-          currentStatus = 'clocked_out';
-        }
-      }
-
       // Convert to Worker format
       const worker: Worker = {
         id: user.id,
@@ -136,10 +112,6 @@ export const workerService = {
           viaEvent: ra.viaEvent,
         })),
         isOwner: user.is_owner,
-        currentStatus,
-        currentBranchId,
-        lastTimeIn,
-        lastTimeOut,
         profilePicture: user.profile_picture,
         createdAt: new Date(user.created_at),
         updatedAt: new Date(user.updated_at),
@@ -197,15 +169,13 @@ export const workerService = {
   listWorkers: async (filters?: {
     branchId?: string;
     role?: 'team_leader' | 'cashier';
-    status?: 'clocked_in' | 'clocked_out';
     searchQuery?: string;
     limit?: number;
   }): Promise<Worker[]> => {
     try {
-      // Assemble the whole list from a constant 3 bulk queries instead of the old
-      // per-worker N+1 (profile → workers → attendance, sequentially). Indexes on
-      // workers.user_id and the partial attendance(worker_id) WHERE clock_out IS NULL
-      // make both IN-lookups cheap.
+      // Assemble the whole list from 2 bulk queries instead of a per-worker N+1
+      // (profile → workers, sequentially). The index on workers.user_id keeps the
+      // IN-lookup cheap.
       const { profiles, error } = await userProfileRepository.getActive();
 
       if (error) {
@@ -217,18 +187,6 @@ export const workerService = {
 
       // 1 query: every worker (branch/role) row for these users.
       const { workers: workerRows } = await workerRepository.getByUserIds(userIds);
-
-      // 1 query: all currently-open attendance rows for those worker rows.
-      const workerIdByUser = new Map<string, string[]>();
-      for (const w of workerRows) {
-        const list = workerIdByUser.get(w.user_id) ?? [];
-        list.push(w.id);
-        workerIdByUser.set(w.user_id, list);
-      }
-      const { records: activeAttendance } = await attendanceService.getActiveAttendanceByWorkerIds(
-        workerRows.map(w => w.id)
-      );
-      const activeByWorkerId = new Map(activeAttendance.map(a => [a.worker_id, a]));
 
       // Group role assignments per user (branch roles only; owners have none).
       const assignmentsByUser = new Map<string, Worker['roleAssignments']>();
@@ -247,22 +205,12 @@ export const workerService = {
       }
 
       const workers: Worker[] = profiles.map(profile => {
-        // Active attendance for any of this user's worker rows (non-owners only).
-        const active = profile.is_owner
-          ? undefined
-          : (workerIdByUser.get(profile.id) ?? [])
-              .map(id => activeByWorkerId.get(id))
-              .find(Boolean);
         return {
           id: profile.id,
           name: profile.name,
           email: profile.email,
           roleAssignments: assignmentsByUser.get(profile.id) ?? [],
           isOwner: profile.is_owner,
-          currentStatus: profile.is_owner ? undefined : active ? 'clocked_in' : 'clocked_out',
-          currentBranchId: active?.branch_id,
-          lastTimeIn: active ? new Date(active.clock_in) : undefined,
-          lastTimeOut: undefined,
           profilePicture: profile.profile_picture,
           createdAt: new Date(profile.created_at),
           updatedAt: new Date(profile.updated_at),
@@ -284,10 +232,6 @@ export const workerService = {
         filtered = filtered.filter(w =>
           w.roleAssignments.some(ra => ra.role === filters.role && ra.isActive)
         );
-      }
-
-      if (filters?.status) {
-        filtered = filtered.filter(w => w.currentStatus === filters.status);
       }
 
       if (filters?.searchQuery) {
@@ -312,11 +256,6 @@ export const workerService = {
   // Get workers by branch
   getWorkersByBranch: async (branchId: string): Promise<Worker[]> => {
     return workerService.listWorkers({ branchId });
-  },
-
-  // Get clocked-in workers
-  getClockedInWorkers: async (branchId: string): Promise<Worker[]> => {
-    return workerService.listWorkers({ branchId, status: 'clocked_in' });
   },
 
   // Assign worker to branch
@@ -417,120 +356,12 @@ export const workerService = {
       throw error;
     }
   },
-
-  // PIN Management
-  setWorkerPin: async (userId: string, pin: string): Promise<void> => {
-    try {
-      const hashedPin = await hashPin(pin);
-      
-      // Update all worker records for this user
-      const { profiles } = await userProfileRepository.getActive();
-      const userProfile = profiles.find(p => p.id === userId);
-      
-      if (!userProfile) {
-        throw new Error('User not found');
-      }
-
-      // Get all worker records for this user
-      const { user } = await userProfileRepository.getWithRoles(userId);
-      if (user) {
-        for (const ra of user.roleAssignments) {
-          const { workers } = await workerRepository.getByBranch(ra.branchId);
-          const worker = workers.find(w => w.user_id === userId);
-          if (worker) {
-            await workerRepository.update(worker.id, {
-              pin: hashedPin,
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error setting worker PIN:', error);
-      throw error;
-    }
-  },
-
-  verifyWorkerPin: async (userId: string, pin: string): Promise<boolean> => {
-    try {
-      // Get any worker record for this user to check PIN
-      const { user } = await userProfileRepository.getWithRoles(userId);
-      
-      if (!user || user.roleAssignments.length === 0) {
-        return false;
-      }
-
-      const firstBranch = user.roleAssignments[0].branchId;
-      const { workers } = await workerRepository.getByBranch(firstBranch);
-      const worker = workers.find(w => w.user_id === userId);
-
-      if (!worker || !worker.pin) {
-        return false;
-      }
-
-      return await verifyPin(pin, worker.pin);
-    } catch (error) {
-      console.error('Error verifying worker PIN:', error);
-      return false;
-    }
-  },
-
-  hasPin: async (userId: string): Promise<boolean> => {
-    try {
-      const { user } = await userProfileRepository.getWithRoles(userId);
-      
-      if (!user || user.roleAssignments.length === 0) {
-        return false;
-      }
-
-      const firstBranch = user.roleAssignments[0].branchId;
-      const { workers } = await workerRepository.getByBranch(firstBranch);
-      const worker = workers.find(w => w.user_id === userId);
-
-      return !!(worker && worker.pin);
-    } catch (error) {
-      console.error('Error checking worker PIN:', error);
-      return false;
-    }
-  },
-
-  resetWorkerPin: async (userId: string): Promise<void> => {
-    try {
-      // Clear PIN from all worker records for this user
-      const { user } = await userProfileRepository.getWithRoles(userId);
-
-      if (user) {
-        for (const ra of user.roleAssignments) {
-          const { workers } = await workerRepository.getByBranch(ra.branchId);
-          const worker = workers.find(w => w.user_id === userId);
-          if (worker) {
-            await workerRepository.update(worker.id, { pin: null });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error resetting worker PIN:', error);
-      throw error;
-    }
-  },
-
-  // Worker Stats
-  getWorkerStats: async (userId: string): Promise<any> => {
-    // Delegate to attendanceService for statistics
-    // This can be enhanced with more business logic
-    return {
-      userId,
-      // Add stats calculation logic here
-    };
-  },
 };
 
 /**
  * Subscribe to realtime changes for a single worker (by auth userId).
  * Fires `callback` with the initial worker record and again whenever the
  * user's profile or workers row changes. Returns an unsubscribe function.
- *
- * Note: the attendance table has no user_id column, so clock in/out updates
- * are applied directly in TimeTrackingContext rather than via this channel.
  */
 export function subscribeToWorker(
   userId: string,

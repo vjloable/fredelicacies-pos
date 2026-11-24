@@ -136,28 +136,6 @@ export default function WorkerFilters({
 							shadow={false}
 						/>
 					</div>
-
-					{/* Status Filter */}
-					<div className='sm:min-w-36'>
-						<DropdownField
-							options={["Clocked In", "Clocked Out"]}
-							defaultValue="ALL STATUS"
-							allSuffix="STATUS"
-							hasAllOptionsVisible={true}
-							dropdownPosition='bottom-right'
-							dropdownOffset={{ top: 2, right: 0 }}
-							onChange={(e) =>
-								handleFilterChange("status", e || undefined)
-							}
-							roundness="8"
-							height={42}
-							valueAlignment={"left"}
-							padding=''
-							fontSize="12px"
-							borderClassName="border border-secondary/20"
-							shadow={false}
-						/>
-					</div>
 				</div>
 
 				{/* Clear Filters */}

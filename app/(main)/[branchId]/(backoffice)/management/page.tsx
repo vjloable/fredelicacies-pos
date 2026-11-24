@@ -10,11 +10,8 @@ import WorkerFiltersComponent from "@/app/(main)/owner/users/components/WorkerFi
 import CreateWorkerModal from "@/app/(main)/owner/users/components/CreateWorkerModal";
 import EditWorkerModal from "@/app/(main)/owner/users/components/EditWorkerModal";
 import DeleteWorkerModal from "@/app/(main)/owner/users/components/DeleteWorkerModal";
-import TimeInOutModal from "@/app/(main)/owner/users/components/TimeInOutModal";
 import AssignBranchModal from "@/app/(main)/[branchId]/(backoffice)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(backoffice)/management/components/WorkerDetailModal";
-import AttendanceView from "@/app/(main)/[branchId]/(backoffice)/management/components/AttendanceView";
-import StaffAttendanceView from "@/app/(main)/[branchId]/(backoffice)/management/components/StaffAttendanceView";
 import PlusIcon from "@/components/icons/PlusIcon";
 import { useParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -28,12 +25,8 @@ export default function ManagementPage() {
 		user,
 		getUserRoleForBranch,
 		canAccessBranch,
-		isUserOwner,
-		isManager,
 		loading: authLoading,
 	} = useAuth();
-	// Staff Attendance (face kiosk for all staff): admins, owners and managers (mirrors face_access.can_manage).
-	const canManageStaffAttendance = isUserOwner() || isManager();
 	const { branchId } = useParams();
 	const [workers, setWorkers] = useState<Worker[]>([]);
 	const [branches, setBranches] = useState<Branch[]>([]);
@@ -47,16 +40,9 @@ export default function ManagementPage() {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [isTimeInOutModalOpen, setIsTimeInOutModalOpen] = useState(false);
 	const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
 	const [isWorkerDetailModalOpen, setIsWorkerDetailModalOpen] = useState(false);
 	const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
-	const [timeInOutAction, setTimeInOutAction] = useState<
-		"time_in" | "time_out"
-	>("time_in");
-
-	// View mode (only attendance and workers for managers)
-	const [viewMode, setViewMode] = useState<"workers" | "attendance" | "staff">("workers");
 
 	// Filters and sorting
 	const [filters, setFilters] = useState<WorkerFiltersType>({
@@ -188,12 +174,6 @@ export default function ManagementPage() {
 		setIsDeleteModalOpen(true);
 	};
 
-	const handleTimeInOut = (worker: Worker, action: "time_in" | "time_out") => {
-		setSelectedWorker(worker);
-		setTimeInOutAction(action);
-		setIsTimeInOutModalOpen(true);
-	};
-
 	const handleAssignBranch = (worker: Worker) => {
 		setSelectedWorker(worker);
 		setIsAssignBranchModalOpen(true);
@@ -224,7 +204,6 @@ export default function ManagementPage() {
 		setIsCreateModalOpen(false);
 		setIsEditModalOpen(false);
 		setIsDeleteModalOpen(false);
-		setIsTimeInOutModalOpen(false);
 		setIsAssignBranchModalOpen(false);
 		setIsWorkerDetailModalOpen(false);
 		setSelectedWorker(null);
@@ -271,12 +250,6 @@ export default function ManagementPage() {
 				}
 				return true;
 			});
-		}
-
-		if (filters.status) {
-			filtered = filtered.filter(
-				(worker) => worker.currentStatus === filters.status
-			);
 		}
 
 		// Sort the filtered results
@@ -333,7 +306,6 @@ export default function ManagementPage() {
 						<MobileTopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
@@ -341,7 +313,6 @@ export default function ManagementPage() {
 						<TopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					<PageLoader text="Loading…" />
@@ -360,7 +331,6 @@ export default function ManagementPage() {
 						<MobileTopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
@@ -368,7 +338,6 @@ export default function ManagementPage() {
 						<TopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
@@ -396,7 +365,6 @@ export default function ManagementPage() {
 						<MobileTopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
@@ -404,7 +372,6 @@ export default function ManagementPage() {
 						<TopBar
 							title='Management'
 							icon={<ManagementIcon />}
-							showTimeTracking={true}
 						/>
 					</div>
 					<div className='flex-1 flex items-center justify-center'>
@@ -428,7 +395,6 @@ export default function ManagementPage() {
 					<MobileTopBar
 						title={`Management`}
 						icon={<ManagementIcon />}
-						showTimeTracking={true}
 					/>
 				</div>
 				{/* Desktop TopBar - visible at xl: breakpoint and above (≥ 1280px) */}
@@ -436,7 +402,6 @@ export default function ManagementPage() {
 					<TopBar
 						title={`Management`}
 						icon={<ManagementIcon />}
-						showTimeTracking={true}
 					/>
 				</div>
 				<span className='flex h-6'></span>
@@ -492,109 +457,58 @@ export default function ManagementPage() {
 								</div>
 
 								<div className='flex flex-col sm:flex-row sm:items-center gap-4'>
-									{/* View Toggle */}
-									<div className='flex bg-accent/20 rounded-lg p-1 border-accent/30 border w-full sm:w-auto h-10.5'>
-										<button
-											onClick={() => setViewMode("workers")}
-											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-												viewMode === "workers"
-													? "bg-white text-secondary shadow-sm"
-													: "text-secondary/60 hover:text-secondary"
-											}`}>
-											Workers
-										</button>
-										<button
-											onClick={() => setViewMode("attendance")}
-											className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-												viewMode === "attendance"
-													? "bg-white text-secondary shadow-sm"
-													: "text-secondary/60 hover:text-secondary"
-											}`}>
-											Attendance
-										</button>
-										{canManageStaffAttendance && (
-											<button
-												onClick={() => setViewMode("staff")}
-												className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-													viewMode === "staff"
-														? "bg-white text-secondary shadow-sm"
-														: "text-secondary/60 hover:text-secondary"
-												}`}>
-												Staff Attendance
-											</button>
-										)}
-									</div>
-
-									{/* Add Worker Button - only show in workers view */}
-									{viewMode === "workers" && (
-										<button
-											onClick={handleCreateWorker}
-											className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold active:bg-light-accent'>
-											<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3'>
-												<div className='w-4 h-4'> 
-													<PlusIcon className='drop-shadow-sm' />
-												</div>
-												<span className='mt-0.5'>ADD WORKER</span>
+									{/* Add Worker Button */}
+									<button
+										onClick={handleCreateWorker}
+										className='w-full sm:w-auto bg-accent text-secondary text-3 px-4 py-2 rounded-lg hover:bg-accent/90 transition-all font-semibold active:bg-light-accent'>
+										<div className='flex flex-row items-center justify-center gap-2 text-primary text-shadow-sm font-black text-3'>
+											<div className='w-4 h-4'> 
+												<PlusIcon className='drop-shadow-sm' />
 											</div>
-										</button>
-									)}
+											<span className='mt-0.5'>ADD WORKER</span>
+										</div>
+									</button>
 								</div>
 							</div>
 
-							{/* Filters - only show in workers view */}
-							{viewMode === "workers" && (
-								<div className='mb-4'>
-									<WorkerFiltersComponent
-										filters={filters}
-										branches={[]} // No branches shown for managers - they only see their branch
-										onFiltersChange={handleFiltersChange}
-										userAccessibleBranches={[branchId as string]}
-										isOwner={false} // Managers see only their branch
-										hideBranchFilter={true} // Hide branch filter for managers
-										hideOwnerRole={true} // Hide owner role option for managers
-									/>
-								</div>
-							)}
+							{/* Filters */}
+							<div className='mb-4'>
+								<WorkerFiltersComponent
+									filters={filters}
+									branches={[]} // No branches shown for managers - they only see their branch
+									onFiltersChange={handleFiltersChange}
+									userAccessibleBranches={[branchId as string]}
+									isOwner={false} // Managers see only their branch
+									hideBranchFilter={true} // Hide branch filter for managers
+									hideOwnerRole={true} // Hide owner role option for managers
+								/>
+							</div>
 						</div>
 
 						{/* Content */}
 						<div className='space-y-4'>
-							{viewMode === "workers" ? (
-								<>
-									<WorkersTable
-										workers={sortedWorkers}
-										currentUser={user}
-										branches={branches}
-										loading={loading}
-										sortConfig={sortConfig}
-										onSort={handleSort}
-										onEdit={handleEditWorker}
-										onDelete={handleDeleteWorker}
-										onTimeIn={(worker) => handleTimeInOut(worker, "time_in")}
-										onTimeOut={(worker) => handleTimeInOut(worker, "time_out")}
-										onRowClick={handleWorkerDetails}
-									/>
+							<WorkersTable
+								workers={sortedWorkers}
+								currentUser={user}
+								branches={branches}
+								loading={loading}
+								sortConfig={sortConfig}
+								onSort={handleSort}
+								onEdit={handleEditWorker}
+								onDelete={handleDeleteWorker}
+								onRowClick={handleWorkerDetails}
+							/>
 
-									{/* Stats */}
-									<div className='mt-6 text-xs text-gray-500'>
-										Showing {sortedWorkers.length} of {workers.length} worker
-										{workers.length !== 1 ? "s" : ""} for this branch
-										{sortedWorkers.length !== workers.length && (
-											<span className='ml-2 text-accent'>
-												(filtered)
-											</span>
-										)}
-									</div>
-								</>
-							) : viewMode === "staff" && canManageStaffAttendance ? (
-								<StaffAttendanceView />
-							) : (
-								/* Attendance View */
-								<AttendanceView 
-									branchId={branchId as string}
-									workers={sortedWorkers}
-								/>
-							)}
+							{/* Stats */}
+							<div className='mt-6 text-xs text-gray-500'>
+								Showing {sortedWorkers.length} of {workers.length} worker
+								{workers.length !== 1 ? "s" : ""} for this branch
+								{sortedWorkers.length !== workers.length && (
+									<span className='ml-2 text-accent'>
+										(filtered)
+									</span>
+								)}
+							</div>
 						</div>
 					</div>
 				)}
@@ -626,15 +540,6 @@ export default function ManagementPage() {
 					worker={selectedWorker}
 					onClose={handleModalClose}
 					onSuccess={handleWorkerDeleted}
-				/>
-
-				<TimeInOutModal
-					isOpen={isTimeInOutModalOpen}
-					worker={selectedWorker}
-					action={timeInOutAction}
-					branches={branches.filter((branch) => branch.id === branchId)}
-					onClose={handleModalClose}
-					onSuccess={handleWorkerUpdated}
 				/>
 
 				<AssignBranchModal

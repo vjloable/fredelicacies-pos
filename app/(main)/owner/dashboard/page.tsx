@@ -148,8 +148,8 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <>
-        <div className='hidden xl:block'><TopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
-        <div className='xl:hidden'><MobileTopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
+        <div className='hidden xl:block'><TopBar title='Dashboard' icon={<DashboardIcon />} /></div>
+        <div className='xl:hidden'><MobileTopBar title='Dashboard' icon={<DashboardIcon />} /></div>
         <div className='flex flex-col items-center justify-center py-20 gap-4'>
           <PageLoader text="Loading dashboard…" />
         </div>
@@ -159,8 +159,8 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className='hidden xl:block'><TopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
-      <div className='xl:hidden'><MobileTopBar title='Dashboard' icon={<DashboardIcon />} showTimeTracking={false} /></div>
+      <div className='hidden xl:block'><TopBar title='Dashboard' icon={<DashboardIcon />} /></div>
+      <div className='xl:hidden'><MobileTopBar title='Dashboard' icon={<DashboardIcon />} /></div>
 
       <div className='px-4 xl:px-6 pb-8 space-y-6'>
 

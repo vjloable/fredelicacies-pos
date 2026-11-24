@@ -37,14 +37,12 @@ import { formatCurrency } from "@/lib/currency_formatter";
 import { formatReceiptWithLogo } from "@/lib/esc_formatter";
 import { useBluetoothPrinter } from "@/contexts/BluetoothContext";
 
-import { useTimeTracking, usePOSAccessControl } from "@/contexts/TimeTrackingContext";
 import { useShift } from "@/contexts/ShiftContext";
 import SafeDropModal from "@/components/shift/SafeDropModal";
 import WriteOffModal from "@/components/shift/WriteOffModal";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PageLoader from "@/components/PageLoader";
-import ClockInGate from "@/components/ClockInGate";
 import CustomBundlePickerModal, { type PickedItem } from "./CustomBundlePickerModal";
 import BundleGroupPickerModal from "./BundleGroupPickerModal";
 import B1T1PickerModal, { type B1T1PickedItem } from "./B1T1PickerModal";
@@ -140,8 +138,6 @@ export default function StoreScreen() {
 	// Event branches: every item is always sellable, no stock counts shown
 	const stockTracked = tracksStock(currentBranch);
 	const { printReceipt } = useBluetoothPrinter(); // Get Bluetooth printer function
-	const timeTracking = useTimeTracking({ autoRefresh: true }); // Get time tracking state
-	const { canAccessPOS } = usePOSAccessControl(currentBranch?.id); // Get POS access control
 	const shiftCtx = useShift();
 	const [showSafeDropModal, setShowSafeDropModal] = useState(false);
 	const [showWriteOffModal, setShowWriteOffModal] = useState(false);
@@ -787,7 +783,6 @@ export default function StoreScreen() {
 				cashier:
 					user?.display_name?.trim() ||
 					user?.name?.trim().split(' ')[0] ||
-					timeTracking.worker?.name ||
 					user?.email ||
 					"Unknown Worker",
 				cashierEmployeeId: user.uid,
@@ -850,7 +845,6 @@ export default function StoreScreen() {
 						<MobileTopBar
 							title='Store'
 							icon={<StoreIcon />}
-							showTimeTracking={true}
 							onOrderClick={() => {
 								setShowOrderMenu(!showOrderMenu);
 							}}
@@ -862,14 +856,13 @@ export default function StoreScreen() {
 						<TopBar
 							title='Store'
 							icon={<StoreIcon />}
-							showTimeTracking={true}
 							rightAction={<HelpButton variant='page' steps={storeSteps} />}
 						/>
 					</div>
 				</div>{" "}
 
 				{/* Search Section - Fixed */}
-				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} showButton={false} className='px-4 py-2'>
+				<div className='px-4 py-2'>
 					<div className='relative'>
 						<input
 							type='text'
@@ -888,10 +881,10 @@ export default function StoreScreen() {
 							)}
 						</div>
 					</div>
-				</ClockInGate>
+				</div>
 
 				{/* Results Header - Fixed */}
-				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} showButton={false} className='flex items-center justify-between px-4 py-1'>
+				<div className='flex items-center justify-between px-4 py-1'>
 					<div className='flex flex-col'>
 						<h2 className='text-secondary font-bold'>
 							{isSearching ? "Search Results" : ""}
@@ -902,12 +895,12 @@ export default function StoreScreen() {
 							</p>
 						)}
 					</div>
-				</ClockInGate>
+				</div>
 
 				{/* Category selection now uses the folder grid below */}
 
 				{/* Menu Items - Scrollable */}
-				<ClockInGate active={!canAccessPOS && !timeTracking.loading} branchId={currentBranch?.id} className='flex-1 overflow-y-auto px-4 py-4'>
+				<div className='flex-1 overflow-y-auto px-4 py-4'>
 					{loading ? (
 						<PageLoader text="Loading menu…" />
 					) : inventoryItems.length === 0 ? (
@@ -1166,7 +1159,7 @@ export default function StoreScreen() {
 						))}
 					</div>
 					)}
-				</ClockInGate>
+				</div>
 			</div>
 
 			{/* Mobile Order Menu Overlay - visible below xl: breakpoint (< 1280px) */}

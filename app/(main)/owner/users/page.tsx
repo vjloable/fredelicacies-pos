@@ -10,12 +10,9 @@ import WorkerFiltersComponent from "./components/WorkerFilters";
 import CreateWorkerModal from "./components/CreateWorkerModal";
 import EditWorkerModal from "./components/EditWorkerModal";
 import DeleteWorkerModal from "./components/DeleteWorkerModal";
-import TimeInOutModal from "./components/TimeInOutModal";
 import AssignBranchModal from "../../[branchId]/(backoffice)/management/components/AssignBranchModal";
 import WorkerDetailModal from "@/app/(main)/[branchId]/(backoffice)/management/components/WorkerDetailModal";
 import PlusIcon from "@/components/icons/PlusIcon";
-import AdvancedReporting from "./components/AdvancedReporting";
-import WorkScheduleManagement from "./components/WorkScheduleManagement";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -52,16 +49,9 @@ export default function WorkersPage() {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [isTimeInOutModalOpen, setIsTimeInOutModalOpen] = useState(false);
 	const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
 	const [isWorkerDetailModalOpen, setIsWorkerDetailModalOpen] = useState(false);
 	const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
-	const [timeInOutAction, setTimeInOutAction] = useState<
-		"time_in" | "time_out"
-	>("time_in");
-
-	// View mode
-	const [viewMode] = useState<"workers" | "analytics" | "schedule">("workers");
 
 	// Filters
 	const [filters, setFilters] = useState<WorkerFiltersType>({});
@@ -98,13 +88,11 @@ export default function WorkersPage() {
 			const workerFilters: {
 				branchId?: string;
 				role?: 'team_leader' | 'cashier';
-				status?: 'clocked_in' | 'clocked_out';
 				searchQuery?: string;
 				limit?: number;
 			} = {
 				branchId: filters.branchId,
 				role: (filters.role === 'team_leader' || filters.role === 'cashier') ? filters.role : undefined,
-				status: filters.status,
 				searchQuery: filters.searchQuery,
 				limit: filters.limit,
 			};
@@ -180,12 +168,6 @@ export default function WorkersPage() {
 		setIsDeleteModalOpen(true);
 	};
 
-	const handleTimeInOut = (worker: Worker, action: "time_in" | "time_out") => {
-		setSelectedWorker(worker);
-		setTimeInOutAction(action);
-		setIsTimeInOutModalOpen(true);
-	};
-
 	const handleAssignBranch = (worker: Worker) => {
 		setSelectedWorker(worker);
 		setIsAssignBranchModalOpen(true);
@@ -218,7 +200,6 @@ export default function WorkersPage() {
 		setIsCreateModalOpen(false);
 		setIsEditModalOpen(false);
 		setIsDeleteModalOpen(false);
-		setIsTimeInOutModalOpen(false);
 		setIsAssignBranchModalOpen(false);
 		setIsWorkerDetailModalOpen(false);
 		setSelectedWorker(null);
@@ -289,7 +270,6 @@ export default function WorkersPage() {
 				<TopBar
 					title="Users Management"
 					icon={<UsersIcon className="mr-2" />}
-					showTimeTracking={false}
 				/>
 			</div>
 
@@ -298,7 +278,6 @@ export default function WorkersPage() {
 				<MobileTopBar
 					title="Users Management"
 					icon={<UsersIcon className="mr-2" />}
-					showTimeTracking={false}
 				/>
 			</div>
 
@@ -331,17 +310,15 @@ export default function WorkersPage() {
 							</div>
 						)}
 
-						{/* Add Worker Button - only show in workers view */}
-						{viewMode === "workers" && (
-							<button
-								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
-								<div className='size-4'>
-									<PlusIcon className='drop-shadow-lg' />
-								</div>
-								<span className='mt-0.5'>ADD WORKER</span>
-							</button>
-						)}
+						{/* Add Worker Button */}
+						<button
+							onClick={handleCreateWorker}
+							className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
+							<div className='size-4'>
+								<PlusIcon className='drop-shadow-lg' />
+							</div>
+							<span className='mt-0.5'>ADD WORKER</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -381,34 +358,30 @@ export default function WorkersPage() {
 							</div>
 						)}
 
-						{/* Add Worker Button - only show in workers view */}
-						{viewMode === "workers" && (
-							<button
-								onClick={handleCreateWorker}
-								className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
-								<div className='size-4'>
-									<PlusIcon className='drop-shadow-lg' />
-								</div>
-								<span className='mt-0.5'>ADD WORKER</span>
-							</button>
-						)}
+						{/* Add Worker Button */}
+						<button
+							onClick={handleCreateWorker}
+							className='w-full sm:min-w-40 sm:w-auto h-10.5 flex items-center justify-center gap-2 bg-accent text-primary text-shadow-md font-black text-3 px-4 rounded-lg hover:bg-accent/90 transition-all hover:shadow-sm active:bg-light-accent'>
+							<div className='size-4'>
+								<PlusIcon className='drop-shadow-lg' />
+							</div>
+							<span className='mt-0.5'>ADD WORKER</span>
+						</button>
 					</div>
 				</div>
 			</div>
 
-			{/* Filters - only show in workers view */}
-			{viewMode === "workers" && (
-				<div className='px-6 py-4 border-b border-secondary/20 bg-secondary/5'>
-					<WorkerFiltersComponent
-						filters={filters}
-						branches={branches}
-						onFiltersChange={handleFiltersChange}
-						userAccessibleBranches={getAccessibleBranches()}
-					isOwner={user?.is_owner || false}
-					hideBranchFilter={user?.is_owner || false}
-					/>
-				</div>
-			)}
+			{/* Filters */}
+			<div className='px-6 py-4 border-b border-secondary/20 bg-secondary/5'>
+				<WorkerFiltersComponent
+					filters={filters}
+					branches={branches}
+					onFiltersChange={handleFiltersChange}
+					userAccessibleBranches={getAccessibleBranches()}
+				isOwner={user?.is_owner || false}
+				hideBranchFilter={user?.is_owner || false}
+				/>
+			</div>
 
 			{/* Content */}
 			<div className='flex-1 overflow-auto px-6 py-4'>
@@ -431,7 +404,7 @@ export default function WorkersPage() {
 							Retry
 						</button>
 					</div>
-				) : viewMode === "workers" ? (
+				) : (
 					<>
 						<WorkersTable
 							workers={sortedWorkers}
@@ -442,8 +415,6 @@ export default function WorkersPage() {
 							onSort={handleSort}
 							onEdit={handleEditWorker}
 							onDelete={handleDeleteWorker}
-							onTimeIn={(worker) => handleTimeInOut(worker, "time_in")}
-							onTimeOut={(worker) => handleTimeInOut(worker, "time_out")}
 							onAssignBranch={handleAssignBranch}
 							onRowClick={handleWorkerDetails}
 						/>
@@ -454,12 +425,6 @@ export default function WorkersPage() {
 							{sortedWorkers.length !== 1 ? "s" : ""}
 						</div>
 					</>
-				) : viewMode === "analytics" ? (
-					/* Analytics View */
-					<AdvancedReporting workers={workers} />
-				) : (
-					/* Schedule Management View */
-					<WorkScheduleManagement workers={workers} />
 				)}
 			</div>
 
@@ -503,15 +468,6 @@ export default function WorkersPage() {
 				worker={selectedWorker}
 				onClose={handleModalClose}
 				onSuccess={handleWorkerDeleted}
-			/>
-
-			<TimeInOutModal
-				isOpen={isTimeInOutModalOpen}
-				worker={selectedWorker}
-				action={timeInOutAction}
-				branches={branches}
-				onClose={handleModalClose}
-				onSuccess={handleWorkerUpdated}
 			/>
 
 			<AssignBranchModal

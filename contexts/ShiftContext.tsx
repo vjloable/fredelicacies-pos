@@ -16,7 +16,6 @@ import {
   getActiveShift,
 } from '@/services/shiftService';
 import { createSafeDrop, getDropsByShift } from '@/services/safeDropService';
-import { supabase } from '@/lib/supabase';
 import { createWriteOff, getWriteOffsByShift } from '@/services/writeOffService';
 import type { Shift, ShiftReportData } from '@/types/domain/shift';
 import type { SafeDrop } from '@/types/domain/safeDrop';
@@ -233,19 +232,6 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       return;
     } finally {
       setLoading(false);
-    }
-
-    // Auto-clock-out all workers still clocked in at this branch.
-    // The shift is already closed here, so a failure must not block the report.
-    try {
-      const now = new Date().toISOString();
-      await supabase
-        .from('attendance')
-        .update({ clock_out: now })
-        .eq('branch_id', currentBranch.id)
-        .is('clock_out', null);
-    } catch (e) {
-      console.error('Auto clock-out after shift close failed:', e);
     }
 
     setActiveShift(null);

@@ -11,7 +11,6 @@ export { bundleGroupRepository } from './bundleGroupRepository';
 export { orderRepository } from './orderRepository';
 export { discountRepository } from './discountRepository';
 export { workerRepository } from './workerRepository';
-export { attendanceRepository } from './attendanceRepository';
 export { userProfileRepository } from './userProfileRepository';
 export { transferRepository } from './transferRepository';
 export { shiftRepository } from './shiftRepository';

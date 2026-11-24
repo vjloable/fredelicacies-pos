@@ -39,8 +39,6 @@ export default function EditWorkerModal({
 }: EditWorkerModalProps) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [pinResetLoading, setPinResetLoading] = useState(false);
-	const [pinResetDone, setPinResetDone] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -135,20 +133,6 @@ export default function EditWorkerModal({
 		setSelectedRole(role);
 		if (selectedBranchId) {
 			setFormData((prev) => ({ ...prev, branchAssignments: [{ branchId: selectedBranchId, role }] }));
-		}
-	};
-
-	const handlePinReset = async () => {
-		if (!worker) return;
-		setPinResetLoading(true);
-		try {
-			await workerService.resetWorkerPin(worker.id);
-			setPinResetDone(true);
-			setTimeout(() => setPinResetDone(false), 3000);
-		} catch {
-			setError("Couldn't reset the PIN. Please try again.");
-		} finally {
-			setPinResetLoading(false);
 		}
 	};
 
@@ -396,31 +380,6 @@ export default function EditWorkerModal({
 										)}
 										<p className='text-2.5 text-secondary/50 mt-1.5'>{ROLE_BLURB[selectedRole]}</p>
 									</div>
-								</div>
-							)}
-
-							{/* PIN reset — owners only, not self, not other owners */}
-							{isOwner && worker.id !== currentUserId && !worker.isOwner && (
-								<div className='flex items-center justify-between gap-4 pt-4 border-t border-secondary/10'>
-									<div>
-										<p className='text-3 font-medium text-secondary'>Sign-in PIN</p>
-										<p className='text-2.5 text-secondary/55 mt-0.5'>
-											{pinResetDone
-												? "Cleared — they'll set a new PIN at their next clock-in."
-												: "Clear it if they forgot their PIN or need a new one."}
-										</p>
-									</div>
-									<button
-										type='button'
-										onClick={handlePinReset}
-										disabled={pinResetLoading || pinResetDone}
-										className={`shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 ${
-											pinResetDone
-												? "bg-success/10 text-success"
-												: "bg-error/10 text-error hover:bg-error/20"
-										}`}>
-										{pinResetLoading ? "Clearing…" : pinResetDone ? "PIN cleared ✓" : "Reset PIN"}
-									</button>
 								</div>
 							)}
 						</div>

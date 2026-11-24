@@ -3,7 +3,6 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { DateTimeProvider } from "@/contexts/DateTimeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import RolePreviewBanner from "@/components/RolePreviewBanner";
@@ -38,12 +37,10 @@ export default function RootLayout({
 			<body className={`${poppins.variable} antialiased`}>
 				<ServiceWorkerRegistration />
 				<AuthProvider>
-					<TimeTrackingProvider options={{ autoRefresh: true }}>
-						<BranchProvider>
-							<DateTimeProvider>{children}</DateTimeProvider>
-							<RolePreviewBanner />
-						</BranchProvider>
-					</TimeTrackingProvider>
+					<BranchProvider>
+						<DateTimeProvider>{children}</DateTimeProvider>
+						<RolePreviewBanner />
+					</BranchProvider>
 				</AuthProvider>
 				<SpeedInsights />
 			</body>

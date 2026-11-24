@@ -72,10 +72,6 @@ export type {
 } from './worker';
 
 export type {
-  Attendance,
-} from './attendance';
-
-export type {
   UserProfile,
   CreateUserProfileData,
   UpdateUserProfileData,

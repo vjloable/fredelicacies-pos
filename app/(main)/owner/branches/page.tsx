@@ -176,7 +176,6 @@ export default function BranchesPage() {
 				<TopBar
 					title="Branch Management"
 					icon={<BranchesIcon className="mr-2" />}
-					showTimeTracking={false}
 				/>
 			</div>
 
@@ -185,7 +184,6 @@ export default function BranchesPage() {
 				<MobileTopBar
 					title="Branch Management"
 					icon={<BranchesIcon className="mr-2" />}
-					showTimeTracking={false}
 				/>
 			</div>
 
