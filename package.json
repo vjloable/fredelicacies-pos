@@ -1,6 +1,6 @@
 {
   "name": "pos",
-  "version": "5.6.3",
+  "version": "6.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
