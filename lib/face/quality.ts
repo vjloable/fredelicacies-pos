@@ -20,7 +20,10 @@ const MIN_FACE_WIDTH = 0.2;
 // The kiosk's turn-your-head check raises it, since those frames aren't matched.
 export const MAX_YAW = 0.35;
 const MAX_PITCH = 0.35;
-const MIN_SCORE = 0.75;
+// The detector's confidence runs lower for darker skin and in dim or backlit
+// light, so a high floor locks those faces out. The face match on the server is
+// the real identity check; this only rejects frames too poor to embed.
+const MIN_SCORE = 0.6;
 
 export const FACE_HINTS: Record<FaceIssue, string> = {
   no_face: 'Position your face inside the circle',
@@ -89,14 +92,23 @@ export const TURN_MIN = 0.18;
 export const TILT_MIN = 0.12;
 /** Within ~7° of the baseline counts as facing straight. */
 const STRAIGHT_MAX = 0.12;
+// Without a baseline the estimate is compared to zero, and the estimated angle
+// of a face looking straight ahead varies with face shape (nose bridge, brow,
+// cheekbones) and with where the tablet sits. So the first shot only needs to
+// be roughly frontal (~14° yaw, ~17° pitch); later checks use it as the baseline.
+const ABS_STRAIGHT_YAW = 0.25;
+const ABS_STRAIGHT_PITCH = 0.3;
 
 export const yawSide = (angle: HeadAngle, base: HeadAngle): 1 | -1 => (angle.yaw - base.yaw >= 0 ? 1 : -1);
 
-/** Facing the camera: near the baseline if one is known, otherwise near zero. */
+/** Facing the camera: near the baseline if one is known, otherwise roughly frontal. */
 export function checkStraight(angle: HeadAngle | null | undefined, base?: HeadAngle): PoseHint | null {
   if (!angle) return 'unclear_pose';
-  const yaw = angle.yaw - (base?.yaw ?? 0);
-  const pitch = angle.pitch - (base?.pitch ?? 0);
+  if (!base) {
+    return Math.abs(angle.yaw) <= ABS_STRAIGHT_YAW && Math.abs(angle.pitch) <= ABS_STRAIGHT_PITCH ? null : 'look_straight';
+  }
+  const yaw = angle.yaw - base.yaw;
+  const pitch = angle.pitch - base.pitch;
   return Math.abs(yaw) <= STRAIGHT_MAX && Math.abs(pitch) <= STRAIGHT_MAX * 1.5 ? null : 'look_straight';
 }
 

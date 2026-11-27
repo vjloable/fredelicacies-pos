@@ -64,6 +64,12 @@ describe('head pose checks', () => {
     expect(checkStraight(null)).toBe('unclear_pose');
   });
 
+  it('straight without a baseline tolerates the per-face offset of the angle estimate', () => {
+    expect(checkStraight(at(0.2, 0.25))).toBeNull();
+    expect(checkStraight(at(0.2, 0.25), base)).toBe('look_straight');
+    expect(checkStraight(at(0.05, 0.4))).toBe('look_straight');
+  });
+
   it('turn: needs a real turn from the baseline, either side', () => {
     expect(checkTurn(at(0.1), base)).toBe('turn_more');
     expect(checkTurn(at(0.3), base)).toBeNull();
