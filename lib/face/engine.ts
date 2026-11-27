@@ -105,6 +105,8 @@ export interface CaptureOptions {
   /** Allowed head turn before a frame is rejected (raise it for the turn check). */
   maxYaw?: number;
   session?: FaceSession;
+  /** Raw reading of each frame (null when there isn't exactly one face), for tuning. */
+  onFrame?: (face: DetectedFace | null) => void;
 }
 
 /**
@@ -113,7 +115,7 @@ export interface CaptureOptions {
  * scores. Rejects with 'TIMEOUT', 'ABORTED' or 'LOST_FACE'.
  */
 export async function captureFace(video: HTMLVideoElement, opts: CaptureOptions = {}): Promise<FaceSample> {
-  const { frames = 3, timeoutMs = 20_000, signal, onHint, pose, maxYaw = MAX_YAW, session } = opts;
+  const { frames = 3, timeoutMs = 20_000, signal, onHint, pose, maxYaw = MAX_YAW, session, onFrame } = opts;
   const human = await loadFaceEngine();
   const deadline = Date.now() + timeoutMs;
   let good: DetectedFace[] = [];
@@ -122,6 +124,7 @@ export async function captureFace(video: HTMLVideoElement, opts: CaptureOptions 
     if (signal?.aborted) throw new Error('ABORTED');
     if (video.readyState >= 2) {
       const faces = toDetected(await human.detect(video));
+      onFrame?.(faces.length === 1 ? faces[0]! : null);
       const now = Date.now();
       if (session) {
         if (faces.length === 1) session.lastFaceAt = now;

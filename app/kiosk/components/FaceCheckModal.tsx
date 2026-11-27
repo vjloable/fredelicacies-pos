@@ -8,6 +8,7 @@ import {
   cosineSimilarity,
   hintText,
   MAX_YAW,
+  type DetectedFace,
   type FaceIssue,
   type PoseHint,
 } from '@/lib/face/quality';
@@ -38,6 +39,10 @@ const PHASES: { id: Phase; prompt: string }[] = [
 // face score far higher than this).
 const SAME_PERSON_MIN = 0.75;
 const PHASE_TIMEOUT_MS = 10_000;
+// Open the kiosk with ?facedebug to show the raw per-frame readings, for
+// working out which check a face is failing.
+const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('facedebug');
+const deg = (rad: number) => `${Math.round((rad * 180) / Math.PI)}°`;
 
 interface FaceCheckModalProps {
   worker: KioskWorker;
@@ -54,6 +59,7 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
   const [phase, setPhase] = useState<Phase>('straight');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ action: KioskAction; at: string } | null>(null);
+  const [reading, setReading] = useState<DetectedFace | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const locationRef = useRef<Promise<LocationResult> | null>(null);
   const { videoRef, ready, error: cameraError } = useCamera(step === 'scanning' || step === 'sending');
@@ -83,7 +89,7 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
         locationRef.current ??= getDeviceLocation();
         const video = videoRef.current!;
         const session: FaceSession = { lastFaceAt: 0 };
-        const common = { signal: ctrl.signal, onHint: setIssue, session };
+        const common = { signal: ctrl.signal, onHint: setIssue, session, onFrame: DEBUG ? setReading : undefined };
 
         setPhase('straight');
         const first = await captureFace(video, { ...common, pose: (a) => checkStraight(a) });
@@ -196,6 +202,21 @@ export default function FaceCheckModal({ worker, onClose, onRosterChanged }: Fac
               state={step === 'sending' ? 'busy' : issue ? 'guiding' : 'good'}
               hint={step === 'sending' ? null : !ready ? 'Starting camera…' : issue ? hintText(issue) : 'Hold still…'}
             />
+            {DEBUG && (
+              <div className='mt-3 font-mono text-3 text-secondary/70 bg-light-accent/40 rounded-lg p-2'>
+                {reading ? (
+                  <>
+                    score {reading.score.toFixed(2)} (min 0.60) · width {reading.boxRaw[2].toFixed(2)} (min 0.20)
+                    <br />
+                    yaw {reading.angle ? deg(reading.angle.yaw) : '–'} · pitch {reading.angle ? deg(reading.angle.pitch) : '–'}
+                    <br />
+                    real {reading.real?.toFixed(2) ?? '–'} · live {reading.live?.toFixed(2) ?? '–'} · issue {issue ?? 'none'}
+                  </>
+                ) : (
+                  'no single face in frame'
+                )}
+              </div>
+            )}
             <button onClick={close} className='mt-6 w-full py-3 rounded-lg border border-secondary/20 text-secondary font-semibold'>
               Cancel
             </button>
