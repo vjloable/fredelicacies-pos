@@ -39,6 +39,7 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "^16.1.6",
+    "onnxruntime-web": "1.31.1",
     "tailwindcss": "^4.1.11",
     "typescript": "^5",
     "vitest": "^4.1.9"

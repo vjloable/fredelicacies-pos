@@ -35,9 +35,9 @@ const PHASES: { id: Phase; prompt: string }[] = [
   { id: 'turn', prompt: 'Now turn your head slightly to the side' },
   { id: 'back', prompt: 'Look back at the camera' },
 ];
-// Same person at the start and the end of the check (same-session frames of one
-// face score far higher than this).
-const SAME_PERSON_MIN = 0.75;
+// Same person at the start and the end of the check. Same-session SFace
+// templates of one face score far higher; different people score below ~0.35.
+const SAME_PERSON_MIN = 0.5;
 const PHASE_TIMEOUT_MS = 10_000;
 // Open the kiosk with ?facedebug to show the raw per-frame readings, for
 // working out which check a face is failing.

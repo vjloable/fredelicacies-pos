@@ -9,7 +9,6 @@ export interface DetectedFace {
   boxRaw: [number, number, number, number];
   /** Head angles in radians. */
   angle?: { yaw: number; pitch: number; roll: number } | null;
-  embedding?: number[];
   real?: number;
   live?: number;
 }
@@ -44,9 +43,7 @@ export function assessFaces(
   if (face.angle && (Math.abs(face.angle.yaw) > maxYaw || Math.abs(face.angle.pitch) > MAX_PITCH)) {
     return { face: null, issue: 'not_facing' };
   }
-  if (face.score < MIN_SCORE || !face.embedding || face.embedding.length === 0) {
-    return { face: null, issue: 'unclear' };
-  }
+  if (face.score < MIN_SCORE) return { face: null, issue: 'unclear' };
   return { face, issue: null };
 }
 

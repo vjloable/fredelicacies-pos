@@ -14,7 +14,6 @@ const good: DetectedFace = {
   score: 0.95,
   boxRaw: [0.3, 0.2, 0.35, 0.45],
   angle: { yaw: 0.05, pitch: -0.1, roll: 0 },
-  embedding: [0.1, 0.2],
   real: 0.9,
   live: 0.9,
 };
@@ -40,9 +39,8 @@ describe('assessFaces', () => {
     expect(assessFaces([{ ...good, angle: { yaw: 0.6, pitch: 0, roll: 0 } }]).issue).toBe('not_facing');
   });
 
-  it('treats low confidence or a missing embedding as unclear', () => {
+  it('treats low confidence as unclear', () => {
     expect(assessFaces([{ ...good, score: 0.4 }]).issue).toBe('unclear');
-    expect(assessFaces([{ ...good, embedding: undefined }]).issue).toBe('unclear');
   });
 });
 
